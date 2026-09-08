@@ -34,59 +34,49 @@ internal static class ProfileAppDataSourceLocator
         }
     }
 
+    internal static string ResolveConfiguredRoot(string layerRoot)
+    {
+        var configDirectory = ProfileDataConfigurator.FindFileDirectory(layerRoot, "fsgame.ltx")
+            ?? throw new FileNotFoundException($"Не найден fsgame.ltx базовой игры: {layerRoot}");
+        var aliases = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in File.ReadLines(Path.Combine(configDirectory, "fsgame.ltx"), XRayTextEncoding.Config))
+        {
+            var content = line.Split(';', 2)[0];
+            var assignment = content.IndexOf('=');
+            if (assignment < 0) continue;
+            aliases[content[..assignment].Trim()] = content[(assignment + 1)..]
+                .Split('|', StringSplitOptions.TrimEntries);
+        }
+
+        var visiting = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        return Resolve("$app_data_root$");
+
+        string Resolve(string alias)
+        {
+            if (alias.Equals("$fs_root$", StringComparison.OrdinalIgnoreCase)) return Path.GetFullPath(configDirectory);
+            if (!visiting.Add(alias) || !aliases.TryGetValue(alias, out var parts) || parts.Length < 3)
+            {
+                throw new InvalidDataException($"Не удалось определить каталог данных базовой игры: неизвестный или циклический alias {alias}.");
+            }
+
+            var root = parts[2].Trim('"');
+            if (string.IsNullOrWhiteSpace(root)) throw new InvalidDataException($"Пустой путь {alias} в fsgame.ltx.");
+            var path = root.StartsWith('$') ? Resolve(root) : Path.GetFullPath(root, configDirectory);
+            if (parts.Length > 3 && !string.IsNullOrWhiteSpace(parts[3])) path = Path.GetFullPath(parts[3].Trim('"'), path);
+            visiting.Remove(alias);
+            return path;
+        }
+    }
+
     private static string? TryResolveConfiguredRoot(string layerRoot)
     {
-        var fsgamePath = Path.Combine(layerRoot, "fsgame.ltx");
-        if (!File.Exists(fsgamePath))
-        {
-            return null;
-        }
-
         try
         {
-            foreach (var line in File.ReadLines(fsgamePath, XRayTextEncoding.Config))
-            {
-                if (!line.TrimStart().StartsWith("$app_data_root$", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                var assignment = line.IndexOf('=');
-                if (assignment < 0)
-                {
-                    return null;
-                }
-
-                var parts = line[(assignment + 1)..]
-                    .Split('|', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 3)
-                {
-                    return null;
-                }
-
-                var rootToken = parts[2];
-                if (rootToken.Equals("$fs_root$", StringComparison.OrdinalIgnoreCase))
-                {
-                    return parts.Length >= 4
-                        ? Path.GetFullPath(Path.Combine(layerRoot, parts[3]))
-                        : Path.GetFullPath(layerRoot);
-                }
-
-                if (rootToken.StartsWith('$'))
-                {
-                    return null;
-                }
-
-                return Path.IsPathRooted(rootToken)
-                    ? Path.GetFullPath(rootToken)
-                    : Path.GetFullPath(Path.Combine(layerRoot, rootToken));
-            }
+            return ResolveConfiguredRoot(layerRoot);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
             return null;
         }
-
-        return null;
     }
 }

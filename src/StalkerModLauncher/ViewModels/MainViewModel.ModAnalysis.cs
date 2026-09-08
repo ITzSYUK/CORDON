@@ -87,7 +87,7 @@ public sealed partial class MainViewModel
         }
 
         var workspaceRoot = string.IsNullOrWhiteSpace(profile.WorkspacePath)
-            ? Path.Combine(Path.GetTempPath(), "StalkerModLauncher", "analysis", profile.Id)
+            ? Path.Combine(AppPaths.Current.TempDirectory, "analysis", profile.Id)
             : profile.WorkspacePath;
         return FileLayerPlan.CreateLinkedWorkspace(profile.GameInstallPath, profile, workspaceRoot);
     }

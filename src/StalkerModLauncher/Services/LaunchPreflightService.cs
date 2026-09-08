@@ -25,7 +25,15 @@ public sealed class LaunchPreflightService
     private LaunchPreflightReport Analyze(ModProfile profile, CancellationToken cancellationToken)
     {
         var checks = new List<ProfileHealthCheck>();
-        var fileLayerPlan = TryCreateLinkedFileLayerPlan(profile);
+        FileLayerPlan? fileLayerPlan = null;
+        try
+        {
+            fileLayerPlan = TryCreateLinkedFileLayerPlan(profile);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
+        {
+            checks.Add(Error("Подготовка профиля", ex.Message));
+        }
         var launchPlan = TryCreateLaunchPlan(profile, fileLayerPlan, cancellationToken);
         var overlayManifest = TryCreateOverlayManifest(profile, fileLayerPlan, cancellationToken);
         if (!profile.IsEnabled)
@@ -35,6 +43,16 @@ public sealed class LaunchPreflightService
 
         if (!profile.IsStandalone)
         {
+            try
+            {
+                var dataRoot = ProfileDataPathResolver.GetGameDataRoot(profile);
+                checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Healthy, "Данные игры",
+                    profile.UseBaseGameData ? $"Общий каталог базовой игры: {dataRoot}" : "В папке профиля"));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException)
+            {
+                checks.Add(Error("Данные игры", ex.Message));
+            }
             var game = GameInstallationValidator.Validate(profile.GameInstallPath);
             checks.Add(new ProfileHealthCheck(
                 game.IsValid ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Error,

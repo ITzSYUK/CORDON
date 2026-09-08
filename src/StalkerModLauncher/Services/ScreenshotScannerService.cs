@@ -28,7 +28,7 @@ public static class ScreenshotScannerService
         var directories = new List<string>(ProfileDataPathResolver.GetScreenshotDirectories(profile));
         var gamePath = profile.GameInstallPath;
 
-        if (!string.IsNullOrWhiteSpace(gamePath))
+        if (profile.IsStandalone && !string.IsNullOrWhiteSpace(gamePath))
         {
             directories.Add(Path.Combine(gamePath, "userdata", "screenshots"));
             directories.Add(Path.Combine(gamePath, "appdata", "screenshots"));

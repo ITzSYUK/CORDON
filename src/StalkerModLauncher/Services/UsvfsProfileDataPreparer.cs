@@ -19,14 +19,19 @@ internal static class UsvfsProfileDataPreparer
                 "Profile-local saves and logs cannot be guaranteed.");
         }
 
-        var profileDataPath = Path.Combine(profileWorkspace, "userdata");
+        var profileDataPath = layerPlan.GameDataRoot;
         var destination = Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx");
         ProfileWritableGameFileStore.PrepareForVirtualFileSystem(
             layerPlan,
             profileWorkspace,
             progress);
         ProfileDataConfigurator.WriteProfileFsgame(source.FullPath, destination, profileDataPath);
-        Directory.CreateDirectory(profileDataPath);
+        Directory.CreateDirectory(layerPlan.GameDataRoot);
+        if (layerPlan.UsesSharedGameData)
+        {
+            progress?.Report($"USVFS: общие данные базовой игры: {layerPlan.GameDataRoot}. Существующие файлы сохранены.");
+            return destination;
+        }
         ProfileDataConfigurator.EnsureProfileUserLtx(
             layerPlan,
             profileDataPath,

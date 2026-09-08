@@ -74,8 +74,9 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
             }
 
             _configurationPath = Path.Combine(
-                Path.GetTempPath(),
+                AppPaths.Current.TempDirectory,
                 $"stalker-usvfs-x86-{Guid.NewGuid():N}.bin");
+            Directory.CreateDirectory(Path.GetDirectoryName(_configurationPath)!);
             WriteConfiguration(_configurationPath, _mappingPlan, launchRequest, _options);
             progress?.Report($"USVFS x86 host starting: {launchRequest.ExecutablePath}");
             _hostProcess = Process.Start(new ProcessStartInfo

@@ -67,6 +67,13 @@ public static class FileSystemSafety
         return fullLeft.Equals(fullRight, StringComparison.OrdinalIgnoreCase);
     }
 
+    public static bool IsFileSystemRoot(string directoryPath)
+    {
+        var fullPath = Path.GetFullPath(directoryPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var root = Path.GetPathRoot(Path.GetFullPath(directoryPath))?.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return !string.IsNullOrWhiteSpace(root) && fullPath.Equals(root, StringComparison.OrdinalIgnoreCase);
+    }
+
     public static void DeleteDirectoryContents(string directoryPath, string allowedRoot)
     {
         EnsureDirectoryInside(directoryPath, allowedRoot);

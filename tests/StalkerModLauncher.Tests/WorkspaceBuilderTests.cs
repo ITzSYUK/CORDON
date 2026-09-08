@@ -384,6 +384,21 @@ public sealed class WorkspaceBuilderTests : IDisposable
     }
 
     [Fact]
+    public async Task BuildAsyncKeepsAnomalyLauncherConfigurationIndependentFromBaseGame()
+    {
+        var sourceConfiguration = Path.Combine(_gamePath, "AnomalyLauncher.cfg");
+        CreateFileAtPath(sourceConfiguration, "DX11\nAVX\n1");
+        var profile = CreateProfile();
+
+        var result = await _builder.BuildAsync(_gamePath, profile, new ProgressLog());
+        var workspaceConfiguration = Path.Combine(result.WorkspaceRoot, "AnomalyLauncher.cfg");
+        File.WriteAllText(workspaceConfiguration, "DX9\nNOAVX\n1");
+
+        Assert.Equal("DX11\nAVX\n1", File.ReadAllText(sourceConfiguration));
+        Assert.Equal("DX9\nNOAVX\n1", File.ReadAllText(workspaceConfiguration));
+    }
+
+    [Fact]
     public async Task BuildAsyncCapturesAnomalyOptionsBeforeReusingCachedWorkspace()
     {
         var sourceOptions = Path.Combine(_gamePath, "gamedata", "configs", "axr_options.ltx");

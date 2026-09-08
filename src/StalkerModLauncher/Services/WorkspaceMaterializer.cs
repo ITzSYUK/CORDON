@@ -92,7 +92,7 @@ internal static class WorkspaceMaterializer
             cancellationToken.ThrowIfCancellationRequested();
             var targetFile = Path.Combine(targetRoot, file.RelativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
-            LinkFile(file.FullPath, targetFile, file.RelativePath, stats);
+            LinkFile(file.FullPath, targetFile, file.RelativePath, stats, IsAnomalyLauncherConfiguration(file.RelativePath));
 
             if (++fileCount % 500 == 0)
             {
@@ -135,7 +135,7 @@ internal static class WorkspaceMaterializer
                 File.Delete(targetFile);
             }
 
-            LinkFile(file.FullPath, targetFile, file.RelativePath, stats);
+            LinkFile(file.FullPath, targetFile, file.RelativePath, stats, IsAnomalyLauncherConfiguration(file.RelativePath));
         }
 
         progress.Report($"Мод подключён: {mod.Name}. Файлов: {source.Files.Count:N0}; папок: {source.Directories.Count:N0}.");
@@ -162,10 +162,15 @@ internal static class WorkspaceMaterializer
         LinkFile(sourceFile, targetFile, relativePath, stats);
     }
 
-    private static void LinkFile(string sourceFile, string targetFile, string relativePath, WorkspaceBuildStats stats)
+    private static void LinkFile(
+        string sourceFile,
+        string targetFile,
+        string relativePath,
+        WorkspaceBuildStats stats,
+        bool forceIndependentCopy = false)
     {
         var length = new FileInfo(sourceFile).Length;
-        if (WorkspaceFileStrategy.MustCopy(relativePath))
+        if (forceIndependentCopy || WorkspaceFileStrategy.MustCopy(relativePath, sourceFile, targetFile))
         {
             CopyIndependentFile(sourceFile, targetFile, relativePath, stats, length, isRequiredLocalFile: true);
             return;
@@ -232,6 +237,9 @@ internal static class WorkspaceMaterializer
             stats.Record(relativePath, WorkspaceFileKind.LocalCopy, length);
         }
     }
+
+    private static bool IsAnomalyLauncherConfiguration(string relativePath) =>
+        Path.GetFileName(relativePath).Equals("AnomalyLauncher.cfg", StringComparison.OrdinalIgnoreCase);
 
     private static List<SourceFileAttributes> CaptureReadOnlySourceAttributes(WorkspaceSourceSnapshot snapshot)
     {

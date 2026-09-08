@@ -92,6 +92,11 @@ public sealed class WorkspaceManagementService
             throw new InvalidOperationException("Автономный профиль не использует workspace.");
         }
 
+        if (FileSystemSafety.IsFileSystemRoot(destinationRoot))
+        {
+            throw new InvalidOperationException("Корень диска нельзя использовать как корень workspace.");
+        }
+
         Directory.CreateDirectory(destinationRoot);
         File.WriteAllText(
             Path.Combine(destinationRoot, WorkspaceBuilder.RootMarkerFileName),

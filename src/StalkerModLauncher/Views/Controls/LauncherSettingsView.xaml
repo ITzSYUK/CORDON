@@ -176,7 +176,7 @@
                                          GroupName="LauncherInterface" IsChecked="{Binding UsePdaInterface}"/>
                         </WrapPanel>
                         <CheckBox Content="Запускать вместе с Windows" Style="{StaticResource SettingsCheckBoxStyle}"
-                                  IsChecked="{Binding StartWithWindows}" Margin="0,0,0,9"/>
+                                  IsChecked="{Binding StartWithWindows}" IsEnabled="{Binding CanRegisterStartup}" Margin="0,0,0,9"/>
                         <CheckBox Content="При запуске вместе с Windows открывать в трее"
                                   Style="{StaticResource SettingsCheckBoxStyle}"
                                   IsChecked="{Binding StartMinimizedToTrayOnWindowsStartup}"
@@ -215,6 +215,8 @@
                                 </ComboBox>
                             </StackPanel>
                             <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
+                                <TextBlock Text="{Binding StorageDescription}" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10"/>
                                 <TextBlock Text="Настройки" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,6"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>

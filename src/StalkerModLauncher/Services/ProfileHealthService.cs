@@ -29,7 +29,15 @@ public sealed class ProfileHealthService
         var checks = new List<ProfileHealthCheck>();
         var gamePath = profile.GameInstallPath;
         var profileFolderPath = _profileManager.GetProfileFolderPath(profile) ?? string.Empty;
-        var fileLayerPlan = TryCreateLinkedFileLayerPlan(profile, profileFolderPath);
+        FileLayerPlan? fileLayerPlan = null;
+        try
+        {
+            fileLayerPlan = TryCreateLinkedFileLayerPlan(profile, profileFolderPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
+        {
+            checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Error, "Подготовка профиля", ex.Message));
+        }
         var launchPlan = TryCreateLaunchPlan(profile, fileLayerPlan, profileFolderPath, cancellationToken);
         var overlayManifest = TryCreateOverlayManifest(profile, fileLayerPlan, profileFolderPath, cancellationToken);
 
@@ -42,6 +50,16 @@ public sealed class ProfileHealthService
         }
         else
         {
+            try
+            {
+                var dataRoot = ProfileDataPathResolver.GetGameDataRoot(profile, profileFolderPath);
+                checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Healthy, "Данные игры",
+                    $"{(profile.UseBaseGameData ? "Общий каталог базовой игры" : "Данные профиля")}: {dataRoot}"));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException)
+            {
+                checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Error, "Данные игры", ex.Message));
+            }
             var validation = GameInstallationValidator.Validate(gamePath);
             checks.Add(new ProfileHealthCheck(
                 validation.IsValid ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Error,

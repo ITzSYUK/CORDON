@@ -22,6 +22,8 @@ public sealed class FileLayerPlan
     public IReadOnlyList<FileLayer> Mods { get; }
 
     public FileLayer UserData { get; }
+    public string GameDataRoot { get; private init; } = string.Empty;
+    public bool UsesSharedGameData { get; private init; }
 
     public IEnumerable<FileLayer> SourceLayers => new[] { BaseGame }.Concat(Mods);
 
@@ -145,6 +147,11 @@ public sealed class FileLayerPlan
             throw new InvalidOperationException("FileLayerPlan for standalone profiles is not part of the linked workspace pipeline.");
         }
 
+        var paths = AppPaths.Current;
+        foreach (var source in new[] { gamePath }.Concat(profile.Mods.Where(mod => mod.IsEnabled).Select(mod => mod.SourcePath)))
+            paths.ValidateSourceDirectory(source);
+        if (!string.IsNullOrWhiteSpace(profile.Mo2OverwritePath)) paths.ValidateSourceDirectory(profile.Mo2OverwritePath);
+
         var layers = new List<FileLayer>
         {
             new(
@@ -192,7 +199,11 @@ public sealed class FileLayerPlan
             Path.Combine(Path.GetFullPath(workspaceRoot), "userdata"),
             int.MaxValue));
 
-        return new FileLayerPlan(layers);
+        return new FileLayerPlan(layers)
+        {
+            GameDataRoot = ProfileDataPathResolver.GetGameDataRoot(profile, workspaceRoot, gamePath),
+            UsesSharedGameData = profile.UseBaseGameData
+        };
     }
 
     private static IEnumerable<FileLayerFile> EnumerateLayerFiles(FileLayer layer, CancellationToken cancellationToken)

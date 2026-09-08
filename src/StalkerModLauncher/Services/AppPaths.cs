@@ -2,13 +2,27 @@ namespace StalkerModLauncher.Services;
 
 public sealed class AppPaths
 {
+    public static AppPaths Current { get; } = new();
     private readonly bool _preferGameDriveWorkspace;
 
-    public AppPaths()
+    public AppPaths(string? executableDirectory = null)
+        : this(executableDirectory, IsStandaloneExecutable(Environment.ProcessPath))
+    {
+    }
+
+    internal AppPaths(string? executableDirectory, bool useLocalSettings)
         : this(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StalkerModLauncher"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StalkerModLauncher", "Workspaces"))
     {
+        ExecutableDirectory = Path.GetFullPath(executableDirectory ?? AppContext.BaseDirectory);
+        IsPortable = useLocalSettings;
+        if (IsPortable)
+        {
+            ConfigDirectory = Path.Combine(ExecutableDirectory, "Data", "StalkerModLauncher");
+            SettingsFile = Path.Combine(ConfigDirectory, "settings.json");
+            SettingsBackupFile = Path.Combine(ConfigDirectory, "settings.backup.json");
+        }
     }
 
     public AppPaths(string configDirectory, string workspaceRoot, bool preferGameDriveWorkspace = true)
@@ -24,6 +38,54 @@ public sealed class AppPaths
     public string SettingsFile { get; }
     public string SettingsBackupFile { get; }
     public string WorkspaceRoot { get; }
+    public string ExecutableDirectory { get; } = AppContext.BaseDirectory;
+    public bool IsPortable { get; }
+    internal static bool IsStandaloneExecutable(string? path) =>
+        string.Equals(Path.GetFileName(path), "CORDON-Standalone.exe", StringComparison.OrdinalIgnoreCase);
+    public string CacheDirectory => IsPortable
+        ? Path.Combine(ConfigDirectory, "Cache")
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StalkerModLauncher");
+    public string TempDirectory => IsPortable
+        ? Path.Combine(ConfigDirectory, "Temp")
+        : Path.Combine(Path.GetTempPath(), "StalkerModLauncher");
+
+    public void EnsureStorageWritable()
+    {
+        if (!IsPortable) return;
+        foreach (var directory in new[] { ConfigDirectory, CacheDirectory, TempDirectory })
+        {
+            Directory.CreateDirectory(directory);
+            var probe = Path.Combine(directory, $".write-test-{Guid.NewGuid():N}");
+            using var stream = new FileStream(probe, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1, FileOptions.DeleteOnClose);
+        }
+    }
+
+    internal string ToStoredPath(string path)
+    {
+        if (!IsPortable || string.IsNullOrWhiteSpace(path)) return path;
+        return FileSystemSafety.IsDirectoryInside(path, ExecutableDirectory)
+            ? Path.GetRelativePath(ExecutableDirectory, path)
+            : Path.GetFullPath(path);
+    }
+
+    internal void ValidateSourceDirectory(string source)
+    {
+        if (!IsPortable) return;
+        if (FileSystemSafety.IsDirectoryInside(ConfigDirectory, source) ||
+            new[] { WorkspaceRoot, CacheDirectory, TempDirectory }.Any(root => FileSystemSafety.IsDirectoryInside(source, root)))
+        {
+            throw new InvalidOperationException("Папка игры или мода пересекается со служебными данными портативного лаунчера. Разместите лаунчер вне исходной игры и модов.");
+        }
+    }
+
+    internal string FromStoredPath(string path)
+    {
+        if (!IsPortable || string.IsNullOrWhiteSpace(path) || Path.IsPathRooted(path)) return path;
+        var fullPath = Path.GetFullPath(path, ExecutableDirectory);
+        if (!FileSystemSafety.IsDirectoryInside(fullPath, ExecutableDirectory))
+            throw new InvalidDataException("Относительный путь выходит за пределы портативной папки.");
+        return fullPath;
+    }
 
     public string GetPreferredWorkspaceRoot(string? gameInstallPath)
     {

@@ -35,13 +35,15 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         DialogService dialogService,
         Func<Task<LauncherUpdateResult>>? checkForUpdates = null,
         Func<bool>? confirmReset = null,
-        Func<string, string, LauncherReleasePackage, Task<string>>? downloadReleasePackage = null)
+        Func<string, string, LauncherReleasePackage, Task<string>>? downloadReleasePackage = null,
+        bool isPortable = false)
     {
+        IsPortable = isPortable;
         _isPdaInterfaceEnabled = preferences.IsPdaInterfaceEnabled;
         _showTrayIcon = preferences.ShowTrayIcon;
-        _startWithWindows = preferences.StartWithWindows;
+        _startWithWindows = !isPortable && preferences.StartWithWindows;
         _startMinimizedToTrayOnWindowsStartup =
-            preferences.ShowTrayIcon && preferences.StartMinimizedToTrayOnWindowsStartup;
+            !isPortable && preferences.ShowTrayIcon && preferences.StartMinimizedToTrayOnWindowsStartup;
         _minimizeToTrayOnClose = preferences.ShowTrayIcon && preferences.MinimizeToTrayOnClose;
         _autoCheckForUpdates = preferences.AutoCheckForUpdates;
         _showUpdateNotifications = preferences.ShowUpdateNotifications;
@@ -78,7 +80,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         get => _startWithWindows;
         set
         {
-            if (SetProperty(ref _startWithWindows, value))
+            if (SetProperty(ref _startWithWindows, value && CanRegisterStartup))
             {
                 OnPropertyChanged(nameof(CanStartMinimizedToTray));
             }
@@ -170,6 +172,11 @@ public sealed class LauncherSettingsViewModel : ObservableObject
     }
 
     public string SettingsDirectory => _settingsDirectory;
+    public bool IsPortable { get; }
+    public bool CanRegisterStartup => !IsPortable;
+    public string StorageDescription => IsPortable
+        ? "Локальные настройки: настройки, журналы, кэш и временные файлы хранятся рядом с EXE в Data\\StalkerModLauncher. Mods и Workspaces остаются в StalkerModLauncher на диске игры. Автозапуск Windows отключён; существующие данные автоматически не переносятся."
+        : "Обычный режим: настройки хранятся в AppData, а Mods и Workspaces — в StalkerModLauncher на диске игры.";
     public string UpdateStatus
     {
         get => _updateStatus;

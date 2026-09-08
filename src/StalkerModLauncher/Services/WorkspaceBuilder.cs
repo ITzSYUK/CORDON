@@ -16,7 +16,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
     private const string MarkerFileName = ".stalker-launcher-workspace";
     internal const string RootMarkerFileName = ".stalker-launcher-workspace-root";
     private const string ManifestFileName = "build-manifest.json";
-    private const string WorkspaceFormatVersion = "strict-links-v2";
+    private const string WorkspaceFormatVersion = "strict-links-v3";
     private readonly AppPaths _paths;
     private static EnumerationOptions SafeEnumerationOptions { get; } = new()
     {
@@ -224,12 +224,8 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
 
     public static string GetSavedGamesPath(ModProfile profile)
     {
-        if (string.IsNullOrWhiteSpace(profile.WorkspacePath))
-        {
-            return string.Empty;
-        }
-
-        return Path.Combine(profile.WorkspacePath, "userdata", "savedgames");
+        var directories = ProfileDataPathResolver.GetSavedGameDirectories(profile);
+        return directories.Count == 0 ? string.Empty : directories[0];
     }
 
     public void DeleteProfileWorkspace(ModProfile profile, string gamePath)
@@ -429,7 +425,8 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
     private static bool HasManagedParentMarker(string workspacePath)
     {
         var parent = Directory.GetParent(Path.GetFullPath(workspacePath))?.FullName;
-        return parent is not null && File.Exists(Path.Combine(parent, RootMarkerFileName));
+        return parent is not null && !FileSystemSafety.IsFileSystemRoot(parent) &&
+               File.Exists(Path.Combine(parent, RootMarkerFileName));
     }
 
     private static bool RestoreGeneratedWorkspaceMarker(
@@ -523,6 +520,8 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
 
     private static bool EnsureWorkspaceRootMarker(string workspaceRoot)
     {
+        if (FileSystemSafety.IsFileSystemRoot(workspaceRoot))
+            throw new InvalidOperationException("Корень диска нельзя использовать как корень workspace.");
         Directory.CreateDirectory(workspaceRoot);
         var rootMarker = Path.Combine(workspaceRoot, RootMarkerFileName);
         if (!File.Exists(rootMarker))

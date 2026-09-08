@@ -8,7 +8,7 @@ public sealed class AppServices : IDisposable
 
     public AppServices()
     {
-        Paths = new AppPaths();
+        Paths = AppPaths.Current;
         SettingsStore = new SettingsStore(Paths);
         DialogService = new DialogService();
         LauncherUpdateService = new LauncherUpdateService();

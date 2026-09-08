@@ -40,6 +40,17 @@ public sealed partial class App : Application, IDisposable
 
         _startMinimized = e.Args.Any(argument =>
             argument.Equals("--minimized", StringComparison.OrdinalIgnoreCase));
+        try
+        {
+            _services.Paths.EnsureStorageWritable();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show($"Портативная папка недоступна для записи:\n{_services.Paths.ConfigDirectory}\n\n{ex.Message}",
+                "Ошибка хранения данных", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(-1);
+            return;
+        }
         _uiSoundService.Initialize();
 
         if (_startMinimized)

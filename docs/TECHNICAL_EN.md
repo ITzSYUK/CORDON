@@ -242,6 +242,12 @@ StalkerModLauncher.UsvfsX86Host.exe
 
 ## 8. Profile data isolation
 
+Standard profiles now have a **Game data** setting: profile-local data (default), or the base game's configured directory. Shared mode resolves `$app_data_root$` and referenced aliases from the base game's `fsgame.ltx`; missing, unknown, cyclic, and unsafe paths block launch. Only the prepared configuration is rewritten. Standalone profiles keep their direct-launch behavior.
+
+Workspace and USVFS write the resolved absolute path into the prepared `fsgame.ltx`. With USVFS, the shared directory stays outside the virtual bootstrap root and is not mapped through `CreateTarget`, so X-Ray accesses the base game's directory directly. This is an explicit write exception for that directory only. Service stores, diagnostics, writable game-tree files, and overwrite remain inside the profile. Save/log/screenshot discovery and folder opening follow the selected location; deleting a profile never deletes shared data.
+
+Switching does not copy or overwrite game data. The separate **Copy missing data** action copies from the other location to the selected one, skips existing entries, rejects directory links, and excludes service stores. Canceling profile settings does not undo an explicitly requested copy. The following isolation/seeding rules apply to profile-local mode only.
+
 Persistent data for a standard profile is kept in:
 
 ```text
@@ -308,6 +314,16 @@ Deleting a standard profile removes only its validated managed workspace. Deleti
 
 ## 10. Settings and recovery
 
+### Standalone local settings
+
+`CORDON-Standalone.exe` automatically uses `<EXE directory>\Data\StalkerModLauncher` for settings, backup, launcher logs, `Cache`, and `Temp`. Regular `CORDON.exe` always uses AppData and ignores `portable.flag`. `Mods` and `Workspaces` keep their normal `<game drive>\StalkerModLauncher` location; the `%LOCALAPPDATA%` fallback is used when a drive cannot be resolved. Write access is checked before startup; failure shows an error without falling back to AppData. Windows startup registration is disabled.
+
+The portable launcher must be outside game/mod source folders: overlapping source roots are rejected before building layers to avoid including its own Data tree. USVFS still requires an ASCII-only workspace path, so place the portable launcher under a path without non-ASCII characters.
+
+Paths inside the EXE directory are stored relative to it; external game, mod, and workspace paths stay absolute. Existing AppData settings are not migrated automatically. To move local settings, close the launcher and copy `Data\StalkerModLauncher`, omitting generated `Cache` and `Temp`. Profile `userdata`, `Mods`, and `Workspaces` remain under `<game drive>\StalkerModLauncher`.
+
+The paths below describe ordinary mode.
+
 Settings files are stored at:
 
 ```text
@@ -337,7 +353,7 @@ Settings reads and writes are performed one at a time, so two operations cannot 
 
 An explicit save from the profile settings UI propagates persistence failures back to the window. The window remains open, shows the error, and restores the in-memory profile values instead of presenting unsaved changes as successful.
 
-Game and mod paths are absolute. When a source folder is moved, the user must select it again. The workspace move operation first copies `userdata`, changes the stored path only after success, and then removes only the explicitly remembered old path without performing a general profile-folder search. The path is changed on the UI thread because WPF observes the profile. If final cleanup fails, the move remains successful: the launcher shows both paths, writes the full exception to the log, and offers to retry only the old-folder cleanup.
+In ordinary mode, game and mod paths are absolute. When a source folder is moved, the user must select it again. The workspace move operation first copies `userdata`, changes the stored path only after success, and then removes only the explicitly remembered old path without performing a general profile-folder search. The path is changed on the UI thread because WPF observes the profile. If final cleanup fails, the move remains successful: the launcher shows both paths, writes the full exception to the log, and offers to retry only the old-folder cleanup.
 
 ## 11. Validation, status, and diagnostics
 

@@ -170,7 +170,7 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
             IsBusy = true;
             Summary = "Анализ файлов...";
             var workspace = string.IsNullOrWhiteSpace(_profile.WorkspacePath)
-                ? Path.Combine(Path.GetTempPath(), "StalkerModLauncher", "analysis", _profile.Id)
+                ? Path.Combine(AppPaths.Current.TempDirectory, "analysis", _profile.Id)
                 : _profile.WorkspacePath;
             var plan = FileLayerPlan.CreateLinkedWorkspace(_profile.GameInstallPath, _profile, workspace);
             var finalTreeTask = FileLayerExplorerService.BuildFinalTreeAsync(plan, workspace, cancellationToken);

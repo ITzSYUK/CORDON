@@ -81,12 +81,12 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     public string FirstMetricToolTip => UsesVirtualFileSystem
         ? "Базовая игра и включённые моды, которые USVFS объединит при запуске."
         : "Сколько данных видит игра внутри рабочей папки. Из-за ссылок это не равно расходу места на диске.";
-    public string SecondMetricTitle => UsesVirtualFileSystem ? "Профильные данные" : "Реально занято";
+    public string SecondMetricTitle => UsesVirtualFileSystem ? "Данные игры" : "Реально занято";
     public string SecondMetricValue => UsesVirtualFileSystem
         ? ProfileDataStateDisplay
         : Workspace?.PhysicalSizeDisplay ?? "—";
     public string SecondMetricToolTip => UsesVirtualFileSystem
-        ? "Сохранения, настройки и логи хранятся отдельно в userdata профиля."
+        ? _profile.UseBaseGameData ? "Используется общий каталог данных базовой игры." : "Сохранения, настройки и логи хранятся отдельно в userdata профиля."
         : "Сколько места примерно занимает workspace с учетом hardlink и symlink.";
     public string ThirdMetricTitle => UsesVirtualFileSystem ? "Папка current" : "Файлы";
     public string ThirdMetricValue => UsesVirtualFileSystem ? "не используется" : Workspace?.FileCountDisplay ?? "—";
@@ -94,8 +94,8 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         ? "USVFS формирует представление игры в памяти процесса и не собирает папку current."
         : Workspace?.LinkSummaryDisplay ?? string.Empty;
 
-    private string ProfileDataStateDisplay => !string.IsNullOrWhiteSpace(_profile.WorkspacePath) &&
-                                              Directory.Exists(Path.Combine(_profile.WorkspacePath, "userdata"))
+    private string ProfileDataStateDisplay => ProfileDataPathResolver.GetSavedGameDirectories(_profile)
+                                              .Any(path => Directory.Exists(Path.GetDirectoryName(path)))
         ? "созданы"
         : "при запуске";
 

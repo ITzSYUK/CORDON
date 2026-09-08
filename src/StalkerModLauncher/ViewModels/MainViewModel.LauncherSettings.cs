@@ -29,17 +29,20 @@ public sealed partial class MainViewModel
         ApplyLauncherSettingsAsync,
         _dialogService,
         checkForUpdates,
-        confirmReset);
+        confirmReset,
+        isPortable: _paths.IsPortable);
 
     private async Task ApplyLauncherSettingsAsync(LauncherPreferences preferences)
     {
+        if (_paths.IsPortable)
+            preferences = preferences with { StartWithWindows = false, StartMinimizedToTrayOnWindowsStartup = false };
         var previous = GetLauncherPreferences();
         var startupRegistrationChanged =
             preferences.StartWithWindows != previous.StartWithWindows ||
             preferences.StartWithWindows &&
             preferences.StartMinimizedToTrayOnWindowsStartup != previous.StartMinimizedToTrayOnWindowsStartup;
 
-        if (startupRegistrationChanged)
+        if (startupRegistrationChanged && !_paths.IsPortable)
         {
             _startupRegistrationService.Configure(
                 preferences.StartWithWindows,
@@ -72,7 +75,7 @@ public sealed partial class MainViewModel
             _logLevel = previous.LogLevel;
             _applicationLogService.Level = previous.LogLevel;
 
-            if (startupRegistrationChanged)
+            if (startupRegistrationChanged && !_paths.IsPortable)
             {
                 try
                 {

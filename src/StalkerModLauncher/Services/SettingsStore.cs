@@ -64,7 +64,7 @@ public sealed class SettingsStore : IDisposable
     public async Task SaveAsync(AppSettings settings)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        var snapshot = JsonSerializer.SerializeToUtf8Bytes(settings, JsonOptions);
+        var snapshot = SerializeSettings(settings);
         await _ioLock.WaitAsync();
         try
         {
@@ -89,7 +89,7 @@ public sealed class SettingsStore : IDisposable
             var current = await LoadCoreAsync();
             recovery = current.Recovery;
             updated = update(current.Settings);
-            await SaveSnapshotCoreAsync(JsonSerializer.SerializeToUtf8Bytes(updated, JsonOptions));
+            await SaveSnapshotCoreAsync(SerializeSettings(updated));
         }
         catch (SettingsPersistenceException ex)
         {
@@ -146,7 +146,7 @@ public sealed class SettingsStore : IDisposable
                 damagedFiles));
     }
 
-    private static async Task<SettingsFileLoadResult> TryLoadFileAsync(string path)
+    private async Task<SettingsFileLoadResult> TryLoadFileAsync(string path)
     {
         if (!File.Exists(path))
         {
@@ -157,6 +157,13 @@ public sealed class SettingsStore : IDisposable
         {
             await using var stream = File.OpenRead(path);
             var settings = await JsonSerializer.DeserializeAsync<AppSettings>(stream, JsonOptions);
+            if (settings is not null) settings = AppSettingsNormalizer.Normalize(settings);
+            if (settings is not null && _paths.IsPortable)
+            {
+                TransformPaths(settings, _paths.FromStoredPath);
+                settings.StartWithWindows = false;
+                settings.StartMinimizedToTrayOnWindowsStartup = false;
+            }
             return settings is null
                 ? new SettingsFileLoadResult(
                     path,
@@ -165,7 +172,7 @@ public sealed class SettingsStore : IDisposable
                     SettingsFileLoadKind.Corrupted)
                 : new SettingsFileLoadResult(
                     path,
-                    AppSettingsNormalizer.Normalize(settings),
+                    settings,
                     null,
                     SettingsFileLoadKind.Loaded);
         }
@@ -261,7 +268,7 @@ public sealed class SettingsStore : IDisposable
 
     private async Task RestorePrimaryAsync(AppSettings settings)
     {
-        var snapshot = JsonSerializer.SerializeToUtf8Bytes(settings, JsonOptions);
+        var snapshot = SerializeSettings(settings);
         var tempPath = _paths.SettingsFile + ".recovery.tmp";
         try
         {
@@ -294,6 +301,32 @@ public sealed class SettingsStore : IDisposable
             {
                 return path;
             }
+        }
+    }
+
+    private byte[] SerializeSettings(AppSettings settings)
+    {
+        if (!_paths.IsPortable) return JsonSerializer.SerializeToUtf8Bytes(settings, JsonOptions);
+        // Snapshot only: never replace the absolute paths observed by WPF with relative ones.
+        var snapshot = JsonSerializer.Deserialize<AppSettings>(JsonSerializer.SerializeToUtf8Bytes(settings, JsonOptions), JsonOptions)!;
+        TransformPaths(snapshot, _paths.ToStoredPath);
+        snapshot.StartWithWindows = false;
+        snapshot.StartMinimizedToTrayOnWindowsStartup = false;
+        return JsonSerializer.SerializeToUtf8Bytes(snapshot, JsonOptions);
+    }
+
+    private static void TransformPaths(AppSettings settings, Func<string, string> transform)
+    {
+        settings.LastBrowsedGamePath = transform(settings.LastBrowsedGamePath ?? string.Empty);
+        if (settings.LegacyGameInstallPath is not null) settings.LegacyGameInstallPath = transform(settings.LegacyGameInstallPath);
+        foreach (var profile in settings.Profiles ?? [])
+        {
+            profile.GameInstallPath = transform(profile.GameInstallPath ?? string.Empty);
+            profile.ExecutableSourcePath = transform(profile.ExecutableSourcePath ?? string.Empty);
+            profile.WorkspacePath = transform(profile.WorkspacePath ?? string.Empty);
+            profile.ModInstallPath = transform(profile.ModInstallPath ?? string.Empty);
+            profile.Mo2OverwritePath = transform(profile.Mo2OverwritePath ?? string.Empty);
+            foreach (var mod in profile.Mods ?? []) mod.SourcePath = transform(mod.SourcePath ?? string.Empty);
         }
     }
 

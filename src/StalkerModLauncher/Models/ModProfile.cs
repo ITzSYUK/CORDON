@@ -13,6 +13,7 @@ public sealed class ModProfile : ObservableObject
     private bool _isEnabled = true;
     private bool _isDiscordStatusEnabled = true;
     private bool _isStandalone;
+    private bool _useBaseGameData;
     private LaunchBackendKind _launchBackendKind = LaunchBackendKind.LinkedWorkspace;
     private string _launchArguments = "-nointro";
     private string _executableRelativePath = @"bin\xr_3da.exe";
@@ -183,6 +184,12 @@ public sealed class ModProfile : ObservableObject
     {
         get => _isRunning;
         set => SetProperty(ref _isRunning, value);
+    }
+
+    public bool UseBaseGameData
+    {
+        get => _useBaseGameData;
+        set => SetProperty(ref _useBaseGameData, value);
     }
 
     [JsonIgnore]

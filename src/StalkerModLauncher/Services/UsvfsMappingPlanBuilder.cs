@@ -42,14 +42,7 @@ public static class UsvfsMappingPlanBuilder
         AddExcludedFileRestorations(operations, layerPlan, virtualRoot);
         AddWritableFiles(operations, virtualRoot, manifest);
 
-        operations.Add(new UsvfsMappingOperation(
-            UsvfsMappingKind.DirectoryStatic,
-            Path.GetFullPath(manifest.WriteOverlayRoot),
-            virtualRoot,
-            "profile overwrite",
-            int.MaxValue,
-            MonitorChanges: true,
-            CreateTarget: true));
+        AddProfileOverwrite(operations, layerPlan, manifest, virtualRoot);
 
         return new UsvfsMappingPlan(
             virtualRoot,
@@ -79,14 +72,7 @@ public static class UsvfsMappingPlanBuilder
 
         AddExcludedFileRestorations(operations, layerPlan, fullVirtualRoot);
         AddWritableFiles(operations, fullVirtualRoot, manifest);
-        operations.Add(new UsvfsMappingOperation(
-            UsvfsMappingKind.DirectoryStatic,
-            Path.GetFullPath(manifest.WriteOverlayRoot),
-            fullVirtualRoot,
-            "profile overwrite",
-            int.MaxValue,
-            MonitorChanges: true,
-            CreateTarget: true));
+        AddProfileOverwrite(operations, layerPlan, manifest, fullVirtualRoot);
 
         return new UsvfsMappingPlan(
             fullVirtualRoot,
@@ -155,6 +141,46 @@ public static class UsvfsMappingPlanBuilder
                 int.MaxValue - 1,
                 MonitorChanges: false,
                 CreateTarget: false));
+        }
+    }
+
+    private static void AddProfileOverwrite(
+        List<UsvfsMappingOperation> operations,
+        FileLayerPlan layerPlan,
+        OverlayManifest manifest,
+        string virtualRoot)
+    {
+        var overwriteRoot = Path.GetFullPath(manifest.WriteOverlayRoot);
+        if (!layerPlan.UsesSharedGameData)
+        {
+            operations.Add(new UsvfsMappingOperation(
+                UsvfsMappingKind.DirectoryStatic,
+                overwriteRoot,
+                virtualRoot,
+                "profile overwrite",
+                int.MaxValue,
+                MonitorChanges: true,
+                CreateTarget: true));
+            return;
+        }
+
+        // In shared-data mode userdata belongs to the game installation. Mapping it
+        // from the profile overlay makes USVFS silently capture saves and logs again.
+        foreach (var entry in Directory.EnumerateFileSystemEntries(overwriteRoot, "*", SearchOption.TopDirectoryOnly))
+        {
+            if (Path.GetFileName(entry).Equals("userdata", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            operations.Add(new UsvfsMappingOperation(
+                Directory.Exists(entry) ? UsvfsMappingKind.DirectoryStatic : UsvfsMappingKind.File,
+                entry,
+                Path.Combine(virtualRoot, Path.GetFileName(entry)),
+                "profile overwrite",
+                int.MaxValue,
+                MonitorChanges: true,
+                CreateTarget: true));
         }
     }
 

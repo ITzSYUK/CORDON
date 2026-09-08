@@ -24,10 +24,15 @@ internal static class ProfileDataConfigurator
             progress.Report($"Detected fsgame.ltx in '{relativeDir}' — using as working directory.");
         }
 
-        var profileDataPath = Path.Combine(profileWorkspace, "userdata");
+        var profileDataPath = layerPlan?.GameDataRoot ?? Path.Combine(profileWorkspace, "userdata");
         var fsgamePath = Path.Combine(fsgameDir, "fsgame.ltx");
         WriteProfileFsgame(fsgamePath, fsgamePath, profileDataPath);
         Directory.CreateDirectory(profileDataPath);
+        if (layerPlan?.UsesSharedGameData == true)
+        {
+            progress.Report($"Используются общие данные базовой игры: {profileDataPath}. Существующие файлы не копируются и не заменяются.");
+            return workingDirectoryRelative;
+        }
         if (layerPlan is null)
         {
             EnsureProfileUserLtx(gamePath, profileDataPath, progress);
@@ -47,6 +52,11 @@ internal static class ProfileDataConfigurator
 
     internal static void WriteProfileFsgame(string sourcePath, string destinationPath, string profileDataPath)
     {
+        WriteProfileFsgameDefinition(sourcePath, destinationPath, $"true | false| {profileDataPath}");
+    }
+
+    private static void WriteProfileFsgameDefinition(string sourcePath, string destinationPath, string appDataDefinition)
+    {
         var lines = File.ReadAllLines(sourcePath, XRayTextEncoding.Config);
         var appDataLineIndex = Array.FindIndex(
             lines,
@@ -58,7 +68,7 @@ internal static class ProfileDataConfigurator
                 "Profile-local saves and logs cannot be guaranteed, so launch was blocked.");
         }
 
-        lines[appDataLineIndex] = $"$app_data_root$ = true | false| {profileDataPath}";
+        lines[appDataLineIndex] = $"$app_data_root$ = {appDataDefinition}";
         Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
         if (Path.GetFullPath(sourcePath).Equals(Path.GetFullPath(destinationPath), StringComparison.OrdinalIgnoreCase))
         {

@@ -293,6 +293,7 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             Path.Combine(game, "fsgame.ltx"),
             "$app_data_root$ = true | false | $fs_root$ | appdata\\" + Environment.NewLine +
             "$arch_dir_patches$ = false | true | $fs_root$ | patches\\");
+        Directory.CreateDirectory(Path.Combine(game, "appdata"));
         File.WriteAllLines(Path.Combine(game, "AnomalyLauncher.cfg"), ["DX11", "AVX", "1"]);
         File.Copy(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SysWOW64", "cmd.exe"),
@@ -324,7 +325,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             GameInstallPath = game,
             ExecutableRelativePath = "AnomalyLauncher.exe",
             LaunchArguments = "-dbg",
-            LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
+            LaunchBackendKind = LaunchBackendKind.VirtualFileSystem,
+            UseBaseGameData = true
         };
         profile.Mods.Add(new ModEntry
         {
@@ -360,6 +362,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             Path.Combine(workspace, "userdata"),
             plan.ExecutablePath,
             StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(Path.Combine(game, "appdata"), File.ReadAllText(Path.Combine(workspace, "userdata", "overwrite", "fsgame.ltx")));
+        Assert.DoesNotContain(runtime.MappingPlan!.Operations, operation => operation.SourceName == "shared game data");
         Assert.Equal(WindowsExecutableArchitecture.X86, WindowsExecutableArchitectureDetector.Detect(plan.ExecutablePath));
         Assert.Equal("-dbg", plan.Arguments);
         var bootstrapRoot = Path.GetDirectoryName(plan.ExecutablePath)!;
@@ -414,6 +418,7 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         Assert.Equal(
             "DX9\nNOAVX\n1",
             File.ReadAllText(Path.Combine(workspace, "userdata", "overwrite", "AnomalyLauncher.cfg")));
+        Assert.DoesNotContain(runtime.MappingPlan!.Operations, operation => operation.SourceName == "shared game data");
     }
 
     [Fact]

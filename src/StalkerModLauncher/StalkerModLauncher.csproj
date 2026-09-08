@@ -21,6 +21,7 @@
     <Description>Profile-based launcher for local S.T.A.L.K.E.R. games and modifications.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="StalkerModLauncher.Tests" />
     <Using Remove="System.Drawing" />
     <Using Remove="System.Windows.Forms" />
     <Resource Include="..\..\assets\icons\mod-actions\add_mods.png" Link="Resources\add_mods.png" />

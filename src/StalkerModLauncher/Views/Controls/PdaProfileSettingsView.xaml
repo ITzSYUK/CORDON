@@ -197,6 +197,20 @@
                         </TextBlock>
                     </CheckBox>
 
+                    <StackPanel Margin="0,6,0,14">
+                        <TextBlock Text="Данные игры" Foreground="#929B88" FontSize="11" Margin="0,0,0,5"/>
+                        <StackPanel IsEnabled="{Binding CanChooseGameData}">
+                            <RadioButton Content="В папке профиля" Style="{StaticResource PdaProfileRadioButtonStyle}"
+                                         GroupName="PdaGameData" IsChecked="{Binding UseProfileGameData}" Margin="0,0,0,5"/>
+                            <RadioButton Content="В папке данных базовой игры" Style="{StaticResource PdaProfileRadioButtonStyle}"
+                                         GroupName="PdaGameData" IsChecked="{Binding UseBaseGameData}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding GameDataDescription}" Foreground="#929B88" FontSize="11"
+                                   TextWrapping="Wrap" Margin="0,5,0,0"/>
+                        <Button Content="Скопировать недостающие данные в выбранную папку"
+                                Command="{Binding CopyGameDataCommand}" IsEnabled="{Binding CanChooseGameData}"
+                                HorizontalAlignment="Left" Margin="0,6,0,0"/>
+                    </StackPanel>
                     <TextBlock Text="Система запуска" Foreground="#929B88" FontSize="11" Margin="0,0,0,4"/>
                     <WrapPanel Margin="0,0,0,5">
                         <RadioButton Content="Workspace"

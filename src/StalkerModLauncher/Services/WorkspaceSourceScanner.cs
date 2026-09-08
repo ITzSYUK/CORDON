@@ -55,6 +55,7 @@ internal static class WorkspaceSourceScanner
             ExecutableRelativePath = profile.ExecutableRelativePath,
             ExecutableSourcePath = profile.ExecutableSourcePath,
             ProfileMode = profile.IsStandalone ? "standalone" : "overlay",
+            WorkspacePath = Path.GetDirectoryName(plan.UserData.RootPath)!,
             Layers = plan.SourceLayers
                 .Select(layer => new WorkspaceBuildLayerFingerprint
                 {
@@ -124,6 +125,7 @@ internal static class WorkspaceSourceScanner
         builder.AppendLine(fingerprint.ExecutableRelativePath);
         builder.AppendLine(fingerprint.ExecutableSourcePath);
         builder.AppendLine(fingerprint.ProfileMode);
+        builder.AppendLine(fingerprint.WorkspacePath);
 
         foreach (var source in fingerprint.Sources)
         {
@@ -209,6 +211,7 @@ internal sealed class WorkspaceBuildFingerprint
     public string ExecutableRelativePath { get; set; } = string.Empty;
     public string ExecutableSourcePath { get; set; } = string.Empty;
     public string ProfileMode { get; set; } = string.Empty;
+    public string WorkspacePath { get; set; } = string.Empty;
     public List<WorkspaceBuildLayerFingerprint> Layers { get; set; } = [];
     public List<WorkspaceBuildSourceFingerprint> Sources { get; set; } = [];
 }

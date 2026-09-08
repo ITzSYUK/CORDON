@@ -12,7 +12,7 @@ public sealed class ScreenshotScannerServiceTests : IDisposable
         Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public async Task ScanAsyncFindsSupportedImagesAcrossProfileAndGamePaths()
+    public async Task ScanAsyncUsesOnlyTheSelectedGameDataDirectory()
     {
         var workspace = Path.Combine(_root, "workspace");
         var game = Path.Combine(_root, "game");
@@ -20,11 +20,13 @@ public sealed class ScreenshotScannerServiceTests : IDisposable
         var gameScreenshot = CreateFile(game, "appdata", "screenshots", "game.jpg");
         CreateFile(game, "appdata", "screenshots", "ignored.dds");
         var profile = new ModProfile { WorkspacePath = workspace, GameInstallPath = game };
+        File.WriteAllText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true | false | appdata");
         var result = await ScreenshotScannerService.ScanAsync(profile);
 
-        Assert.Equal(2, result.Count);
-        Assert.Contains(profileScreenshot, result);
-        Assert.Contains(gameScreenshot, result);
+        Assert.Equal(profileScreenshot, Assert.Single(result));
+        profile.UseBaseGameData = true;
+        result = await ScreenshotScannerService.ScanAsync(profile);
+        Assert.Equal(gameScreenshot, Assert.Single(result));
     }
 
     [Fact]

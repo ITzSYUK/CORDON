@@ -140,6 +140,31 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
     }
 
     [Fact]
+    public void BuildDoesNotMapProfileUserdataWhenGameDataIsShared()
+    {
+        var game = CreateDirectory("shared-game");
+        var workspace = CreateDirectory("shared-workspace");
+        File.WriteAllText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true| false| $fs_root$| userdata\\");
+        var profile = new ModProfile
+        {
+            Name = "Shared data",
+            GameInstallPath = game,
+            UseBaseGameData = true
+        };
+        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        Directory.CreateDirectory(Path.Combine(manifest.WriteOverlayRoot, "userdata", "savedgames"));
+        File.WriteAllText(Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx"), "profile config");
+
+        var plan = UsvfsMappingPlanBuilder.Build(layerPlan, manifest);
+
+        Assert.DoesNotContain(plan.Operations, operation =>
+            operation.DestinationPath.Equals(Path.Combine(game, "userdata"), StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(plan.Operations, operation =>
+            operation.DestinationPath.Equals(Path.Combine(game, "fsgame.ltx"), StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void BuildRestoresPreviousProviderForExcludedConflictFile()
     {
         var game = CreateDirectory("excluded-game");

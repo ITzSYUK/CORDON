@@ -26,6 +26,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     private bool _isEnabled;
     private bool _isDiscordStatusEnabled;
     private bool _isStandalone;
+    private bool _useBaseGameData;
     private LaunchBackendKind _launchBackendKind;
     private string _usvfsExecutableOverrideRelativePath;
     private string _anomalyRenderer = string.Empty;
@@ -64,6 +65,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         _isEnabled = profile.IsEnabled;
         _isDiscordStatusEnabled = profile.IsDiscordStatusEnabled;
         _isStandalone = profile.IsStandalone;
+        _useBaseGameData = profile.UseBaseGameData;
         _launchBackendKind = profile.LaunchBackendKind;
         _usvfsExecutableOverrideRelativePath = profile.UsvfsExecutableOverrideRelativePath;
         _isAnomalyProfile = IsAnomalyProfile(profile);
@@ -84,6 +86,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         BrowseModInstallPathCommand = new RelayCommand(BrowseModInstallPath);
         ResetModInstallPathCommand = new RelayCommand(ResetModInstallPath);
         ImportMo2ModListCommand = new AsyncRelayCommand(ImportMo2ModListAsync);
+        CopyGameDataCommand = new AsyncRelayCommand(CopyGameDataAsync);
     }
 
     public string ProfileName
@@ -203,11 +206,56 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             }
 
             OnPropertyChanged(nameof(CanUseUsvfs));
+            OnPropertyChanged(nameof(CanChooseGameData));
+            OnPropertyChanged(nameof(GameDataDescription));
             OnPropertyChanged(nameof(IsAnomalyUsvfsOptionsVisible));
         }
     }
 
     public bool IsUsvfsAvailable => _isUsvfsAvailable;
+
+    public bool CanChooseGameData => !IsStandalone && !_profile.IsRunning;
+    public bool UseBaseGameData
+    {
+        get => _useBaseGameData;
+        set
+        {
+            if (SetProperty(ref _useBaseGameData, value))
+            {
+                OnPropertyChanged(nameof(UseProfileGameData));
+                OnPropertyChanged(nameof(GameDataDescription));
+            }
+        }
+    }
+    public bool UseProfileGameData
+    {
+        get => !UseBaseGameData;
+        set { if (value) UseBaseGameData = false; }
+    }
+    public string GameDataDescription
+    {
+        get
+        {
+            if (IsStandalone) return "Автономная сборка использует свои данные без перенаправления.";
+            try
+            {
+                var path = GetSelectedGameDataRoot();
+                return $"{(UseBaseGameData ? "Общие сохранения, настройки, логи и скриншоты" : "Отдельные данные профиля")}: {path}\nПереключение не переносит и не заменяет существующие файлы.";
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException)
+            {
+                return ex.Message;
+            }
+        }
+    }
+
+    private string GetSelectedGameDataRoot() => ProfileDataPathResolver.GetGameDataRoot(new ModProfile
+    {
+        GameInstallPath = _profile.GameInstallPath,
+        WorkspacePath = WorkspacePath,
+        UseBaseGameData = UseBaseGameData,
+        Mods = _profile.Mods
+    });
 
     public bool CanUseUsvfs => IsUsvfsAvailable && !IsStandalone;
 
@@ -300,6 +348,34 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     public ICommand BrowseModInstallPathCommand { get; }
     public ICommand ResetModInstallPathCommand { get; }
     public ICommand ImportMo2ModListCommand { get; }
+    public ICommand CopyGameDataCommand { get; }
+
+    private async Task CopyGameDataAsync()
+    {
+        if (!CanChooseGameData) return;
+        try
+        {
+            var profileData = Path.Combine(WorkspacePath, "userdata");
+            if (string.IsNullOrWhiteSpace(WorkspacePath)) throw new InvalidOperationException("Сначала создайте рабочую папку профиля запуском игры.");
+            var sharedData = ProfileDataPathResolver.GetGameDataRoot(new ModProfile
+            {
+                GameInstallPath = _profile.GameInstallPath,
+                WorkspacePath = WorkspacePath,
+                UseBaseGameData = true,
+                Mods = _profile.Mods
+            });
+            var source = UseBaseGameData ? profileData : sharedData;
+            var destination = UseBaseGameData ? sharedData : profileData;
+            if (!DialogService.Confirm("Копирование данных игры",
+                $"Откуда: {source}\nКуда: {destination}\n\nСуществующие файлы будут пропущены. Служебные файлы профиля не копируются. Закройте другие экземпляры игры перед копированием.")) return;
+            var result = await Task.Run(() => GameDataCopyService.CopyMissing(source, destination));
+            DialogService.ShowInfo("Копирование завершено", $"Скопировано: {result.Copied}. Пропущено: {result.Skipped}.\nДля смены каталога запуска сохраните настройки профиля.");
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("Не удалось скопировать все данные", $"{ex.Message}\nУже скопированные файлы сохранены. Существующие файлы не заменены.");
+        }
+    }
 
     public async Task<bool> TrySaveAsync()
     {
@@ -313,6 +389,9 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         var snapshot = ProfileSettingsSnapshot.Capture(_profile);
         try
         {
+            if (_profile.IsRunning && UseBaseGameData != _profile.UseBaseGameData)
+                throw new InvalidOperationException("Завершите игру перед изменением каталога данных.");
+            if (!IsStandalone && UseBaseGameData) _ = GetSelectedGameDataRoot();
             ApplyToProfile();
             await _onSave();
             return true;
@@ -342,6 +421,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         _profile.IsEnabled = IsEnabled;
         _profile.IsDiscordStatusEnabled = IsDiscordStatusEnabled;
         _profile.IsStandalone = IsStandalone;
+        _profile.UseBaseGameData = UseBaseGameData;
         _profile.LaunchBackendKind = IsStandalone
             ? LaunchBackendKind.LinkedWorkspace
             : _launchBackendKind;
@@ -573,6 +653,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         bool IsEnabled,
         bool IsDiscordStatusEnabled,
         bool IsStandalone,
+        bool UseBaseGameData,
         LaunchBackendKind LaunchBackendKind,
         string UsvfsExecutableOverrideRelativePath)
     {
@@ -588,6 +669,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             profile.IsEnabled,
             profile.IsDiscordStatusEnabled,
             profile.IsStandalone,
+            profile.UseBaseGameData,
             profile.LaunchBackendKind,
             profile.UsvfsExecutableOverrideRelativePath);
 
@@ -604,6 +686,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             profile.IsEnabled = IsEnabled;
             profile.IsDiscordStatusEnabled = IsDiscordStatusEnabled;
             profile.IsStandalone = IsStandalone;
+            profile.UseBaseGameData = UseBaseGameData;
             profile.LaunchBackendKind = LaunchBackendKind;
             profile.UsvfsExecutableOverrideRelativePath = UsvfsExecutableOverrideRelativePath;
         }

@@ -11,6 +11,25 @@ public sealed class WorkspaceFileStrategyTests
         Assert.True(WorkspaceFileStrategy.MustCopy("fsgame.ltx"));
     }
 
+    [Fact]
+    public void MustCopyReturnsTrueForCrossVolumeXRayScripts()
+    {
+        Assert.True(WorkspaceFileStrategy.MustCopy(
+            Path.Combine("gamedata", "scripts", "callbacks_gameobject.script"),
+            @"E:\mods\callbacks_gameobject.script",
+            @"D:\workspace\gamedata\scripts\callbacks_gameobject.script"));
+    }
+
+    [Fact]
+    public void MustCopyReturnsFalseForSameVolumeXRayScripts()
+    {
+        Assert.False(WorkspaceFileStrategy.MustCopy(
+            Path.Combine("gamedata", "scripts", "callbacks_gameobject.script"),
+            @"D:\mods\callbacks_gameobject.script",
+            @"D:\workspace\gamedata\scripts\callbacks_gameobject.script"));
+    }
+
+
     [Theory]
     [InlineData("gamedata.db0")]
     [InlineData("gamedata/textures/texture.dds")]

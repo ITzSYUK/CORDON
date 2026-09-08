@@ -25,11 +25,10 @@ public sealed class UiSoundService : IDisposable
     private bool _isDisposed;
     private bool _isInitialized;
 
-    public UiSoundService()
+    public UiSoundService(AppPaths? paths = null)
     {
         _cacheDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "StalkerModLauncher",
+            (paths ?? AppPaths.Current).CacheDirectory,
             "RuntimeSounds");
     }
 
