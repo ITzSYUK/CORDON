@@ -77,6 +77,37 @@ public sealed class SettingsStore : IDisposable
         }
     }
 
+    public async Task ImportAsync(string sourcePath)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!string.Equals(Path.GetExtension(sourcePath), ".json", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException("Выберите файл настроек с расширением .json.");
+        }
+
+        await _ioLock.WaitAsync();
+        try
+        {
+            EnsureWritesAllowed();
+            var imported = await TryLoadFileAsync(sourcePath);
+            if (imported.Settings is null)
+            {
+                if (imported.Kind == SettingsFileLoadKind.Unavailable)
+                {
+                    throw new SettingsPersistenceException(imported.Error ?? "Файл настроек недоступен.");
+                }
+
+                throw new InvalidDataException(imported.Error ?? "Выбранный файл не содержит настроек CORDON.");
+            }
+
+            await SaveSnapshotCoreAsync(SerializeSettings(imported.Settings));
+        }
+        finally
+        {
+            _ioLock.Release();
+        }
+    }
+
     public async Task<AppSettings> UpdateAsync(Func<AppSettings, AppSettings> update)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

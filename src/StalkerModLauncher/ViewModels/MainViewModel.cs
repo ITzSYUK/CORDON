@@ -93,6 +93,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         ChooseGameFolderCommand = new RelayCommand(ChooseGameFolder);
         NewProfileCommand = new RelayCommand(NewProfile);
+        ImportSettingsCommand = new AsyncRelayCommand(ImportSettingsAsync, () => CanImportSettings);
         DuplicateProfileCommand = new RelayCommand(DuplicateProfile, () => SelectedProfile is not null);
         DeleteProfileCommand = new RelayCommand(DeleteProfile, () => SelectedProfile is not null);
         InlineDuplicateProfileCommand = new RelayCommand(
@@ -151,6 +152,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public Task Initialization { get; }
 
     public bool HasProfiles => Profiles.Count > 0;
+
+    public bool CanImportSettings => _paths.IsPortable && !HasProfiles;
 
     public bool IsPdaInterfaceEnabled
     {
@@ -405,6 +408,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public RelayCommand ChooseGameFolderCommand { get; }
     public RelayCommand NewProfileCommand { get; }
+    public AsyncRelayCommand ImportSettingsCommand { get; }
     public RelayCommand DuplicateProfileCommand { get; }
     public RelayCommand DeleteProfileCommand { get; }
     public RelayCommand InlineDuplicateProfileCommand { get; }
@@ -503,6 +507,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         OpenSelectedModFolderCommand.RaiseCanExecuteChanged();
         ExportProfileCommand.RaiseCanExecuteChanged();
         ImportProfileCommand.RaiseCanExecuteChanged();
+        ImportSettingsCommand.RaiseCanExecuteChanged();
         ImportMo2CollectionCommand.RaiseCanExecuteChanged();
         ShowSelectedModConflictsCommand.RaiseCanExecuteChanged();
         ShowFileTreeCommand.RaiseCanExecuteChanged();

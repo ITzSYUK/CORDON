@@ -126,6 +126,8 @@ public sealed partial class MainViewModel
     private void ProfilesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         OnPropertyChanged(nameof(HasProfiles));
+        OnPropertyChanged(nameof(CanImportSettings));
+        ImportSettingsCommand.RaiseCanExecuteChanged();
         SynchronizeProfileSubscriptions();
     }
 

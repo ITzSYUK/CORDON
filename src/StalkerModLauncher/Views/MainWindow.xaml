@@ -125,6 +125,18 @@
                                         FontWeight="SemiBold"
                                         Padding="18,10"
                                         MinWidth="220"/>
+                                <StackPanel Margin="0,12,0,0"
+                                            Visibility="{Binding CanImportSettings, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Button Content="Импортировать существующие настройки"
+                                            Command="{Binding ImportSettingsCommand}"
+                                            Padding="18,9"
+                                            MinWidth="220"/>
+                                    <TextBlock Text="Загрузить существующий файл настроек settings.json"
+                                               FontSize="12"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               TextAlignment="Center"
+                                               Margin="0,7,0,0"/>
+                                </StackPanel>
                             </StackPanel>
                         </Grid>
                     </Border>

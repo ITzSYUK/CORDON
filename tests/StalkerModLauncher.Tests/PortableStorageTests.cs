@@ -1,5 +1,6 @@
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Services;
+using System.Text.Json;
 using Xunit;
 
 namespace StalkerModLauncher.Tests;
@@ -74,6 +75,32 @@ public sealed class PortableStorageTests : IDisposable
         Assert.True(AppPaths.IsStandaloneExecutable(@"D:\CORDON-Standalone.exe"));
         Assert.True(AppPaths.IsStandaloneExecutable(@"D:\cordon-standalone.EXE"));
         Assert.False(AppPaths.IsStandaloneExecutable(@"D:\CORDON.exe"));
+    }
+
+    [Fact]
+    public async Task ImportReplacesPortableSettingsAndKeepsBackup()
+    {
+        var paths = new AppPaths(_root, useLocalSettings: true);
+        Directory.CreateDirectory(_root);
+        using var store = new SettingsStore(paths);
+        await store.SaveAsync(new AppSettings());
+
+        var invalidPath = Path.Combine(_root, "settings.txt");
+        await File.WriteAllTextAsync(invalidPath, "{}");
+        await Assert.ThrowsAsync<InvalidDataException>(() => store.ImportAsync(invalidPath));
+
+        var sourcePath = Path.Combine(_root, "imported-settings.json");
+        var imported = new AppSettings
+        {
+            Profiles = [new ModProfile { Name = "Импортированный профиль" }]
+        };
+        await File.WriteAllTextAsync(sourcePath, JsonSerializer.Serialize(imported));
+
+        await store.ImportAsync(sourcePath);
+
+        var loaded = await store.LoadAsync();
+        Assert.Equal("Импортированный профиль", Assert.Single(loaded.Profiles).Name);
+        Assert.True(File.Exists(paths.SettingsBackupFile));
     }
 
     [Fact]

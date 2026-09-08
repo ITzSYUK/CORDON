@@ -84,6 +84,30 @@ public sealed partial class MainViewModel
         }
     }
 
+    private async Task ImportSettingsAsync()
+    {
+        var path = DialogService.PickFile(
+            "Импорт настроек CORDON",
+            "Файлы JSON (*.json)|*.json");
+        if (path is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _autoSave.Cancel();
+            await _settingsStore.ImportAsync(path);
+            await LoadAsync();
+            Log($"Settings imported: {path}");
+        }
+        catch (Exception ex)
+        {
+            Log($"Settings import failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError("Не удалось импортировать настройки", ex.Message);
+        }
+    }
+
     private void ChooseGameFolder()
     {
         var selected = DialogService.PickFolder("Choose S.T.A.L.K.E.R. GOG folder", GameInstallPath);
