@@ -12,6 +12,19 @@ public sealed partial class MainViewModel
     {
         try
         {
+            try
+            {
+                if (await _settingsStore.TryImportRoamingSettingsAsync())
+                {
+                    Log($"Settings imported automatically: {_paths.RoamingSettingsFile}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"Automatic settings import failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+                _dialogService.ShowError("Не удалось импортировать настройки из AppData", ex.Message);
+            }
+
             var loadResult = await _settingsStore.LoadWithRecoveryAsync();
             var settings = loadResult.Settings;
             _lastBrowsedGamePath = settings.LastBrowsedGamePath;
@@ -34,6 +47,18 @@ public sealed partial class MainViewModel
             OnPropertyChanged(nameof(LogLevel));
             OnPropertyChanged(nameof(GameInstallPath));
             ActivityLog.Load([], settings.IsLogVisible);
+
+            if (_startWithWindows)
+            {
+                try
+                {
+                    _startupRegistrationService.Configure(true, _startMinimizedToTrayOnWindowsStartup);
+                }
+                catch (Exception ex)
+                {
+                    Log($"Windows startup registration refresh failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(settings.DiscordClientId))
             {

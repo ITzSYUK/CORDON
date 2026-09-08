@@ -29,6 +29,17 @@ public sealed class SettingsStore : IDisposable
 
     public event EventHandler<SettingsRecoveryInfo>? RecoveryCompleted;
 
+    internal async Task<bool> TryImportRoamingSettingsAsync()
+    {
+        if (!_paths.IsPortable || HasSettingsFile || !File.Exists(_paths.RoamingSettingsFile))
+        {
+            return false;
+        }
+
+        await ImportAsync(_paths.RoamingSettingsFile);
+        return true;
+    }
+
     public async Task<AppSettings> LoadAsync()
     {
         var result = await LoadWithRecoveryAsync();
@@ -192,8 +203,6 @@ public sealed class SettingsStore : IDisposable
             if (settings is not null && _paths.IsPortable)
             {
                 TransformPaths(settings, _paths.FromStoredPath);
-                settings.StartWithWindows = false;
-                settings.StartMinimizedToTrayOnWindowsStartup = false;
             }
             return settings is null
                 ? new SettingsFileLoadResult(
@@ -341,8 +350,6 @@ public sealed class SettingsStore : IDisposable
         // Snapshot only: never replace the absolute paths observed by WPF with relative ones.
         var snapshot = JsonSerializer.Deserialize<AppSettings>(JsonSerializer.SerializeToUtf8Bytes(settings, JsonOptions), JsonOptions)!;
         TransformPaths(snapshot, _paths.ToStoredPath);
-        snapshot.StartWithWindows = false;
-        snapshot.StartMinimizedToTrayOnWindowsStartup = false;
         return JsonSerializer.SerializeToUtf8Bytes(snapshot, JsonOptions);
     }
 

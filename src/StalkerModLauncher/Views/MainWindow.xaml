@@ -112,7 +112,7 @@
                                            Foreground="{StaticResource TextBrush}"
                                            TextAlignment="Center"
                                            Margin="0,0,0,8"/>
-                                <TextBlock Text="Профиль хранит список модов, порядок загрузки, выбранный EXE, сохранения и рабочую среду."
+                                <TextBlock Text="Создайте профиль, добавьте игру и подключите нужные моды."
                                            FontSize="14"
                                            Foreground="{StaticResource MutedTextBrush}"
                                            TextWrapping="Wrap"

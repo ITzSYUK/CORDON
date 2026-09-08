@@ -41,9 +41,9 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         IsPortable = isPortable;
         _isPdaInterfaceEnabled = preferences.IsPdaInterfaceEnabled;
         _showTrayIcon = preferences.ShowTrayIcon;
-        _startWithWindows = !isPortable && preferences.StartWithWindows;
+        _startWithWindows = preferences.StartWithWindows;
         _startMinimizedToTrayOnWindowsStartup =
-            !isPortable && preferences.ShowTrayIcon && preferences.StartMinimizedToTrayOnWindowsStartup;
+            preferences.ShowTrayIcon && preferences.StartMinimizedToTrayOnWindowsStartup;
         _minimizeToTrayOnClose = preferences.ShowTrayIcon && preferences.MinimizeToTrayOnClose;
         _autoCheckForUpdates = preferences.AutoCheckForUpdates;
         _showUpdateNotifications = preferences.ShowUpdateNotifications;
@@ -80,7 +80,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         get => _startWithWindows;
         set
         {
-            if (SetProperty(ref _startWithWindows, value && CanRegisterStartup))
+            if (SetProperty(ref _startWithWindows, value))
             {
                 OnPropertyChanged(nameof(CanStartMinimizedToTray));
             }
@@ -173,9 +173,8 @@ public sealed class LauncherSettingsViewModel : ObservableObject
 
     public string SettingsDirectory => _settingsDirectory;
     public bool IsPortable { get; }
-    public bool CanRegisterStartup => !IsPortable;
     public string StorageDescription => IsPortable
-        ? "Локальные настройки: настройки, журналы, кэш и временные файлы хранятся рядом с EXE в Data\\StalkerModLauncher. Mods и Workspaces остаются в StalkerModLauncher на диске игры. Автозапуск Windows отключён; существующие данные автоматически не переносятся."
+        ? "Локальные настройки: настройки, журналы, кэш и временные файлы хранятся рядом с EXE в Data\\StalkerModLauncher. Mods и Workspaces остаются в StalkerModLauncher на диске игры. Если локального файла ещё нет, settings.json импортируется из AppData. Автозапуск Windows использует путь к этому EXE."
         : "Обычный режим: настройки хранятся в AppData, а Mods и Workspaces — в StalkerModLauncher на диске игры.";
     public string UpdateStatus
     {

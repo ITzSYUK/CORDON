@@ -116,6 +116,25 @@ public sealed class MainViewModelTests
     }
 
     [Fact]
+    public async Task LoadingEnabledWindowsStartupRefreshesRegistration()
+    {
+        var startup = new CapturingStartupRegistrationService();
+        await RunWithViewModelAsync(
+            (viewModel, _) =>
+            {
+                Assert.True(viewModel.StartWithWindows);
+                Assert.Equal([(true, false)], startup.Values);
+                return Task.CompletedTask;
+            },
+            startupRegistrationService: startup,
+            initialSettings: new AppSettings
+            {
+                StartWithWindows = true,
+                StartMinimizedToTrayOnWindowsStartup = false
+            });
+    }
+
+    [Fact]
     public async Task SavingLauncherSettingsCanHideTrayIconSafely()
     {
         await RunWithViewModelAsync(async (viewModel, _) =>
@@ -512,12 +531,22 @@ public sealed class MainViewModelTests
     private static async Task RunWithViewModelAsync(
         Func<MainViewModel, string, Task> test,
         DialogService? dialogService = null,
-        IStartupRegistrationService? startupRegistrationService = null)
+        IStartupRegistrationService? startupRegistrationService = null,
+        AppSettings? initialSettings = null)
     {
         var root = Path.Combine(Path.GetTempPath(), "StalkerModLauncherTests", Guid.NewGuid().ToString("N"));
         MainViewModel? viewModel = null;
         try
         {
+            if (initialSettings is not null)
+            {
+                using var initialStore = new SettingsStore(new AppPaths(
+                    Path.Combine(root, "config"),
+                    Path.Combine(root, "workspaces"),
+                    preferGameDriveWorkspace: false));
+                await initialStore.SaveAsync(initialSettings);
+            }
+
             viewModel = CreateViewModel(root, dialogService, startupRegistrationService);
             await WaitForSettingsLoadedAsync(viewModel);
             await test(viewModel, root);

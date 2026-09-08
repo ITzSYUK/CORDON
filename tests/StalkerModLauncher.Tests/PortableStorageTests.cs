@@ -52,7 +52,7 @@ public sealed class PortableStorageTests : IDisposable
         Assert.Equal(external, Assert.Single(restoredProfile.Mods).SourcePath);
         Assert.Equal(external, restoredProfile.ExecutableSourcePath);
         Assert.True(restoredProfile.UseBaseGameData);
-        Assert.False(restored.StartWithWindows);
+        Assert.True(restored.StartWithWindows);
         Assert.True(File.Exists(movedPaths.SettingsBackupFile));
     }
 
@@ -101,6 +101,29 @@ public sealed class PortableStorageTests : IDisposable
         var loaded = await store.LoadAsync();
         Assert.Equal("Импортированный профиль", Assert.Single(loaded.Profiles).Name);
         Assert.True(File.Exists(paths.SettingsBackupFile));
+    }
+
+    [Fact]
+    public async Task FirstPortableLaunchImportsExistingRoamingSettingsOnce()
+    {
+        var executableDirectory = Path.Combine(_root, "standalone");
+        var roamingDirectory = Path.Combine(_root, "roaming");
+        Directory.CreateDirectory(roamingDirectory);
+        await File.WriteAllTextAsync(
+            Path.Combine(roamingDirectory, "settings.json"),
+            JsonSerializer.Serialize(new AppSettings
+            {
+                Profiles = [new ModProfile { Name = "Профиль из AppData" }]
+            }));
+        var paths = new AppPaths(executableDirectory, useLocalSettings: true, roamingDirectory);
+        using var store = new SettingsStore(paths);
+
+        Assert.True(await store.TryImportRoamingSettingsAsync());
+        Assert.Equal("Профиль из AppData", Assert.Single((await store.LoadAsync()).Profiles).Name);
+
+        await File.WriteAllTextAsync(Path.Combine(roamingDirectory, "settings.json"), "{}");
+        Assert.False(await store.TryImportRoamingSettingsAsync());
+        Assert.Equal("Профиль из AppData", Assert.Single((await store.LoadAsync()).Profiles).Name);
     }
 
     [Fact]

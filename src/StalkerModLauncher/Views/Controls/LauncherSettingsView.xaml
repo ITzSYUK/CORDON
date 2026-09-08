@@ -176,7 +176,7 @@
                                          GroupName="LauncherInterface" IsChecked="{Binding UsePdaInterface}"/>
                         </WrapPanel>
                         <CheckBox Content="Запускать вместе с Windows" Style="{StaticResource SettingsCheckBoxStyle}"
-                                  IsChecked="{Binding StartWithWindows}" IsEnabled="{Binding CanRegisterStartup}" Margin="0,0,0,9"/>
+                                  IsChecked="{Binding StartWithWindows}" Margin="0,0,0,9"/>
                         <CheckBox Content="При запуске вместе с Windows открывать в трее"
                                   Style="{StaticResource SettingsCheckBoxStyle}"
                                   IsChecked="{Binding StartMinimizedToTrayOnWindowsStartup}"

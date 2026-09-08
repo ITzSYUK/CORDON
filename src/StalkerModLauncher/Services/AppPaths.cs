@@ -10,9 +10,9 @@ public sealed class AppPaths
     {
     }
 
-    internal AppPaths(string? executableDirectory, bool useLocalSettings)
+    internal AppPaths(string? executableDirectory, bool useLocalSettings, string? roamingConfigDirectory = null)
         : this(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StalkerModLauncher"),
+            roamingConfigDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StalkerModLauncher"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StalkerModLauncher", "Workspaces"))
     {
         ExecutableDirectory = Path.GetFullPath(executableDirectory ?? AppContext.BaseDirectory);
@@ -30,6 +30,7 @@ public sealed class AppPaths
         ConfigDirectory = configDirectory;
         SettingsFile = Path.Combine(ConfigDirectory, "settings.json");
         SettingsBackupFile = Path.Combine(ConfigDirectory, "settings.backup.json");
+        RoamingSettingsFile = SettingsFile;
         WorkspaceRoot = workspaceRoot;
         _preferGameDriveWorkspace = preferGameDriveWorkspace;
     }
@@ -37,6 +38,7 @@ public sealed class AppPaths
     public string ConfigDirectory { get; }
     public string SettingsFile { get; }
     public string SettingsBackupFile { get; }
+    internal string RoamingSettingsFile { get; }
     public string WorkspaceRoot { get; }
     public string ExecutableDirectory { get; } = AppContext.BaseDirectory;
     public bool IsPortable { get; }
