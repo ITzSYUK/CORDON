@@ -174,8 +174,8 @@ public sealed class LauncherSettingsViewModel : ObservableObject
     public string SettingsDirectory => _settingsDirectory;
     public bool IsPortable { get; }
     public string StorageDescription => IsPortable
-        ? "Локальные настройки: настройки, журналы, кэш и временные файлы хранятся рядом с EXE в Data\\StalkerModLauncher. Mods и Workspaces остаются в StalkerModLauncher на диске игры. Если локального файла ещё нет, settings.json импортируется из AppData."
-        : "Обычный режим: настройки хранятся в AppData, а Mods и Workspaces — в StalkerModLauncher на диске игры.";
+        ? "Портативный режим: настройки, журналы, кэш и временные файлы хранятся в .\\Data\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой. Если локального settings.json ещё нет, настройки автоматически импортируются из AppData."
+        : "Обычный режим: настройки лаунчера хранятся в %AppData%\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой.";
     public string UpdateStatus
     {
         get => _updateStatus;
