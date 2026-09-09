@@ -25,10 +25,10 @@ public sealed class UiSoundService : IDisposable
     private bool _isDisposed;
     private bool _isInitialized;
 
-    public UiSoundService(AppPaths? paths = null)
+    public UiSoundService()
     {
         _cacheDirectory = Path.Combine(
-            (paths ?? AppPaths.Current).CacheDirectory,
+            AppPaths.Current.CacheDirectory,
             "RuntimeSounds");
     }
 

@@ -114,8 +114,10 @@ public sealed class ModArchiveInstallerTests : IDisposable
                    archiveStream,
                    ArchiveType.SevenZip,
                    new SevenZipWriterOptions(CompressionType.LZMA2)))
-        using (var content = new MemoryStream(Encoding.UTF8.GetBytes("value")))
         {
+            using var emptyContent = new MemoryStream();
+            writer.Write("gamedata/configs/empty.ltx", emptyContent, DateTime.UtcNow);
+            using var content = new MemoryStream(Encoding.UTF8.GetBytes("value"));
             writer.Write("gamedata/configs/test.ltx", content, DateTime.UtcNow);
         }
 
@@ -126,6 +128,7 @@ public sealed class ModArchiveInstallerTests : IDisposable
             new InlineProgress<ModArchiveInstallProgress>(reports.Add));
 
         Assert.Equal("value", File.ReadAllText(Path.Combine(result.ModPath, "gamedata", "configs", "test.ltx")));
+        Assert.Empty(File.ReadAllBytes(Path.Combine(result.ModPath, "gamedata", "configs", "empty.ltx")));
         Assert.Contains(reports, report =>
             report.Stage == ModArchiveInstallStage.Extracting &&
             report.TotalBytes == result.ExtractedBytes);

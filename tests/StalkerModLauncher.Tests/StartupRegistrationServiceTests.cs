@@ -43,6 +43,25 @@ public sealed class StartupRegistrationServiceTests
         Assert.Equal("\"C:\\Launcher.exe\"", store.Command);
     }
 
+    [Fact]
+    public void StandaloneProcessWinsOverRegularExecutableInSameDirectory()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"CordonStartupTests-{Guid.NewGuid():N}");
+        var standalone = Path.Combine(directory, "CORDON-Standalone.exe");
+
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(Path.Combine(directory, "CORDON.exe"), string.Empty);
+
+        try
+        {
+            Assert.Equal(standalone, StartupRegistrationService.ResolveExecutablePath(standalone, directory));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private sealed class CapturingStartupRegistrationStore : IStartupRegistrationStore
     {
         public string? SetName { get; private set; }

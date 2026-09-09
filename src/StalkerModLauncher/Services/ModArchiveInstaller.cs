@@ -231,7 +231,7 @@ public static class ModArchiveInstaller
                 ExtractEntry(
                     stagingPath,
                     reader.Entry.Key,
-                    reader.Entry.IsEncrypted,
+                    reader.Entry.IsEncrypted && reader.Entry.Size > 0,
                     input,
                     state,
                     cancellationToken);
@@ -243,7 +243,13 @@ public static class ModArchiveInstaller
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 using var input = entry.OpenEntryStream();
-                ExtractEntry(stagingPath, entry.Key, entry.IsEncrypted, input, state, cancellationToken);
+                ExtractEntry(
+                    stagingPath,
+                    entry.Key,
+                    entry.IsEncrypted && entry.Size > 0,
+                    input,
+                    state,
+                    cancellationToken);
             }
         }
 

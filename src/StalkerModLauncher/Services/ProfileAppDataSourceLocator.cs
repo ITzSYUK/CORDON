@@ -74,7 +74,7 @@ internal static class ProfileAppDataSourceLocator
         {
             return ResolveConfiguredRoot(layerRoot);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException)
         {
             return null;
         }

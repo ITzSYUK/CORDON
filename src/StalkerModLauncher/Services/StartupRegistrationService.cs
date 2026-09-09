@@ -39,15 +39,23 @@ public sealed class StartupRegistrationService : IStartupRegistrationService
         _store.SetCommand(ValueName, $"\"{_resolveExecutablePath()}\"{minimizedArgument}");
     }
 
-    private static string ResolveExecutablePath()
+    private static string ResolveExecutablePath() =>
+        ResolveExecutablePath(Environment.ProcessPath, AppContext.BaseDirectory);
+
+    internal static string ResolveExecutablePath(string? processPath, string baseDirectory)
     {
-        var packagedExecutable = Path.Combine(AppContext.BaseDirectory, "CORDON.exe");
+        if (AppPaths.IsStandaloneExecutable(processPath))
+        {
+            return Path.GetFullPath(processPath!);
+        }
+
+        var packagedExecutable = Path.Combine(baseDirectory, "CORDON.exe");
         if (File.Exists(packagedExecutable))
         {
             return packagedExecutable;
         }
 
-        return Environment.ProcessPath
+        return processPath
             ?? throw new InvalidOperationException("Не удалось определить путь к лаунчеру.");
     }
 }

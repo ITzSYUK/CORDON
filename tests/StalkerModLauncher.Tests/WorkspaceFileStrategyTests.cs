@@ -29,7 +29,6 @@ public sealed class WorkspaceFileStrategyTests
             @"D:\workspace\gamedata\scripts\callbacks_gameobject.script"));
     }
 
-
     [Theory]
     [InlineData("gamedata.db0")]
     [InlineData("gamedata/textures/texture.dds")]

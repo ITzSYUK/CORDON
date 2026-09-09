@@ -73,8 +73,9 @@ public sealed class AppPaths
     internal void ValidateSourceDirectory(string source)
     {
         if (!IsPortable) return;
-        if (FileSystemSafety.IsDirectoryInside(ConfigDirectory, source) ||
-            new[] { WorkspaceRoot, CacheDirectory, TempDirectory }.Any(root => FileSystemSafety.IsDirectoryInside(source, root)))
+        if (new[] { ConfigDirectory, WorkspaceRoot, CacheDirectory, TempDirectory }.Any(root =>
+                FileSystemSafety.IsDirectoryInside(source, root) ||
+                FileSystemSafety.IsDirectoryInside(root, source)))
         {
             throw new InvalidOperationException("Папка игры или мода пересекается со служебными данными портативного лаунчера. Разместите лаунчер вне исходной игры и модов.");
         }

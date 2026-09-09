@@ -38,7 +38,9 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         Func<string, string, LauncherReleasePackage, Task<string>>? downloadReleasePackage = null,
         bool isPortable = false)
     {
-        IsPortable = isPortable;
+        StorageDescription = isPortable
+            ? "Портативный режим: настройки, журналы, кэш и временные файлы хранятся в .\\Data\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой. Если локального settings.json ещё нет, настройки автоматически импортируются из AppData."
+            : "Обычный режим: настройки лаунчера хранятся в %AppData%\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой.";
         _isPdaInterfaceEnabled = preferences.IsPdaInterfaceEnabled;
         _showTrayIcon = preferences.ShowTrayIcon;
         _startWithWindows = preferences.StartWithWindows;
@@ -172,10 +174,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
     }
 
     public string SettingsDirectory => _settingsDirectory;
-    public bool IsPortable { get; }
-    public string StorageDescription => IsPortable
-        ? "Портативный режим: настройки, журналы, кэш и временные файлы хранятся в .\\Data\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой. Если локального settings.json ещё нет, настройки автоматически импортируются из AppData."
-        : "Обычный режим: настройки лаунчера хранятся в %AppData%\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой.";
+    public string StorageDescription { get; }
     public string UpdateStatus
     {
         get => _updateStatus;

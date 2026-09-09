@@ -78,6 +78,16 @@ public sealed class GameDataStorageTests : IDisposable
     }
 
     [Fact]
+    public void RootEnumerationFallsBackWhenConfiguredAliasIsInvalid()
+    {
+        var game = Path.Combine(_root, "game");
+        Write(game, "fsgame.ltx", "$app_data_root$ = true | false | $unknown$");
+        Write(game, "appdata/user.ltx", "settings");
+
+        Assert.Equal(Path.Combine(game, "appdata"), Assert.Single(ProfileAppDataSourceLocator.EnumerateRoots(game)));
+    }
+
+    [Fact]
     public void IdentifiesOnlyVolumeRootsAsFileSystemRoots()
     {
         Assert.True(FileSystemSafety.IsFileSystemRoot(Path.GetPathRoot(_root)!));

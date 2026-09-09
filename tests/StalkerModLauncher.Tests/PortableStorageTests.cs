@@ -132,6 +132,7 @@ public sealed class PortableStorageTests : IDisposable
         Directory.CreateDirectory(_root);
         var paths = new AppPaths(_root, useLocalSettings: true);
         Assert.Throws<InvalidOperationException>(() => paths.ValidateSourceDirectory(_root));
+        Assert.Throws<InvalidOperationException>(() => paths.ValidateSourceDirectory(Path.Combine(paths.ConfigDirectory, "nested-mod")));
         Assert.Throws<InvalidOperationException>(() => paths.ValidateSourceDirectory(Path.Combine(paths.WorkspaceRoot, "profile-test")));
         paths.ValidateSourceDirectory(Path.Combine(paths.GetDefaultModInstallPath(null), "mod"));
         Assert.Throws<InvalidDataException>(() => paths.FromStoredPath(@"..\outside"));
