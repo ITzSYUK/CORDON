@@ -17,6 +17,7 @@ public sealed class AppSettings
     public bool DontShowAboutOnStartup { get; set; }
     public bool IsLogVisible { get; set; } = true;
     public bool IsPdaInterfaceEnabled { get; set; }
+    public bool UseNewPdaInterface { get; set; }
     public bool ShowTrayIcon { get; set; } = true;
     public bool StartWithWindows { get; set; }
     public bool StartMinimizedToTrayOnWindowsStartup { get; set; } = true;

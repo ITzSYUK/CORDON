@@ -17,6 +17,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
     private bool _startWithWindows;
     private bool _startMinimizedToTrayOnWindowsStartup;
     private bool _isPdaInterfaceEnabled;
+    private bool _useNewPdaInterface;
     private bool _minimizeToTrayOnClose;
     private bool _autoCheckForUpdates;
     private bool _showUpdateNotifications;
@@ -42,6 +43,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
             ? "Портативный режим: настройки, журналы, кэш и временные файлы хранятся в .\\Data\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой. Если локального settings.json ещё нет, настройки автоматически импортируются из AppData."
             : "Обычный режим: настройки лаунчера хранятся в %AppData%\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой.";
         _isPdaInterfaceEnabled = preferences.IsPdaInterfaceEnabled;
+        _useNewPdaInterface = preferences.UseNewPdaInterface;
         _showTrayIcon = preferences.ShowTrayIcon;
         _startWithWindows = preferences.StartWithWindows;
         _startMinimizedToTrayOnWindowsStartup =
@@ -133,12 +135,24 @@ public sealed class LauncherSettingsViewModel : ObservableObject
 
     public bool UsePdaInterface
     {
-        get => _isPdaInterfaceEnabled;
+        get => _isPdaInterfaceEnabled && !_useNewPdaInterface;
         set
         {
             if (value)
             {
-                SetPdaInterface(true);
+                SetPdaInterface(true, false);
+            }
+        }
+    }
+
+    public bool UseNewPdaInterface
+    {
+        get => _isPdaInterfaceEnabled && _useNewPdaInterface;
+        set
+        {
+            if (value)
+            {
+                SetPdaInterface(true, true);
             }
         }
     }
@@ -255,6 +269,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         {
             await _save(new LauncherPreferences(
                 _isPdaInterfaceEnabled,
+                _useNewPdaInterface,
                 ShowTrayIcon,
                 StartWithWindows,
                 StartMinimizedToTrayOnWindowsStartup,
@@ -296,7 +311,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
 
         var defaults = LauncherPreferences.Default;
-        SetPdaInterface(defaults.IsPdaInterfaceEnabled);
+        SetPdaInterface(defaults.IsPdaInterfaceEnabled, defaults.UseNewPdaInterface);
         ShowTrayIcon = defaults.ShowTrayIcon;
         StartWithWindows = defaults.StartWithWindows;
         StartMinimizedToTrayOnWindowsStartup = defaults.StartMinimizedToTrayOnWindowsStartup;
@@ -391,15 +406,17 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
     }
 
-    private void SetPdaInterface(bool value)
+    private void SetPdaInterface(bool value, bool useNewPdaInterface = false)
     {
-        if (_isPdaInterfaceEnabled == value)
+        if (_isPdaInterfaceEnabled == value && _useNewPdaInterface == useNewPdaInterface)
         {
             return;
         }
 
         _isPdaInterfaceEnabled = value;
+        _useNewPdaInterface = useNewPdaInterface;
         OnPropertyChanged(nameof(UseClassicInterface));
         OnPropertyChanged(nameof(UsePdaInterface));
+        OnPropertyChanged(nameof(UseNewPdaInterface));
     }
 }

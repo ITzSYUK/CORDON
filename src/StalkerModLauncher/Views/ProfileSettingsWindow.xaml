@@ -168,20 +168,6 @@
                     </CheckBox>
 
                     <StackPanel Grid.Row="4" Margin="0,4,0,12">
-                        <StackPanel Margin="0,0,0,14">
-                            <TextBlock Text="Данные игры" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,6"/>
-                            <StackPanel IsEnabled="{Binding CanChooseGameData}">
-                                <RadioButton Content="В папке профиля" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             GroupName="GameData" IsChecked="{Binding UseProfileGameData}" Margin="0,0,0,5"/>
-                                <RadioButton Content="В папке данных базовой игры" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             GroupName="GameData" IsChecked="{Binding UseBaseGameData}"/>
-                            </StackPanel>
-                            <TextBlock Text="{Binding GameDataDescription}" Foreground="{StaticResource MutedTextBrush}"
-                                       FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
-                            <Button Content="Скопировать недостающие данные в выбранную папку"
-                                    Command="{Binding CopyGameDataCommand}" IsEnabled="{Binding CanChooseGameData}"
-                                    HorizontalAlignment="Left" Margin="0,6,0,0"/>
-                        </StackPanel>
                         <TextBlock Text="Система запуска"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="12"
@@ -189,12 +175,10 @@
                         <WrapPanel>
                             <RadioButton Content="Workspace"
                                          Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                         GroupName="LaunchBackend"
                                          IsChecked="{Binding UseLinkedWorkspace, Mode=TwoWay}"
                                          Margin="0,0,18,0"/>
                             <RadioButton Content="USVFS"
                                          Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                         GroupName="LaunchBackend"
                                          IsChecked="{Binding UseVirtualFileSystem, Mode=TwoWay}"
                                          IsEnabled="{Binding CanUseUsvfs}"/>
                         </WrapPanel>
@@ -213,31 +197,26 @@
                             <WrapPanel>
                                 <RadioButton Content="Лаунчер"
                                              Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             GroupName="AnomalyRenderer"
                                              IsChecked="{Binding UseAutomaticAnomalyRenderer, Mode=TwoWay}"
                                              VerticalAlignment="Center"
                                              Margin="0,0,12,0"/>
                                 <RadioButton Content="DX8"
                                              Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             GroupName="AnomalyRenderer"
                                              IsChecked="{Binding UseAnomalyDx8, Mode=TwoWay}"
                                              VerticalAlignment="Center"
                                              Margin="0,0,12,0"/>
                                 <RadioButton Content="DX9"
                                              Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             GroupName="AnomalyRenderer"
                                              IsChecked="{Binding UseAnomalyDx9, Mode=TwoWay}"
                                              VerticalAlignment="Center"
                                              Margin="0,0,12,0"/>
                                 <RadioButton Content="DX10"
                                              Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             GroupName="AnomalyRenderer"
                                              IsChecked="{Binding UseAnomalyDx10, Mode=TwoWay}"
                                              VerticalAlignment="Center"
                                              Margin="0,0,12,0"/>
                                 <RadioButton Content="DX11"
                                              Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             GroupName="AnomalyRenderer"
                                              IsChecked="{Binding UseAnomalyDx11, Mode=TwoWay}"
                                              VerticalAlignment="Center"
                                              Margin="0,0,16,0"/>
@@ -251,6 +230,23 @@
                                        FontSize="11"
                                        TextWrapping="Wrap"
                                        Margin="0,4,0,0"/>
+                        </StackPanel>
+
+                        <Border Style="{StaticResource ProfileSectionDividerStyle}" Margin="0,14,0,14"/>
+
+                        <StackPanel>
+                            <TextBlock Text="Пользовательские данные" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,6"/>
+                            <StackPanel IsEnabled="{Binding CanChooseGameData}">
+                                <RadioButton Content="В папке профиля" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                             IsChecked="{Binding UseProfileGameData}" Margin="0,0,0,5"/>
+                                <RadioButton Content="В папке данных базовой игры" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                             IsChecked="{Binding UseBaseGameData}"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding GameDataDescription}" Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                            <Button Content="Скопировать недостающие данные в выбранную папку"
+                                    Command="{Binding CopyGameDataCommand}" IsEnabled="{Binding CanChooseGameData}"
+                                    HorizontalAlignment="Left" Margin="0,6,0,0"/>
                         </StackPanel>
                     </StackPanel>
 

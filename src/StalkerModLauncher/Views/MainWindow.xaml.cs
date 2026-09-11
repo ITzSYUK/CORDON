@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     private bool _isClosing;
     private bool _initialInterfaceReady;
     private bool _isSwitchingToClassic;
+    private bool _isSwitchingPdaTheme;
     private PdaWindow? _pdaWindow;
     private readonly WindowNavigationService _navigation;
 
@@ -165,13 +166,24 @@ public partial class MainWindow : Window
 
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (!_initialInterfaceReady || e.PropertyName != nameof(MainViewModel.IsPdaInterfaceEnabled) || ViewModel is null)
+        if (!_initialInterfaceReady ||
+            e.PropertyName is not nameof(MainViewModel.IsPdaInterfaceEnabled) and not nameof(MainViewModel.UseNewPdaInterface) ||
+            ViewModel is null)
         {
             return;
         }
 
         Dispatcher.BeginInvoke(() =>
         {
+            if (e.PropertyName == nameof(MainViewModel.UseNewPdaInterface) &&
+                _pdaWindow is not null &&
+                _pdaWindow.UsesNewTheme != ViewModel.UseNewPdaInterface)
+            {
+                _isSwitchingPdaTheme = true;
+                _pdaWindow.Close();
+                return;
+            }
+
             if (ViewModel.IsPdaInterfaceEnabled)
             {
                 ShowPdaWindow();
@@ -213,6 +225,13 @@ public partial class MainWindow : Window
                 _isSwitchingToClassic = false;
                 Show();
                 Activate();
+                return;
+            }
+
+            if (_isSwitchingPdaTheme)
+            {
+                _isSwitchingPdaTheme = false;
+                ShowPdaWindow();
                 return;
             }
 

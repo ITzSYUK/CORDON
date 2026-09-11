@@ -27,6 +27,7 @@
     <Resource Include="..\..\assets\icons\mod-actions\add_mods.png" Link="Resources\add_mods.png" />
     <Resource Include="..\..\assets\icons\mod-actions\scan_add_mods.png" Link="Resources\scan_add_mods.png" />
     <Resource Include="..\..\assets\ui\pda\PdaShell.HD.png" Link="Resources\PdaShell.HD.png" />
+    <Resource Include="..\..\assets\ui\pda\AltPdaShell.png" Link="Resources\AltPdaShell.png" />
     <Resource Include="..\..\assets\ui\pda\PdaUiAtlas.png" Link="Resources\PdaUiAtlas.png" />
     <Resource Include="..\..\assets\ui\pda\PdaDialogAtlas.png" Link="Resources\PdaDialogAtlas.png" />
     <EmbeddedResource Include="Resources\ModLauncherLoadingLogo.png" />

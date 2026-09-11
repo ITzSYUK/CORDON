@@ -316,11 +316,11 @@ Deleting a standard profile removes only its validated managed workspace. Deleti
 
 ### Standalone local settings
 
-`CORDON-Standalone.exe` automatically uses `<EXE directory>\Data\StalkerModLauncher` for settings, backup, launcher logs, `Cache`, and `Temp`. Regular `CORDON.exe` always uses AppData and ignores `portable.flag`. `Mods` and `Workspaces` keep their normal `<game drive>\StalkerModLauncher` location; the `%LOCALAPPDATA%` fallback is used when a drive cannot be resolved. Write access is checked before startup; failure shows an error without falling back to AppData. Windows startup registration is disabled.
+`CORDON-Standalone.exe` automatically uses `<EXE directory>\Data\StalkerModLauncher` for settings, backup, launcher logs, `Cache`, and `Temp`. Regular `CORDON.exe` always uses AppData and ignores `portable.flag`. `Mods` and `Workspaces` keep their normal `<game drive>\StalkerModLauncher` location; the `%LOCALAPPDATA%` fallback is used when a drive cannot be resolved. Write access is checked before startup; failure shows an error without falling back to AppData. Windows startup registration is supported and points to the current `CORDON-Standalone.exe`.
 
 The portable launcher must be outside game/mod source folders: overlapping source roots are rejected before building layers to avoid including its own Data tree. USVFS still requires an ASCII-only workspace path, so place the portable launcher under a path without non-ASCII characters.
 
-Paths inside the EXE directory are stored relative to it; external game, mod, and workspace paths stay absolute. Existing AppData settings are not migrated automatically. To move local settings, close the launcher and copy `Data\StalkerModLauncher`, omitting generated `Cache` and `Temp`. Profile `userdata`, `Mods`, and `Workspaces` remain under `<game drive>\StalkerModLauncher`.
+Paths inside the EXE directory are stored relative to it; external game, mod, and workspace paths stay absolute. On the first launch without a local `settings.json` or backup, the primary AppData settings file is imported automatically. The standalone store is independent after that import; manual `settings.json` import is also available while the profile list is empty. Profile `userdata`, `Mods`, and `Workspaces` remain under `<game drive>\StalkerModLauncher`.
 
 The paths below describe ordinary mode.
 

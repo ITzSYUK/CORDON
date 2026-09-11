@@ -1,11 +1,12 @@
 <UserControl x:Class="StalkerModLauncher.Views.Controls.PdaLogView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="#080D14">
+             xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
+             Background="{DynamicResource PdaPageBackgroundBrush}">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/CORDON;component/Themes/PdaTheme.xaml"/>
+                <ResourceDictionary Source="{x:Static themes:PdaThemeSelector.CurrentSource}"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -17,9 +18,9 @@
                  TextWrapping="NoWrap"
                  VerticalScrollBarVisibility="Auto"
                  HorizontalScrollBarVisibility="Auto"
-                 Background="#060A10"
-                 BorderBrush="#3B4755"
-                 Foreground="#CAC8B8"
+                 Background="{DynamicResource PdaLogBackgroundBrush}"
+                 BorderBrush="{DynamicResource StrokeBrush}"
+                 Foreground="{DynamicResource PdaLogTextBrush}"
                  FontFamily="Consolas"
                  FontSize="11"/>
     </Grid>

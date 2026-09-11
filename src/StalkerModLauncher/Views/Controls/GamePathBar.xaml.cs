@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using StalkerModLauncher.Themes;
 
 namespace StalkerModLauncher.Views.Controls;
 
@@ -35,7 +36,7 @@ public partial class GamePathBar : UserControl
         {
             _pdaTheme = new ResourceDictionary
             {
-                Source = new Uri("/CORDON;component/Themes/PdaTheme.xaml", UriKind.RelativeOrAbsolute)
+                Source = PdaThemeSelector.CurrentSource
             };
             Resources.MergedDictionaries.Add(_pdaTheme);
         }

@@ -366,8 +366,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             });
             var source = UseBaseGameData ? profileData : sharedData;
             var destination = UseBaseGameData ? sharedData : profileData;
-            if (!DialogService.Confirm("Копирование данных игры",
-                $"Откуда: {source}\nКуда: {destination}\n\nСуществующие файлы будут пропущены. Служебные файлы профиля не копируются. Закройте другие экземпляры игры перед копированием.")) return;
+            if (!DialogService.Confirm("Копирование пользовательских данных",
+                $"Откуда: {source}\nКуда: {destination}\n\nДубликаты файлов будут пропущены. Служебные файлы профиля не копируются. Закройте другие экземпляры игры перед копированием.")) return;
             var result = await Task.Run(() => GameDataCopyService.CopyMissing(source, destination));
             DialogService.ShowInfo("Копирование завершено", $"Скопировано: {result.Copied}. Пропущено: {result.Skipped}.\nДля смены каталога запуска сохраните настройки профиля.");
         }

@@ -23,6 +23,8 @@ public sealed class LauncherSettingsViewModelTests
             new DialogService());
 
         viewModel.UsePdaInterface = true;
+        Assert.True(viewModel.UsePdaInterface);
+        viewModel.UseNewPdaInterface = true;
         viewModel.ShowTrayIcon = true;
         viewModel.StartWithWindows = true;
         viewModel.StartMinimizedToTrayOnWindowsStartup = false;
@@ -34,6 +36,7 @@ public sealed class LauncherSettingsViewModelTests
         Assert.True(await viewModel.TrySaveAsync());
         Assert.Equal(new LauncherPreferences(
             IsPdaInterfaceEnabled: true,
+            UseNewPdaInterface: true,
             ShowTrayIcon: true,
             StartWithWindows: true,
             StartMinimizedToTrayOnWindowsStartup: false,
@@ -42,7 +45,8 @@ public sealed class LauncherSettingsViewModelTests
             ShowUpdateNotifications: false,
             LauncherLogLevel.Detailed), saved);
         Assert.False(viewModel.UseClassicInterface);
-        Assert.True(viewModel.UsePdaInterface);
+        Assert.False(viewModel.UsePdaInterface);
+        Assert.True(viewModel.UseNewPdaInterface);
     }
 
     [Fact]
@@ -125,6 +129,7 @@ public sealed class LauncherSettingsViewModelTests
         var viewModel = new LauncherSettingsViewModel(
             new LauncherPreferences(
                 IsPdaInterfaceEnabled: true,
+                UseNewPdaInterface: true,
                 ShowTrayIcon: false,
                 StartWithWindows: true,
                 StartMinimizedToTrayOnWindowsStartup: false,
@@ -144,6 +149,7 @@ public sealed class LauncherSettingsViewModelTests
         viewModel.ResetCommand.Execute(null);
 
         Assert.True(viewModel.UseClassicInterface);
+        Assert.False(viewModel.UseNewPdaInterface);
         Assert.True(viewModel.ShowTrayIcon);
         Assert.False(viewModel.StartWithWindows);
         Assert.True(viewModel.StartMinimizedToTrayOnWindowsStartup);

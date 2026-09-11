@@ -53,6 +53,7 @@ public sealed partial class MainViewModel
             _startWithWindows = preferences.StartWithWindows;
             _startMinimizedToTrayOnWindowsStartup = preferences.StartMinimizedToTrayOnWindowsStartup;
             _isPdaInterfaceEnabled = preferences.IsPdaInterfaceEnabled;
+            _useNewPdaInterface = preferences.UseNewPdaInterface;
             _minimizeToTrayOnClose = preferences.MinimizeToTrayOnClose;
             _autoCheckForUpdates = preferences.AutoCheckForUpdates;
             _showUpdateNotifications = preferences.ShowUpdateNotifications;
@@ -67,6 +68,7 @@ public sealed partial class MainViewModel
             _startWithWindows = previous.StartWithWindows;
             _startMinimizedToTrayOnWindowsStartup = previous.StartMinimizedToTrayOnWindowsStartup;
             _isPdaInterfaceEnabled = previous.IsPdaInterfaceEnabled;
+            _useNewPdaInterface = previous.UseNewPdaInterface;
             _minimizeToTrayOnClose = previous.MinimizeToTrayOnClose;
             _autoCheckForUpdates = previous.AutoCheckForUpdates;
             _showUpdateNotifications = previous.ShowUpdateNotifications;
@@ -97,6 +99,7 @@ public sealed partial class MainViewModel
         OnPropertyChanged(nameof(StartWithWindows));
         OnPropertyChanged(nameof(StartMinimizedToTrayOnWindowsStartup));
         OnPropertyChanged(nameof(IsPdaInterfaceEnabled));
+        OnPropertyChanged(nameof(UseNewPdaInterface));
         OnPropertyChanged(nameof(MinimizeToTrayOnClose));
         OnPropertyChanged(nameof(AutoCheckForUpdates));
         OnPropertyChanged(nameof(ShowUpdateNotifications));
@@ -105,6 +108,7 @@ public sealed partial class MainViewModel
 
     private LauncherPreferences GetLauncherPreferences() => new(
         IsPdaInterfaceEnabled,
+        UseNewPdaInterface,
         ShowTrayIcon,
         StartWithWindows,
         StartMinimizedToTrayOnWindowsStartup,

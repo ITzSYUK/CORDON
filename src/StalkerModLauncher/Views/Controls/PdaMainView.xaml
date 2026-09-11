@@ -1,6 +1,7 @@
 <UserControl x:Class="StalkerModLauncher.Views.Controls.PdaMainView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
              xmlns:controls="clr-namespace:StalkerModLauncher.Views.Controls"
              Loaded="PdaMainView_OnLoaded"
              Unloaded="PdaMainView_OnUnloaded"
@@ -8,7 +9,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/CORDON;component/Themes/PdaTheme.xaml"/>
+                <ResourceDictionary Source="{x:Static themes:PdaThemeSelector.CurrentSource}"/>
             </ResourceDictionary.MergedDictionaries>
         <ImageBrush x:Key="PdaTopButtonNormalBrush"
                     ImageSource="/CORDON;component/Resources/PdaUiAtlas.png"
@@ -31,6 +32,8 @@
         <ImageBrush x:Key="PdaPowerHoverBrush"
                     ImageSource="/CORDON;component/Resources/PdaUiAtlas.png"
                     ViewboxUnits="Absolute" Viewbox="131,29,34,34" Stretch="Uniform"/>
+        <RectangleGeometry x:Key="PdaScreenClip" Rect="0,0,908,625" RadiusX="11" RadiusY="11"/>
+        <RectangleGeometry x:Key="NewPdaScreenClip" Rect="0,0,1083,597" RadiusX="17" RadiusY="17"/>
         <Style x:Key="PdaTopTabStyle" TargetType="Button">
             <Setter Property="Height" Value="31"/>
             <Setter Property="Width" Value="102"/>
@@ -39,7 +42,7 @@
             <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed"/>
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#E9E5D3"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Background" Value="{StaticResource PdaTopButtonNormalBrush}"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -49,7 +52,8 @@
                     <ControlTemplate TargetType="Button">
                         <Grid Width="102" Height="31" SnapsToDevicePixels="True">
                             <Path x:Name="Chrome" Data="M12,0 H102 L90,31 H0 Z"
-                                  Fill="#17212D" Stroke="#5B6874" StrokeThickness="1"/>
+                                  Fill="{DynamicResource PdaMainTabBackgroundBrush}"
+                                  Stroke="{DynamicResource PdaMainTabBorderBrush}" StrokeThickness="1"/>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8,1,4,1">
                                 <ContentPresenter.RenderTransform>
                                     <TranslateTransform X="-2"/>
@@ -58,11 +62,11 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Fill" Value="#263442"/>
-                                <Setter TargetName="Chrome" Property="Stroke" Value="#8A949D"/>
+                                <Setter TargetName="Chrome" Property="Fill" Value="{DynamicResource PdaMainTabHoverBrush}"/>
+                                <Setter TargetName="Chrome" Property="Stroke" Value="{DynamicResource PdaMainTabHoverBorderBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Chrome" Property="Fill" Value="#0B1119"/>
+                                <Setter TargetName="Chrome" Property="Fill" Value="{DynamicResource PdaMainTabPressedBrush}"/>
                                 <Setter TargetName="Chrome" Property="Stroke" Value="#A07832"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.42"/></Trigger>
@@ -106,7 +110,7 @@
             <Setter Property="Height" Value="31"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Margin" Value="-8,0,0,0"/>
-            <Setter Property="Foreground" Value="#E9E5D3"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
@@ -114,7 +118,8 @@
                     <ControlTemplate TargetType="Button">
                         <Grid Width="38" Height="31" SnapsToDevicePixels="True">
                             <Path x:Name="Chrome" Data="M12,0 H38 L26,31 H0 Z"
-                                  Fill="#17212D" Stroke="#5B6874" StrokeThickness="1"/>
+                                  Fill="{DynamicResource PdaMainTabBackgroundBrush}"
+                                  Stroke="{DynamicResource PdaMainTabBorderBrush}" StrokeThickness="1"/>
                             <ContentPresenter HorizontalAlignment="Center"
                                               VerticalAlignment="Center"
                                               Margin="8,2,4,1">
@@ -125,11 +130,11 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Fill" Value="#263442"/>
-                                <Setter TargetName="Chrome" Property="Stroke" Value="#8A949D"/>
+                                <Setter TargetName="Chrome" Property="Fill" Value="{DynamicResource PdaMainTabHoverBrush}"/>
+                                <Setter TargetName="Chrome" Property="Stroke" Value="{DynamicResource PdaMainTabHoverBorderBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Chrome" Property="Fill" Value="#0B1119"/>
+                                <Setter TargetName="Chrome" Property="Fill" Value="{DynamicResource PdaMainTabPressedBrush}"/>
                                 <Setter TargetName="Chrome" Property="Stroke" Value="#A07832"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -144,9 +149,9 @@
             <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed"/>
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#D6D5C7"/>
-            <Setter Property="Background" Value="#141C26"/>
-            <Setter Property="BorderBrush" Value="#53606C"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource PdaNavigationBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PdaNavigationBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
@@ -161,21 +166,22 @@
                                   StrokeThickness="1"/>
                             <Ellipse x:Name="Marker" Width="10" Height="10" Margin="7,0,0,0"
                                      HorizontalAlignment="Left" VerticalAlignment="Center"
-                                     Fill="#323D48" Stroke="#77828C" StrokeThickness="1"/>
+                                     Fill="{DynamicResource PdaMarkerBackgroundBrush}"
+                                     Stroke="{DynamicResource PdaMarkerBorderBrush}" StrokeThickness="1"/>
                             <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Foreground" Value="#F0EEE3"/>
-                                <Setter TargetName="Chrome" Property="Fill" Value="#202B37"/>
-                                <Setter TargetName="Chrome" Property="Stroke" Value="#7F8A94"/>
+                                <Setter TargetName="Chrome" Property="Fill" Value="{DynamicResource PdaNavigationHoverBrush}"/>
+                                <Setter TargetName="Chrome" Property="Stroke" Value="{DynamicResource PdaMainTabHoverBorderBrush}"/>
                                 <Setter TargetName="Marker" Property="Fill" Value="#C5C9C4"/>
                             </Trigger>
                             <Trigger Property="Tag" Value="Active">
                                 <Setter TargetName="Marker" Property="Fill" Value="#C5C9C4"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Chrome" Property="Fill" Value="#0B1119"/>
+                                <Setter TargetName="Chrome" Property="Fill" Value="{DynamicResource PdaMainTabPressedBrush}"/>
                                 <Setter TargetName="Marker" Property="Fill" Value="#CF962C"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.42"/></Trigger>
@@ -185,9 +191,9 @@
             </Setter>
         </Style>
         <Style TargetType="Button">
-            <Setter Property="Background" Value="#151F2B"/>
-            <Setter Property="Foreground" Value="#E7E3D3"/>
-            <Setter Property="BorderBrush" Value="#4B5967"/>
+            <Setter Property="Background" Value="{DynamicResource PdaControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PdaControlBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="11,6"/>
             <Setter Property="MinHeight" Value="31"/>
@@ -203,10 +209,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="#263442"/>
-                                <Setter TargetName="Chrome" Property="BorderBrush" Value="#7D8994"/>
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaControlHoverBrush}"/>
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PdaControlHoverBorderBrush}"/>
                             </Trigger>
-                            <Trigger Property="IsPressed" Value="True"><Setter TargetName="Chrome" Property="Background" Value="#0B1119"/></Trigger>
+                            <Trigger Property="IsPressed" Value="True"><Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaMainTabPressedBrush}"/></Trigger>
                             <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.38"/></Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -214,9 +220,9 @@
             </Setter>
         </Style>
         <Style TargetType="GridViewColumnHeader">
-            <Setter Property="Background" Value="#182330"/>
-            <Setter Property="Foreground" Value="#E7E3D3"/>
-            <Setter Property="BorderBrush" Value="#3B4B5B"/>
+            <Setter Property="Background" Value="{DynamicResource PdaColumnHeaderBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PdaColumnHeaderBorderBrush}"/>
             <Setter Property="Padding" Value="8,5"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -272,10 +278,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="#3D1B2632"/>
-                                <Setter TargetName="Chrome" Property="BorderBrush" Value="#77838B"/>
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaToolHoverBrush}"/>
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PdaControlHoverBorderBrush}"/>
                             </Trigger>
-                            <Trigger Property="IsPressed" Value="True"><Setter TargetName="Chrome" Property="Background" Value="#6A111923"/></Trigger>
+                            <Trigger Property="IsPressed" Value="True"><Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaToolPressedBrush}"/></Trigger>
                             <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.3"/><Setter Property="Cursor" Value="Arrow"/></Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -285,7 +291,7 @@
         <Style x:Key="PdaInlineInfoPanelStyle" TargetType="ContentControl">
             <Setter Property="Height" Value="58"/>
             <Setter Property="Padding" Value="14,5,7,5"/>
-            <Setter Property="Foreground" Value="#E7E3D3"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ContentControl">
@@ -305,14 +311,48 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Width="1200" Height="823" Background="Transparent">
+    <Grid Background="Transparent">
         <Image Source="/CORDON;component/Resources/PdaShell.HD.png"
-               Stretch="Fill" RenderOptions.BitmapScalingMode="HighQuality" IsHitTestVisible="False"/>
+               Stretch="Fill" RenderOptions.BitmapScalingMode="HighQuality" IsHitTestVisible="False">
+            <Image.Style>
+                <Style TargetType="Image">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding UseNewPdaInterface}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Image.Style>
+        </Image>
+        <Image Source="/CORDON;component/Resources/AltPdaShell.png"
+               Stretch="Fill" RenderOptions.BitmapScalingMode="HighQuality" IsHitTestVisible="False">
+            <Image.Style>
+                <Style TargetType="Image">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding UseNewPdaInterface}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Image.Style>
+        </Image>
 
-        <Grid Margin="120,98,172,100" ClipToBounds="True" Background="#F0080C13">
-            <Grid.Clip>
-                <RectangleGeometry Rect="0,0,908,625" RadiusX="11" RadiusY="11"/>
-            </Grid.Clip>
+        <Grid x:Name="PdaScreen" ClipToBounds="True">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Margin" Value="120,98,172,100"/>
+                    <Setter Property="Background" Value="#F0080C13"/>
+                    <Setter Property="Clip" Value="{StaticResource PdaScreenClip}"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding UseNewPdaInterface}" Value="True">
+                            <Setter Property="Margin" Value="86,86,135,94"/>
+                            <Setter Property="Background" Value="#EC0B120F"/>
+                            <Setter Property="Clip" Value="{StaticResource NewPdaScreenClip}"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Grid.RowDefinitions>
                 <RowDefinition Height="34"/>
                 <RowDefinition Height="35"/>
@@ -320,7 +360,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" Background="#EA101722">
+            <Grid Grid.Row="0" Background="{DynamicResource PdaTopBarBrush}">
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="50"/><ColumnDefinition Width="32"/></Grid.ColumnDefinitions>
                 <TextBlock Margin="10,0,8,0"
                            VerticalAlignment="Center"
@@ -362,7 +402,8 @@
                 </Button>
             </Grid>
 
-            <Border Grid.Row="1" Background="#E00D141E" BorderBrush="#3B4755" BorderThickness="0,1,0,1">
+            <Border Grid.Row="1" Background="{DynamicResource PdaSubHeaderBrush}"
+                    BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="0,1,0,1">
                 <Grid Margin="10,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <Grid x:Name="ProfileTypeIcon" Width="20" Height="20" VerticalAlignment="Center">
@@ -405,8 +446,8 @@
             </Border>
 
             <Border Grid.Row="2"
-                    Background="#E4090E16"
-                    BorderBrush="#465462"
+                    Background="{DynamicResource PdaNavigationBarBrush}"
+                    BorderBrush="{DynamicResource PdaSectionBorderBrush}"
                     BorderThickness="0,0,0,1">
                 <Grid Margin="5,2,5,2">
                     <Grid.ColumnDefinitions>
@@ -431,7 +472,7 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="3" Background="#F3080D14">
+            <Grid Grid.Row="3" Background="{DynamicResource PdaContentBackgroundBrush}">
                 <Grid x:Name="ProfilePage" Margin="5">
                     <Grid.Style>
                         <Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding HasProfiles}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style>
@@ -508,7 +549,7 @@
                                 </Button>
                                 <Border Grid.Column="2" Width="1" Height="48" Margin="4,0"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
-                                        Background="#52606C"/>
+                                        Background="{DynamicResource PdaDividerBrush}"/>
                                 <Button Grid.Column="3" Command="{Binding ScanForModsCommand}" Style="{StaticResource PdaProfileToolButtonStyle}"
                                         ToolTip="Найти моды в выбранной папке" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <Viewbox Width="23" Height="23">

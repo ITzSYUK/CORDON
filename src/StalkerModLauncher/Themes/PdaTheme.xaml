@@ -20,12 +20,91 @@
     <SolidColorBrush x:Key="ModArchiveProgressPanelBrush" Color="#101923"/>
     <SolidColorBrush x:Key="ModArchiveProgressTrackBrush" Color="#090E16"/>
     <SolidColorBrush x:Key="ModArchiveProgressFillBrush" Color="#CF962C"/>
+    <SolidColorBrush x:Key="PdaPageBackgroundBrush" Color="#080D14"/>
+    <SolidColorBrush x:Key="PdaControlBackgroundBrush" Color="#151D28"/>
+    <SolidColorBrush x:Key="PdaControlBorderBrush" Color="#44515F"/>
+    <SolidColorBrush x:Key="PdaControlHoverBrush" Color="#24303D"/>
+    <SolidColorBrush x:Key="PdaControlHoverBorderBrush" Color="#7B8792"/>
+    <SolidColorBrush x:Key="PdaControlPressedBrush" Color="#0B111A"/>
+    <SolidColorBrush x:Key="PdaInlineButtonBackgroundBrush" Color="#172230"/>
+    <SolidColorBrush x:Key="PdaInlineButtonBorderBrush" Color="#536271"/>
+    <SolidColorBrush x:Key="PdaInputHoverBorderBrush" Color="#65717C"/>
+    <SolidColorBrush x:Key="PdaRadioBackgroundBrush" Color="#0A1018"/>
+    <SolidColorBrush x:Key="PdaRadioBorderBrush" Color="#71808C"/>
+    <SolidColorBrush x:Key="PdaRadioHoverBorderBrush" Color="#A6B0B8"/>
+    <SolidColorBrush x:Key="PdaCheckedBackgroundBrush" Color="#26311F"/>
+    <SolidColorBrush x:Key="PdaPopupBackgroundBrush" Color="#101722"/>
+    <SolidColorBrush x:Key="PdaPopupBorderBrush" Color="#4D5965"/>
+    <SolidColorBrush x:Key="PdaMenuHighlightBrush" Color="#263442"/>
+    <SolidColorBrush x:Key="PdaMenuHighlightBorderBrush" Color="#7D8994"/>
+    <SolidColorBrush x:Key="PdaThumbBrush" Color="#5C6873"/>
+    <SolidColorBrush x:Key="PdaThumbBorderBrush" Color="#8B949B"/>
+    <SolidColorBrush x:Key="PdaThumbHoverBrush" Color="#78838C"/>
+    <SolidColorBrush x:Key="PdaScrollBarBackgroundBrush" Color="#07101A"/>
+    <SolidColorBrush x:Key="PdaScrollBarBorderBrush" Color="#34424F"/>
+    <SolidColorBrush x:Key="PdaColumnHeaderBrush" Color="#182330"/>
+    <SolidColorBrush x:Key="PdaColumnHeaderBorderBrush" Color="#3B4B5B"/>
+    <SolidColorBrush x:Key="PdaMainTabBackgroundBrush" Color="#17212D"/>
+    <SolidColorBrush x:Key="PdaMainTabBorderBrush" Color="#5B6874"/>
+    <SolidColorBrush x:Key="PdaMainTabHoverBrush" Color="#263442"/>
+    <SolidColorBrush x:Key="PdaMainTabHoverBorderBrush" Color="#8A949D"/>
+    <SolidColorBrush x:Key="PdaMainTabPressedBrush" Color="#0B1119"/>
+    <SolidColorBrush x:Key="PdaNavigationBackgroundBrush" Color="#141C26"/>
+    <SolidColorBrush x:Key="PdaNavigationBorderBrush" Color="#53606C"/>
+    <SolidColorBrush x:Key="PdaNavigationHoverBrush" Color="#202B37"/>
+    <SolidColorBrush x:Key="PdaMarkerBackgroundBrush" Color="#323D48"/>
+    <SolidColorBrush x:Key="PdaMarkerBorderBrush" Color="#77828C"/>
+    <SolidColorBrush x:Key="PdaToolHoverBrush" Color="#3D1B2632"/>
+    <SolidColorBrush x:Key="PdaToolPressedBrush" Color="#6A111923"/>
+    <SolidColorBrush x:Key="PdaTopBarBrush" Color="#EA101722"/>
+    <SolidColorBrush x:Key="PdaSubHeaderBrush" Color="#E00D141E"/>
+    <SolidColorBrush x:Key="PdaNavigationBarBrush" Color="#E4090E16"/>
+    <SolidColorBrush x:Key="PdaContentBackgroundBrush" Color="#F3080D14"/>
+    <SolidColorBrush x:Key="PdaSectionBorderBrush" Color="#465462"/>
+    <SolidColorBrush x:Key="PdaDividerBrush" Color="#52606C"/>
+    <SolidColorBrush x:Key="PdaInsetPanelBrush" Color="#0D141E"/>
+    <SolidColorBrush x:Key="PdaDeepFieldBrush" Color="#090F18"/>
+    <SolidColorBrush x:Key="PdaLogBackgroundBrush" Color="#060A10"/>
+    <SolidColorBrush x:Key="PdaLogTextBrush" Color="#CAC8B8"/>
+    <SolidColorBrush x:Key="PdaToolHoverBorderBrush" Color="#77838B"/>
+    <SolidColorBrush x:Key="PdaToolStrongPressedBrush" Color="#73101823"/>
+    <SolidColorBrush x:Key="PdaCatalogButtonTextBrush" Color="#E1DDC9"/>
+    <SolidColorBrush x:Key="PdaCatalogButtonBorderBrush" Color="#4A5866"/>
+    <SolidColorBrush x:Key="PdaCatalogActiveTextBrush" Color="#141009"/>
+    <SolidColorBrush x:Key="PdaCatalogActiveBorderBrush" Color="#E0A43B"/>
+    <SolidColorBrush x:Key="PdaCatalogCardSelectedBrush" Color="#14202C"/>
+    <SolidColorBrush x:Key="PdaCatalogCardSelectedBorderBrush" Color="#B8842C"/>
+    <SolidColorBrush x:Key="PdaCatalogMutedTextBrush" Color="#9AA3A5"/>
+    <SolidColorBrush x:Key="PdaCatalogMetadataBrush" Color="#CB922B"/>
+    <SolidColorBrush x:Key="PdaCatalogFooterTextBrush" Color="#727D82"/>
+    <SolidColorBrush x:Key="PdaProfileCardBackgroundBrush" Color="#0A1019"/>
+    <SolidColorBrush x:Key="PdaProfileCardBorderBrush" Color="#75818A"/>
+    <SolidColorBrush x:Key="PdaProfileCardSelectedBorderBrush" Color="#687684"/>
+    <SolidColorBrush x:Key="PdaProfileCardHoverBrush" Color="#1D2B39"/>
+    <SolidColorBrush x:Key="PdaScanBorderBrush" Color="#263441"/>
+    <SolidColorBrush x:Key="PdaScanSelectedBrush" Color="#172432"/>
+    <SolidColorBrush x:Key="PdaScanHoverBrush" Color="#213346"/>
+    <SolidColorBrush x:Key="PdaScanHoverBorderBrush" Color="#64798B"/>
+    <SolidColorBrush x:Key="PdaDrawerIconHoverBrush" Color="#B024303D"/>
+    <SolidColorBrush x:Key="PdaDrawerIconHoverBorderBrush" Color="#9AA6AE"/>
+    <SolidColorBrush x:Key="PdaDrawerIconPressedBrush" Color="#73101823"/>
+    <SolidColorBrush x:Key="PdaDrawerItemBackgroundBrush" Color="#DA0A1018"/>
+    <SolidColorBrush x:Key="PdaDrawerItemBorderBrush" Color="#556574"/>
+    <SolidColorBrush x:Key="PdaDrawerItemHoverBrush" Color="#D0223142"/>
+    <SolidColorBrush x:Key="PdaDrawerItemHoverBorderBrush" Color="#42576A"/>
+    <SolidColorBrush x:Key="PdaDrawerItemActiveBrush" Color="#F00B111A"/>
+    <SolidColorBrush x:Key="PdaDrawerItemActiveBorderBrush" Color="#687B8C"/>
+    <Color x:Key="PdaDrawerGradientTransparentColor">#00000000</Color>
+    <Color x:Key="PdaDrawerGradientLightColor">#24070B11</Color>
+    <Color x:Key="PdaDrawerGradientMediumColor">#A8070B11</Color>
+    <Color x:Key="PdaDrawerGradientDarkColor">#EE070B11</Color>
+    <Color x:Key="PdaDrawerGradientSolidColor">#F8070B11</Color>
     <CornerRadius x:Key="LauncherSettingsPanelCornerRadius">0</CornerRadius>
 
     <Style x:Key="PdaBaseButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="#151D28"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="#44515F"/>
+        <Setter Property="Background" Value="{DynamicResource PdaControlBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PdaControlBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="11,6"/>
         <Setter Property="MinHeight" Value="31"/>
@@ -47,11 +126,11 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="#24303D"/>
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="#7B8792"/>
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaControlHoverBrush}"/>
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PdaControlHoverBorderBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="#0B111A"/>
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaControlPressedBrush}"/>
                             <Setter TargetName="Chrome" Property="BorderBrush" Value="#A07832"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
@@ -69,9 +148,9 @@
     <Style x:Key="InlineModActionButtonStyle"
            TargetType="Button"
            BasedOn="{StaticResource PdaBaseButtonStyle}">
-        <Setter Property="Background" Value="#172230"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="#536271"/>
+        <Setter Property="Background" Value="{DynamicResource PdaInlineButtonBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PdaInlineButtonBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed"/>
         <Setter Property="FontSize" Value="12"/>
@@ -86,17 +165,17 @@
     </Style>
 
     <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PdaBaseButtonStyle}">
-        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="Foreground" Value="#15110A"/>
         <Setter Property="BorderBrush" Value="#E0A43B"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
 
     <Style TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource FieldBackgroundBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource FieldBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,5"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -114,7 +193,7 @@
                             <Setter TargetName="Chrome" Property="BorderBrush" Value="#8B7850"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="#65717C"/>
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PdaInputHoverBorderBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.42"/></Trigger>
                     </ControlTemplate.Triggers>
@@ -124,7 +203,7 @@
     </Style>
 
     <Style TargetType="RadioButton">
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
@@ -133,15 +212,15 @@
                     <BulletDecorator Background="Transparent">
                         <BulletDecorator.Bullet>
                             <Grid Width="14" Height="14" Margin="0,0,6,0">
-                                <Ellipse x:Name="Outer" Fill="#0A1018" Stroke="#71808C" StrokeThickness="1"/>
-                                <Ellipse x:Name="Inner" Width="6" Height="6" Fill="{StaticResource AccentBrush}" Visibility="Collapsed"/>
+                                <Ellipse x:Name="Outer" Fill="{DynamicResource PdaRadioBackgroundBrush}" Stroke="{DynamicResource PdaRadioBorderBrush}" StrokeThickness="1"/>
+                                <Ellipse x:Name="Inner" Width="6" Height="6" Fill="{DynamicResource AccentBrush}" Visibility="Collapsed"/>
                             </Grid>
                         </BulletDecorator.Bullet>
                         <ContentPresenter VerticalAlignment="Center"/>
                     </BulletDecorator>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True"><Setter TargetName="Inner" Property="Visibility" Value="Visible"/></Trigger>
-                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Outer" Property="Stroke" Value="#A6B0B8"/></Trigger>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Outer" Property="Stroke" Value="{DynamicResource PdaRadioHoverBorderBrush}"/></Trigger>
                         <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.38"/></Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -150,7 +229,7 @@
     </Style>
 
     <Style TargetType="CheckBox">
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
@@ -172,9 +251,9 @@
     </Style>
 
     <Style x:Key="ProfileToggleButtonStyle" TargetType="ToggleButton">
-        <Setter Property="Background" Value="#151D28"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="#44515F"/>
+        <Setter Property="Background" Value="{DynamicResource PdaControlBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PdaControlBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="10,6"/>
         <Setter Property="MinHeight" Value="31"/>
@@ -194,11 +273,11 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="#26311F"/>
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentGreenBrush}"/>
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaCheckedBackgroundBrush}"/>
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentGreenBrush}"/>
                             <Setter TargetName="StateImage" Property="Source" Value="{StaticResource RadiationOnImage}"/>
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Chrome" Property="BorderBrush" Value="#7B8792"/></Trigger>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PdaControlHoverBorderBrush}"/></Trigger>
                         <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.38"/></Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -207,9 +286,9 @@
     </Style>
 
     <Style TargetType="ToolTip">
-        <Setter Property="Background" Value="#101722"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="#4D5965"/>
+        <Setter Property="Background" Value="{DynamicResource PdaPopupBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PdaPopupBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="7,4"/>
         <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed"/>
@@ -233,9 +312,9 @@
     </Style>
 
     <Style TargetType="ContextMenu">
-        <Setter Property="Background" Value="#101722"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="#536271"/>
+        <Setter Property="Background" Value="{DynamicResource PdaPopupBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PdaInlineButtonBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="2"/>
         <Setter Property="HasDropShadow" Value="False"/>
@@ -255,7 +334,7 @@
     </Style>
 
     <Style TargetType="MenuItem">
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Padding" Value="11,5"/>
         <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed"/>
@@ -277,8 +356,8 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="#263442"/>
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="#7D8994"/>
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaMenuHighlightBrush}"/>
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PdaMenuHighlightBorderBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4"/>
@@ -290,8 +369,8 @@
     </Style>
 
     <Style TargetType="Thumb">
-        <Setter Property="Background" Value="#5C6873"/>
-        <Setter Property="BorderBrush" Value="#8B949B"/>
+        <Setter Property="Background" Value="{DynamicResource PdaThumbBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PdaThumbBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -303,7 +382,7 @@
                             CornerRadius="0"/>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="#78838C"/>
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaThumbHoverBrush}"/>
                         </Trigger>
                         <Trigger Property="IsDragging" Value="True">
                             <Setter TargetName="Chrome" Property="Background" Value="#9B7A3A"/>
@@ -327,13 +406,13 @@
     </Style>
 
     <Style TargetType="ScrollBar">
-        <Setter Property="Background" Value="#07101A"/>
+        <Setter Property="Background" Value="{DynamicResource PdaScrollBarBackgroundBrush}"/>
         <Setter Property="Width" Value="13"/>
         <Setter Property="MinWidth" Value="13"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ScrollBar">
-                    <Border Background="{TemplateBinding Background}" BorderBrush="#34424F" BorderThickness="1">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource PdaScrollBarBorderBrush}" BorderThickness="1">
                         <Track x:Name="PART_Track" Margin="2" IsDirectionReversed="True">
                             <Track.DecreaseRepeatButton>
                                 <RepeatButton Command="ScrollBar.PageUpCommand"/>
@@ -355,7 +434,7 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ScrollBar">
-                            <Border Background="{TemplateBinding Background}" BorderBrush="#34424F" BorderThickness="1">
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource PdaScrollBarBorderBrush}" BorderThickness="1">
                                 <Track x:Name="PART_Track" Margin="2">
                                     <Track.DecreaseRepeatButton>
                                         <RepeatButton Command="ScrollBar.PageLeftCommand"/>
@@ -374,17 +453,17 @@
     </Style>
 
     <Style TargetType="ListView">
-        <Setter Property="Background" Value="{StaticResource FieldBackgroundBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource FieldBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
     </Style>
 
     <Style TargetType="GridViewColumnHeader">
-        <Setter Property="Background" Value="#182330"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="#3B4B5B"/>
+        <Setter Property="Background" Value="{DynamicResource PdaColumnHeaderBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PdaColumnHeaderBorderBrush}"/>
         <Setter Property="Padding" Value="8,5"/>
         <Setter Property="Template">
             <Setter.Value>

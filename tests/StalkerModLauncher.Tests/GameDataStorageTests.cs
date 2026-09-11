@@ -78,6 +78,33 @@ public sealed class GameDataStorageTests : IDisposable
     }
 
     [Fact]
+    public void StandaloneDataDiscoveryResolvesConfiguredAliases()
+    {
+        var build = Path.Combine(_root, "standalone");
+        Write(build, "fsgame.ltx", "$data$ = true | false | $fs_root$ | common\n$app_data_root$ = true | false | $data$ | saves");
+        var profile = new ModProfile { IsStandalone = true };
+        profile.Mods.Add(new ModEntry { SourcePath = build, IsEnabled = true });
+
+        Assert.Contains(
+            Path.Combine(build, "common", "saves", "screenshots"),
+            ProfileDataPathResolver.GetScreenshotDirectories(profile));
+    }
+
+    [Fact]
+    public void SharedDataRejectsOverlapWithModSource()
+    {
+        var game = Path.Combine(_root, "game-with-external-data");
+        var mod = Path.Combine(_root, "mod-with-appdata");
+        var sharedData = Path.Combine(mod, "appdata");
+        Write(game, "fsgame.ltx", $"$app_data_root$ = true | false | {sharedData}");
+        Directory.CreateDirectory(mod);
+        var profile = new ModProfile { GameInstallPath = game, UseBaseGameData = true };
+        profile.Mods.Add(new ModEntry { SourcePath = mod, IsEnabled = true });
+
+        Assert.Throws<InvalidDataException>(() => ProfileDataPathResolver.GetGameDataRoot(profile));
+    }
+
+    [Fact]
     public void RootEnumerationFallsBackWhenConfiguredAliasIsInvalid()
     {
         var game = Path.Combine(_root, "game");

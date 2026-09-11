@@ -2,6 +2,7 @@ namespace StalkerModLauncher.Models;
 
 public sealed record LauncherPreferences(
     bool IsPdaInterfaceEnabled,
+    bool UseNewPdaInterface,
     bool ShowTrayIcon,
     bool StartWithWindows,
     bool StartMinimizedToTrayOnWindowsStartup,
@@ -12,6 +13,7 @@ public sealed record LauncherPreferences(
 {
     public static LauncherPreferences Default { get; } = new(
         IsPdaInterfaceEnabled: false,
+        UseNewPdaInterface: false,
         ShowTrayIcon: true,
         StartWithWindows: false,
         StartMinimizedToTrayOnWindowsStartup: true,

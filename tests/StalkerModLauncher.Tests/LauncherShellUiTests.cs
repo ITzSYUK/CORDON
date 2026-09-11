@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml.Linq;
+using StalkerModLauncher.Themes;
 using StalkerModLauncher.Views;
 using StalkerModLauncher.Views.Controls;
 using Xunit;
@@ -93,6 +94,38 @@ public sealed class LauncherShellUiTests
                 var pdaBitmap = new RenderTargetBitmap(908, 521, 96, 96, PixelFormats.Pbgra32);
                 pdaBitmap.Render(pda);
                 Assert.Equal(908, pdaBitmap.PixelWidth);
+
+                var originalAtlas = new FormatConvertedBitmap(
+                    PdaThemeSelector.CurrentDrawerAtlas,
+                    PixelFormats.Bgra32,
+                    null,
+                    0);
+                PdaThemeSelector.UseNewTheme = true;
+                var neutralAtlas = PdaThemeSelector.CurrentDrawerAtlas;
+                Assert.Equal(PixelFormats.Bgra32, neutralAtlas.Format);
+                var stride = neutralAtlas.PixelWidth * 4;
+                var originalPixels = new byte[stride * originalAtlas.PixelHeight];
+                var pixels = new byte[stride * neutralAtlas.PixelHeight];
+                originalAtlas.CopyPixels(originalPixels, stride, 0);
+                neutralAtlas.CopyPixels(pixels, stride, 0);
+                Assert.Equal(
+                    Enumerable.Range(0, neutralAtlas.PixelWidth * neutralAtlas.PixelHeight)
+                        .Select(pixel => originalPixels[(pixel * 4) + 3]),
+                    Enumerable.Range(0, neutralAtlas.PixelWidth * neutralAtlas.PixelHeight)
+                        .Select(pixel => pixels[(pixel * 4) + 3]));
+
+                var newPda = CreatePdaThemeHost(useNewTheme: true);
+                newPda.Width = 959;
+                newPda.Height = 424;
+                var newPdaSettings = new LauncherSettingsView();
+                newPda.Children.Add(newPdaSettings);
+                newPda.Measure(new Size(959, 424));
+                newPda.Arrange(new Rect(0, 0, 959, 424));
+                newPda.UpdateLayout();
+
+                var newPdaBitmap = new RenderTargetBitmap(959, 424, 96, 96, PixelFormats.Pbgra32);
+                newPdaBitmap.Render(newPda);
+                Assert.Equal(424, newPdaBitmap.PixelHeight);
             }
             catch (Exception ex)
             {
@@ -100,6 +133,7 @@ public sealed class LauncherShellUiTests
             }
             finally
             {
+                PdaThemeSelector.UseNewTheme = false;
                 System.Windows.Threading.Dispatcher.CurrentDispatcher.InvokeShutdown();
             }
         });
@@ -209,6 +243,27 @@ public sealed class LauncherShellUiTests
     }
 
     [Fact]
+    public void ProfileSettingsPlaceUserDataBetweenRendererAndExecutableWithLocalRadioGroups()
+    {
+        var interfaces = new[]
+        {
+            LoadProjectXaml("Views", "ProfileSettingsWindow.xaml").ToString(),
+            LoadProjectXaml("Views", "Controls", "PdaProfileSettingsView.xaml").ToString()
+        };
+
+        foreach (var xaml in interfaces)
+        {
+            var renderer = xaml.IndexOf("Text=\"Движок Anomaly\"", StringComparison.Ordinal);
+            var userData = xaml.IndexOf("Text=\"Пользовательские данные\"", StringComparison.Ordinal);
+            var executable = xaml.IndexOf("Text=\"Файл запуска (.exe)\"", StringComparison.Ordinal);
+
+            Assert.True(renderer >= 0 && renderer < userData && userData < executable);
+            Assert.DoesNotContain("GroupName=", xaml);
+            Assert.DoesNotContain("Text=\"Данные игры\"", xaml);
+        }
+    }
+
+    [Fact]
     public void TrayPopupCanBeReopenedImmediately()
     {
         Exception? failure = null;
@@ -293,9 +348,21 @@ public sealed class LauncherShellUiTests
     {
         var classic = LoadProjectXaml("Views", "Controls", "ProfileSidebarView.xaml");
         var pda = LoadProjectXaml("Views", "Controls", "PdaMainView.xaml");
+        var pdaWindow = LoadProjectXaml("Views", "PdaWindow.xaml");
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
 
         Assert.Contains("LauncherSettingsButton_OnClick", classic.ToString());
         Assert.Contains("LauncherSettingsButton_OnClick", pda.ToString());
+        Assert.Contains("/CORDON;component/Resources/PdaShell.HD.png", pda.ToString());
+        Assert.Contains("/CORDON;component/Resources/AltPdaShell.png", pda.ToString());
+        Assert.Contains("86,86,135,94", pda.ToString());
+        var newPdaClip = Assert.Single(pda.Descendants(), element =>
+            (string?)element.Attribute(xaml + "Key") == "NewPdaScreenClip");
+        Assert.Equal("0,0,1083,597", (string?)newPdaClip.Attribute("Rect"));
+        Assert.Equal("17", (string?)newPdaClip.Attribute("RadiusX"));
+        Assert.Equal("17", (string?)newPdaClip.Attribute("RadiusY"));
+        Assert.Contains("Property=\"Width\" Value=\"1304\"", pdaWindow.ToString());
+        Assert.Contains("Property=\"Height\" Value=\"777\"", pdaWindow.ToString());
         Assert.DoesNotContain("PdaSystemSettingsButtonStyle", pda.ToString());
         Assert.Equal(1, pda.Descendants()
             .Count(element => (string?)element.Attribute("Style") == "{StaticResource PdaCompactTopTabStyle}"));
@@ -308,6 +375,32 @@ public sealed class LauncherShellUiTests
             .Count(element => (string?)element.Attribute("Value") == "{StaticResource PdaPowerNormalBrush}"));
         Assert.DoesNotContain("ToolTip=\"Настройки лаунчера\"", classic.ToString());
         Assert.DoesNotContain("ToolTip=\"Настройки лаунчера\"", pda.ToString());
+    }
+
+    [Fact]
+    public void NewPdaUsesSeparateNeutralPalette()
+    {
+        var classicTheme = LoadProjectXaml("Themes", "PdaTheme.xaml");
+        var newTheme = LoadProjectXaml("Themes", "NewPdaTheme.xaml");
+        var pdaMain = LoadProjectXaml("Views", "Controls", "PdaMainView.xaml");
+        var profileDrawer = LoadProjectXaml("Views", "Controls", "PdaProfileDrawerView.xaml");
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        static string BrushColor(XDocument document, XNamespace presentationNamespace, XNamespace xamlNamespace, string key) =>
+            (string)document.Descendants(presentationNamespace + "SolidColorBrush")
+                .Single(element => (string?)element.Attribute(xamlNamespace + "Key") == key)
+                .Attribute("Color")!;
+
+        Assert.Equal("#080C13", BrushColor(classicTheme, presentation, xaml, "WindowBackgroundBrush"));
+        Assert.Equal("#17212D", BrushColor(classicTheme, presentation, xaml, "PdaMainTabBackgroundBrush"));
+        Assert.Equal("#4A5866", BrushColor(classicTheme, presentation, xaml, "PdaCatalogButtonBorderBrush"));
+        Assert.Equal("#0C0D0C", BrushColor(newTheme, presentation, xaml, "WindowBackgroundBrush"));
+        Assert.Equal("#1A1C19", BrushColor(newTheme, presentation, xaml, "PdaMainTabBackgroundBrush"));
+        Assert.Equal("#53574E", BrushColor(newTheme, presentation, xaml, "PdaCatalogButtonBorderBrush"));
+        Assert.Contains("/CORDON;component/Themes/PdaTheme.xaml", newTheme.ToString());
+        Assert.Contains("PdaThemeSelector.CurrentSource", pdaMain.ToString());
+        Assert.Contains("PdaThemeSelector.CurrentDrawerAtlas", profileDrawer.ToString());
     }
 
     [Fact]
@@ -386,12 +479,16 @@ public sealed class LauncherShellUiTests
         return host;
     }
 
-    private static Grid CreatePdaThemeHost()
+    private static Grid CreatePdaThemeHost(bool useNewTheme = false)
     {
         var host = new Grid { Width = 908, Height = 521 };
         host.Resources.MergedDictionaries.Add(new ResourceDictionary
         {
-            Source = new Uri("/CORDON;component/Themes/PdaTheme.xaml", UriKind.RelativeOrAbsolute)
+            Source = new Uri(
+                useNewTheme
+                    ? "/CORDON;component/Themes/NewPdaTheme.xaml"
+                    : "/CORDON;component/Themes/PdaTheme.xaml",
+                UriKind.RelativeOrAbsolute)
         });
         return host;
     }

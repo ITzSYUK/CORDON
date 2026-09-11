@@ -29,6 +29,7 @@ public sealed partial class MainViewModel
             var settings = loadResult.Settings;
             _lastBrowsedGamePath = settings.LastBrowsedGamePath;
             _isPdaInterfaceEnabled = settings.IsPdaInterfaceEnabled;
+            _useNewPdaInterface = settings.UseNewPdaInterface;
             _showTrayIcon = settings.ShowTrayIcon;
             _startWithWindows = settings.StartWithWindows;
             _startMinimizedToTrayOnWindowsStartup = settings.StartMinimizedToTrayOnWindowsStartup;
@@ -38,6 +39,7 @@ public sealed partial class MainViewModel
             _logLevel = settings.LogLevel;
             _applicationLogService.Level = settings.LogLevel;
             OnPropertyChanged(nameof(IsPdaInterfaceEnabled));
+            OnPropertyChanged(nameof(UseNewPdaInterface));
             OnPropertyChanged(nameof(ShowTrayIcon));
             OnPropertyChanged(nameof(StartWithWindows));
             OnPropertyChanged(nameof(StartMinimizedToTrayOnWindowsStartup));
@@ -118,6 +120,7 @@ public sealed partial class MainViewModel
                 DontShowAboutOnStartup = existing.DontShowAboutOnStartup,
                 IsLogVisible = ActivityLog.IsVisible,
                 IsPdaInterfaceEnabled = IsPdaInterfaceEnabled,
+                UseNewPdaInterface = UseNewPdaInterface,
                 ShowTrayIcon = ShowTrayIcon,
                 StartWithWindows = StartWithWindows,
                 StartMinimizedToTrayOnWindowsStartup = StartMinimizedToTrayOnWindowsStartup,

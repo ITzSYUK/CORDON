@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using StalkerModLauncher.Services;
 using StalkerModLauncher.ViewModels;
 
@@ -77,8 +76,8 @@ public partial class PdaModCatalogView : UserControl
 
     private static void SetButtonState(Button button, bool active)
     {
-        button.Background = new SolidColorBrush(active ? Color.FromRgb(0xCF, 0x96, 0x2C) : Color.FromRgb(0x15, 0x1D, 0x28));
-        button.Foreground = new SolidColorBrush(active ? Color.FromRgb(0x14, 0x10, 0x09) : Color.FromRgb(0xE1, 0xDD, 0xC9));
-        button.BorderBrush = new SolidColorBrush(active ? Color.FromRgb(0xE0, 0xA4, 0x3B) : Color.FromRgb(0x4A, 0x58, 0x66));
+        button.SetResourceReference(Control.BackgroundProperty, active ? "AccentBrush" : "PdaControlBackgroundBrush");
+        button.SetResourceReference(Control.ForegroundProperty, active ? "PdaCatalogActiveTextBrush" : "PdaCatalogButtonTextBrush");
+        button.SetResourceReference(Control.BorderBrushProperty, active ? "PdaCatalogActiveBorderBrush" : "PdaCatalogButtonBorderBrush");
     }
 }

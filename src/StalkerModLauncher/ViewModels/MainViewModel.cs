@@ -44,6 +44,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private bool _isGameValid;
     private bool _isBuilding;
     private bool _isPdaInterfaceEnabled;
+    private bool _useNewPdaInterface;
     private string _buildProgressText = string.Empty;
     private bool _isInstallingModArchive;
     private bool _isModArchiveInstallProgressIndeterminate;
@@ -166,6 +167,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             }
         }
     }
+
+    public bool UseNewPdaInterface => _useNewPdaInterface;
 
     public event EventHandler? ProfileCreationRequested;
     public event EventHandler? Mo2ImportRequested;

@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Themes;
 using StalkerModLauncher.ViewModels;
 
 namespace StalkerModLauncher.Views.Controls;
@@ -71,7 +72,7 @@ public partial class ModPanelView : UserControl
         {
             _pdaTheme = new ResourceDictionary
             {
-                Source = new Uri("/CORDON;component/Themes/PdaTheme.xaml", UriKind.RelativeOrAbsolute)
+                Source = PdaThemeSelector.CurrentSource
             };
             Resources.MergedDictionaries.Add(_pdaTheme);
         }

@@ -82,6 +82,8 @@ public sealed class SettingsStoreTests : IDisposable
     {
         await _store.SaveAsync(new AppSettings
         {
+            IsPdaInterfaceEnabled = true,
+            UseNewPdaInterface = true,
             ShowTrayIcon = true,
             StartWithWindows = true,
             StartMinimizedToTrayOnWindowsStartup = false,
@@ -93,6 +95,8 @@ public sealed class SettingsStoreTests : IDisposable
 
         var loaded = await _store.LoadAsync();
 
+        Assert.True(loaded.IsPdaInterfaceEnabled);
+        Assert.True(loaded.UseNewPdaInterface);
         Assert.True(loaded.ShowTrayIcon);
         Assert.True(loaded.StartWithWindows);
         Assert.False(loaded.StartMinimizedToTrayOnWindowsStartup);

@@ -1,16 +1,17 @@
 <UserControl x:Class="StalkerModLauncher.Views.Controls.PdaProfileCreationView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="#080D14">
+             xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
+             Background="{DynamicResource PdaPageBackgroundBrush}">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/CORDON;component/Themes/PdaTheme.xaml"/>
+                <ResourceDictionary Source="{x:Static themes:PdaThemeSelector.CurrentSource}"/>
             </ResourceDictionary.MergedDictionaries>
 
             <Style x:Key="PdaProfileTypeCardStyle" TargetType="RadioButton">
-                <Setter Property="Background" Value="#0A1019"/>
-                <Setter Property="BorderBrush" Value="#3B4755"/>
+        <Setter Property="Background" Value="{DynamicResource PdaProfileCardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="MinHeight" Value="72"/>
                 <Setter Property="Padding" Value="13"/>
@@ -31,7 +32,7 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid Width="16" Height="16" VerticalAlignment="Center">
-                                        <Ellipse x:Name="Outer" Fill="#080D14" Stroke="#75818A" StrokeThickness="1"/>
+                                        <Ellipse x:Name="Outer" Fill="{DynamicResource PdaPageBackgroundBrush}" Stroke="{DynamicResource PdaProfileCardBorderBrush}" StrokeThickness="1"/>
                                         <Ellipse x:Name="Inner" Width="8" Height="8" Fill="{StaticResource AccentBrush}" Visibility="Collapsed"/>
                                     </Grid>
                                     <ContentPresenter Grid.Column="1"/>
@@ -39,11 +40,11 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Card" Property="Background" Value="#172230"/>
-                                    <Setter TargetName="Card" Property="BorderBrush" Value="#687684"/>
+                            <Setter TargetName="Card" Property="Background" Value="{DynamicResource PdaInlineButtonBackgroundBrush}"/>
+                            <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource PdaProfileCardSelectedBorderBrush}"/>
                                 </Trigger>
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="Card" Property="Background" Value="#1D2B39"/>
+                            <Setter TargetName="Card" Property="Background" Value="{DynamicResource PdaProfileCardHoverBrush}"/>
                                     <Setter TargetName="Card" Property="BorderBrush" Value="#8B7850"/>
                                     <Setter TargetName="Inner" Property="Visibility" Value="Visible"/>
                                 </Trigger>
@@ -117,8 +118,8 @@
         </Grid>
 
         <Border Grid.Row="1"
-                Background="#0D141E"
-                BorderBrush="#3B4755"
+                Background="{DynamicResource PdaInsetPanelBrush}"
+                BorderBrush="{DynamicResource StrokeBrush}"
                 BorderThickness="1"
                 Padding="13">
             <Grid>
@@ -216,8 +217,8 @@
                                        Foreground="{StaticResource DisabledTextBrush}" FontSize="10"/>
                         </Grid>
                         <Border Grid.Row="3"
-                                Background="#080D14"
-                                BorderBrush="#3B4755"
+                                Background="{DynamicResource PdaPageBackgroundBrush}"
+                                BorderBrush="{DynamicResource StrokeBrush}"
                                 BorderThickness="1"
                                 Margin="0,0,0,8"
                                 AllowDrop="True"
@@ -305,7 +306,7 @@
                             </Style.Triggers>
                         </Style>
                     </StackPanel.Style>
-                    <Border Background="#111925" BorderBrush="#3B4755" BorderThickness="1" Padding="10" Margin="0,0,0,11">
+                <Border Background="{DynamicResource PanelAltBrush}" BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1" Padding="10" Margin="0,0,0,11">
                         <StackPanel>
                             <TextBlock Text="{Binding ProfileTypeLabel}" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding SourceSummary}" Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0"/>

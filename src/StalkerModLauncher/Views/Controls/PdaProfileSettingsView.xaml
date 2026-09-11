@@ -1,11 +1,12 @@
 <UserControl x:Class="StalkerModLauncher.Views.Controls.PdaProfileSettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="#080D14">
+             xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
+             Background="{DynamicResource PdaPageBackgroundBrush}">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/CORDON;component/Themes/PdaTheme.xaml"/>
+                <ResourceDictionary Source="{x:Static themes:PdaThemeSelector.CurrentSource}"/>
             </ResourceDictionary.MergedDictionaries>
 
             <Style x:Key="PdaProfileTextBoxStyle"
@@ -68,7 +69,7 @@
                             <BulletDecorator Background="Transparent">
                                 <BulletDecorator.Bullet>
                                     <Grid Width="15" Height="15">
-                                        <Ellipse x:Name="Outer" Fill="#0A1018" Stroke="#71808C" StrokeThickness="1"/>
+                                        <Ellipse x:Name="Outer" Fill="{DynamicResource PdaRadioBackgroundBrush}" Stroke="{DynamicResource PdaRadioBorderBrush}" StrokeThickness="1"/>
                                         <Ellipse x:Name="Inner" Width="7" Height="7"
                                                  Fill="{StaticResource AccentBrush}" Visibility="Collapsed"/>
                                     </Grid>
@@ -81,7 +82,7 @@
                                     <Setter TargetName="Inner" Property="Visibility" Value="Visible"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Outer" Property="Stroke" Value="#A6B0B8"/>
+                                    <Setter TargetName="Outer" Property="Stroke" Value="{DynamicResource PdaRadioHoverBorderBrush}"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter Property="Opacity" Value="0.38"/>
@@ -161,8 +162,8 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
-                Background="#0D141E"
-                BorderBrush="#3B4755"
+                    Background="{DynamicResource PdaInsetPanelBrush}"
+                    BorderBrush="{DynamicResource StrokeBrush}"
                 BorderThickness="1"
                 Padding="12">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -197,30 +198,14 @@
                         </TextBlock>
                     </CheckBox>
 
-                    <StackPanel Margin="0,6,0,14">
-                        <TextBlock Text="Данные игры" Foreground="#929B88" FontSize="11" Margin="0,0,0,5"/>
-                        <StackPanel IsEnabled="{Binding CanChooseGameData}">
-                            <RadioButton Content="В папке профиля" Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                         GroupName="PdaGameData" IsChecked="{Binding UseProfileGameData}" Margin="0,0,0,5"/>
-                            <RadioButton Content="В папке данных базовой игры" Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                         GroupName="PdaGameData" IsChecked="{Binding UseBaseGameData}"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding GameDataDescription}" Foreground="#929B88" FontSize="11"
-                                   TextWrapping="Wrap" Margin="0,5,0,0"/>
-                        <Button Content="Скопировать недостающие данные в выбранную папку"
-                                Command="{Binding CopyGameDataCommand}" IsEnabled="{Binding CanChooseGameData}"
-                                HorizontalAlignment="Left" Margin="0,6,0,0"/>
-                    </StackPanel>
                     <TextBlock Text="Система запуска" Foreground="#929B88" FontSize="11" Margin="0,0,0,4"/>
                     <WrapPanel Margin="0,0,0,5">
                         <RadioButton Content="Workspace"
                                      Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                     GroupName="PdaLaunchBackend"
                                      IsChecked="{Binding UseLinkedWorkspace, Mode=TwoWay}"
                                      Margin="0,0,18,0"/>
                         <RadioButton Content="USVFS"
                                      Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                     GroupName="PdaLaunchBackend"
                                      IsChecked="{Binding UseVirtualFileSystem, Mode=TwoWay}"
                                      IsEnabled="{Binding CanUseUsvfs}"/>
                     </WrapPanel>
@@ -232,15 +217,15 @@
                         <TextBlock Text="Движок Anomaly" Foreground="#929B88" FontSize="12" Margin="0,0,0,4"/>
                         <WrapPanel>
                             <RadioButton Content="Лаунчер" Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                         GroupName="PdaAnomalyRenderer" IsChecked="{Binding UseAutomaticAnomalyRenderer}" Margin="0,0,10,0"/>
+                                         IsChecked="{Binding UseAutomaticAnomalyRenderer}" Margin="0,0,10,0"/>
                             <RadioButton Content="DX8" Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                         GroupName="PdaAnomalyRenderer" IsChecked="{Binding UseAnomalyDx8}" Margin="0,0,10,0"/>
+                                         IsChecked="{Binding UseAnomalyDx8}" Margin="0,0,10,0"/>
                             <RadioButton Content="DX9" Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                         GroupName="PdaAnomalyRenderer" IsChecked="{Binding UseAnomalyDx9}" Margin="0,0,10,0"/>
+                                         IsChecked="{Binding UseAnomalyDx9}" Margin="0,0,10,0"/>
                             <RadioButton Content="DX10" Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                         GroupName="PdaAnomalyRenderer" IsChecked="{Binding UseAnomalyDx10}" Margin="0,0,10,0"/>
+                                         IsChecked="{Binding UseAnomalyDx10}" Margin="0,0,10,0"/>
                             <RadioButton Content="DX11" Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                         GroupName="PdaAnomalyRenderer" IsChecked="{Binding UseAnomalyDx11}" Margin="0,0,14,0"/>
+                                         IsChecked="{Binding UseAnomalyDx11}" Margin="0,0,14,0"/>
                             <CheckBox Content="AVX"
                                       Style="{StaticResource PdaAvxCheckBoxStyle}"
                                       IsChecked="{Binding AnomalyUseAvx}"
@@ -251,6 +236,23 @@
                                    FontSize="11"
                                    TextWrapping="Wrap"
                                    Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <Border Style="{StaticResource PdaProfileSectionDividerStyle}" Margin="0,1,0,12"/>
+
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Пользовательские данные" Foreground="#929B88" FontSize="11" Margin="0,0,0,5"/>
+                        <StackPanel IsEnabled="{Binding CanChooseGameData}">
+                            <RadioButton Content="В папке профиля" Style="{StaticResource PdaProfileRadioButtonStyle}"
+                                         IsChecked="{Binding UseProfileGameData}" Margin="0,0,0,5"/>
+                            <RadioButton Content="В папке данных базовой игры" Style="{StaticResource PdaProfileRadioButtonStyle}"
+                                         IsChecked="{Binding UseBaseGameData}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding GameDataDescription}" Foreground="#929B88" FontSize="11"
+                                   TextWrapping="Wrap" Margin="0,5,0,0"/>
+                        <Button Content="Скопировать недостающие данные в выбранную папку"
+                                Command="{Binding CopyGameDataCommand}" IsEnabled="{Binding CanChooseGameData}"
+                                HorizontalAlignment="Left" Margin="0,6,0,0"/>
                     </StackPanel>
 
                     <Border Style="{StaticResource PdaProfileSectionDividerStyle}" Margin="0,1,0,12"/>
@@ -329,7 +331,7 @@
                                 Margin="7,0,0,0" Width="110"/>
                     </Grid>
 
-                    <Border Background="#101923" BorderBrush="#3B4755" BorderThickness="1" Padding="8" Margin="0,0,0,9"
+                            <Border Background="{DynamicResource ModArchiveProgressPanelBrush}" BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1" Padding="8" Margin="0,0,0,9"
                             Visibility="{Binding HasMo2Overwrite, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Grid>
                             <Grid.ColumnDefinitions>

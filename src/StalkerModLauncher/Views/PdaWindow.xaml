@@ -3,12 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:StalkerModLauncher.Views.Controls"
         Title="CORDON — PDA"
-        Width="1200"
-        Height="823"
-        MinWidth="1200"
-        MinHeight="823"
-        MaxWidth="1200"
-        MaxHeight="823"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -16,6 +10,26 @@
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="True"
         MouseLeftButtonDown="Window_OnMouseLeftButtonDown">
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Width" Value="1200"/>
+            <Setter Property="Height" Value="823"/>
+            <Setter Property="MinWidth" Value="1200"/>
+            <Setter Property="MinHeight" Value="823"/>
+            <Setter Property="MaxWidth" Value="1200"/>
+            <Setter Property="MaxHeight" Value="823"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding UseNewPdaInterface}" Value="True">
+                    <Setter Property="Width" Value="1304"/>
+                    <Setter Property="Height" Value="777"/>
+                    <Setter Property="MinWidth" Value="1304"/>
+                    <Setter Property="MinHeight" Value="777"/>
+                    <Setter Property="MaxWidth" Value="1304"/>
+                    <Setter Property="MaxHeight" Value="777"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
     <controls:PdaMainView x:Name="PdaView"
                           ProfileHealthRequested="ProfileHealthButton_OnClick"
                           ProfileSettingsRequested="EditProfileButton_OnClick"

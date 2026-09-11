@@ -173,7 +173,9 @@
                             <RadioButton Content="Classic UI" Style="{StaticResource SettingsRadioButtonStyle}"
                                          GroupName="LauncherInterface" IsChecked="{Binding UseClassicInterface}" Margin="0,0,22,0"/>
                             <RadioButton Content="PDA UI" Style="{StaticResource SettingsRadioButtonStyle}"
-                                         GroupName="LauncherInterface" IsChecked="{Binding UsePdaInterface}"/>
+                                         GroupName="LauncherInterface" IsChecked="{Binding UsePdaInterface}" Margin="0,0,22,0"/>
+                            <RadioButton Content="PDA UI 2" Style="{StaticResource SettingsRadioButtonStyle}"
+                                         GroupName="LauncherInterface" IsChecked="{Binding UseNewPdaInterface}"/>
                         </WrapPanel>
                         <CheckBox Content="Запускать вместе с Windows" Style="{StaticResource SettingsCheckBoxStyle}"
                                   IsChecked="{Binding StartWithWindows}" Margin="0,0,0,9"/>

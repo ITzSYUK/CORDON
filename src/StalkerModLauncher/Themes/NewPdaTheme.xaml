@@ -1,0 +1,107 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/CORDON;component/Themes/PdaTheme.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#0C0D0C"/>
+    <SolidColorBrush x:Key="PanelBrush" Color="#121310"/>
+    <SolidColorBrush x:Key="PanelAltBrush" Color="#181916"/>
+    <SolidColorBrush x:Key="CommandPanelBrush" Color="#181916"/>
+    <SolidColorBrush x:Key="FieldBackgroundBrush" Color="#0A0B0A"/>
+    <SolidColorBrush x:Key="StrokeBrush" Color="#484A43"/>
+    <SolidColorBrush x:Key="TextBrush" Color="#DEDDD4"/>
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#92958B"/>
+    <SolidColorBrush x:Key="DisabledTextBrush" Color="#5F625B"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#B68A3A"/>
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#C49A4B"/>
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#8F6B2D"/>
+    <SolidColorBrush x:Key="AccentGreenBrush" Color="#7C865F"/>
+    <SolidColorBrush x:Key="ModSelectionBrush" Color="#2B2D28"/>
+    <SolidColorBrush x:Key="ModRelatedBrush" Color="#20231F"/>
+    <SolidColorBrush x:Key="ModRelatedStrokeBrush" Color="#5B6254"/>
+    <SolidColorBrush x:Key="ModArchiveProgressPanelBrush" Color="#171916"/>
+    <SolidColorBrush x:Key="ModArchiveProgressTrackBrush" Color="#0A0B0A"/>
+    <SolidColorBrush x:Key="ModArchiveProgressFillBrush" Color="#B68A3A"/>
+
+    <SolidColorBrush x:Key="PdaPageBackgroundBrush" Color="#0D0E0D"/>
+    <SolidColorBrush x:Key="PdaControlBackgroundBrush" Color="#1B1C19"/>
+    <SolidColorBrush x:Key="PdaControlBorderBrush" Color="#4E5149"/>
+    <SolidColorBrush x:Key="PdaControlHoverBrush" Color="#292B27"/>
+    <SolidColorBrush x:Key="PdaControlHoverBorderBrush" Color="#81857A"/>
+    <SolidColorBrush x:Key="PdaControlPressedBrush" Color="#0E0F0E"/>
+    <SolidColorBrush x:Key="PdaInlineButtonBackgroundBrush" Color="#20221E"/>
+    <SolidColorBrush x:Key="PdaInlineButtonBorderBrush" Color="#595D53"/>
+    <SolidColorBrush x:Key="PdaInputHoverBorderBrush" Color="#686C63"/>
+    <SolidColorBrush x:Key="PdaRadioBackgroundBrush" Color="#10110F"/>
+    <SolidColorBrush x:Key="PdaRadioBorderBrush" Color="#74786E"/>
+    <SolidColorBrush x:Key="PdaRadioHoverBorderBrush" Color="#A1A49A"/>
+    <SolidColorBrush x:Key="PdaCheckedBackgroundBrush" Color="#292C22"/>
+    <SolidColorBrush x:Key="PdaPopupBackgroundBrush" Color="#171916"/>
+    <SolidColorBrush x:Key="PdaPopupBorderBrush" Color="#50534C"/>
+    <SolidColorBrush x:Key="PdaMenuHighlightBrush" Color="#292B27"/>
+    <SolidColorBrush x:Key="PdaMenuHighlightBorderBrush" Color="#7D8177"/>
+    <SolidColorBrush x:Key="PdaThumbBrush" Color="#62655E"/>
+    <SolidColorBrush x:Key="PdaThumbBorderBrush" Color="#8B8E87"/>
+    <SolidColorBrush x:Key="PdaThumbHoverBrush" Color="#7A7E75"/>
+    <SolidColorBrush x:Key="PdaScrollBarBackgroundBrush" Color="#0B0C0B"/>
+    <SolidColorBrush x:Key="PdaScrollBarBorderBrush" Color="#3F423C"/>
+    <SolidColorBrush x:Key="PdaColumnHeaderBrush" Color="#20221F"/>
+    <SolidColorBrush x:Key="PdaColumnHeaderBorderBrush" Color="#494C45"/>
+
+    <SolidColorBrush x:Key="PdaMainTabBackgroundBrush" Color="#1A1C19"/>
+    <SolidColorBrush x:Key="PdaMainTabBorderBrush" Color="#5B5E56"/>
+    <SolidColorBrush x:Key="PdaMainTabHoverBrush" Color="#2B2D29"/>
+    <SolidColorBrush x:Key="PdaMainTabHoverBorderBrush" Color="#858980"/>
+    <SolidColorBrush x:Key="PdaMainTabPressedBrush" Color="#0E0F0E"/>
+    <SolidColorBrush x:Key="PdaNavigationBackgroundBrush" Color="#181A17"/>
+    <SolidColorBrush x:Key="PdaNavigationBorderBrush" Color="#565A51"/>
+    <SolidColorBrush x:Key="PdaNavigationHoverBrush" Color="#272925"/>
+    <SolidColorBrush x:Key="PdaMarkerBackgroundBrush" Color="#393C36"/>
+    <SolidColorBrush x:Key="PdaMarkerBorderBrush" Color="#7A7E74"/>
+    <SolidColorBrush x:Key="PdaToolHoverBrush" Color="#3D2B2D29"/>
+    <SolidColorBrush x:Key="PdaToolPressedBrush" Color="#6A11120F"/>
+    <SolidColorBrush x:Key="PdaTopBarBrush" Color="#EA171916"/>
+    <SolidColorBrush x:Key="PdaSubHeaderBrush" Color="#E0141613"/>
+    <SolidColorBrush x:Key="PdaNavigationBarBrush" Color="#E4111311"/>
+    <SolidColorBrush x:Key="PdaContentBackgroundBrush" Color="#F30C0D0C"/>
+    <SolidColorBrush x:Key="PdaSectionBorderBrush" Color="#50544C"/>
+    <SolidColorBrush x:Key="PdaDividerBrush" Color="#595D54"/>
+    <SolidColorBrush x:Key="PdaInsetPanelBrush" Color="#141512"/>
+    <SolidColorBrush x:Key="PdaDeepFieldBrush" Color="#0B0C0B"/>
+    <SolidColorBrush x:Key="PdaLogBackgroundBrush" Color="#080908"/>
+    <SolidColorBrush x:Key="PdaLogTextBrush" Color="#CFCEC5"/>
+    <SolidColorBrush x:Key="PdaToolHoverBorderBrush" Color="#7C8076"/>
+    <SolidColorBrush x:Key="PdaToolStrongPressedBrush" Color="#73161714"/>
+    <SolidColorBrush x:Key="PdaCatalogButtonTextBrush" Color="#DAD9D0"/>
+    <SolidColorBrush x:Key="PdaCatalogButtonBorderBrush" Color="#53574E"/>
+    <SolidColorBrush x:Key="PdaCatalogActiveTextBrush" Color="#15130D"/>
+    <SolidColorBrush x:Key="PdaCatalogActiveBorderBrush" Color="#C29A50"/>
+    <SolidColorBrush x:Key="PdaCatalogCardSelectedBrush" Color="#20221E"/>
+    <SolidColorBrush x:Key="PdaCatalogCardSelectedBorderBrush" Color="#A67D36"/>
+    <SolidColorBrush x:Key="PdaCatalogMutedTextBrush" Color="#94978E"/>
+    <SolidColorBrush x:Key="PdaCatalogMetadataBrush" Color="#AE8338"/>
+    <SolidColorBrush x:Key="PdaCatalogFooterTextBrush" Color="#74776F"/>
+    <SolidColorBrush x:Key="PdaProfileCardBackgroundBrush" Color="#10110F"/>
+    <SolidColorBrush x:Key="PdaProfileCardBorderBrush" Color="#777B71"/>
+    <SolidColorBrush x:Key="PdaProfileCardSelectedBorderBrush" Color="#686C62"/>
+    <SolidColorBrush x:Key="PdaProfileCardHoverBrush" Color="#292B27"/>
+    <SolidColorBrush x:Key="PdaScanBorderBrush" Color="#2A2C28"/>
+    <SolidColorBrush x:Key="PdaScanSelectedBrush" Color="#20221E"/>
+    <SolidColorBrush x:Key="PdaScanHoverBrush" Color="#292B27"/>
+    <SolidColorBrush x:Key="PdaScanHoverBorderBrush" Color="#6A6E64"/>
+    <SolidColorBrush x:Key="PdaDrawerIconHoverBrush" Color="#B02B2D29"/>
+    <SolidColorBrush x:Key="PdaDrawerIconHoverBorderBrush" Color="#9B9E91"/>
+    <SolidColorBrush x:Key="PdaDrawerIconPressedBrush" Color="#73161714"/>
+    <SolidColorBrush x:Key="PdaDrawerItemBackgroundBrush" Color="#DA10110F"/>
+    <SolidColorBrush x:Key="PdaDrawerItemBorderBrush" Color="#5E6057"/>
+    <SolidColorBrush x:Key="PdaDrawerItemHoverBrush" Color="#D02A2C27"/>
+    <SolidColorBrush x:Key="PdaDrawerItemHoverBorderBrush" Color="#66695F"/>
+    <SolidColorBrush x:Key="PdaDrawerItemActiveBrush" Color="#F011120F"/>
+    <SolidColorBrush x:Key="PdaDrawerItemActiveBorderBrush" Color="#727469"/>
+    <Color x:Key="PdaDrawerGradientTransparentColor">#00000000</Color>
+    <Color x:Key="PdaDrawerGradientLightColor">#240B0C0A</Color>
+    <Color x:Key="PdaDrawerGradientMediumColor">#A80B0C0A</Color>
+    <Color x:Key="PdaDrawerGradientDarkColor">#EE0B0C0A</Color>
+    <Color x:Key="PdaDrawerGradientSolidColor">#F80B0C0A</Color>
+</ResourceDictionary>

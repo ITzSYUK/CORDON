@@ -2,23 +2,22 @@
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
              Background="Transparent">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/CORDON;component/Themes/PdaTheme.xaml"/>
+                <ResourceDictionary Source="{x:Static themes:PdaThemeSelector.CurrentSource}"/>
             </ResourceDictionary.MergedDictionaries>
-        <BitmapImage x:Key="PdaDialogAtlasSource"
-                     UriSource="/CORDON;component/Resources/PdaDialogAtlas.png"/>
-        <CroppedBitmap x:Key="PdaDialogTopLeft" Source="{StaticResource PdaDialogAtlasSource}" SourceRect="0,0,32,32"/>
-        <CroppedBitmap x:Key="PdaDialogTop" Source="{StaticResource PdaDialogAtlasSource}" SourceRect="32,0,32,32"/>
-        <CroppedBitmap x:Key="PdaDialogTopRight" Source="{StaticResource PdaDialogAtlasSource}" SourceRect="64,0,32,32"/>
-        <CroppedBitmap x:Key="PdaDialogLeft" Source="{StaticResource PdaDialogAtlasSource}" SourceRect="0,32,32,32"/>
-        <CroppedBitmap x:Key="PdaDialogCenter" Source="{StaticResource PdaDialogAtlasSource}" SourceRect="32,32,32,32"/>
-        <CroppedBitmap x:Key="PdaDialogRight" Source="{StaticResource PdaDialogAtlasSource}" SourceRect="64,32,32,32"/>
-        <CroppedBitmap x:Key="PdaDialogBottomLeft" Source="{StaticResource PdaDialogAtlasSource}" SourceRect="0,64,32,32"/>
-        <CroppedBitmap x:Key="PdaDialogBottom" Source="{StaticResource PdaDialogAtlasSource}" SourceRect="32,64,32,32"/>
-        <CroppedBitmap x:Key="PdaDialogBottomRight" Source="{StaticResource PdaDialogAtlasSource}" SourceRect="64,64,32,32"/>
+        <CroppedBitmap x:Key="PdaDialogTopLeft" Source="{x:Static themes:PdaThemeSelector.CurrentDrawerAtlas}" SourceRect="0,0,32,32"/>
+        <CroppedBitmap x:Key="PdaDialogTop" Source="{x:Static themes:PdaThemeSelector.CurrentDrawerAtlas}" SourceRect="32,0,32,32"/>
+        <CroppedBitmap x:Key="PdaDialogTopRight" Source="{x:Static themes:PdaThemeSelector.CurrentDrawerAtlas}" SourceRect="64,0,32,32"/>
+        <CroppedBitmap x:Key="PdaDialogLeft" Source="{x:Static themes:PdaThemeSelector.CurrentDrawerAtlas}" SourceRect="0,32,32,32"/>
+        <CroppedBitmap x:Key="PdaDialogCenter" Source="{x:Static themes:PdaThemeSelector.CurrentDrawerAtlas}" SourceRect="32,32,32,32"/>
+        <CroppedBitmap x:Key="PdaDialogRight" Source="{x:Static themes:PdaThemeSelector.CurrentDrawerAtlas}" SourceRect="64,32,32,32"/>
+        <CroppedBitmap x:Key="PdaDialogBottomLeft" Source="{x:Static themes:PdaThemeSelector.CurrentDrawerAtlas}" SourceRect="0,64,32,32"/>
+        <CroppedBitmap x:Key="PdaDialogBottom" Source="{x:Static themes:PdaThemeSelector.CurrentDrawerAtlas}" SourceRect="32,64,32,32"/>
+        <CroppedBitmap x:Key="PdaDialogBottomRight" Source="{x:Static themes:PdaThemeSelector.CurrentDrawerAtlas}" SourceRect="64,64,32,32"/>
         <Style x:Key="PdaDrawerActionStyle" TargetType="Button">
             <Setter Property="Width" Value="36"/>
             <Setter Property="Height" Value="34"/>
@@ -44,11 +43,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="IconChrome" Property="Background" Value="#B024303D"/>
-                                <Setter TargetName="IconChrome" Property="BorderBrush" Value="#9AA6AE"/>
+                                <Setter TargetName="IconChrome" Property="Background" Value="{DynamicResource PdaDrawerIconHoverBrush}"/>
+                                <Setter TargetName="IconChrome" Property="BorderBrush" Value="{DynamicResource PdaDrawerIconHoverBorderBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="IconChrome" Property="Background" Value="#73101823"/>
+                                <Setter TargetName="IconChrome" Property="Background" Value="{DynamicResource PdaDrawerIconPressedBrush}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.35"/>
@@ -86,13 +85,13 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemChrome" Property="Background" Value="#DA0A1018"/>
-                                <Setter TargetName="ItemChrome" Property="BorderBrush" Value="#556574"/>
+                                <Setter TargetName="ItemChrome" Property="Background" Value="{DynamicResource PdaDrawerItemBackgroundBrush}"/>
+                                <Setter TargetName="ItemChrome" Property="BorderBrush" Value="{DynamicResource PdaDrawerItemBorderBrush}"/>
                                 <Setter Property="Foreground" Value="#DBDAD2"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemChrome" Property="Background" Value="#D0223142"/>
-                                <Setter TargetName="ItemChrome" Property="BorderBrush" Value="#42576A"/>
+                                <Setter TargetName="ItemChrome" Property="Background" Value="{DynamicResource PdaDrawerItemHoverBrush}"/>
+                                <Setter TargetName="ItemChrome" Property="BorderBrush" Value="{DynamicResource PdaDrawerItemHoverBorderBrush}"/>
                                 <Setter Property="Foreground" Value="#F0EEE4"/>
                             </Trigger>
                             <MultiTrigger>
@@ -100,8 +99,8 @@
                                     <Condition Property="IsSelected" Value="True"/>
                                     <Condition Property="IsMouseOver" Value="True"/>
                                 </MultiTrigger.Conditions>
-                                <Setter TargetName="ItemChrome" Property="Background" Value="#F00B111A"/>
-                                <Setter TargetName="ItemChrome" Property="BorderBrush" Value="#687B8C"/>
+                                <Setter TargetName="ItemChrome" Property="Background" Value="{DynamicResource PdaDrawerItemActiveBrush}"/>
+                                <Setter TargetName="ItemChrome" Property="BorderBrush" Value="{DynamicResource PdaDrawerItemActiveBorderBrush}"/>
                                 <Setter Property="Foreground" Value="#FFFFFF"/>
                             </MultiTrigger>
                         </ControlTemplate.Triggers>
@@ -277,11 +276,11 @@
                             <Border x:Name="ActionShade" Grid.ColumnSpan="3" Opacity="0" IsHitTestVisible="False">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                                        <GradientStop Color="#00000000" Offset="0"/>
-                                        <GradientStop Color="#24070B11" Offset="0.38"/>
-                                        <GradientStop Color="#A8070B11" Offset="0.58"/>
-                                        <GradientStop Color="#EE070B11" Offset="0.76"/>
-                                        <GradientStop Color="#F8070B11" Offset="1"/>
+                                        <GradientStop Color="{DynamicResource PdaDrawerGradientTransparentColor}" Offset="0"/>
+                                        <GradientStop Color="{DynamicResource PdaDrawerGradientLightColor}" Offset="0.38"/>
+                                        <GradientStop Color="{DynamicResource PdaDrawerGradientMediumColor}" Offset="0.58"/>
+                                        <GradientStop Color="{DynamicResource PdaDrawerGradientDarkColor}" Offset="0.76"/>
+                                        <GradientStop Color="{DynamicResource PdaDrawerGradientSolidColor}" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
                             </Border>

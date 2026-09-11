@@ -1,4 +1,3 @@
-using System.Text;
 using StalkerModLauncher.Models;
 
 namespace StalkerModLauncher.Services;
@@ -25,11 +24,18 @@ public static class ProfileDataPathResolver
         {
             throw new InvalidDataException("Общие данные игры не должны пересекаться с рабочей папкой профиля.");
         }
-        if (new[] { gamePath ?? profile.GameInstallPath }.Concat(profile.Mods.Select(mod => mod.SourcePath))
-            .Where(path => !string.IsNullOrWhiteSpace(path))
-            .Any(path => FileSystemSafety.IsDirectoryInside(path, root)))
+        var baseGamePath = gamePath ?? profile.GameInstallPath;
+        if (!string.IsNullOrWhiteSpace(baseGamePath) && FileSystemSafety.IsDirectoryInside(baseGamePath, root))
         {
-            throw new InvalidDataException("Каталог данных не должен совпадать с корнем игры или мода либо содержать их.");
+            throw new InvalidDataException("Каталог данных не должен совпадать с корнем игры либо содержать его.");
+        }
+        if (profile.Mods
+            .Select(mod => mod.SourcePath)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Any(path => FileSystemSafety.IsDirectoryInside(path, root) ||
+                         FileSystemSafety.IsDirectoryInside(root, path)))
+        {
+            throw new InvalidDataException("Каталог данных не должен пересекаться с исходной папкой мода.");
         }
         return root;
     }
@@ -104,55 +110,12 @@ public static class ProfileDataPathResolver
     {
         try
         {
-            var fsgamePath = FindFsgame(modRoot);
-            if (fsgamePath is null)
-            {
-                return null;
-            }
-
-            foreach (var line in File.ReadLines(fsgamePath, Encoding.Default))
-            {
-                var trimmed = line.TrimStart();
-                if (!trimmed.StartsWith("$app_data_root$", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                var parts = trimmed.Split('|', StringSplitOptions.TrimEntries);
-                if (parts.Length < 3)
-                {
-                    return null;
-                }
-
-                var configuredPath = parts
-                    .Skip(2)
-                    .LastOrDefault(part => !string.IsNullOrWhiteSpace(part) && !part.StartsWith('$'));
-                if (configuredPath is null)
-                {
-                    return null;
-                }
-
-                return Path.GetFullPath(Path.Combine(Path.GetDirectoryName(fsgamePath)!, configuredPath));
-            }
+            return ProfileAppDataSourceLocator.ResolveConfiguredRoot(modRoot);
         }
-        catch
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException)
         {
             // Invalid fsgame.ltx should not prevent fallback path discovery.
+            return null;
         }
-
-        return null;
-    }
-
-    private static string? FindFsgame(string modRoot)
-    {
-        var rootFile = Path.Combine(modRoot, "fsgame.ltx");
-        if (File.Exists(rootFile))
-        {
-            return rootFile;
-        }
-
-        return Directory.EnumerateDirectories(modRoot, "*", SearchOption.TopDirectoryOnly)
-            .Select(directory => Path.Combine(directory, "fsgame.ltx"))
-            .FirstOrDefault(File.Exists);
     }
 }

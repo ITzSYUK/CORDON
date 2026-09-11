@@ -1,12 +1,13 @@
 <UserControl x:Class="StalkerModLauncher.Views.Controls.PdaScanResultsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
              xmlns:infrastructure="clr-namespace:StalkerModLauncher.Infrastructure"
-             Background="#080D14">
+             Background="{DynamicResource PdaPageBackgroundBrush}">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/CORDON;component/Themes/PdaTheme.xaml"/>
+                <ResourceDictionary Source="{x:Static themes:PdaThemeSelector.CurrentSource}"/>
             </ResourceDictionary.MergedDictionaries>
             <infrastructure:BoolToRadiationConverter x:Key="BoolToRadiationConverter"/>
 
@@ -15,7 +16,7 @@
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-                <Setter Property="BorderBrush" Value="#263441"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PdaScanBorderBrush}"/>
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                 <Setter Property="Padding" Value="0"/>
                 <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -32,11 +33,11 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Chrome" Property="Background" Value="#172432"/>
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaScanSelectedBrush}"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Chrome" Property="Background" Value="#213346"/>
-                                    <Setter TargetName="Chrome" Property="BorderBrush" Value="#64798B"/>
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaScanHoverBrush}"/>
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PdaScanHoverBorderBrush}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -78,8 +79,8 @@
         </Grid>
 
         <Border Grid.Row="1"
-                Background="#182330"
-                BorderBrush="#3B4B5B"
+                            Background="{DynamicResource PdaColumnHeaderBrush}"
+                            BorderBrush="{DynamicResource PdaColumnHeaderBorderBrush}"
                 BorderThickness="1,1,1,0"
                 Padding="8,5">
             <Grid>
@@ -96,8 +97,8 @@
         </Border>
 
         <Border Grid.Row="2"
-                Background="#080D14"
-                BorderBrush="#3B4B5B"
+                            Background="{DynamicResource PdaPageBackgroundBrush}"
+                            BorderBrush="{DynamicResource PdaColumnHeaderBorderBrush}"
                 BorderThickness="1">
             <ListView x:Name="ModsListView"
                       Background="Transparent"

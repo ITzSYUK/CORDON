@@ -48,11 +48,16 @@ public sealed class AppSettingsNormalizerTests
     [Fact]
     public void NormalizePreservesPdaInterfacePreference()
     {
-        var settings = new AppSettings { IsPdaInterfaceEnabled = true };
+        var settings = new AppSettings
+        {
+            IsPdaInterfaceEnabled = true,
+            UseNewPdaInterface = true
+        };
 
         var normalized = AppSettingsNormalizer.Normalize(settings);
 
         Assert.True(normalized.IsPdaInterfaceEnabled);
+        Assert.True(normalized.UseNewPdaInterface);
     }
 
     [Fact]

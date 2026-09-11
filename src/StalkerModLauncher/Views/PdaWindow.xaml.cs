@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Input;
 using StalkerModLauncher.Services;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Themes;
 using StalkerModLauncher.ViewModels;
 using StalkerModLauncher.Views.Controls;
 
@@ -13,6 +14,8 @@ public partial class PdaWindow : Window
 
     public PdaWindow(MainViewModel viewModel, WindowNavigationService navigation)
     {
+        UsesNewTheme = viewModel.UseNewPdaInterface;
+        PdaThemeSelector.UseNewTheme = UsesNewTheme;
         InitializeComponent();
         _navigation = navigation;
         DataContext = viewModel;
@@ -28,6 +31,8 @@ public partial class PdaWindow : Window
             viewModel.ConflictExplorerRequested -= ViewModel_ConflictExplorerRequested;
         };
     }
+
+    public bool UsesNewTheme { get; }
 
     private void ViewModel_ConflictExplorerRequested(object? sender, ModEntry? mod)
     {

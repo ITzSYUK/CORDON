@@ -1,13 +1,14 @@
 <UserControl x:Class="StalkerModLauncher.Views.Controls.PdaAboutView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
              xmlns:controls="clr-namespace:StalkerModLauncher.Views.Controls"
              Background="{DynamicResource WindowBackgroundBrush}"
              Foreground="{DynamicResource TextBrush}">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/CORDON;component/Themes/PdaTheme.xaml"/>
+                <ResourceDictionary Source="{x:Static themes:PdaThemeSelector.CurrentSource}"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
