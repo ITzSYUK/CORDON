@@ -494,6 +494,29 @@ public sealed class WorkspaceBuilderTests : IDisposable
     }
 
     [Fact]
+    public async Task BuildAsyncRebuildsWhenFsltxTargetChanges()
+    {
+        CreateFile(
+            _gamePath,
+            "fsgame_coc.ltx",
+            "$app_data_root$ = true | false | appdata\n$source$ = coc");
+        CreateFile(
+            _gamePath,
+            "fsgame_alt.ltx",
+            "$app_data_root$ = true | false | appdata\n$source$ = alt");
+        var profile = CreateProfile();
+        profile.LaunchArguments = "-fsltx fsgame_coc.ltx";
+        await _builder.BuildAsync(_gamePath, profile, new ProgressLog());
+        profile.LaunchArguments = "-fsltx fsgame_alt.ltx";
+        var progress = new ProgressLog();
+
+        var rebuilt = await _builder.BuildAsync(_gamePath, profile, progress);
+
+        Assert.DoesNotContain(progress.Messages, message => message.Contains("Workspace уже актуален", StringComparison.Ordinal));
+        Assert.Contains("$source$ = alt", File.ReadAllText(Path.Combine(rebuilt.WorkspaceRoot, "fsgame_alt.ltx")));
+    }
+
+    [Fact]
     public async Task BuildAsyncReportsExecutableChangeAsRebuildReason()
     {
         CreateFile(_gamePath, "bin/alternate.exe", "alternate executable");

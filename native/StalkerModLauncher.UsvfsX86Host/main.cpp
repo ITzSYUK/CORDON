@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <shellapi.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -16,6 +17,8 @@ namespace fs = std::filesystem;
 
 namespace
 {
+#pragma comment(lib, "shell32.lib")
+
 constexpr std::uint32_t ConfigMagic = 0x32534656; // VFS2
 constexpr std::uintmax_t MaxLogFileBytes = 2 * 1024 * 1024;
 
@@ -197,8 +200,41 @@ void drainLogs(DiagnosticLog* log)
   log->output.flush();
 }
 
-void waitForProcess(HANDLE process, DiagnosticLog* diagnosticLog)
+fs::path processListPath(const fs::path& configurationPath)
 {
+  fs::path result = configurationPath;
+  result += L".pids";
+  return result;
+}
+
+void publishProcessIds(const fs::path& configurationPath)
+{
+  std::size_t count = 0;
+  if (!usvfsGetVFSProcessList(&count, nullptr)) {
+    return;
+  }
+
+  std::vector<DWORD> processIds(count);
+  if (count > 0) {
+    const auto capacity = count;
+    if (!usvfsGetVFSProcessList(&count, processIds.data())) {
+      return;
+    }
+    processIds.resize((std::min)(count, capacity));
+  }
+
+  std::ofstream output(processListPath(configurationPath), std::ios::binary | std::ios::trunc);
+  for (const DWORD processId : processIds) {
+    output << processId << '\n';
+  }
+}
+
+void waitForProcess(
+    HANDLE process,
+    DiagnosticLog* diagnosticLog,
+    const fs::path* configurationPath = nullptr)
+{
+  int processListPolls = 0;
   while (true) {
     const DWORD waitResult = WaitForSingleObject(process, 25);
     if (waitResult == WAIT_OBJECT_0) {
@@ -210,16 +246,21 @@ void waitForProcess(HANDLE process, DiagnosticLog* diagnosticLog)
     }
 
     drainLogs(diagnosticLog);
+    if (configurationPath != nullptr && ++processListPolls == 20) {
+      publishProcessIds(*configurationPath);
+      processListPolls = 0;
+    }
   }
   drainLogs(diagnosticLog);
 }
 
-void waitForVfsProcessTree(DiagnosticLog* diagnosticLog)
+void waitForVfsProcessTree(DiagnosticLog* diagnosticLog, const fs::path& configurationPath)
 {
   // Launchers such as Gunslinger Play.exe exit immediately after spawning the
   // actual game. Keep the controller alive until every hooked descendant exits.
   constexpr int requiredEmptyPolls = 10;
   int emptyPolls = 0;
+  int processListPolls = 0;
   while (emptyPolls < requiredEmptyPolls) {
     std::size_t processCount = 0;
     if (!usvfsGetVFSProcessList(&processCount, nullptr)) {
@@ -228,9 +269,44 @@ void waitForVfsProcessTree(DiagnosticLog* diagnosticLog)
     }
 
     emptyPolls = processCount == 0 ? emptyPolls + 1 : 0;
+    if (++processListPolls == 5 || processCount == 0) {
+      publishProcessIds(configurationPath);
+      processListPolls = 0;
+    }
     drainLogs(diagnosticLog);
     Sleep(100);
   }
+}
+
+int runElevated(const fs::path& executablePath, const fs::path& configurationPath)
+{
+  const auto executable = fs::absolute(executablePath).wstring();
+  const auto parameters = quote(configurationPath.wstring());
+  const auto workingDirectory = fs::path(executable).parent_path().wstring();
+  SHELLEXECUTEINFOW startInfo{};
+  startInfo.cbSize = sizeof(startInfo);
+  startInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+  startInfo.lpVerb = L"runas";
+  startInfo.lpFile = executable.c_str();
+  startInfo.lpParameters = parameters.c_str();
+  startInfo.lpDirectory = workingDirectory.c_str();
+  startInfo.nShow = SW_HIDE;
+  if (!ShellExecuteExW(&startInfo) || startInfo.hProcess == nullptr) {
+    throw std::runtime_error(
+        "Failed to elevate USVFS x86 host: " + std::to_string(GetLastError()));
+  }
+
+  waitForProcess(startInfo.hProcess, nullptr);
+  DWORD exitCode = 1;
+  if (!GetExitCodeProcess(startInfo.hProcess, &exitCode)) {
+    const DWORD error = GetLastError();
+    CloseHandle(startInfo.hProcess);
+    throw std::runtime_error(
+        "Failed to read elevated USVFS x86 host exit code: " + std::to_string(error));
+  }
+
+  CloseHandle(startInfo.hProcess);
+  return static_cast<int>(exitCode);
 }
 }
 
@@ -289,15 +365,32 @@ int wmain(int argc, wchar_t* argv[])
     if (!usvfsCreateProcessHooked(
             config.executable.c_str(), commandBuffer.data(), nullptr, nullptr, FALSE, 0,
             nullptr, config.workingDirectory.c_str(), &startup, &process)) {
-      throw std::runtime_error("usvfsCreateProcessHooked failed: " + std::to_string(GetLastError()));
+      const DWORD error = GetLastError();
+      if (error == ERROR_ELEVATION_REQUIRED) {
+        usvfsDisconnectVFS();
+        if (diagnosticLog.output.is_open()) {
+          diagnosticLog.output << "Target requires elevation; restarting USVFS x86 host as administrator.\n";
+          diagnosticLog.output.close();
+        }
+        return runElevated(argv[0], argv[1]);
+      }
+
+      throw std::runtime_error("usvfsCreateProcessHooked failed: " + std::to_string(error));
     }
 
-    waitForProcess(process.hProcess, diagnosticLog.output.is_open() ? &diagnosticLog : nullptr);
+    const fs::path configurationPath(argv[1]);
+    publishProcessIds(configurationPath);
+    waitForProcess(
+        process.hProcess,
+        diagnosticLog.output.is_open() ? &diagnosticLog : nullptr,
+        &configurationPath);
     DWORD exitCode = 1;
     GetExitCodeProcess(process.hProcess, &exitCode);
     CloseHandle(process.hThread);
     CloseHandle(process.hProcess);
-    waitForVfsProcessTree(diagnosticLog.output.is_open() ? &diagnosticLog : nullptr);
+    waitForVfsProcessTree(
+        diagnosticLog.output.is_open() ? &diagnosticLog : nullptr,
+        configurationPath);
     usvfsDisconnectVFS();
     drainLogs(diagnosticLog.output.is_open() ? &diagnosticLog : nullptr);
     return static_cast<int>(exitCode);

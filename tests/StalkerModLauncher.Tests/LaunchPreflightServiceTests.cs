@@ -6,6 +6,7 @@ namespace StalkerModLauncher.Tests;
 
 public sealed class LaunchPreflightServiceTests : IDisposable
 {
+    private const string ValidFsgame = "$app_data_root$ = true | false | $fs_root$ | appdata";
     private readonly string _root = Path.Combine(Path.GetTempPath(), "StalkerModLauncherTests", Guid.NewGuid().ToString("N"));
 
     [Fact]
@@ -15,7 +16,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
         var builder = new WorkspaceBuilder(paths);
         var service = new LaunchPreflightService(
             new ProfileManager(paths, builder));
-        var game = CreateFile("game/fsgame.ltx");
+        var game = CreateFile("game/fsgame.ltx", ValidFsgame);
         CreateFile("game/bin/xr_3da.exe");
         var patchExecutable = CreateFile("patch/bin/xr_3da.exe");
         var profile = new ModProfile
@@ -42,7 +43,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
         var builder = new WorkspaceBuilder(paths);
         var service = new LaunchPreflightService(
             new ProfileManager(paths, builder));
-        var game = CreateFile("layered-game/fsgame.ltx");
+        var game = CreateFile("layered-game/fsgame.ltx", ValidFsgame);
         CreateFile("layered-game/bin/xr_3da.exe");
         var patchExecutable = CreateFile("layered-patch/bin_x64/xrEngine.exe");
         var profile = new ModProfile
@@ -78,7 +79,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
         var builder = new WorkspaceBuilder(paths);
         var service = new LaunchPreflightService(
             new ProfileManager(paths, builder));
-        var game = CreateFile("game-pinned/fsgame.ltx");
+        var game = CreateFile("game-pinned/fsgame.ltx", ValidFsgame);
         CreateFile("game-pinned/bin/xr_3da.exe");
         var mainExecutable = CreateFile("main/bin_x64/xrEngine.exe");
         CreateFile("patch/bin_x64/xrEngine.exe");
@@ -110,10 +111,10 @@ public sealed class LaunchPreflightServiceTests : IDisposable
         var service = new LaunchPreflightService(
             new ProfileManager(paths, builder));
         var game = Path.Combine(_root, "game-layered");
-        CreateFile("game-layered/fsgame.ltx");
+        CreateFile("game-layered/fsgame.ltx", ValidFsgame);
         CreateFile("game-layered/bin/xr_3da.exe");
-        CreateFile("main/fsgame.ltx");
-        var patchFsgame = CreateFile("patch/fsgame.ltx");
+        CreateFile("main/fsgame.ltx", ValidFsgame);
+        var patchFsgame = CreateFile("patch/fsgame.ltx", ValidFsgame);
         var profile = new ModProfile
         {
             GameInstallPath = game,
@@ -132,13 +133,82 @@ public sealed class LaunchPreflightServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeAsyncReportsManuallySelectedFsgame()
+    {
+        var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
+        var service = new LaunchPreflightService(new ProfileManager(paths, new WorkspaceBuilder(paths)));
+        var game = Path.Combine(_root, "game-manual-fsgame");
+        var selected = CreateFile(
+            "game-manual-fsgame/fsgame_coc.ltx",
+            "$app_data_root$ = true | false | $fs_root$ | _appdata_\\");
+        var executable = CreateFile("manual-fsgame/_bin/xrEngine.exe");
+        var profile = new ModProfile
+        {
+            GameInstallPath = game,
+            ExecutableRelativePath = @"_bin\xrEngine.exe",
+            FsgameSourcePath = selected
+        };
+        profile.Mods.Add(new ModEntry { Name = "Manual", SourcePath = Path.Combine(_root, "manual-fsgame"), Order = 1 });
+
+        var report = await service.AnalyzeAsync(profile);
+
+        Assert.True(report.CanLaunch);
+        Assert.Contains(report.Checks, check => check.Title == "Базовая игра" && check.Status == ProfileHealthStatus.Healthy);
+        Assert.Contains(report.Checks, check => check.Title == "Итоговый бинарник" && check.Details.Contains(executable));
+        Assert.Contains(report.Checks, check => check.Title == "fsgame.ltx" && check.Details == selected);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsyncRejectsManualFsgameWithoutAppDataRoot()
+    {
+        var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
+        var service = new LaunchPreflightService(new ProfileManager(paths, new WorkspaceBuilder(paths)));
+        var game = Path.Combine(_root, "invalid-manual-fsgame");
+        var selected = CreateFile("invalid-manual-fsgame/fsgame_coc.ltx");
+        CreateFile("invalid-manual-fsgame/bin/xr_3da.exe");
+        var profile = new ModProfile
+        {
+            GameInstallPath = game,
+            FsgameSourcePath = selected
+        };
+
+        var report = await service.AnalyzeAsync(profile);
+
+        Assert.False(report.CanLaunch);
+        Assert.Contains(
+            report.Checks,
+            check => check.Title == "fsgame.ltx" &&
+                     check.Status == ProfileHealthStatus.Error &&
+                     check.Details.Contains("$app_data_root$"));
+    }
+
+    [Fact]
+    public async Task AnalyzeAsyncRejectsAutomaticFsgameWithoutAppDataRoot()
+    {
+        var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
+        var service = new LaunchPreflightService(new ProfileManager(paths, new WorkspaceBuilder(paths)));
+        var game = CreateFile("invalid-automatic-fsgame/fsgame.ltx", "invalid");
+        CreateFile("invalid-automatic-fsgame/bin/xr_3da.exe");
+        var profile = new ModProfile { GameInstallPath = Path.GetDirectoryName(game)! };
+
+        var report = await service.AnalyzeAsync(profile);
+
+        Assert.False(report.CanLaunch);
+        Assert.Contains(
+            report.Checks,
+            check => check.Title == "fsgame.ltx" &&
+                     check.Status == ProfileHealthStatus.Error &&
+                     check.Details.Contains("$app_data_root$"));
+    }
+
+    [Fact]
     public async Task AnalyzeAsyncWarnsAndFallsBackWhenRequestedExecutableIsMissing()
     {
         var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
         var builder = new WorkspaceBuilder(paths);
         var service = new LaunchPreflightService(
             new ProfileManager(paths, builder));
-        var game = CreateFile("game/fsgame.ltx");
+        var game = CreateFile("game/fsgame.ltx", ValidFsgame);
         CreateFile("game/bin/xr_3da.exe");
         var profile = new ModProfile
         {
@@ -164,7 +234,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
         var builder = new WorkspaceBuilder(paths);
         var service = new LaunchPreflightService(
             new ProfileManager(paths, builder));
-        var game = CreateFile("broken-game/fsgame.ltx");
+        var game = CreateFile("broken-game/fsgame.ltx", ValidFsgame);
         var profile = new ModProfile
         {
             GameInstallPath = Path.GetDirectoryName(game)!,
@@ -186,7 +256,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
         var builder = new WorkspaceBuilder(paths);
         var service = new LaunchPreflightService(
             new ProfileManager(paths, builder));
-        var game = CreateFile("game-empty-mod/fsgame.ltx");
+        var game = CreateFile("game-empty-mod/fsgame.ltx", ValidFsgame);
         CreateFile("game-empty-mod/bin/xr_3da.exe");
         var emptyMod = Path.Combine(_root, "empty-mod");
         Directory.CreateDirectory(emptyMod);
@@ -216,7 +286,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
             new ProfileManager(paths, builder),
             runtimeDirectory);
         var game = Path.Combine(_root, "usvfs-game");
-        CreateFile("usvfs-game/fsgame.ltx");
+        CreateFile("usvfs-game/fsgame.ltx", ValidFsgame);
         var executable = Path.Combine(game, "bin_x64", "xrEngine.exe");
         CopyExecutable(executable, WindowsExecutableArchitecture.X64);
         var profile = new ModProfile
@@ -254,7 +324,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
             new ProfileManager(paths, builder),
             runtimeDirectory);
         var game = Path.Combine(_root, "incomplete-usvfs-game");
-        CreateFile("incomplete-usvfs-game/fsgame.ltx");
+        CreateFile("incomplete-usvfs-game/fsgame.ltx", ValidFsgame);
         CopyExecutable(
             Path.Combine(game, "bin_x64", "xrEngine.exe"),
             WindowsExecutableArchitecture.X64);
@@ -276,11 +346,11 @@ public sealed class LaunchPreflightServiceTests : IDisposable
                      check.Details.Contains(UsvfsRuntimeFiles.X86ProxyFileName));
     }
 
-    private string CreateFile(string relativePath)
+    private string CreateFile(string relativePath, string contents = "test")
     {
         var path = Path.Combine(_root, relativePath.Replace('/', Path.DirectorySeparatorChar));
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, "test");
+        File.WriteAllText(path, contents);
         return path;
     }
 

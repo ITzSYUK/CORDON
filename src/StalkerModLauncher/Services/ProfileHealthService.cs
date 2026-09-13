@@ -65,6 +65,8 @@ public sealed class ProfileHealthService
                 validation.IsValid ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Error,
                 "Базовая игра",
                 $"{validation.Summary} {string.Join(" ", validation.Messages)}".Trim()));
+
+            AddFsgameSourceCheck(checks, profile, fileLayerPlan);
         }
 
         foreach (var mod in profile.Mods.OrderBy(mod => mod.Order))
@@ -150,6 +152,40 @@ public sealed class ProfileHealthService
             LaunchPlan: launchPlan?.Plan,
             OverlayManifest: overlayManifest,
             UsvfsLogPath: File.Exists(usvfsLogPath) ? usvfsLogPath : null);
+    }
+
+    private static void AddFsgameSourceCheck(
+        List<ProfileHealthCheck> checks,
+        ModProfile profile,
+        FileLayerPlan? fileLayerPlan)
+    {
+        try
+        {
+            var source = fileLayerPlan?.FindFsgameSource() ?? FileLayerPlan.ResolveFsgameSource(profile);
+            if (source is null)
+            {
+                checks.Add(new ProfileHealthCheck(
+                    ProfileHealthStatus.Warning,
+                    "Источник fsgame.ltx",
+                    "Файл не найден автоматически во включённых слоях. Выберите его вручную в настройках профиля."));
+                return;
+            }
+
+            ProfileDataConfigurator.ValidateFsgameSource(source.FullPath);
+            var selection = !string.IsNullOrWhiteSpace(profile.FsgameSourcePath)
+                ? "Выбран вручную"
+                : FileLayerPlan.ResolveFsgameLaunchArgument(profile.LaunchArguments) is null
+                    ? "Найден автоматически"
+                    : "Найден автоматически по параметру -fsltx";
+            checks.Add(new ProfileHealthCheck(
+                ProfileHealthStatus.Healthy,
+                "Источник fsgame.ltx",
+                $"{selection}: {source.FullPath}{Environment.NewLine}Источник: {source.SourceName}."));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
+        {
+            checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Error, "Источник fsgame.ltx", ex.Message));
+        }
     }
 
     private static LaunchPlanResolution? TryCreateLaunchPlan(

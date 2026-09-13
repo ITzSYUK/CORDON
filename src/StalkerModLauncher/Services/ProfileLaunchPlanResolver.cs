@@ -288,6 +288,16 @@ internal static class ProfileLaunchPlanResolver
 
     private static string FindWorkingDirectoryRelative(FileLayerPlan plan)
     {
+        if (plan.UsesFsgameLaunchArgument)
+        {
+            return string.Empty;
+        }
+
+        if (plan.ManualFsgameSource is { } manualSource)
+        {
+            return Path.GetDirectoryName(manualSource.RelativePath) ?? string.Empty;
+        }
+
         string? result = null;
         foreach (var layer in plan.SourceLayers.Where(layer => Directory.Exists(layer.RootPath)))
         {

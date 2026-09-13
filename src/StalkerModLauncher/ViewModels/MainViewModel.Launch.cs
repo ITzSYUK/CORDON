@@ -27,7 +27,7 @@ public sealed partial class MainViewModel
                 profile is not { IsEnabled: true, IsRunning: false } ||
                 !GetProfileValidation(profile, forceRefresh: true).IsValid)
             {
-                Log($"Launch blocked: profile '{profile.Name}' is not ready.", LauncherLogLevel.ErrorsOnly);
+                Log($"Запуск заблокирован: профиль «{profile.Name}» не готов.", LauncherLogLevel.ErrorsOnly);
                 return;
             }
 
@@ -38,7 +38,7 @@ public sealed partial class MainViewModel
             var preflight = await _launchPreflightService.AnalyzeAsync(profile);
             foreach (var warning in preflight.Checks.Where(check => check.Status == ProfileHealthStatus.Warning))
             {
-                Log($"Preflight warning: {warning.Title}: {warning.Details}", LauncherLogLevel.Standard);
+                Log($"Предупреждение проверки: {warning.Title}: {warning.Details}", LauncherLogLevel.Standard);
             }
 
             if (!preflight.CanLaunch)
@@ -46,7 +46,7 @@ public sealed partial class MainViewModel
                 throw new InvalidOperationException(preflight.ToErrorMessage());
             }
 
-            BuildProgressText = "Building workspace...";
+            BuildProgressText = "Подготовка запуска...";
             var progress = new Progress<string>(message =>
             {
                 Log(message, LauncherLogLevel.Detailed);
@@ -55,7 +55,7 @@ public sealed partial class MainViewModel
 
             var session = await _launchCoordinator.StartAsync(profile.GameInstallPath, profile, progress);
             await SaveAsync();
-            Log($"Game process created. PID: {session.ProcessId}", LauncherLogLevel.Detailed);
+            Log($"Процесс игры создан. PID: {session.ProcessId}", LauncherLogLevel.Detailed);
             profile.IsRunning = true;
             RaiseCommandStates();
             _ = ObserveLaunchReadinessAsync(session, profile);
@@ -63,7 +63,7 @@ public sealed partial class MainViewModel
         }
         catch (Exception ex)
         {
-            Log($"Launch failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+            Log($"Ошибка запуска: {ex.Message}", LauncherLogLevel.ErrorsOnly);
             _dialogService.ShowError("Не удалось запустить профиль", ex.Message);
         }
         finally
@@ -81,17 +81,17 @@ public sealed partial class MainViewModel
             var readiness = await session.Readiness;
             if (readiness.Status == GameLaunchReadinessStatus.Ready)
             {
-                Log($"Game launch ready: {readiness.Details}.", LauncherLogLevel.Detailed);
+                Log($"Игра готова к работе: {readiness.Details}.", LauncherLogLevel.Detailed);
                 return;
             }
 
             if (readiness.Status == GameLaunchReadinessStatus.ExitedBeforeReady)
             {
-                Log($"Game exited before readiness: {readiness.Details}", LauncherLogLevel.ErrorsOnly);
+                Log($"Игра завершилась до подтверждения готовности: {readiness.Details}", LauncherLogLevel.ErrorsOnly);
                 return;
             }
 
-            Log($"Possible game launch hang: {readiness.Details}", LauncherLogLevel.ErrorsOnly);
+            Log($"Возможное зависание запуска: {readiness.Details}", LauncherLogLevel.ErrorsOnly);
             var terminate = false;
             await InvokeOnUiAsync(() =>
             {

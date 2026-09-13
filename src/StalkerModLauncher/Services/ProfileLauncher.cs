@@ -47,10 +47,10 @@ public sealed class ProfileLauncher : IProfileLauncher
             profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem &&
             ex is not OperationCanceledException)
         {
-            progress.Report($"USVFS launch failed: {ex.Message}");
+            progress.Report($"Ошибка запуска USVFS: {ex.Message}");
             progress.Report(
-                "USVFS fallback to Workspace was not performed. " +
-                "The selected backend was preserved; choose Workspace in the profile settings to retry safely.");
+                "Профиль не переключён на Workspace автоматически. " +
+                "Чтобы повторить запуск через Workspace, выберите этот режим в настройках профиля.");
             throw;
         }
     }
@@ -62,10 +62,10 @@ public sealed class ProfileLauncher : IProfileLauncher
         CancellationToken cancellationToken)
     {
         var backend = ResolveBackend(profile.LaunchBackendKind);
-        progress.Report($"Launch backend: {backend.Kind}.");
+        progress.Report($"Режим запуска: {(backend.Kind == LaunchBackendKind.VirtualFileSystem ? "USVFS" : "Workspace")}.");
         var context = CreateBackendContext(gamePath, profile, progress);
         var plan = await backend.PrepareAsync(context, progress, cancellationToken);
-        progress.Report($"Starting: {plan.ExecutablePath}");
+        progress.Report($"Запуск: {plan.ExecutablePath}");
         try
         {
             var process = _launchPlanExecutor.Start(plan, progress);

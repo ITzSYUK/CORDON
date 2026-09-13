@@ -6,13 +6,52 @@ public static class ProfileDataPathResolver
 {
     public static string GetGameDataRoot(ModProfile profile, string? workspacePath = null, string? gamePath = null)
     {
+        string? automaticFsgameSourcePath = null;
+        if (profile.UseBaseGameData &&
+            !profile.IsStandalone &&
+            string.IsNullOrWhiteSpace(profile.FsgameSourcePath))
+        {
+            try
+            {
+                if (FileLayerPlan.ResolveFsgameLaunchArgument(profile.LaunchArguments) is { } relativePath)
+                {
+                    automaticFsgameSourcePath = FileLayerPlan.ResolveFsgameSource(profile)?.FullPath
+                        ?? throw new FileNotFoundException(
+                            $"Файл из параметра -fsltx не найден во включённых слоях: {relativePath}");
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidDataException(ex.Message, ex);
+            }
+        }
+
+        return GetGameDataRootCore(profile, workspacePath, gamePath, automaticFsgameSourcePath);
+    }
+
+    internal static string GetGameDataRoot(
+        ModProfile profile,
+        string workspacePath,
+        string gamePath,
+        string? automaticFsgameSourcePath)
+    {
+        return GetGameDataRootCore(profile, workspacePath, gamePath, automaticFsgameSourcePath);
+    }
+
+    private static string GetGameDataRootCore(
+        ModProfile profile,
+        string? workspacePath,
+        string? gamePath,
+        string? automaticFsgameSourcePath)
+    {
         var workspace = workspacePath ?? profile.WorkspacePath;
         if (!profile.UseBaseGameData || profile.IsStandalone)
         {
             return string.IsNullOrWhiteSpace(workspace) ? string.Empty : Path.Combine(workspace, "userdata");
         }
 
-        var root = ProfileAppDataSourceLocator.ResolveConfiguredRoot(gamePath ?? profile.GameInstallPath);
+        var baseGamePath = gamePath ?? profile.GameInstallPath;
+        var root = ResolveConfiguredRoot(profile, baseGamePath, automaticFsgameSourcePath);
         for (var parent = new DirectoryInfo(root); parent is not null; parent = parent.Parent)
         {
             if (!FileSystemSafety.IsFileSystemRoot(parent.FullName) &&
@@ -24,7 +63,6 @@ public static class ProfileDataPathResolver
         {
             throw new InvalidDataException("Общие данные игры не должны пересекаться с рабочей папкой профиля.");
         }
-        var baseGamePath = gamePath ?? profile.GameInstallPath;
         if (!string.IsNullOrWhiteSpace(baseGamePath) && FileSystemSafety.IsDirectoryInside(baseGamePath, root))
         {
             throw new InvalidDataException("Каталог данных не должен совпадать с корнем игры либо содержать его.");
@@ -38,6 +76,25 @@ public static class ProfileDataPathResolver
             throw new InvalidDataException("Каталог данных не должен пересекаться с исходной папкой мода.");
         }
         return root;
+    }
+
+    private static string ResolveConfiguredRoot(
+        ModProfile profile,
+        string baseGamePath,
+        string? automaticFsgameSourcePath)
+    {
+        if (string.IsNullOrWhiteSpace(profile.FsgameSourcePath))
+        {
+            return string.IsNullOrWhiteSpace(automaticFsgameSourcePath)
+                ? ProfileAppDataSourceLocator.ResolveConfiguredRoot(baseGamePath)
+                : ProfileAppDataSourceLocator.ResolveConfiguredRootFromFile(automaticFsgameSourcePath, baseGamePath);
+        }
+
+        var configPath = Path.GetFullPath(profile.FsgameSourcePath.Trim());
+        _ = ProfileExecutableSourceResolver.TryCreateSelection(profile, configPath, includeWorkspace: false)
+            ?? throw new InvalidDataException(
+                "Ручной файл .ltx должен находиться в папке базовой игры или включённого мода.");
+        return ProfileAppDataSourceLocator.ResolveConfiguredRootFromFile(configPath, baseGamePath);
     }
 
     public static IReadOnlyList<string> GetLogDirectories(ModProfile profile)

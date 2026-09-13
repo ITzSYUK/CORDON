@@ -42,6 +42,7 @@ public static class AppSettingsNormalizer
                 ? @"bin\xr_3da.exe"
                 : profile.ExecutableRelativePath;
             profile.ExecutableSourcePath ??= string.Empty;
+            profile.FsgameSourcePath ??= string.Empty;
             profile.UsvfsExecutableOverrideRelativePath ??= string.Empty;
             if (!string.IsNullOrWhiteSpace(profile.UsvfsExecutableOverrideRelativePath) &&
                 !AnomalyUsvfsEngineSelection.TryParseRelativePath(

@@ -141,6 +141,22 @@ public sealed class UsvfsRuntimeTests
         }
     }
 
+    [Fact]
+    public void X86HostProcessListIgnoresInvalidEntries()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"stalker-usvfs-pids-{Guid.NewGuid():N}");
+        try
+        {
+            File.WriteAllLines(path, ["123", "invalid", "0", "456", "123"]);
+
+            Assert.Equal([123, 456], X86UsvfsHostRuntime.ReadProcessIds(path));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     private sealed class FakeUsvfsNativeApi : IUsvfsNativeApi
     {
         private static readonly IntPtr Parameters = new(42);

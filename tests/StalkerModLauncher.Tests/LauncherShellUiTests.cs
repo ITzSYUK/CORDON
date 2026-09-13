@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml.Linq;
+using StalkerModLauncher.Services;
 using StalkerModLauncher.Themes;
 using StalkerModLauncher.Views;
 using StalkerModLauncher.Views.Controls;
@@ -264,6 +265,23 @@ public sealed class LauncherShellUiTests
     }
 
     [Fact]
+    public void ProfileSettingsExposeManualFsgameSelectionInBothInterfaces()
+    {
+        var interfaces = new[]
+        {
+            LoadProjectXaml("Views", "ProfileSettingsWindow.xaml").ToString(),
+            LoadProjectXaml("Views", "Controls", "PdaProfileSettingsView.xaml").ToString()
+        };
+
+        Assert.All(interfaces, xaml =>
+        {
+            Assert.Contains("Источник fsgame.ltx", xaml);
+            Assert.Contains("BrowseFsgameCommand", xaml);
+            Assert.Contains("ClearFsgameSourceCommand", xaml);
+        });
+    }
+
+    [Fact]
     public void TrayPopupCanBeReopenedImmediately()
     {
         Exception? failure = null;
@@ -375,6 +393,31 @@ public sealed class LauncherShellUiTests
             .Count(element => (string?)element.Attribute("Value") == "{StaticResource PdaPowerNormalBrush}"));
         Assert.DoesNotContain("ToolTip=\"Настройки лаунчера\"", classic.ToString());
         Assert.DoesNotContain("ToolTip=\"Настройки лаунчера\"", pda.ToString());
+    }
+
+    [Fact]
+    public void PdaShowsErrorsInsideBothThemes()
+    {
+        var dialogService = new DialogService();
+        string? displayedTitle = null;
+        string? displayedMessage = null;
+        dialogService.ErrorRequested += (title, message) =>
+        {
+            displayedTitle = title;
+            displayedMessage = message;
+        };
+
+        dialogService.ShowError("Ошибка запуска", "Файл не найден.");
+
+        Assert.Equal("Ошибка запуска", displayedTitle);
+        Assert.Equal("Файл не найден.", displayedMessage);
+
+        var pda = LoadProjectXaml("Views", "Controls", "PdaMainView.xaml");
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var panel = Assert.Single(pda.Descendants(), element =>
+            (string?)element.Attribute(xaml + "Name") == "InlineErrorPanel");
+        Assert.Equal("{DynamicResource ModArchiveProgressPanelStyle}", (string?)panel.Attribute("Style"));
+        Assert.Contains("DismissErrorButton_OnClick", panel.ToString());
     }
 
     [Fact]

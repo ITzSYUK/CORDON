@@ -26,6 +26,8 @@ public sealed class ProfileCreationViewModelTests : IDisposable
             Name = "Ликвидация",
             GamePath = game
         };
+        ModProfile? createdProfile = null;
+        viewModel.Completed += (_, profile) => createdProfile = profile;
         viewModel.Mods.Add(new ModEntry { Name = "main", SourcePath = mainMod, Order = 1 });
         viewModel.Mods.Add(new ModEntry { Name = "patch", SourcePath = patch, Order = 2 });
 
@@ -35,6 +37,10 @@ public sealed class ProfileCreationViewModelTests : IDisposable
         Assert.True(viewModel.IsStepThree);
         Assert.Equal(@"bin_x64\xrEngine.exe", viewModel.ExecutableRelativePath);
         Assert.Contains("мод: patch", viewModel.ExecutableDetectionMessage);
+        viewModel.FinishCommand.Execute(null);
+        Assert.Equal(
+            LaunchBackendKind.VirtualFileSystem,
+            Assert.IsType<ModProfile>(createdProfile).LaunchBackendKind);
     }
 
     [Fact]

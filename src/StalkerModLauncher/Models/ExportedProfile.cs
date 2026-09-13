@@ -10,6 +10,7 @@ public sealed class ExportedProfile
     public LaunchBackendKind LaunchBackendKind { get; set; } = LaunchBackendKind.LinkedWorkspace;
     public string ExecutableRelativePath { get; set; } = @"bin\xr_3da.exe";
     public string ExecutableSourcePath { get; set; } = string.Empty;
+    public string FsgameSourcePath { get; set; } = string.Empty;
     public string UsvfsExecutableOverrideRelativePath { get; set; } = string.Empty;
     public string LaunchArguments { get; set; } = "-nointro";
     public string WorkingDirectoryRelative { get; set; } = string.Empty;

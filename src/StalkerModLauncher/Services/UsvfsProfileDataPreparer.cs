@@ -11,33 +11,45 @@ internal static class UsvfsProfileDataPreparer
         IProgress<string>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var source = layerPlan.FindFinalFile("fsgame.ltx");
+        var source = layerPlan.FindFsgameSource();
         if (source is null)
         {
-            throw new FileNotFoundException(
-                "fsgame.ltx was not found in the enabled layers. " +
-                "Profile-local saves and logs cannot be guaranteed.");
+            throw new FileNotFoundException(ProfileDataConfigurator.MissingFsgameMessage);
         }
 
         var profileDataPath = layerPlan.GameDataRoot;
-        var destination = Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx");
+        var destination = FileSystemSafety.ResolvePathInside(
+            manifest.WriteOverlayRoot,
+            source.RelativePath,
+            "Profile fsgame.ltx");
+        ProfileDataConfigurator.MigrateLegacyManualData(layerPlan, manifest.WriteOverlayRoot, progress);
         ProfileWritableGameFileStore.PrepareForVirtualFileSystem(
             layerPlan,
             profileWorkspace,
             progress);
         ProfileDataConfigurator.WriteProfileFsgame(source.FullPath, destination, profileDataPath);
+        var launchDestination = layerPlan.UsesFsgameLaunchArgument
+            ? FileSystemSafety.ResolvePathInside(
+                manifest.WriteOverlayRoot,
+                layerPlan.FsgameLaunchRelativePath,
+                "fsgame.ltx from -fsltx")
+            : destination;
+        if (!launchDestination.Equals(destination, StringComparison.OrdinalIgnoreCase))
+        {
+            ProfileDataConfigurator.WriteProfileFsgame(source.FullPath, launchDestination, profileDataPath);
+        }
         Directory.CreateDirectory(layerPlan.GameDataRoot);
         if (layerPlan.UsesSharedGameData)
         {
             progress?.Report($"USVFS: общие данные базовой игры: {layerPlan.GameDataRoot}. Существующие файлы сохранены.");
-            return destination;
+            return launchDestination;
         }
         ProfileDataConfigurator.EnsureProfileUserLtx(
             layerPlan,
             profileDataPath,
             progress);
         ProfileShaderCacheSeeder.Seed(layerPlan, profileDataPath, progress, cancellationToken);
-        progress?.Report($"USVFS profile fsgame.ltx prepared from {source.SourceName}.");
-        return destination;
+        progress?.Report($"USVFS: профильный fsgame.ltx подготовлен из слоя «{source.SourceName}»{(layerPlan.ManualFsgameSource is null ? string.Empty : " (ручной выбор)")}.");
+        return launchDestination;
     }
 }

@@ -31,6 +31,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         File.WriteAllText(
             Path.Combine(game, "fsgame.ltx"),
             "$app_data_root$ = true | false | $fs_root$ | _appdata_\\");
+        var selectedFsgame = Path.Combine(mod, "fsgame_coc.ltx");
+        File.WriteAllText(selectedFsgame, "$app_data_root$ = true | false | $fs_root$ | _appdata_\\");
         Directory.CreateDirectory(Path.Combine(mod, "bin_x64"));
         CopyExecutable(Path.Combine(mod, "bin_x64", "xrEngine.exe"), WindowsExecutableArchitecture.X64);
         CreateUsvfsRuntimeFiles(game);
@@ -41,6 +43,7 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             Name = "USVFS",
             GameInstallPath = game,
             ExecutableRelativePath = @"bin_x64\xrEngine.exe",
+            FsgameSourcePath = selectedFsgame,
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
         profile.Mods.Add(new ModEntry
@@ -88,9 +91,13 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             [game, mod, manifest.WriteOverlayRoot],
             runtime.MappingPlan.Operations.Select(operation => operation.SourcePath).ToArray());
         Assert.Equal(bootstrapRoot, runtime.MappingPlan.VirtualRoot);
+        var selectedProfileFsgame = Path.Combine(manifest.WriteOverlayRoot, "fsgame_coc.ltx");
         var profileFsgame = Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx");
+        Assert.True(File.Exists(selectedProfileFsgame));
         Assert.True(File.Exists(profileFsgame));
-        Assert.Contains(Path.Combine(workspace, "userdata"), File.ReadAllText(profileFsgame));
+        Assert.Equal(File.ReadAllText(selectedProfileFsgame), File.ReadAllText(profileFsgame));
+        Assert.Contains(Path.Combine(workspace, "userdata"), File.ReadAllText(selectedProfileFsgame));
+        Assert.Equal(File.ReadAllText(selectedProfileFsgame), File.ReadAllText(Path.Combine(bootstrapRoot, "fsgame_coc.ltx")));
         Assert.Equal(File.ReadAllText(profileFsgame), File.ReadAllText(Path.Combine(bootstrapRoot, "fsgame.ltx")));
     }
 

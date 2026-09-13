@@ -2,6 +2,16 @@ namespace StalkerModLauncher.Services;
 
 internal static class ProfileDataConfigurator
 {
+    private const string LegacyManualDataMigrationMarkerFileName = ".stalker-launcher-manual-data-migrated";
+
+    internal static string MissingFsgameMessage =>
+        "Файл fsgame.ltx не найден во включённых слоях. Выберите его вручную в одном из включённых слоёв." +
+        Environment.NewLine + Environment.NewLine +
+        "Перейдите: «Настройки профиля» → «Источник fsgame.ltx» → «Выбрать файл...»." +
+        Environment.NewLine + Environment.NewLine +
+        "Обратите внимание: в зависимости от модификации файл может называться по-разному: " +
+        "fsgame.ltx, fsgame_coc.ltx или fsolr.ltx.";
+
     public static string Configure(
         string gamePath,
         string currentWorkspace,
@@ -10,23 +20,57 @@ internal static class ProfileDataConfigurator
         FileLayerPlan? layerPlan = null,
         CancellationToken cancellationToken = default)
     {
-        var fsgameDir = FindFileDirectory(currentWorkspace, "fsgame.ltx");
-        if (fsgameDir is null)
+        var manualSource = layerPlan?.ManualFsgameSource;
+        var selectedSource = manualSource ??
+                             (layerPlan?.UsesFsgameLaunchArgument == true ? layerPlan.FindFsgameSource() : null);
+        var fsgamePath = selectedSource is null
+            ? FindFileDirectory(currentWorkspace, "fsgame.ltx") is { } directory
+                ? Path.Combine(directory, "fsgame.ltx")
+                : null
+            : FileSystemSafety.ResolvePathInside(
+                currentWorkspace,
+                selectedSource.RelativePath,
+                "Profile fsgame.ltx");
+        if (fsgamePath is null)
         {
-            throw new FileNotFoundException(
-                "fsgame.ltx was not found in the workspace. Profile-local saves and logs cannot be guaranteed.");
+            throw new FileNotFoundException(MissingFsgameMessage);
         }
 
+        var fsgameDir = Path.GetDirectoryName(fsgamePath)!;
         var relativeDir = Path.GetRelativePath(currentWorkspace, fsgameDir);
-        var workingDirectoryRelative = relativeDir == "." ? string.Empty : relativeDir;
+        var workingDirectoryRelative = layerPlan?.UsesFsgameLaunchArgument == true || relativeDir == "."
+            ? string.Empty
+            : relativeDir;
         if (workingDirectoryRelative.Length > 0)
         {
             progress.Report($"Detected fsgame.ltx in '{relativeDir}' — using as working directory.");
         }
 
         var profileDataPath = layerPlan?.GameDataRoot ?? Path.Combine(profileWorkspace, "userdata");
-        var fsgamePath = Path.Combine(fsgameDir, "fsgame.ltx");
-        WriteProfileFsgame(fsgamePath, fsgamePath, profileDataPath);
+        if (layerPlan is not null)
+        {
+            MigrateLegacyManualData(
+                layerPlan,
+                Path.Combine(profileWorkspace, "userdata", "overwrite"),
+                progress);
+        }
+        var sourcePath = selectedSource?.FullPath ?? fsgamePath;
+        WriteProfileFsgame(sourcePath, fsgamePath, profileDataPath);
+        if (layerPlan?.UsesFsgameLaunchArgument == true)
+        {
+            var launchArgumentPath = FileSystemSafety.ResolvePathInside(
+                currentWorkspace,
+                layerPlan.FsgameLaunchRelativePath,
+                "fsgame.ltx from -fsltx");
+            if (!launchArgumentPath.Equals(fsgamePath, StringComparison.OrdinalIgnoreCase))
+            {
+                WriteProfileFsgame(sourcePath, launchArgumentPath, profileDataPath);
+            }
+        }
+        if (manualSource is not null)
+        {
+            progress.Report($"Используется выбранная вручную конфигурация fsgame: {manualSource.FullPath}");
+        }
         Directory.CreateDirectory(profileDataPath);
         if (layerPlan?.UsesSharedGameData == true)
         {
@@ -50,12 +94,74 @@ internal static class ProfileDataConfigurator
         return workingDirectoryRelative;
     }
 
+    internal static void MigrateLegacyManualData(
+        FileLayerPlan layerPlan,
+        string writeOverlayRoot,
+        IProgress<string>? progress)
+    {
+        if (layerPlan.UsesSharedGameData || layerPlan.ManualFsgameSource is not { } source)
+        {
+            return;
+        }
+
+        var baseRoot = Path.GetFullPath(layerPlan.BaseGame.RootPath);
+        var configuredRoot = ProfileAppDataSourceLocator.ResolveConfiguredRootFromFile(source.FullPath, baseRoot);
+        if (FileSystemSafety.IsSameDirectory(configuredRoot, baseRoot) ||
+            !FileSystemSafety.IsDirectoryInside(configuredRoot, baseRoot))
+        {
+            return;
+        }
+
+        var relativePath = Path.GetRelativePath(baseRoot, configuredRoot);
+        var legacyRoot = FileSystemSafety.ResolvePathInside(writeOverlayRoot, relativePath, "Legacy profile data");
+        if (!Directory.Exists(legacyRoot))
+        {
+            return;
+        }
+
+        var markerPath = Path.Combine(legacyRoot, LegacyManualDataMigrationMarkerFileName);
+        if (File.Exists(markerPath))
+        {
+            return;
+        }
+
+        var result = GameDataCopyService.CopyMissingFromProfileOverwrite(legacyRoot, layerPlan.GameDataRoot);
+        File.WriteAllText(markerPath, string.Empty);
+        progress?.Report(
+            $"Перенесены ранее перенаправленные данные профиля: {result.Copied:N0}; пропущено существующих: {result.Skipped:N0}.");
+    }
+
     internal static void WriteProfileFsgame(string sourcePath, string destinationPath, string profileDataPath)
     {
-        WriteProfileFsgameDefinition(sourcePath, destinationPath, $"true | false| {profileDataPath}");
+        var appDataDefinition = $"true | false| {profileDataPath}";
+        WriteProfileFsgameDefinition(sourcePath, destinationPath, appDataDefinition);
+        if (!Path.GetFileName(destinationPath).Equals("fsgame.ltx", StringComparison.OrdinalIgnoreCase))
+        {
+            WriteProfileFsgameDefinition(
+                sourcePath,
+                Path.Combine(Path.GetDirectoryName(destinationPath)!, "fsgame.ltx"),
+                appDataDefinition);
+        }
     }
 
     private static void WriteProfileFsgameDefinition(string sourcePath, string destinationPath, string appDataDefinition)
+    {
+        var (lines, appDataLineIndex) = ReadValidatedFsgame(sourcePath);
+        lines[appDataLineIndex] = $"$app_data_root$ = {appDataDefinition}";
+        Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
+        if (File.Exists(destinationPath))
+        {
+            // The workspace entry can be a link to a read-only source. Recreate the entry
+            // instead of ever writing through that link into the game or a mod folder.
+            File.Delete(destinationPath);
+        }
+
+        File.WriteAllLines(destinationPath, lines, XRayTextEncoding.Config);
+    }
+
+    internal static void ValidateFsgameSource(string sourcePath) => _ = ReadValidatedFsgame(sourcePath);
+
+    private static (string[] Lines, int AppDataLineIndex) ReadValidatedFsgame(string sourcePath)
     {
         var lines = File.ReadAllLines(sourcePath, XRayTextEncoding.Config);
         var appDataLineIndex = Array.FindIndex(
@@ -68,16 +174,7 @@ internal static class ProfileDataConfigurator
                 "Profile-local saves and logs cannot be guaranteed, so launch was blocked.");
         }
 
-        lines[appDataLineIndex] = $"$app_data_root$ = {appDataDefinition}";
-        Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
-        if (Path.GetFullPath(sourcePath).Equals(Path.GetFullPath(destinationPath), StringComparison.OrdinalIgnoreCase))
-        {
-            // The workspace entry can be a link to a read-only source. Recreate the entry
-            // instead of ever writing through that link into the game or a mod folder.
-            File.Delete(destinationPath);
-        }
-
-        File.WriteAllLines(destinationPath, lines, XRayTextEncoding.Config);
+        return (lines, appDataLineIndex);
     }
 
     public static string? FindFileDirectory(string searchRoot, string fileName)

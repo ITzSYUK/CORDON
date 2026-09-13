@@ -13,6 +13,19 @@ internal static class GameDataCopyService
         if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination) ||
             FileSystemSafety.IsDirectoryInside(source, destination) || FileSystemSafety.IsDirectoryInside(destination, source))
             throw new InvalidOperationException("Каталоги копирования должны быть отдельными и не вложенными друг в друга.");
+        return CopyMissingCore(source, destination);
+    }
+
+    internal static (int Copied, int Skipped) CopyMissingFromProfileOverwrite(string source, string destination)
+    {
+        var overwrite = Path.Combine(Path.GetFullPath(destination), "overwrite");
+        if (!FileSystemSafety.IsDirectoryInside(source, overwrite))
+            throw new InvalidOperationException($"Источник должен находиться в профильном overwrite: {overwrite}");
+        return CopyMissingCore(source, destination);
+    }
+
+    private static (int Copied, int Skipped) CopyMissingCore(string source, string destination)
+    {
         if (!Directory.Exists(source)) throw new DirectoryNotFoundException($"Нет данных для копирования: {source}");
         EnsureNoLinks(source);
         EnsureNoLinks(destination);

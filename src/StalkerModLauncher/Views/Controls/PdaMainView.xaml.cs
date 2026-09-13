@@ -28,6 +28,13 @@ public partial class PdaMainView : UserControl
     public event RoutedEventHandler? LogRequested;
     public event RoutedEventHandler? LauncherSettingsRequested;
 
+    public void ShowError(string title, string message)
+    {
+        InlineErrorTitle.Text = title;
+        InlineErrorMessage.Text = message;
+        InlineErrorPanel.Visibility = Visibility.Visible;
+    }
+
     public void ShowPage(
         FrameworkElement page,
         string title,
@@ -102,6 +109,7 @@ public partial class PdaMainView : UserControl
     private void LogButton_OnClick(object sender, RoutedEventArgs e) => LogRequested?.Invoke(this, e);
     private void LauncherSettingsButton_OnClick(object sender, RoutedEventArgs e) => LauncherSettingsRequested?.Invoke(this, e);
     private void PowerButton_OnClick(object sender, RoutedEventArgs e) => Window.GetWindow(this)?.Close();
+    private void DismissErrorButton_OnClick(object sender, RoutedEventArgs e) => InlineErrorPanel.Visibility = Visibility.Collapsed;
 
     private void ProfilesButton_OnClick(object sender, RoutedEventArgs e)
     {

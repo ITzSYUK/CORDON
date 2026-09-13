@@ -19,7 +19,8 @@ public sealed class ProfileManager
         var profile = new ModProfile
         {
             Name = GetUniqueName(profiles, $"Profile {profiles.Count + 1}"),
-            Description = "S.T.A.L.K.E.R. mod profile"
+            Description = "S.T.A.L.K.E.R. mod profile",
+            LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
 
         profile.ModInstallPath = _paths.GetDefaultModInstallPath(profile.GameInstallPath);
@@ -40,6 +41,7 @@ public sealed class ProfileManager
             LaunchArguments = source.LaunchArguments,
             ExecutableRelativePath = source.ExecutableRelativePath,
             ExecutableSourcePath = source.ExecutableSourcePath,
+            FsgameSourcePath = source.FsgameSourcePath,
             UsvfsExecutableOverrideRelativePath = source.UsvfsExecutableOverrideRelativePath,
             WorkingDirectoryRelative = source.WorkingDirectoryRelative,
             GameInstallPath = source.GameInstallPath,

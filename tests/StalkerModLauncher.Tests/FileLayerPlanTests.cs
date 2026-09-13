@@ -65,6 +65,26 @@ public sealed class FileLayerPlanTests : IDisposable
             () => FileLayerPlan.CreateLinkedWorkspace("game", profile, "workspace"));
     }
 
+    [Theory]
+    [InlineData("-fsltx")]
+    [InlineData(@"-fsltx ..\outside.ltx")]
+    [InlineData("-fsltx config.txt")]
+    public void CreateLinkedWorkspaceRejectsInvalidFsltx(string launchArguments)
+    {
+        var game = Path.Combine(_root, "invalid-fsltx-game");
+        Directory.CreateDirectory(game);
+        var profile = new ModProfile
+        {
+            GameInstallPath = game,
+            LaunchArguments = launchArguments
+        };
+
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            FileLayerPlan.CreateLinkedWorkspace(game, profile, Path.Combine(_root, "invalid-fsltx-workspace")));
+
+        Assert.Contains("-fsltx", error.Message);
+    }
+
     [Fact]
     public void CreateLinkedWorkspaceAddsMo2OverwriteAfterModsWithoutChangingProfileModList()
     {

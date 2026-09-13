@@ -17,6 +17,7 @@ public sealed class ProfileSettingsViewModelTests : IDisposable
     {
         Directory.CreateDirectory(_root);
         File.WriteAllText(Path.Combine(_root, "AnomalyLauncher.exe"), string.Empty);
+        File.WriteAllText(Path.Combine(_root, "fsgame.ltx"), "$app_data_root$ = true | false | _appdata_\\");
         var profile = new ModProfile
         {
             Name = "Anomaly",
@@ -76,12 +77,112 @@ public sealed class ProfileSettingsViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveSharedDataUsesManuallySelectedNamedFsgame()
+    {
+        var game = Path.Combine(_root, "game");
+        var mod = Path.Combine(_root, "mod");
+        Directory.CreateDirectory(game);
+        Directory.CreateDirectory(mod);
+        var fsgame = Path.Combine(mod, "fsgame_coc.ltx");
+        File.WriteAllText(fsgame, "$app_data_root$ = true | false | _appdata_\\");
+        var profile = new ModProfile
+        {
+            Name = "Call Of Chernobyl",
+            GameInstallPath = game,
+            ExecutableRelativePath = "xrEngine.exe",
+            FsgameSourcePath = fsgame
+        };
+        profile.Mods.Add(new ModEntry { SourcePath = mod, IsEnabled = true });
+        var saved = false;
+        var viewModel = new ProfileSettingsViewModel(
+            profile,
+            new DialogService(),
+            () =>
+            {
+                saved = true;
+                return Task.CompletedTask;
+            },
+            _ => null,
+            () => null,
+            _ => false);
+
+        viewModel.UseBaseGameData = true;
+        var result = await viewModel.TrySaveAsync();
+
+        Assert.True(result);
+        Assert.True(saved);
+        Assert.True(profile.UseBaseGameData);
+        Assert.Equal(fsgame, profile.FsgameSourcePath);
+    }
+
+    [Fact]
+    public async Task SaveWithoutFsgameShowsErrorAndDoesNotPersist()
+    {
+        var game = Path.Combine(_root, "missing-fsgame");
+        Directory.CreateDirectory(game);
+        var profile = new ModProfile
+        {
+            Name = "Missing fsgame",
+            GameInstallPath = game,
+            ExecutableRelativePath = "xrEngine.exe"
+        };
+        var saved = false;
+        var dialogs = new RecordingDialogService();
+        var viewModel = new ProfileSettingsViewModel(
+            profile,
+            dialogs,
+            () =>
+            {
+                saved = true;
+                return Task.CompletedTask;
+            },
+            _ => null,
+            () => null,
+            _ => false);
+
+        var result = await viewModel.TrySaveAsync();
+
+        Assert.False(result);
+        Assert.False(saved);
+        Assert.Equal("Не удалось сохранить настройки профиля", dialogs.ErrorTitle);
+        Assert.Equal(ProfileDataConfigurator.MissingFsgameMessage, dialogs.ErrorMessage);
+    }
+
+    [Fact]
+    public void SharedDataDescriptionUsesNamedFsgameFromFsltx()
+    {
+        var game = Path.Combine(_root, "fsltx-game");
+        Directory.CreateDirectory(game);
+        File.WriteAllText(
+            Path.Combine(game, "fsgame_coc.ltx"),
+            "$app_data_root$ = true | false | $fs_root$ | coc-data");
+        var profile = new ModProfile
+        {
+            GameInstallPath = game,
+            LaunchArguments = "-fsltx fsgame_coc.ltx",
+            UseBaseGameData = true
+        };
+        var viewModel = new ProfileSettingsViewModel(
+            profile,
+            new DialogService(),
+            () => Task.CompletedTask,
+            _ => null,
+            () => null,
+            _ => false);
+
+        Assert.Contains(Path.Combine(game, "coc-data"), viewModel.GameDataDescription);
+    }
+
+    [Fact]
     public async Task SaveWhenPersistenceFailsKeepsWindowOpenAndRestoresProfile()
     {
+        Directory.CreateDirectory(_root);
+        File.WriteAllText(Path.Combine(_root, "fsgame.ltx"), "$app_data_root$ = true | false | _appdata_\\");
         var profile = new ModProfile
         {
             Name = "Original",
             Description = "Saved description",
+            GameInstallPath = _root,
             ExecutableRelativePath = @"bin\game.exe",
             LaunchArguments = "-saved",
             LaunchBackendKind = LaunchBackendKind.LinkedWorkspace

@@ -32,6 +32,27 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
         return new UsvfsProcessLaunchResult(exitCode, processId);
     }
 
+    internal static IReadOnlyList<int> ReadProcessIds(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return [];
+        }
+
+        try
+        {
+            return File.ReadAllLines(path)
+                .Select(line => int.TryParse(line, out var processId) ? processId : 0)
+                .Where(processId => processId > 0)
+                .Distinct()
+                .ToArray();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return [];
+        }
+    }
+
     private sealed class Session : IUsvfsRuntimeSession
     {
         private const uint ConfigMagic = 0x32534656;
@@ -41,6 +62,7 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
         private readonly UsvfsSessionReservation _reservation;
         private Process? _hostProcess;
         private string? _configurationPath;
+        private string? _processListPath;
         private bool _disposed;
 
         public Session(
@@ -76,6 +98,7 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
             _configurationPath = Path.Combine(
                 AppPaths.Current.TempDirectory,
                 $"stalker-usvfs-x86-{Guid.NewGuid():N}.bin");
+            _processListPath = _configurationPath + ".pids";
             Directory.CreateDirectory(Path.GetDirectoryName(_configurationPath)!);
             WriteConfiguration(_configurationPath, _mappingPlan, launchRequest, _options);
             progress?.Report($"USVFS x86 host starting: {launchRequest.ExecutablePath}");
@@ -100,14 +123,19 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
 
         public IReadOnlyList<int> GetActiveProcessIds()
         {
+            var processIds = new HashSet<int>(ReadProcessIds(_processListPath));
             try
             {
-                return _hostProcess is { HasExited: false } process ? [process.Id] : [];
+                if (_hostProcess is { HasExited: false } process)
+                {
+                    processIds.Add(process.Id);
+                }
             }
             catch (InvalidOperationException)
             {
-                return [];
             }
+
+            return processIds.ToArray();
         }
 
         public ValueTask DisposeAsync()
@@ -121,11 +149,16 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
             // The Process returned by StartProcess belongs to the launch/session tracker.
             // Disposing it here races with GameSessionTracker reading ExitCode.
             _hostProcess = null;
-            if (!string.IsNullOrWhiteSpace(_configurationPath))
+            foreach (var path in new[] { _configurationPath, _processListPath })
             {
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    continue;
+                }
+
                 try
                 {
-                    File.Delete(_configurationPath);
+                    File.Delete(path);
                 }
                 catch (IOException)
                 {

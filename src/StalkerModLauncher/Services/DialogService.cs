@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Media;
 using Microsoft.Win32;
 using System.Windows;
 
@@ -6,6 +7,8 @@ namespace StalkerModLauncher.Services;
 
 public class DialogService
 {
+    internal event Action<string, string>? ErrorRequested;
+
     public static string? PickFolder(string description, string? initialPath = null)
     {
         var dialog = new OpenFolderDialog
@@ -53,6 +56,13 @@ public class DialogService
 
     public virtual void ShowError(string title, string message)
     {
+        if (ErrorRequested is { } handler)
+        {
+            SystemSounds.Hand.Play();
+            handler(title, message);
+            return;
+        }
+
         MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
     }
 

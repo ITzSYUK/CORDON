@@ -40,6 +40,53 @@ public sealed class ProfileHealthServiceTests : IDisposable
             report.Checks,
             check => check.Title == "Сохранения" &&
                      check.Details.StartsWith("1 файл", StringComparison.Ordinal));
+        Assert.Contains(
+            report.Checks,
+            check => check.Title == "Источник fsgame.ltx" &&
+                     check.Status == ProfileHealthStatus.Healthy &&
+                     check.Details.Contains("Найден автоматически", StringComparison.Ordinal) &&
+                     check.Details.Contains(Path.Combine(game, "fsgame.ltx"), StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AnalyzeAsyncReportsManuallySelectedFsgameSource()
+    {
+        var game = CreateGame();
+        var mod = Path.Combine(_root, "manual-fsgame");
+        var selected = CreateFileAtPath(
+            Path.Combine(mod, "fsgame_coc.ltx"),
+            "$app_data_root$ = true | false | _appdata_\\");
+        var profile = new ModProfile
+        {
+            GameInstallPath = game,
+            FsgameSourcePath = selected
+        };
+        profile.Mods.Add(new ModEntry { Name = "CoC", SourcePath = mod, Order = 1 });
+
+        var report = await _service.AnalyzeAsync(profile);
+
+        Assert.Contains(
+            report.Checks,
+            check => check.Title == "Источник fsgame.ltx" &&
+                     check.Status == ProfileHealthStatus.Healthy &&
+                     check.Details.Contains("Выбран вручную", StringComparison.Ordinal) &&
+                     check.Details.Contains(selected, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AnalyzeAsyncWarnsWhenFsgameSourceIsNotFound()
+    {
+        var game = Path.Combine(_root, "game-without-fsgame");
+        CreateFileAtPath(Path.Combine(game, "bin", "xr_3da.exe"));
+        var profile = new ModProfile { GameInstallPath = game };
+
+        var report = await _service.AnalyzeAsync(profile);
+
+        Assert.Contains(
+            report.Checks,
+            check => check.Title == "Источник fsgame.ltx" &&
+                     check.Status == ProfileHealthStatus.Warning &&
+                     check.Details.Contains("не найден автоматически", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -309,7 +356,9 @@ public sealed class ProfileHealthServiceTests : IDisposable
     private string CreateGame()
     {
         var path = Path.Combine(_root, "game");
-        CreateFileAtPath(Path.Combine(path, "fsgame.ltx"));
+        CreateFileAtPath(
+            Path.Combine(path, "fsgame.ltx"),
+            "$app_data_root$ = true | false | _appdata_\\");
         CreateFileAtPath(Path.Combine(path, "bin", "xr_3da.exe"));
         return path;
     }
@@ -319,10 +368,10 @@ public sealed class ProfileHealthServiceTests : IDisposable
         return CreateFileAtPath(Path.Combine(_root, relativePath.Replace('/', Path.DirectorySeparatorChar)));
     }
 
-    private static string CreateFileAtPath(string path)
+    private static string CreateFileAtPath(string path, string contents = "test")
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, "test");
+        File.WriteAllText(path, contents);
         return path;
     }
 

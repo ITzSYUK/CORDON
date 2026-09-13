@@ -108,11 +108,28 @@ public sealed class LaunchPreflightService
             checks.Add(Error("Бинарник запуска", ex.Message));
         }
 
-        var fsgameSource = FindFinalSource(profile, "fsgame.ltx", fileLayerPlan);
-        checks.Add(new ProfileHealthCheck(
-            fsgameSource is null ? ProfileHealthStatus.Warning : ProfileHealthStatus.Healthy,
-            "fsgame.ltx",
-            fsgameSource ?? "Файл не найден. Некоторые движки запускаются без него, но сохранения профиля могут не изолироваться."));
+        try
+        {
+            var fsgameSource = FindFinalSource(profile, "fsgame.ltx", fileLayerPlan);
+            if (!profile.IsStandalone && fsgameSource is null)
+            {
+                throw new FileNotFoundException("Файл fsgame.ltx не найден во включённых слоях.");
+            }
+
+            if (!profile.IsStandalone)
+            {
+                ProfileDataConfigurator.ValidateFsgameSource(fsgameSource!);
+            }
+
+            checks.Add(new ProfileHealthCheck(
+                fsgameSource is null ? ProfileHealthStatus.Warning : ProfileHealthStatus.Healthy,
+                "fsgame.ltx",
+                fsgameSource ?? "Файл не найден. Некоторые движки запускаются без него, но сохранения профиля могут не изолироваться."));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
+        {
+            checks.Add(Error("fsgame.ltx", ex.Message));
+        }
 
         AddUsvfsRuntimeCheck(checks, profile, fileLayerPlan, launchPlan);
 
@@ -379,7 +396,17 @@ public sealed class LaunchPreflightService
     {
         if (fileLayerPlan is not null)
         {
+            if (relativePath.Equals("fsgame.ltx", StringComparison.OrdinalIgnoreCase))
+            {
+                return fileLayerPlan.FindFsgameSource()?.FullPath;
+            }
+
             return FileLayerSourceResolver.FindFinalSource(fileLayerPlan, relativePath)?.FullPath;
+        }
+
+        if (!profile.IsStandalone && relativePath.Equals("fsgame.ltx", StringComparison.OrdinalIgnoreCase))
+        {
+            return FileLayerPlan.ResolveFsgameSource(profile)?.FullPath;
         }
 
         var roots = new List<string>();

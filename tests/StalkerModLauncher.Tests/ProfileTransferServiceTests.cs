@@ -22,6 +22,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
             IsStandalone = true,
             IsDiscordStatusEnabled = false,
             ExecutableRelativePath = @"bin_x64\xrEngine.exe",
+            FsgameSourcePath = @"D:\Mods\Zona\fsgame.ltx",
             LaunchArguments = "-nointro",
             UsvfsExecutableOverrideRelativePath = @"bin\AnomalyDX9AVX.exe",
             GameInstallPath = @"D:\Games\Stalker",
@@ -43,6 +44,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
         Assert.Equal(source.Name, imported.Name);
         Assert.False(imported.IsDiscordStatusEnabled);
         Assert.Equal(source.ExecutableRelativePath, imported.ExecutableRelativePath);
+        Assert.Equal(source.FsgameSourcePath, imported.FsgameSourcePath);
         Assert.Equal(source.UsvfsExecutableOverrideRelativePath, imported.UsvfsExecutableOverrideRelativePath);
         Assert.Equal(source.Mods[0].SourcePath, imported.Mods[0].SourcePath);
         Assert.Equal(1, imported.Mods[0].Order);

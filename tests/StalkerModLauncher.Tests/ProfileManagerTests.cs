@@ -30,6 +30,7 @@ public sealed class ProfileManagerTests
         Assert.Empty(created.GameInstallPath);
         Assert.Empty(created.WorkspacePath);
         Assert.EndsWith("Mods", created.ModInstallPath);
+        Assert.Equal(LaunchBackendKind.VirtualFileSystem, created.LaunchBackendKind);
     }
 
     [Fact]

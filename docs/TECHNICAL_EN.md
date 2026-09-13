@@ -183,6 +183,8 @@ Explorer counts hard-linked files toward the visible logical size. Actual additi
 
 USVFS mode uses the official [ModOrganizer2/usvfs](https://github.com/ModOrganizer2/usvfs) runtime. Instead of creating `current`, it presents one merged virtual tree to the launched game.
 
+New standard profiles select USVFS by default. Existing profiles, standalone builds, and imported profiles retain their stored or explicitly selected backend.
+
 The shared layer plan is converted into this mapping order:
 
 ```text
@@ -195,7 +197,7 @@ base game -> mods in order -> known writable files -> profile overwrite
 
 x64 targets are started through the managed adapter and `usvfs_x64.dll`. x86 targets use `StalkerModLauncher.UsvfsX86Host.exe`, which loads `usvfs_x86.dll` in a process with matching architecture.
 
-The x86 host remains alive while injected child processes are active. The managed x64 path likewise waits for the USVFS process list to remain empty after the initial EXE exits. This is required for launcher applications that exit immediately after starting the actual engine.
+The x86 host remains alive while injected child processes are active and publishes their PIDs to the managed readiness monitor. The managed x64 path likewise waits for the USVFS process list to remain empty after the initial EXE exits. This is required for launcher applications that exit immediately after starting the actual engine.
 
 Only one USVFS session may run at a time because the official runtime uses shared process state and a shared namespace.
 
@@ -244,7 +246,9 @@ StalkerModLauncher.UsvfsX86Host.exe
 
 Standard profiles now have a **Game data** setting: profile-local data (default), or the base game's configured directory. Shared mode resolves `$app_data_root$` and referenced aliases from the base game's `fsgame.ltx`; missing, unknown, cyclic, and unsafe paths block launch. Only the prepared configuration is rewritten. Standalone profiles keep their direct-launch behavior.
 
-Workspace and USVFS write the resolved absolute path into the prepared `fsgame.ltx`. With USVFS, the shared directory stays outside the virtual bootstrap root and is not mapped through `CreateTarget`, so X-Ray accesses the base game's directory directly. This is an explicit write exception for that directory only. Service stores, diagnostics, writable game-tree files, and overwrite remain inside the profile. Save/log/screenshot discovery and folder opening follow the selected location; deleting a profile never deletes shared data.
+Workspace and USVFS write the resolved absolute path into the prepared configuration. A manually selected file keeps its original name and relative path. If its name differs from `fsgame.ltx`, the prepared working layer also gets a sibling `fsgame.ltx` compatibility copy with identical content; the source file in the game or mod is neither renamed nor changed. `$fs_root$` resolves from the game or virtual root rather than the configuration directory. With USVFS, the shared directory stays outside the virtual bootstrap root and is not mapped through `CreateTarget`, so X-Ray accesses the base game's directory directly. This is an explicit write exception for that directory only. Service stores, diagnostics, writable game-tree files, and overwrite remain inside the profile. Save/log/screenshot discovery and folder opening follow the selected location; deleting a profile never deletes shared data.
+
+The `-fsltx` launch argument selects its relative `.ltx` path through normal layer priority. A manual source controls the contents; when `-fsltx` names another path, a prepared copy of that manual file is also written there. Readiness checks and profile-data discovery use the same source as the actual launch.
 
 Switching does not copy or overwrite game data. The separate **Copy missing data** action copies from the other location to the selected one, skips existing entries, rejects directory links, and excludes service stores. Canceling profile settings does not undo an explicitly requested copy. The following isolation/seeding rules apply to profile-local mode only.
 
@@ -254,7 +258,7 @@ Persistent data for a standard profile is kept in:
 <workspace>\userdata
 ```
 
-The launcher takes the winning `fsgame.ltx`, preserves its encoding, including Windows-1251, and changes `$app_data_root$` to the profile's absolute `userdata` path. Other aliases and mod-specific lines remain intact. Managed workspaces always use the ASCII name `profile-<ID>`, so iXray and other engines with limited Unicode support receive a normal path without an extra junction or second data directory.
+The launcher takes the selected file-system configuration, preserves its name, relative path, and encoding, including Windows-1251, and changes `$app_data_root$` to the profile's absolute `userdata` path. Other aliases and mod-specific lines remain intact. Data previously misrouted into the corresponding `userdata\overwrite` subtree is copied without replacing existing files, and the source copy is retained. Managed workspaces always use the ASCII name `profile-<ID>`, so iXray and other engines with limited Unicode support receive a normal path without an extra junction or second data directory.
 
 For a non-standalone profile, launch is blocked when `fsgame.ltx` is missing or does not contain `$app_data_root$`. Workspace and USVFS therefore never report profile-data isolation as successful when the engine would still use a shared data directory.
 

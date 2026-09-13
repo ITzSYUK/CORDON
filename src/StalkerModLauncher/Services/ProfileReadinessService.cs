@@ -67,11 +67,13 @@ public static class ProfileReadinessService
 
         var executableIsSafe = ValidateExecutablePath(profile, messages);
         var exclusionsAreValid = ValidateExcludedFiles(profile, enabledMods, messages);
+        var fsgameIsValid = ValidateFsgamePath(profile, messages);
         var ready = gameValidation.IsValid &&
                     profile.IsEnabled &&
                     missingMods.Length == 0 &&
                     overwriteExists &&
                     exclusionsAreValid &&
+                    fsgameIsValid &&
                     executableIsSafe;
         return CreateResult(ready, ready ? "Готов к запуску." : string.Join(Environment.NewLine, messages.Distinct()), messages);
     }
@@ -117,31 +119,57 @@ public static class ProfileReadinessService
         try
         {
             FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, "Launch executable");
-            if (profile.IsStandalone || string.IsNullOrWhiteSpace(profile.ExecutableSourcePath))
+            if (profile.IsStandalone)
             {
                 return true;
             }
 
-            var pinnedSource = ProfileExecutableSourceResolver.FindPinnedSourceRoot(profile);
-            if (pinnedSource is null)
-            {
-                messages.Add("Ручной источник файла запуска недоступен или мод выключен.");
-                return false;
-            }
-
-            var executable = FileSystemSafety.ResolvePathInside(
-                pinnedSource.RootPath,
+            var roots = ProfileExecutableSourceResolver.GetSourceRoots(profile, includeWorkspace: false)
+                .Select(root => new LaunchExecutableSearchRoot(
+                    root.RootPath,
+                    root.DisplayName,
+                    root.Order,
+                    root.IsBaseGameRoot))
+                .ToArray();
+            var executable = ProfileLaunchPlanResolver.ResolveExecutableSource(
+                profile,
+                roots,
                 profile.ExecutableRelativePath,
-                "Launch executable");
-            if (File.Exists(executable))
+                allowPinnedSource: true,
+                allowDedicatedFallback: LaunchExecutableDetector.IsDedicatedExecutable(profile.ExecutableRelativePath));
+            if (executable is { IsAvailable: true })
             {
                 return true;
             }
 
-            messages.Add($"Ручной файл запуска не найден: {executable}");
+            messages.Add(executable?.Reason ?? $"Файл запуска не найден: {profile.ExecutableRelativePath}");
             return false;
         }
         catch (Exception ex)
+        {
+            messages.Add(ex.Message);
+            return false;
+        }
+    }
+
+    private static bool ValidateFsgamePath(ModProfile profile, List<string> messages)
+    {
+        try
+        {
+            var source = FileLayerPlan.ResolveFsgameSource(profile);
+            if (source is not null)
+            {
+                ProfileDataConfigurator.ValidateFsgameSource(source.FullPath);
+                return true;
+            }
+
+            var relativePath = FileLayerPlan.ResolveFsgameLaunchArgument(profile.LaunchArguments);
+            messages.Add(relativePath is null
+                ? "Файл fsgame.ltx не найден во включённых слоях."
+                : $"Файл из параметра -fsltx не найден во включённых слоях: {relativePath}");
+            return false;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
         {
             messages.Add(ex.Message);
             return false;

@@ -152,6 +152,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public Task Initialization { get; }
 
+    internal DialogService DialogService => _dialogService;
+
     public bool HasProfiles => Profiles.Count > 0;
 
     public bool CanImportSettings => _paths.IsPortable && !HasProfiles;

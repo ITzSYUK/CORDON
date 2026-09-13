@@ -51,8 +51,8 @@ public sealed class ProfileLauncherTests
 
         await launcher.LaunchAsync("game", new ModProfile(), progress);
 
-        Assert.Contains("Launch backend: LinkedWorkspace.", progress.Messages);
-        Assert.Contains("Starting: C:\\Game\\LinkedWorkspace.exe", progress.Messages);
+        Assert.Contains("Режим запуска: Workspace.", progress.Messages);
+        Assert.Contains("Запуск: C:\\Game\\LinkedWorkspace.exe", progress.Messages);
     }
 
     [Fact]
@@ -70,10 +70,10 @@ public sealed class ProfileLauncherTests
             launcher.LaunchAsync("game", profile, progress));
 
         Assert.Equal("overlay setup failed", error.Message);
-        Assert.Contains("USVFS launch failed: overlay setup failed", progress.Messages);
+        Assert.Contains("Ошибка запуска USVFS: overlay setup failed", progress.Messages);
         Assert.Contains(
             progress.Messages,
-            message => message.Contains("fallback to Workspace was not performed", StringComparison.Ordinal));
+            message => message.Contains("не переключён на Workspace автоматически", StringComparison.Ordinal));
         Assert.Equal(LaunchBackendKind.VirtualFileSystem, profile.LaunchBackendKind);
         Assert.Null(linkedBackend.Profile);
     }

@@ -23,16 +23,23 @@ public partial class PdaWindow : Window
         viewModel.Mo2ImportRequested += ViewModel_Mo2ImportRequested;
         viewModel.ModScanSelectionRequested += ViewModel_ModScanSelectionRequested;
         viewModel.ConflictExplorerRequested += ViewModel_ConflictExplorerRequested;
+        viewModel.DialogService.ErrorRequested += DialogService_ErrorRequested;
         Closed += (_, _) =>
         {
             viewModel.ProfileCreationRequested -= ViewModel_ProfileCreationRequested;
             viewModel.Mo2ImportRequested -= ViewModel_Mo2ImportRequested;
             viewModel.ModScanSelectionRequested -= ViewModel_ModScanSelectionRequested;
             viewModel.ConflictExplorerRequested -= ViewModel_ConflictExplorerRequested;
+            viewModel.DialogService.ErrorRequested -= DialogService_ErrorRequested;
         };
     }
 
     public bool UsesNewTheme { get; }
+
+    private void DialogService_ErrorRequested(string title, string message)
+    {
+        Dispatcher.Invoke(() => PdaView.ShowError(title, message));
+    }
 
     private void ViewModel_ConflictExplorerRequested(object? sender, ModEntry? mod)
     {

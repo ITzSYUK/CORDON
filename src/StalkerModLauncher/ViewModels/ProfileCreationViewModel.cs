@@ -282,6 +282,9 @@ public sealed class ProfileCreationViewModel : ObservableObject
             Name = Name.Trim(),
             Description = IsStandalone ? "Автономная сборка" : "Мод поверх базовой игры",
             IsStandalone = IsStandalone,
+            LaunchBackendKind = IsStandalone
+                ? LaunchBackendKind.LinkedWorkspace
+                : LaunchBackendKind.VirtualFileSystem,
             GameInstallPath = IsStandalone ? string.Empty : GamePath.Trim(),
             ExecutableRelativePath = ExecutableRelativePath.Trim(),
             ExecutableSourcePath = IsStandalone ? string.Empty : _executableSourcePath,

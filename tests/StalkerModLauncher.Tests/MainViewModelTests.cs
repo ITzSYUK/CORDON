@@ -660,7 +660,9 @@ public sealed class MainViewModelTests
         var gameRoot = Directory.CreateDirectory(Path.Combine(root, "game")).FullName;
         Directory.CreateDirectory(Path.Combine(gameRoot, "bin"));
         File.WriteAllText(Path.Combine(gameRoot, "bin", "xr_3da.exe"), string.Empty);
-        File.WriteAllText(Path.Combine(gameRoot, "fsgame.ltx"), string.Empty);
+        File.WriteAllText(
+            Path.Combine(gameRoot, "fsgame.ltx"),
+            "$app_data_root$ = true | false | $fs_root$ | appdata");
         return gameRoot;
     }
 

@@ -119,7 +119,10 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                     bootstrapRoot,
                     progress,
                     cancellationToken);
-            MaterializeBootstrapFsgame(profileFsgamePath, bootstrap.RootPath);
+            MaterializeBootstrapFsgame(
+                profileFsgamePath,
+                context.OverlayManifest.WriteOverlayRoot,
+                bootstrap.RootPath);
         }
 
         var usePhysicalGameRoot = usePhysicalAnomalyRoot || usePhysicalBaseGameRoot || usePhysicalArchiveRoot;
@@ -188,14 +191,26 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             session.GetActiveProcessIds));
     }
 
-    private static void MaterializeBootstrapFsgame(string? profileFsgamePath, string bootstrapRoot)
+    private static void MaterializeBootstrapFsgame(
+        string? profileFsgamePath,
+        string writeOverlayRoot,
+        string bootstrapRoot)
     {
         if (string.IsNullOrWhiteSpace(profileFsgamePath) || !File.Exists(profileFsgamePath))
         {
             return;
         }
 
-        File.Copy(profileFsgamePath, Path.Combine(bootstrapRoot, "fsgame.ltx"), overwrite: true);
+        string[] sourcePaths = Path.GetFileName(profileFsgamePath).Equals("fsgame.ltx", StringComparison.OrdinalIgnoreCase)
+            ? [profileFsgamePath]
+            : [profileFsgamePath, Path.Combine(Path.GetDirectoryName(profileFsgamePath)!, "fsgame.ltx")];
+        foreach (var sourcePath in sourcePaths)
+        {
+            var relativePath = Path.GetRelativePath(writeOverlayRoot, sourcePath);
+            var destination = FileSystemSafety.ResolvePathInside(bootstrapRoot, relativePath, "Bootstrap fsgame.ltx");
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            File.Copy(sourcePath, destination, overwrite: true);
+        }
     }
 
     private static bool IsAnomalyEngine(string executableRelativePath)
@@ -207,7 +222,7 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
 
     private static bool RequiresPhysicalArchiveRoot(FileLayerPlan layerPlan)
     {
-        var fsgame = layerPlan.FindFinalFile("fsgame.ltx");
+        var fsgame = layerPlan.FindFsgameSource();
         if (fsgame is null)
         {
             return false;

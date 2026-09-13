@@ -19,6 +19,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     private string _profileDescription;
     private string _executableRelativePath;
     private string _executableSourcePath;
+    private string _fsgameSourcePath;
     private string _launchArguments;
     private string _workspacePath;
     private string _mo2OverwritePath;
@@ -54,6 +55,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         _profileDescription = profile.Description;
         _executableRelativePath = profile.ExecutableRelativePath;
         _executableSourcePath = profile.ExecutableSourcePath;
+        _fsgameSourcePath = profile.FsgameSourcePath;
         _launchArguments = profile.LaunchArguments;
         _workspacePath = profile.WorkspacePath;
         _mo2OverwritePath = profile.Mo2OverwritePath;
@@ -81,6 +83,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(async () => await TrySaveAsync());
         BrowseExecutableCommand = new RelayCommand(BrowseExecutable);
         ClearExecutableSourceCommand = new RelayCommand(ClearExecutableSource, () => !string.IsNullOrWhiteSpace(ExecutableSourcePath));
+        BrowseFsgameCommand = new RelayCommand(BrowseFsgame, () => CanChooseFsgame);
+        ClearFsgameSourceCommand = new RelayCommand(ClearFsgameSource, () => CanChooseFsgame && HasManualFsgameSource);
         OpenProfileFolderCommand = new RelayCommand(OpenProfileFolder);
         RemoveMo2OverwriteCommand = new RelayCommand(RemoveMo2Overwrite);
         BrowseModInstallPathCommand = new RelayCommand(BrowseModInstallPath);
@@ -128,6 +132,26 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     }
 
     public bool HasManualExecutableSource => !string.IsNullOrWhiteSpace(ExecutableSourcePath);
+
+    public string FsgameSourcePath
+    {
+        get => _fsgameSourcePath;
+        private set
+        {
+            if (SetProperty(ref _fsgameSourcePath, value))
+            {
+                OnPropertyChanged(nameof(FsgameSourceDisplay));
+                OnPropertyChanged(nameof(HasManualFsgameSource));
+                ((RelayCommand)ClearFsgameSourceCommand).RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public bool HasManualFsgameSource => !string.IsNullOrWhiteSpace(FsgameSourcePath);
+
+    public string FsgameSourceDisplay => HasManualFsgameSource
+        ? $"Закреплён вручную: {FsgameSourcePath}"
+        : "Автоматически по текущему приоритету слоёв профиля.";
 
     public string ExecutableSourceDisplay
     {
@@ -207,14 +231,18 @@ public sealed class ProfileSettingsViewModel : ObservableObject
 
             OnPropertyChanged(nameof(CanUseUsvfs));
             OnPropertyChanged(nameof(CanChooseGameData));
+            OnPropertyChanged(nameof(CanChooseFsgame));
             OnPropertyChanged(nameof(GameDataDescription));
             OnPropertyChanged(nameof(IsAnomalyUsvfsOptionsVisible));
+            ((RelayCommand)BrowseFsgameCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)ClearFsgameSourceCommand).RaiseCanExecuteChanged();
         }
     }
 
     public bool IsUsvfsAvailable => _isUsvfsAvailable;
 
     public bool CanChooseGameData => !IsStandalone && !_profile.IsRunning;
+    public bool CanChooseFsgame => !IsStandalone && !_profile.IsRunning;
     public bool UseBaseGameData
     {
         get => _useBaseGameData;
@@ -249,13 +277,19 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         }
     }
 
-    private string GetSelectedGameDataRoot() => ProfileDataPathResolver.GetGameDataRoot(new ModProfile
+    private ModProfile CreateEditedProfile() => new()
     {
         GameInstallPath = _profile.GameInstallPath,
         WorkspacePath = WorkspacePath,
         UseBaseGameData = UseBaseGameData,
+        FsgameSourcePath = FsgameSourcePath,
+        LaunchArguments = LaunchArguments,
+        Mo2OverwritePath = Mo2OverwritePath,
         Mods = _profile.Mods
-    });
+    };
+
+    private string GetSelectedGameDataRoot() =>
+        ProfileDataPathResolver.GetGameDataRoot(CreateEditedProfile());
 
     public bool CanUseUsvfs => IsUsvfsAvailable && !IsStandalone;
 
@@ -343,6 +377,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     public ICommand SaveCommand { get; }
     public ICommand BrowseExecutableCommand { get; }
     public ICommand ClearExecutableSourceCommand { get; }
+    public ICommand BrowseFsgameCommand { get; }
+    public ICommand ClearFsgameSourceCommand { get; }
     public ICommand OpenProfileFolderCommand { get; }
     public ICommand RemoveMo2OverwriteCommand { get; }
     public ICommand BrowseModInstallPathCommand { get; }
@@ -362,6 +398,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
                 GameInstallPath = _profile.GameInstallPath,
                 WorkspacePath = WorkspacePath,
                 UseBaseGameData = true,
+                FsgameSourcePath = FsgameSourcePath,
+                LaunchArguments = LaunchArguments,
                 Mods = _profile.Mods
             });
             var source = UseBaseGameData ? profileData : sharedData;
@@ -384,6 +422,28 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         {
             _dialogService.ShowError("Некорректные настройки профиля", string.Join(Environment.NewLine, validation.Messages));
             return false;
+        }
+
+        if (!IsStandalone)
+        {
+            try
+            {
+                var source = FileLayerPlan.ResolveFsgameSource(CreateEditedProfile());
+                if (source is null)
+                {
+                    _dialogService.ShowError(
+                        "Не удалось сохранить настройки профиля",
+                        ProfileDataConfigurator.MissingFsgameMessage);
+                    return false;
+                }
+
+                ProfileDataConfigurator.ValidateFsgameSource(source.FullPath);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
+            {
+                _dialogService.ShowError("Не удалось сохранить настройки профиля", ex.Message);
+                return false;
+            }
         }
 
         var snapshot = ProfileSettingsSnapshot.Capture(_profile);
@@ -412,6 +472,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         _profile.Description = ProfileDescription;
         _profile.ExecutableRelativePath = ExecutableRelativePath;
         _profile.ExecutableSourcePath = IsStandalone ? string.Empty : ExecutableSourcePath;
+        _profile.FsgameSourcePath = IsStandalone ? string.Empty : FsgameSourcePath;
         _profile.LaunchArguments = LaunchArguments;
         _profile.WorkspacePath = WorkspacePath;
         _profile.Mo2OverwritePath = Mo2OverwritePath;
@@ -454,6 +515,37 @@ public sealed class ProfileSettingsViewModel : ObservableObject
 
         SetExecutableSelection(selection);
     }
+
+    private void BrowseFsgame()
+    {
+        var initialPath = HasManualFsgameSource
+            ? Path.GetDirectoryName(FsgameSourcePath)
+            : _profile.GameInstallPath;
+        var selected = DialogService.PickFile(
+            "Выберите конфигурацию fsgame",
+            "LTX files (*.ltx)|*.ltx",
+            Directory.Exists(initialPath) ? initialPath : null);
+        if (selected is null)
+        {
+            return;
+        }
+
+        var sourceRoots = new[] { _profile.GameInstallPath }
+            .Concat(_profile.Mods.Where(mod => mod.IsEnabled).Select(mod => mod.SourcePath));
+        if (!Path.GetExtension(selected).Equals(".ltx", StringComparison.OrdinalIgnoreCase) ||
+            !sourceRoots.Any(root =>
+                Directory.Exists(root) && FileSystemSafety.IsDirectoryInside(selected, root)))
+        {
+            _dialogService.ShowError(
+                "Некорректный fsgame.ltx",
+                "Выберите файл .ltx из папки базовой игры или включённого мода.");
+            return;
+        }
+
+        FsgameSourcePath = Path.GetFullPath(selected);
+    }
+
+    private void ClearFsgameSource() => FsgameSourcePath = string.Empty;
 
     private void BrowseStandaloneExecutable()
     {
@@ -646,6 +738,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         string Description,
         string ExecutableRelativePath,
         string ExecutableSourcePath,
+        string FsgameSourcePath,
         string LaunchArguments,
         string WorkspacePath,
         string Mo2OverwritePath,
@@ -662,6 +755,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             profile.Description,
             profile.ExecutableRelativePath,
             profile.ExecutableSourcePath,
+            profile.FsgameSourcePath,
             profile.LaunchArguments,
             profile.WorkspacePath,
             profile.Mo2OverwritePath,
@@ -679,6 +773,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             profile.Description = Description;
             profile.ExecutableRelativePath = ExecutableRelativePath;
             profile.ExecutableSourcePath = ExecutableSourcePath;
+            profile.FsgameSourcePath = FsgameSourcePath;
             profile.LaunchArguments = LaunchArguments;
             profile.WorkspacePath = WorkspacePath;
             profile.Mo2OverwritePath = Mo2OverwritePath;

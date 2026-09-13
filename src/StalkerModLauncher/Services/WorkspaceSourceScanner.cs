@@ -54,6 +54,8 @@ internal static class WorkspaceSourceScanner
             FormatVersion = formatVersion,
             ExecutableRelativePath = profile.ExecutableRelativePath,
             ExecutableSourcePath = profile.ExecutableSourcePath,
+            FsgameSourcePath = profile.FsgameSourcePath,
+            FsgameLaunchRelativePath = plan.UsesFsgameLaunchArgument ? plan.FsgameLaunchRelativePath : string.Empty,
             ProfileMode = profile.IsStandalone ? "standalone" : "overlay",
             WorkspacePath = Path.GetDirectoryName(plan.UserData.RootPath)!,
             Layers = plan.SourceLayers
@@ -124,6 +126,8 @@ internal static class WorkspaceSourceScanner
 
         builder.AppendLine(fingerprint.ExecutableRelativePath);
         builder.AppendLine(fingerprint.ExecutableSourcePath);
+        builder.AppendLine(fingerprint.FsgameSourcePath);
+        builder.AppendLine(fingerprint.FsgameLaunchRelativePath);
         builder.AppendLine(fingerprint.ProfileMode);
         builder.AppendLine(fingerprint.WorkspacePath);
 
@@ -210,6 +214,8 @@ internal sealed class WorkspaceBuildFingerprint
     public string FormatVersion { get; set; } = string.Empty;
     public string ExecutableRelativePath { get; set; } = string.Empty;
     public string ExecutableSourcePath { get; set; } = string.Empty;
+    public string FsgameSourcePath { get; set; } = string.Empty;
+    public string FsgameLaunchRelativePath { get; set; } = string.Empty;
     public string ProfileMode { get; set; } = string.Empty;
     public string WorkspacePath { get; set; } = string.Empty;
     public List<WorkspaceBuildLayerFingerprint> Layers { get; set; } = [];

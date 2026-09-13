@@ -247,6 +247,15 @@
                             <Button Content="Скопировать недостающие данные в выбранную папку"
                                     Command="{Binding CopyGameDataCommand}" IsEnabled="{Binding CanChooseGameData}"
                                     HorizontalAlignment="Left" Margin="0,6,0,0"/>
+                            <TextBlock Text="Источник fsgame.ltx" Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="12" Margin="0,12,0,4"/>
+                            <TextBlock Text="{Binding FsgameSourceDisplay}" Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="11" TextWrapping="Wrap"/>
+                            <WrapPanel Margin="0,6,0,0" IsEnabled="{Binding CanChooseFsgame}">
+                                <Button Content="Выбрать файл..." Command="{Binding BrowseFsgameCommand}"
+                                        Margin="0,0,8,0"/>
+                                <Button Content="Выбирать автоматически" Command="{Binding ClearFsgameSourceCommand}"/>
+                            </WrapPanel>
                         </StackPanel>
                     </StackPanel>
 

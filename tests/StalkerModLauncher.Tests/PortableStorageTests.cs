@@ -28,6 +28,7 @@ public sealed class PortableStorageTests : IDisposable
             WorkspacePath = Path.Combine(workspace, "profile-test"),
             ModInstallPath = paths.GetDefaultModInstallPath(game),
             ExecutableSourcePath = external,
+            FsgameSourcePath = Path.Combine(external, "fsgame.ltx"),
             UseBaseGameData = true
         };
         profile.Mods.Add(new ModEntry { SourcePath = external });
@@ -51,6 +52,7 @@ public sealed class PortableStorageTests : IDisposable
         Assert.Equal(paths.GetDefaultModInstallPath(game), restoredProfile.ModInstallPath);
         Assert.Equal(external, Assert.Single(restoredProfile.Mods).SourcePath);
         Assert.Equal(external, restoredProfile.ExecutableSourcePath);
+        Assert.Equal(Path.Combine(external, "fsgame.ltx"), restoredProfile.FsgameSourcePath);
         Assert.True(restoredProfile.UseBaseGameData);
         Assert.True(restored.StartWithWindows);
         Assert.True(File.Exists(movedPaths.SettingsBackupFile));

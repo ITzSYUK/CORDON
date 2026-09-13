@@ -361,6 +361,7 @@ public sealed class SettingsStore : IDisposable
         {
             profile.GameInstallPath = transform(profile.GameInstallPath ?? string.Empty);
             profile.ExecutableSourcePath = transform(profile.ExecutableSourcePath ?? string.Empty);
+            profile.FsgameSourcePath = transform(profile.FsgameSourcePath ?? string.Empty);
             profile.WorkspacePath = transform(profile.WorkspacePath ?? string.Empty);
             profile.ModInstallPath = transform(profile.ModInstallPath ?? string.Empty);
             profile.Mo2OverwritePath = transform(profile.Mo2OverwritePath ?? string.Empty);
