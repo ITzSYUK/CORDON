@@ -104,20 +104,8 @@ internal static class LauncherSelfUpdateService
             throw new InvalidOperationException("Временная папка обновления недопустима.");
         }
 
-        using var parent = Process.GetProcessById(request.ParentProcessId);
-        var parentPath = parent.MainModule?.FileName
-            ?? throw new InvalidOperationException("Не удалось проверить запущенный лаунчер.");
-        var parentFileName = Path.GetFileName(parentPath);
-        if (!parentFileName.Equals("CORDON.exe", StringComparison.OrdinalIgnoreCase) &&
-            !parentFileName.Equals("CORDON-Standalone.exe", StringComparison.OrdinalIgnoreCase) ||
-            !Path.GetDirectoryName(Path.GetFullPath(parentPath))!
-                .Equals(request.TargetDirectory.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException("Запрос обновления создан не текущим лаунчером.");
-        }
-
         ValidateStagingDirectory(request.StagingDirectory, request.Package);
-        await parent.WaitForExitAsync();
+        await WaitForParentExitAsync(request.ParentProcessId, request.TargetDirectory);
         ValidateStagingDirectory(request.StagingDirectory, request.Package);
         ApplyStagedFiles(request.StagingDirectory, request.TargetDirectory, request.Package);
 
@@ -133,6 +121,30 @@ internal static class LauncherSelfUpdateService
         startInfo.ArgumentList.Add(Environment.ProcessPath!);
         using var launcher = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Не удалось запустить обновлённый лаунчер.");
+    }
+
+    internal static async Task WaitForParentExitAsync(int parentProcessId, string targetDirectory)
+    {
+        try
+        {
+            using var parent = Process.GetProcessById(parentProcessId);
+            var parentPath = parent.MainModule?.FileName
+                ?? throw new InvalidOperationException("Не удалось проверить запущенный лаунчер.");
+            var parentFileName = Path.GetFileName(parentPath);
+            if ((!parentFileName.Equals("CORDON.exe", StringComparison.OrdinalIgnoreCase) &&
+                 !parentFileName.Equals("CORDON-Standalone.exe", StringComparison.OrdinalIgnoreCase)) ||
+                !Path.GetDirectoryName(Path.GetFullPath(parentPath))!
+                    .Equals(targetDirectory.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Запрос обновления создан не текущим лаунчером.");
+            }
+
+            await parent.WaitForExitAsync();
+        }
+        catch (ArgumentException)
+        {
+            // Основной лаунчер мог штатно завершиться между запуском updater и этой проверкой.
+        }
     }
 
     public static void ScheduleUpdaterCleanup(string[] arguments)

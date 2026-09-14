@@ -103,6 +103,12 @@ public sealed class LauncherSelfUpdateServiceTests : IDisposable
             out _));
     }
 
+    [Fact]
+    public async Task WaitForParentExitAsyncAllowsAlreadyExitedParent()
+    {
+        await LauncherSelfUpdateService.WaitForParentExitAsync(int.MaxValue, _root);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))
