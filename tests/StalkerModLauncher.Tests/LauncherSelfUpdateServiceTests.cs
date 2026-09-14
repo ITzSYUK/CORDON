@@ -77,9 +77,22 @@ public sealed class LauncherSelfUpdateServiceTests : IDisposable
 
         Assert.Throws<InvalidDataException>(() =>
             LauncherReleaseDownloadService.VerifyArchiveChecksum(
-                $"{checksum}  release.zip",
-                archivePath,
-                "release.zip"));
+                checksum,
+                archivePath));
+    }
+
+    [Fact]
+    public void GetReleaseAssetSha256UsesGitHubAssetDigest()
+    {
+        using var document = System.Text.Json.JsonDocument.Parse(
+            """{"tag_name":"v1.4.5","assets":[{"name":"CORDON-v1.4.5-win-x64-standalone.zip","digest":"sha256:333F37A1E87F56883E045CD06163EA294FB640936293A7E305220C4506FC81A0"}]}""");
+
+        var hash = LauncherReleaseDownloadService.GetReleaseAssetSha256(
+            document.RootElement,
+            "v1.4.5",
+            "CORDON-v1.4.5-win-x64-standalone.zip");
+
+        Assert.Equal("333F37A1E87F56883E045CD06163EA294FB640936293A7E305220C4506FC81A0", hash);
     }
 
     [Fact]

@@ -382,6 +382,10 @@ public sealed class LauncherSettingsViewModel : ObservableObject
             UpdateStatus = $"Пакет {packageName} проверен и готов к установке: {Path.GetFileName(path)}.";
             _requestExit?.Invoke();
         }
+        catch (HttpRequestException ex) when (ex.StatusCode is not null)
+        {
+            UpdateStatus = $"GitHub вернул HTTP {(int)ex.StatusCode.Value}. Проверьте файлы выбранного релиза.";
+        }
         catch (HttpRequestException)
         {
             UpdateStatus = $"Не удалось скачать пакет {packageName}. Проверьте подключение к интернету.";

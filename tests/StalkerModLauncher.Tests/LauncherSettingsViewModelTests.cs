@@ -199,6 +199,31 @@ public sealed class LauncherSettingsViewModelTests
     }
 
     [Fact]
+    public async Task DownloadReportsGitHubHttpStatusInsteadOfConnectionFailure()
+    {
+        var viewModel = new LauncherSettingsViewModel(
+            LauncherPreferences.Default,
+            @"C:\Logs",
+            _ => Task.CompletedTask,
+            new DialogService(),
+            () => Task.FromResult(new LauncherUpdateResult(
+                "1.0.0",
+                "v1.1.0",
+                "https://github.com/ITzSYUK/CORDON/releases/tag/v1.1.0",
+                IsUpdateAvailable: true)),
+            downloadReleasePackage: (_, _, _) => throw new HttpRequestException(
+                "Not found",
+                inner: null,
+                statusCode: System.Net.HttpStatusCode.NotFound),
+            confirmInstall: _ => true);
+
+        await viewModel.CheckForUpdatesAsync();
+        viewModel.DownloadMinimalCommand.Execute(null);
+
+        Assert.Contains("HTTP 404", viewModel.UpdateStatus);
+    }
+
+    [Fact]
     public void ResetRestoresVisibleDefaultsAfterConfirmationWithoutSaving()
     {
         var saveCalls = 0;

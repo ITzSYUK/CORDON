@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
+using System.Text.Json;
 
 namespace StalkerModLauncher.Services;
 
@@ -22,10 +23,12 @@ public static class LauncherReleaseDownloadService
         CancellationToken cancellationToken = default)
     {
         var downloadUri = BuildDownloadUri(releaseUrl, releaseTag, package);
+        var assetFileName = Path.GetFileName(downloadUri.LocalPath);
+        var expectedHash = await GetReleaseAssetSha256Async(releaseTag, assetFileName, cancellationToken);
         var destinationDirectory = Path.GetFullPath(AppContext.BaseDirectory);
         Directory.CreateDirectory(destinationDirectory);
 
-        var destinationPath = GetAvailablePath(destinationDirectory, Path.GetFileName(downloadUri.LocalPath));
+        var destinationPath = GetAvailablePath(destinationDirectory, assetFileName);
         var temporaryPath = destinationPath + ".partial";
         var downloadCompleted = false;
 
@@ -52,7 +55,7 @@ public static class LauncherReleaseDownloadService
 
             File.Move(temporaryPath, destinationPath);
             downloadCompleted = true;
-            await VerifyArchiveChecksumAsync(downloadUri, destinationPath, cancellationToken);
+            VerifyArchiveChecksum(expectedHash, destinationPath);
             LauncherSelfUpdateService.PrepareAndLaunch(destinationPath, package);
             return destinationPath;
         }
@@ -97,15 +100,9 @@ public static class LauncherReleaseDownloadService
         return new Uri($"https://github.com/{GitHubRepository}/releases/download/{releaseTag}/{fileName}");
     }
 
-    internal static void VerifyArchiveChecksum(string checksumText, string archivePath, string assetFileName)
+    internal static void VerifyArchiveChecksum(string expectedHash, string archivePath)
     {
-        var expectedHash = checksumText
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-            .Select(line => line.Split("  ", 2, StringSplitOptions.None))
-            .Where(parts => parts.Length == 2 && parts[1].Equals(assetFileName, StringComparison.Ordinal))
-            .Select(parts => parts[0])
-            .SingleOrDefault();
-        if (expectedHash is null || expectedHash.Length != 64 || !expectedHash.All(Uri.IsHexDigit))
+        if (expectedHash.Length != 64 || !expectedHash.All(Uri.IsHexDigit))
         {
             throw new InvalidDataException("Релиз не содержит корректную контрольную сумму архива.");
         }
@@ -118,26 +115,55 @@ public static class LauncherReleaseDownloadService
         }
     }
 
-    private static async Task VerifyArchiveChecksumAsync(
-        Uri downloadUri,
-        string archivePath,
+    private static async Task<string> GetReleaseAssetSha256Async(
+        string releaseTag,
+        string assetFileName,
         CancellationToken cancellationToken)
     {
-        var checksumUri = new Uri(downloadUri, "checksums.txt");
-        using var response = await HttpClient.GetAsync(checksumUri, cancellationToken);
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"https://api.github.com/repos/{GitHubRepository}/releases/tags/{Uri.EscapeDataString(releaseTag)}");
+        request.Headers.Accept.Clear();
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        using var response = await HttpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
-        if (response.Content.Headers.ContentLength is > 65536)
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        return GetReleaseAssetSha256(document.RootElement, releaseTag, assetFileName);
+    }
+
+    internal static string GetReleaseAssetSha256(
+        JsonElement release,
+        string releaseTag,
+        string assetFileName)
+    {
+        if (!release.TryGetProperty("tag_name", out var tagName) ||
+            !string.Equals(tagName.GetString(), releaseTag, StringComparison.Ordinal) ||
+            !release.TryGetProperty("assets", out var assets) ||
+            assets.ValueKind != JsonValueKind.Array)
         {
-            throw new InvalidDataException("Файл контрольных сумм релиза слишком велик.");
+            throw new InvalidDataException("GitHub вернул неполные данные релиза.");
         }
 
-        var checksumText = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (checksumText.Length > 65536)
+        var asset = assets.EnumerateArray().SingleOrDefault(candidate =>
+            candidate.TryGetProperty("name", out var name) &&
+            string.Equals(name.GetString(), assetFileName, StringComparison.Ordinal));
+        if (asset.ValueKind != JsonValueKind.Object ||
+            !asset.TryGetProperty("digest", out var digest) ||
+            digest.ValueKind != JsonValueKind.String ||
+            !digest.GetString()!.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidDataException("Файл контрольных сумм релиза слишком велик.");
+            throw new InvalidDataException($"Релиз не содержит SHA-256 для {assetFileName}.");
         }
 
-        VerifyArchiveChecksum(checksumText, archivePath, Path.GetFileName(downloadUri.LocalPath));
+        var hash = digest.GetString()!["sha256:".Length..];
+        if (hash.Length != 64 || !hash.All(Uri.IsHexDigit))
+        {
+            throw new InvalidDataException($"SHA-256 для {assetFileName} имеет недопустимый формат.");
+        }
+
+        return hash;
     }
 
     private static async Task CopyWithLimitAsync(
