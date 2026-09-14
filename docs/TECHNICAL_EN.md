@@ -258,9 +258,11 @@ Persistent data for a standard profile is kept in:
 <workspace>\userdata
 ```
 
-The launcher takes the selected file-system configuration, preserves its name, relative path, and encoding, including Windows-1251, and changes `$app_data_root$` to the profile's absolute `userdata` path. Other aliases and mod-specific lines remain intact. Data previously misrouted into the corresponding `userdata\overwrite` subtree is copied without replacing existing files, and the source copy is retained. Managed workspaces always use the ASCII name `profile-<ID>`, so iXray and other engines with limited Unicode support receive a normal path without an extra junction or second data directory.
+The launcher takes the selected file-system configuration, preserves its name, relative path, and encoding, including Windows-1251, and changes `$app_data_root$` to the profile's absolute `userdata` path. Other aliases and mod-specific lines remain intact. Data previously misrouted into the corresponding `userdata\overwrite` subtree is copied once without replacing existing files; after a successful migration, `.stalker-launcher-manual-data-migrated` is written to the source directory. The source copy is retained but is not imported again on later launches, so files deleted by the user do not reappear. Managed workspaces always use the ASCII name `profile-<ID>`, so iXray and other engines with limited Unicode support receive a normal path without an extra junction or second data directory.
 
 For a non-standalone profile, launch is blocked when `fsgame.ltx` is missing or does not contain `$app_data_root$`. Workspace and USVFS therefore never report profile-data isolation as successful when the engine would still use a shared data directory.
+
+The same validation runs when profile settings are explicitly saved. A missing, inaccessible, or invalid source prevents the changes from being saved; the settings window remains open and shows the reason.
 
 Common contents include:
 
@@ -375,6 +377,8 @@ Errors block launch. Warnings describe unusual layouts that may still be valid.
 
 The Status window uses the same models and displays a compact summary. Workspace statistics are read from `build-manifest.json` without rescanning the full tree. In USVFS mode it shows layers and profile-data readiness because `current` does not exist.
 
+The **fsgame.ltx source** check reports whether the file was found automatically, resolved through `-fsltx`, or selected manually, together with the final path. A missing automatic source is a warning; an inaccessible or invalid selected file is an error.
+
 Application logs are stored at:
 
 ```text
@@ -463,7 +467,7 @@ At application startup, one shared module creates the required components. Works
 
 The UI follows MVVM without an external dependency-injection container. Main-screen logic is divided by user scenario, and major areas of the window are separate controls.
 
-The classic and PDA interfaces share the same data model and commands. In PDA mode, settings, profile status, the catalog, log, screenshots, and the profile creation wizard are hosted inside one shell; only the true fullscreen screenshot viewer opens a separate monitor-sized window.
+The classic and PDA interfaces share the same data model and commands. PDA mode has two visual themes, PDA UI and PDA UI 2; both reuse the same views, data, and commands. In PDA mode, settings, profile status, the catalog, log, screenshots, and the profile creation wizard are hosted inside one shell; only the true fullscreen screenshot viewer opens a separate monitor-sized window. Errors are shown inside the shell while retaining the standard system error sound; Classic UI uses modal system dialogs.
 
 ## 16. Build, tests, and release packaging
 
