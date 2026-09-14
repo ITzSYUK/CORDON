@@ -12,6 +12,10 @@ public sealed class LauncherSettingsViewModel : ObservableObject
     private readonly DialogService _dialogService;
     private readonly Func<Task<LauncherUpdateResult>>? _checkForUpdates;
     private readonly Func<string, string, LauncherReleasePackage, Task<string>> _downloadReleasePackage;
+    private readonly Func<string, bool> _confirmInstall;
+    private readonly Func<bool> _canInstallUpdate;
+    private readonly Action? _requestExit;
+    private readonly bool _isStandaloneBuild;
     private readonly Func<bool> _confirmReset;
     private bool _showTrayIcon;
     private bool _startWithWindows;
@@ -37,7 +41,11 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         Func<Task<LauncherUpdateResult>>? checkForUpdates = null,
         Func<bool>? confirmReset = null,
         Func<string, string, LauncherReleasePackage, Task<string>>? downloadReleasePackage = null,
-        bool isPortable = false)
+        bool isPortable = false,
+        bool? isStandaloneBuild = null,
+        Func<string, bool>? confirmInstall = null,
+        Func<bool>? canInstallUpdate = null,
+        Action? requestExit = null)
     {
         StorageDescription = isPortable
             ? "Портативный режим: настройки, журналы, кэш и временные файлы хранятся в .\\Data\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой. Если локального settings.json ещё нет, настройки автоматически импортируются из AppData."
@@ -61,6 +69,10 @@ public sealed class LauncherSettingsViewModel : ObservableObject
                 releaseUrl,
                 releaseTag,
                 package));
+        _isStandaloneBuild = isStandaloneBuild ?? AppPaths.IsStandaloneExecutable(Environment.ProcessPath);
+        _confirmInstall = confirmInstall ?? (message => DialogService.Confirm("Установить обновление?", message));
+        _canInstallUpdate = canInstallUpdate ?? (() => true);
+        _requestExit = requestExit;
         _confirmReset = confirmReset ?? (() => DialogService.Confirm(
             "Сбросить настройки лаунчера?",
             "Будут восстановлены настройки интерфейса, поведения, журналирования и обновлений.\n\n" +
@@ -347,25 +359,53 @@ public sealed class LauncherSettingsViewModel : ObservableObject
             return;
         }
 
+        if (!_canInstallUpdate())
+        {
+            UpdateStatus = "Перед обновлением завершите запущенную игру и текущие операции лаунчера.";
+            return;
+        }
+
+        if (!_confirmInstall(BuildInstallConfirmationMessage(package)))
+        {
+            return;
+        }
+
         var packageName = package == LauncherReleasePackage.Minimal
-            ? "Minimal version"
-            : "Standalone version";
-        UpdateStatus = $"Скачивается {packageName}...";
+            ? "обычной версии"
+            : "Standalone-версии";
+        UpdateStatus = $"Скачивается пакет {packageName}...";
 
         try
         {
             var path = await _downloadReleasePackage(_releaseUrl, _releaseTag, package);
             SetDownloadedReleaseDirectory(Path.GetDirectoryName(path));
-            UpdateStatus = $"{packageName} сохранена в Загрузки: {Path.GetFileName(path)}.";
+            UpdateStatus = $"Пакет {packageName} проверен и готов к установке: {Path.GetFileName(path)}.";
+            _requestExit?.Invoke();
         }
         catch (HttpRequestException)
         {
-            UpdateStatus = $"Не удалось скачать {packageName}. Проверьте подключение к интернету.";
+            UpdateStatus = $"Не удалось скачать пакет {packageName}. Проверьте подключение к интернету.";
         }
         catch (Exception ex)
         {
-            UpdateStatus = $"Не удалось скачать {packageName}: {ex.Message}";
+            UpdateStatus = $"Не удалось скачать пакет {packageName}: {ex.Message}";
         }
+    }
+
+    private string BuildInstallConfirmationMessage(LauncherReleasePackage package)
+    {
+        var selectedStandalone = package == LauncherReleasePackage.Standalone;
+        var mismatchWarning = selectedStandalone == _isStandaloneBuild
+            ? string.Empty
+            : _isStandaloneBuild
+                ? "\n\nВНИМАНИЕ: сейчас запущена Standalone-версия, а выбрана обычная. " +
+                  "Она требует установленный .NET 8 Desktop Runtime и будет использовать настройки из AppData. " +
+                  "Папка Data останется без изменений."
+                : "\n\nВНИМАНИЕ: сейчас запущена обычная версия, а выбрана Standalone. " +
+                  "После обновления настройки будут храниться в папке Data рядом с лаунчером.";
+
+        return $"Архив будет скачан в папку лаунчера. После проверки лаунчер закроется, " +
+               $"заменит свои файлы и запустится снова. Папка Data не изменяется.{mismatchWarning}";
     }
 
     private void SetRelease(string? releaseUrl, string? releaseTag = null)

@@ -32,11 +32,11 @@ public sealed class LauncherShellUiTests
         Assert.Contains("CheckForUpdatesCommand", settings.ToString());
         Assert.Contains("Открыть релиз", settings.ToString());
         Assert.Contains("OpenReleaseButton", settings.ToString());
-        Assert.Contains("Скачать в Загрузки", settings.ToString());
+        Assert.Contains("Скачать и установить", settings.ToString());
         Assert.Contains("DownloadToDownloadsButton", settings.ToString());
-        Assert.Contains("Открыть Загрузки", settings.ToString());
-        Assert.Contains("Minimal version", settings.ToString());
-        Assert.Contains("Standalone version", settings.ToString());
+        Assert.Contains("Открыть папку лаунчера", settings.ToString());
+        Assert.Contains("Обычная версия", settings.ToString());
+        Assert.Contains("Standalone-версия", settings.ToString());
         Assert.Contains("Автоматически проверять обновления при запуске", settings.ToString());
         Assert.Contains("При запуске вместе с Windows открывать в трее", settings.ToString());
         Assert.Contains("StartMinimizedToTrayOnWindowsStartup", settings.ToString());

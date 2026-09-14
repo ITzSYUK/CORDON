@@ -11,8 +11,8 @@ namespace StalkerModLauncher;
 
 public sealed partial class App : Application, IDisposable
 {
-    private readonly AppServices _services = new();
-    private readonly SingleInstanceGuard _singleInstance = new("StalkerModLauncher");
+    private AppServices? _services;
+    private SingleInstanceGuard? _singleInstance;
     private readonly UiSoundService _uiSoundService = new();
     private TrayIconService? _trayIconService;
     private ViewModels.MainViewModel? _mainViewModel;
@@ -20,14 +20,26 @@ public sealed partial class App : Application, IDisposable
     private bool _startMinimized;
     private bool _isExiting;
     private bool _disposed;
+    private AppServices Services => _services ?? throw new InvalidOperationException("Сервисы приложения не инициализированы.");
+    private SingleInstanceGuard SingleInstance => _singleInstance ?? throw new InvalidOperationException("Контроль экземпляра не инициализирован.");
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (LauncherSelfUpdateService.TryParseRequest(e.Args, out var updateRequest))
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            _ = ApplyLauncherUpdateAsync(updateRequest!);
+            return;
+        }
+
+        LauncherSelfUpdateService.ScheduleUpdaterCleanup(e.Args);
+        _services = new AppServices();
+        _singleInstance = new SingleInstanceGuard("StalkerModLauncher");
         EventManager.RegisterClassHandler(typeof(ButtonBase), ButtonBase.ClickEvent, new RoutedEventHandler(ButtonBase_OnClick));
         EventManager.RegisterClassHandler(typeof(ListBox), Selector.SelectionChangedEvent, new SelectionChangedEventHandler(ListBox_OnSelectionChanged));
 
-        if (!_singleInstance.IsPrimaryInstance)
+        if (!SingleInstance.IsPrimaryInstance)
         {
             MessageBox.Show(
                 "Лаунчер уже запущен. Используйте открытое окно программы.",
@@ -42,11 +54,11 @@ public sealed partial class App : Application, IDisposable
             argument.Equals("--minimized", StringComparison.OrdinalIgnoreCase));
         try
         {
-            _services.Paths.EnsureStorageWritable();
+            Services.Paths.EnsureStorageWritable();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show($"Портативная папка недоступна для записи:\n{_services.Paths.ConfigDirectory}\n\n{ex.Message}",
+            MessageBox.Show($"Портативная папка недоступна для записи:\n{Services.Paths.ConfigDirectory}\n\n{ex.Message}",
                 "Ошибка хранения данных", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(-1);
             return;
@@ -81,7 +93,7 @@ public sealed partial class App : Application, IDisposable
         }
         catch (Exception ex)
         {
-            _services.ApplicationLogService.Write(
+            Services.ApplicationLogService.Write(
                 $"Splash screen loading failed: {ex}",
                 messageLevel: Models.LauncherLogLevel.ErrorsOnly);
         }
@@ -155,8 +167,8 @@ public sealed partial class App : Application, IDisposable
         _disposed = true;
         _trayIconService?.Dispose();
         _uiSoundService.Dispose();
-        _singleInstance.Dispose();
-        _services.Dispose();
+        _singleInstance?.Dispose();
+        _services?.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -192,10 +204,11 @@ public sealed partial class App : Application, IDisposable
 
     private Views.MainWindow CreateMainWindow()
     {
-        _mainViewModel = _services.CreateMainViewModel();
+        _mainViewModel = Services.CreateMainViewModel();
+        _mainViewModel.LauncherUpdateInstallationRequested += (_, _) => _ = ExitLauncherAsync();
         _launcherWindow = new Views.MainWindow(
             _mainViewModel,
-            _services.WindowNavigationService);
+            Services.WindowNavigationService);
         return _launcherWindow;
     }
 
@@ -208,7 +221,7 @@ public sealed partial class App : Application, IDisposable
             _mainViewModel!,
             main.ShowFromTray,
             () => _ = ExitLauncherAsync(),
-            _services.ApplicationLogService);
+            Services.ApplicationLogService);
 
         var remainsHidden = _startMinimized && _mainViewModel!.ShowTrayIcon;
         if (_startMinimized && !remainsHidden)
@@ -236,7 +249,7 @@ public sealed partial class App : Application, IDisposable
         }
         catch (Exception ex)
         {
-            _services.ApplicationLogService.Write(
+            Services.ApplicationLogService.Write(
                 $"Launcher UI startup failed: {ex}",
                 messageLevel: Models.LauncherLogLevel.ErrorsOnly);
             MessageBox.Show(
@@ -250,14 +263,14 @@ public sealed partial class App : Application, IDisposable
 
     private async Task ShowAboutIfNeededAsync(Window? owner = null)
     {
-        await _services.WindowNavigationService.ShowAboutAsync(owner, onlyIfNeeded: true);
+        await Services.WindowNavigationService.ShowAboutAsync(owner, onlyIfNeeded: true);
     }
 
     private async Task CheckForUpdatesAtStartupAsync()
     {
         try
         {
-            var result = await _services.LauncherUpdateService.CheckAsync();
+            var result = await Services.LauncherUpdateService.CheckAsync();
             if (result.IsUpdateAvailable)
             {
                 if (_mainViewModel?.ShowUpdateNotifications == true)
@@ -294,5 +307,25 @@ public sealed partial class App : Application, IDisposable
         _trayIconService = null;
         _launcherWindow?.CloseAfterCleanup();
         Shutdown();
+    }
+
+    private async Task ApplyLauncherUpdateAsync(LauncherUpdateRequest request)
+    {
+        try
+        {
+            await LauncherSelfUpdateService.ApplyAsync(request);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Не удалось установить обновление.\n\n{ex.Message}",
+                "Ошибка обновления CORDON",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            Shutdown();
+        }
     }
 }

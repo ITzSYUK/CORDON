@@ -98,6 +98,7 @@ public sealed class LauncherSettingsViewModelTests
     [Fact]
     public async Task DownloadedReleaseEnablesOpeningDownloadsFolder()
     {
+        var exitRequested = false;
         var viewModel = new LauncherSettingsViewModel(
             LauncherPreferences.Default,
             @"C:\Logs",
@@ -111,15 +112,90 @@ public sealed class LauncherSettingsViewModelTests
             downloadReleasePackage: (_, _, package) =>
             {
                 Assert.Equal(LauncherReleasePackage.Minimal, package);
-                return Task.FromResult(@"C:\Users\Tester\Downloads\CORDON-v1.1.0-win-x64.zip");
-            });
+                return Task.FromResult(@"C:\CORDON\CORDON-v1.1.0-win-x64.zip");
+            },
+            confirmInstall: _ => true,
+            requestExit: () => exitRequested = true);
 
         await viewModel.CheckForUpdatesAsync();
         viewModel.DownloadMinimalCommand.Execute(null);
 
         Assert.True(viewModel.HasDownloadedRelease);
         Assert.True(viewModel.OpenDownloadsCommand.CanExecute(null));
-        Assert.Contains("сохранена в Загрузки", viewModel.UpdateStatus);
+        Assert.Contains("готов к установке", viewModel.UpdateStatus);
+        Assert.True(exitRequested);
+    }
+
+    [Theory]
+    [InlineData(false, LauncherReleasePackage.Standalone)]
+    [InlineData(true, LauncherReleasePackage.Minimal)]
+    public async Task PackageMismatchRequiresConfirmationBeforeDownload(
+        bool isStandaloneBuild,
+        LauncherReleasePackage selectedPackage)
+    {
+        string? warning = null;
+        var downloadCalls = 0;
+        var viewModel = new LauncherSettingsViewModel(
+            LauncherPreferences.Default,
+            @"C:\Logs",
+            _ => Task.CompletedTask,
+            new DialogService(),
+            () => Task.FromResult(new LauncherUpdateResult(
+                "1.0.0",
+                "v1.1.0",
+                "https://github.com/ITzSYUK/CORDON/releases/tag/v1.1.0",
+                IsUpdateAvailable: true)),
+            downloadReleasePackage: (_, _, _) =>
+            {
+                downloadCalls++;
+                return Task.FromResult(@"C:\CORDON\update.zip");
+            },
+            isStandaloneBuild: isStandaloneBuild,
+            confirmInstall: message =>
+            {
+                warning = message;
+                return false;
+            });
+
+        await viewModel.CheckForUpdatesAsync();
+        (selectedPackage == LauncherReleasePackage.Standalone
+            ? viewModel.DownloadStandaloneCommand
+            : viewModel.DownloadMinimalCommand).Execute(null);
+
+        Assert.NotNull(warning);
+        Assert.Contains("ВНИМАНИЕ", warning);
+        Assert.Contains(isStandaloneBuild ? "выбрана обычная" : "запущена обычная версия", warning);
+        Assert.Contains("Standalone", warning);
+        Assert.Equal(0, downloadCalls);
+    }
+
+    [Fact]
+    public async Task UpdateIsBlockedWhileGameOrLauncherOperationIsRunning()
+    {
+        var downloadCalls = 0;
+        var viewModel = new LauncherSettingsViewModel(
+            LauncherPreferences.Default,
+            @"C:\Logs",
+            _ => Task.CompletedTask,
+            new DialogService(),
+            () => Task.FromResult(new LauncherUpdateResult(
+                "1.0.0",
+                "v1.1.0",
+                "https://github.com/ITzSYUK/CORDON/releases/tag/v1.1.0",
+                IsUpdateAvailable: true)),
+            downloadReleasePackage: (_, _, _) =>
+            {
+                downloadCalls++;
+                return Task.FromResult(@"C:\CORDON\update.zip");
+            },
+            confirmInstall: _ => true,
+            canInstallUpdate: () => false);
+
+        await viewModel.CheckForUpdatesAsync();
+        viewModel.DownloadMinimalCommand.Execute(null);
+
+        Assert.Equal(0, downloadCalls);
+        Assert.Contains("завершите запущенную игру", viewModel.UpdateStatus);
     }
 
     [Fact]

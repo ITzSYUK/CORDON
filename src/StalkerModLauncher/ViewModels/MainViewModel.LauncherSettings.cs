@@ -20,6 +20,7 @@ public sealed partial class MainViewModel
     public bool AutoCheckForUpdates => _autoCheckForUpdates;
     public bool ShowUpdateNotifications => _showUpdateNotifications;
     public LauncherLogLevel LogLevel => _logLevel;
+    public event EventHandler? LauncherUpdateInstallationRequested;
 
     public LauncherSettingsViewModel CreateLauncherSettingsViewModel(
         Func<Task<LauncherUpdateResult>>? checkForUpdates = null,
@@ -30,7 +31,9 @@ public sealed partial class MainViewModel
         _dialogService,
         checkForUpdates,
         confirmReset,
-        isPortable: _paths.IsPortable);
+        isPortable: _paths.IsPortable,
+        canInstallUpdate: () => !IsBuilding && !_isInstallingModArchive && Profiles.All(profile => !profile.IsRunning),
+        requestExit: () => LauncherUpdateInstallationRequested?.Invoke(this, EventArgs.Empty));
 
     private async Task ApplyLauncherSettingsAsync(LauncherPreferences preferences)
     {
