@@ -28,6 +28,11 @@
 
 ---
 
+> **Linux-порт:** этот форк добавляет нативный лаунчер для Linux с адаптацией под движок
+> [OpenXRay](https://github.com/OpenXRay/xray-16) — Python + PySide6, символические ссылки и
+> `fuse-overlayfs` вместо USVFS. См. **[README.LINUX.md](README.LINUX.md)**.
+> Оригинальная Windows-версия (WPF, .NET 8) остаётся в `src/StalkerModLauncher/` без изменений.
+
 <a id="русский"></a>
 
 ## Зачем нужен этот лаунчер

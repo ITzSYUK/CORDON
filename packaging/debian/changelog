@@ -1,0 +1,8 @@
+cordon-linux (0.1.0-1) unstable; urgency=medium
+
+  * Первый выпуск Linux-порта CORDON с адаптацией под движок OpenXRay:
+    профили, оверлей (символические ссылки / fuse-overlayfs), установка модов из
+    архивов, анализ конфликтов, предполётные проверки, аудит регистра путей,
+    импорт из Mod Organizer 2, CLI и графический интерфейс на PySide6.
+
+ -- CORDON-LINUX contributors <noreply@example.org>  Mon, 15 Sep 2026 00:00:00 +0000
