@@ -393,6 +393,6 @@ bash-completion самого OpenXRay.
 
 ## Что дальше
 
-* Общие вопросы по порту — `README.LINUX.md`.
+* Общие вопросы по порту — `README.md`.
 * Внутреннее устройство и точки расширения — `docs/TECHNICAL_LINUX_EN.md`.
-* Оригинальный лаунчер для Windows и его документация — `README.md`, `docs/TECHNICAL_EN.md`.
+* Оригинальный лаунчер для Windows и его документация — `README.WINDOWS.md`, `docs/TECHNICAL_EN.md`.

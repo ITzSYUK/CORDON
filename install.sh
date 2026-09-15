@@ -86,16 +86,50 @@ ${need_sudo} mkdir -p "${APP_DIR}" "${PREFIX}/bin" "${PREFIX}/share/applications
 echo "==> Python: создание виртуального окружения (${version})"
 ${need_sudo} "${PYTHON_BIN}" -m venv --system-site-packages "${VENV}"
 
-echo "==> Установка пакета (это может занять минуту: PySide6 ~100 МБ)"
-if [[ ${GUI} -eq 1 ]]; then
-  ${need_sudo} "${VENV}/bin/pip" install --upgrade pip >/dev/null
-  if ! ${need_sudo} "${VENV}/bin/pip" install "${ROOT}[gui]"; then
+# pip may be missing inside the venv (Arch: the python package has no bundled pip)
+if ! ${need_sudo} "${VENV}/bin/python" -m pip --version >/dev/null 2>&1; then
+  echo "==> В venv нет pip, включаю его через ensurepip"
+  ${need_sudo} "${VENV}/bin/python" -m ensurepip --upgrade >/dev/null 2>&1 || true
+fi
+
+# A system PySide6 (Arch: `pacman -S pyside6`) is already visible thanks to
+# --system-site-packages, so do not download a second copy of Qt from PyPI (~100 MB).
+NEEDS_PYSIDE6=${GUI}
+if [[ ${GUI} -eq 1 ]] && "${VENV}/bin/python" -c 'import PySide6' >/dev/null 2>&1; then
+  echo "==> PySide6 найден в системе, использую его (в PyPI не обращаемся)"
+  NEEDS_PYSIDE6=0
+fi
+
+# Without build isolation pip must find setuptools>=70 (it ships bdist_wheel itself);
+# with Arch's python-setuptools the package build then needs no network at all.
+PIP_BUILD_ARGS=()
+if "${VENV}/bin/python" -c 'import setuptools,sys; v=[int(p) for p in setuptools.__version__.split(".")[:2] if p.isdigit()]; sys.exit(0 if v>=[70,1] else 1)' >/dev/null 2>&1; then
+  PIP_BUILD_ARGS=(--no-build-isolation)
+fi
+
+pip_install() {
+  # $1: requirement spec. Retries without the extra flags, e.g. when the system
+  # setuptools is too old for --no-build-isolation.
+  if ! ${need_sudo} "${VENV}/bin/python" -m pip install "${PIP_BUILD_ARGS[@]}" "$1"; then
+    ${need_sudo} "${VENV}/bin/python" -m pip install "$1"
+  fi
+}
+
+if [[ ${GUI} -eq 1 && ${NEEDS_PYSIDE6} -eq 1 ]]; then
+  echo "==> Установка пакета (это может занять минуту: PySide6 ~100 МБ)"
+else
+  echo "==> Установка пакета"
+fi
+${need_sudo} "${VENV}/bin/python" -m pip install --upgrade pip >/dev/null 2>&1 || true
+
+if [[ ${GUI} -eq 1 && ${NEEDS_PYSIDE6} -eq 1 ]]; then
+  if ! pip_install "${ROOT}[gui]"; then
     echo "Предупреждение: не удалось поставить PySide6, ставлю ядро без графического интерфейса." >&2
-    ${need_sudo} "${VENV}/bin/pip" install "${ROOT}"
+    pip_install "${ROOT}" || { echo "Ошибка: не удалось установить пакет." >&2; exit 1; }
     GUI=0
   fi
 else
-  ${need_sudo} "${VENV}/bin/pip" install "${ROOT}"
+  pip_install "${ROOT}" || { echo "Ошибка: не удалось установить пакет." >&2; exit 1; }
 fi
 
 echo "==> Точки входа"
@@ -137,7 +171,7 @@ echo "Создание профиля:    ${PREFIX}/bin/cordon new \"Моя сб
 cat <<'HINT'
 
 Полезно поставить системные утилиты (по возможности):
-  Debian/Ubuntu: sudo apt install fuse3 fuse-overlayfs p7zip-full libarchive-tools unrar
-  Arch:          sudo pacman -S fuse3 fuse-overlayfs p7zip libarchive unrar
-  Fedora:        sudo dnf install fuse3 fuse-overlayfs p7zip p7zip-plugins unrar
+  Arch:          sudo pacman -S fuse3 fuse-overlayfs 7zip unrar pyside6
+  Debian/Ubuntu: sudo apt install fuse3 fuse-overlayfs p7zip-full libarchive-tools unrar python3-pyside6.qtwidgets
+  Fedora:        sudo dnf install fuse3 fuse-overlayfs p7zip p7zip-plugins unrar python3-pyside6
 HINT

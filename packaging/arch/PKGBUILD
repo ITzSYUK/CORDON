@@ -1,51 +1,58 @@
 # Maintainer: CORDON-LINUX contributors
-# Сборка: makepkg -si   (из каталога packaging/arch)
-# Требуется локальная копия репозитория: source=("$pkgname::git+file://$PWD/../..")
+# Сборка: cd packaging/arch && makepkg -si
+# Пакет собирается из локальной копии репозитория: prepare() делает git archive текущего HEAD.
 pkgname=cordon-linux
 pkgver=0.1.0
 pkgrel=1
-pkgdesc="CORDON-LINUX — лаунчер профилей и модов S.T.A.L.K.E.R. для Linux (движок OpenXRay)"
+pkgdesc="Лаунчер профилей и модов S.T.A.L.K.E.R. для Linux (движок OpenXRay)"
 arch=('any')
-url="https://github.com/ITzSYUK/CORDON"
+url="https://github.com/defaultdj/CORDON-LINUX"
 license=('GPL-3.0-only')
-depends=('python' 'python-pyqt6>=6.4' 'desktop-file-utils' 'xdg-utils')
-optdepends=(
-  'fuse-overlayfs: backend «fuse-overlayfs»'
-  'fuse3: монтирование оверлея'
-  'p7zip: установка модов из .7z'
-  'libarchive: tar-архивы'
-  'unrar: установка модов из .rar'
+depends=(
+  'python'
+  'pyside6'            # графический интерфейс: берём системный PySide6, не тянем копию из PyPI
+  'desktop-file-utils' # update-desktop-database для пункта меню
+  'xdg-utils'          # xdg-open: «открыть каталог профиля»
 )
-makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools' 'python-pyside6')
+optdepends=(
+  'fuse3: backend «fuse-overlayfs» (fusermount3, доступ к /dev/fuse)'
+  'fuse-overlayfs: backend «fuse-overlayfs»'
+  '7zip: установка модов из .7z (пакет заменяет устаревший p7zip)'
+  'unrar: установка модов из .rar'
+  'libarchive: bsdtar для отдельных tar-архивов'
+)
+makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools')
 source=("$pkgname-$pkgver.tar.gz::$pkgname.tar.gz")
 sha256sums=('SKIP')
 
 prepare() {
-  # локальная сборка из копии репозитория: распаковываем git-архив рабочего каталога
-  if [[ ! -f "$pkgname.tar.gz" ]]; then
-    ( cd ../.. && git archive --format=tar.gz -o "packaging/arch/$pkgname.tar.gz" HEAD )
-  fi
+  # всегда свежий архив из текущего HEAD рабочей копии (файл попадает в .gitignore)
+  ( cd ../.. && git archive --format=tar.gz -o "packaging/arch/$pkgname.tar.gz" HEAD )
   mkdir -p "$srcdir/$pkgname-$pkgver"
   tar -xzf "$pkgname.tar.gz" -C "$srcdir/$pkgname-$pkgver"
 }
 
 build() {
   cd "$srcdir/$pkgname-$pkgver"
+  # --no-isolation: setuptools и wheel берутся из makedepends, сеть при сборке не нужна
   python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$srcdir/$pkgname-$pkgver"
-  python -m installer --destdir="$pkgdir" --no-compile-bytecode dist/*.whl
 
-  # PySide6 ставится системным пакетом: не тащим копию в /usr
-  sed -i 's|# PySide6.*||' pyproject.toml || true
+  # console_scripts из pyproject.toml (cordon, cordon-gui) python-installer кладёт в /usr/bin
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
   install -Dm644 packaging/cordon-linux.desktop \
     "$pkgdir/usr/share/applications/cordon-linux.desktop"
   install -Dm644 packaging/cordon-linux.svg \
     "$pkgdir/usr/share/icons/hicolor/scalable/apps/cordon-linux.svg"
 
-  install -d "$pkgdir/usr/share/doc/$pkgname"
-  install -Dm644 README.LINUX.md "$pkgdir/usr/share/doc/$pkgname/README.LINUX.md"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm644 docs/USER_GUIDE_LINUX_RU.md \
+    "$pkgdir/usr/share/doc/$pkgname/USER_GUIDE_LINUX_RU.md"
+  install -Dm644 docs/TECHNICAL_LINUX_EN.md \
+    "$pkgdir/usr/share/doc/$pkgname/TECHNICAL_LINUX_EN.md"
+  install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
 }

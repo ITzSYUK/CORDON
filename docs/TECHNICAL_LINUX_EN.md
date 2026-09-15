@@ -1,8 +1,8 @@
 # CORDON-LINUX - technical overview
 
 Architecture of the Linux port, the invariants it relies on, and where to extend it.
-User-facing documentation lives in `USER_GUIDE_LINUX_RU.md` and `README.LINUX.md`;
-the original Windows launcher is documented in `TECHNICAL_EN.md`.
+User-facing documentation lives in `USER_GUIDE_LINUX_RU.md` and the repository `README.md`;
+the original Windows launcher is documented in `README.WINDOWS.md` and `TECHNICAL_EN.md`.
 
 ---
 

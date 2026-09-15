@@ -28,3 +28,6 @@ dist/
 .venv/
 venv/
 *.spec.local
+
+# --- Arch-пакет (byproduct makepkg) ---
+packaging/arch/*.tar.gz

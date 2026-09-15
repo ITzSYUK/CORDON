@@ -28,10 +28,11 @@ UNMOUNT_TOOLS = ("fusermount3", "fusermount")
 INSTALL_HINTS = {
     "fuse-overlayfs": "Установите пакет fuse-overlayfs (Debian/Ubuntu: apt install fuse-overlayfs; "
                       "Arch: pacman -S fuse-overlayfs; Fedora: dnf install fuse-overlayfs).",
-    "fusermount3": "Установите пакет fuse3 (Debian/Ubuntu: apt install fuse3).",
-    "7z": "Установите p7zip-full (Debian/Ubuntu) или p7zip (Arch), либо unrar для RAR-архивов.",
+    "fusermount3": "Установите пакет fuse3 (Debian/Ubuntu: apt install fuse3; Arch: pacman -S fuse3).",
+    "7z": "Установите 7z: Debian/Ubuntu — p7zip-full; Arch — 7zip (заменяет устаревший p7zip); "
+          "Fedora — p7zip.",
     "bsdtar": "Установите libarchive-tools (Debian/Ubuntu) или libarchive (Arch).",
-    "unrar": "Установите unrar (несвободный пакет) для распаковки RAR.",
+    "unrar": "Установите unrar (Arch: pacman -S unrar) для распаковки RAR.",
 }
 
 

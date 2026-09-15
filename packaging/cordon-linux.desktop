@@ -16,5 +16,4 @@ Keywords=stalker;openxray;anomaly;mod;launcher;моды;
 Keywords[ru]=сталкер;моды;лаунчер;аномалия;
 StartupNotify=true
 StartupWMClass=cordon-linux
-EOF
 X-GNOME-Autostart-enabled=false
