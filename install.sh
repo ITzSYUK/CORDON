@@ -48,10 +48,11 @@ if [[ ! -f "${ROOT}/pyproject.toml" || ! -d "${ROOT}/src/cordon" ]]; then
   ветка:   ${BRANCH}
   ожидалось: pyproject.toml и src/cordon
 
-Порт для Linux живёт в ветке arena/01a0a262-cordon-linux (PR #1).
-Склонируйте её:
+Похоже, рабочая копия устарела (порт влит в основную ветку). Обновите её:
 
-  git clone -b arena/01a0a262-cordon-linux https://github.com/defaultdj/CORDON-LINUX.git
+  git -C "${ROOT}" pull            # если ветка уже есть
+  # или склонируйте заново:
+  git clone https://github.com/defaultdj/CORDON-LINUX.git
   cd CORDON-LINUX && ./install.sh
 MSG
   exit 1
