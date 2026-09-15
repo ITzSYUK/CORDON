@@ -33,6 +33,30 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="${PREFIX}/lib/cordon-linux"
 VENV="${APP_DIR}/venv"
 
+# Guard against the most common mistake: running the script from a checkout of `main`, which
+# only carries the original Windows launcher (no pyproject.toml, no src/cordon).
+if [[ ! -f "${ROOT}/pyproject.toml" || ! -d "${ROOT}/src/cordon" ]]; then
+  # note the "|| true": with `set -o pipefail` a failing git call would abort the script
+  # before it can explain what went wrong
+  BRANCH="$(git -C "${ROOT}" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  if [[ -z "${BRANCH}" || "${BRANCH}" == "HEAD" ]]; then
+    BRANCH="не определена"
+  fi
+  cat >&2 <<MSG
+Ошибка: это дерево не содержит Linux-порта CORDON.
+  каталог: ${ROOT}
+  ветка:   ${BRANCH}
+  ожидалось: pyproject.toml и src/cordon
+
+Порт для Linux живёт в ветке arena/01a0a262-cordon-linux (PR #1).
+Склонируйте её:
+
+  git clone -b arena/01a0a262-cordon-linux https://github.com/defaultdj/CORDON-LINUX.git
+  cd CORDON-LINUX && ./install.sh
+MSG
+  exit 1
+fi
+
 echo "==> CORDON-LINUX: установка в ${PREFIX}"
 
 if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then

@@ -71,14 +71,26 @@ profiles/profile-<id>/            $fs_root$ для движка
 
 ## Установка
 
+> **Важно, куда клонировать.** Порт для Linux лежит **в ветке `arena/01a0a262-cordon-linux`**
+> (PR [#1](https://github.com/defaultdj/CORDON-LINUX/pull/1)). В ветке `main` пока только
+> оригинальный Windows-лаунчер, поэтому обычный `git clone` без `-b` скачает дерево C#,
+> где нет ни `install.sh`, ни `src/cordon`. После слияния PR команда `-b` станет не нужна.
+
 ### Вариант 1: скрипт (без прав root)
 
 ```bash
-git clone https://github.com/<ваш-форк>/CORDON-LINUX.git
+git clone -b arena/01a0a262-cordon-linux https://github.com/defaultdj/CORDON-LINUX.git
 cd CORDON-LINUX
 ./install.sh                 # в ~/.local
 # ./install.sh --system      # в /usr/local (через sudo)
 # ./install.sh --prefix ~/opt/cordon
+# ./install.sh --no-gui      # без PySide6 (только CLI)
+```
+
+Установка без клонирования репозитория (когда нужен только CLI; apt/venv уже готовы):
+
+```bash
+pipx install "cordon-linux @ git+https://github.com/defaultdj/CORDON-LINUX.git@arena/01a0a262-cordon-linux"
 ```
 
 Скрипт создаёт приватное виртуальное окружение, ставит пакет (с PySide6, если получается),
@@ -87,8 +99,8 @@ cd CORDON-LINUX
 ### Вариант 2: pipx / pip
 
 ```bash
-pipx install "cordon-linux[gui] @ git+https://github.com/<ваш-форк>/CORDON-LINUX.git"
-# или из локальной копии:
+pipx install "cordon-linux[gui] @ git+https://github.com/defaultdj/CORDON-LINUX.git@arena/01a0a262-cordon-linux"
+# или из локальной копии (внутри клонированного каталога):
 python3 -m venv ~/.venvs/cordon && ~/.venvs/cordon/bin/pip install ".[gui]"
 ```
 

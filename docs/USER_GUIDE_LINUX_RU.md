@@ -60,10 +60,15 @@ xr_3da -fsltx <профиль>/fsgame.ltx -overlaypath <профиль>/_appdata
 ### Скриптом (без root)
 
 ```bash
-git clone https://github.com/<ваш-форк>/CORDON-LINUX.git
+git clone -b arena/01a0a262-cordon-linux https://github.com/defaultdj/CORDON-LINUX.git
 cd CORDON-LINUX
 ./install.sh                     # в ~/.local
 ```
+
+> Ключ `-b` обязателен до слияния PR: порт живёт в ветке `arena/01a0a262-cordon-linux`.
+> Если склонировать без него, попадёшь в `main` с оригинальным Windows-лаунчером —
+> там нет ни `install.sh`, ни `src/cordon` (это самая частая путаница).
+> Проверить, что дерево то самое: `ls install.sh src/cordon`.
 
 Появятся `~/.local/bin/cordon` (CLI), `~/.local/bin/cordon-gui` (GUI) и пункт
 «CORDON-LINUX» в меню приложений.
@@ -74,8 +79,8 @@ cd CORDON-LINUX
 ### Через pipx / venv
 
 ```bash
-pipx install "cordon-linux[gui] @ git+https://github.com/<ваш-форк>/CORDON-LINUX.git"
-# или
+pipx install "cordon-linux[gui] @ git+https://github.com/defaultdj/CORDON-LINUX.git@arena/01a0a262-cordon-linux"
+# или из локальной копии (внутри клонированного каталога)
 python3 -m venv ~/.venvs/cordon
 ~/.venvs/cordon/bin/pip install ".[gui]"
 ```
