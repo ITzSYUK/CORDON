@@ -135,7 +135,7 @@ tests/cordon/conftest.py    fake_install / fake_profile fixtures (mini game + en
   skip.
 
 ```
-/tmp/venv/bin/python -m pytest tests/cordon -q        # 154 tests
+/tmp/venv/bin/python -m pytest tests/cordon -q        # 155 tests (2 skip without libGL)
 ```
 
 ## 7. Extension points
