@@ -75,6 +75,13 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     logger, _memory = launcherlog.setup_logging(paths)
+    logger.info(
+        "CORDON-LINUX %s: запуск GUI (python %s), настройки: %s, данные: %s",
+        __version__,
+        sys.version.split()[0],
+        paths.config_dir,
+        paths.data_dir,
+    )
     service = CordonService(paths, logger=logger)
     try:
         result = service.load()
