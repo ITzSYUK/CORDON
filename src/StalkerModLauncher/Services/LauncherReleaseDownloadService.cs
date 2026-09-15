@@ -39,6 +39,9 @@ public static class LauncherReleaseDownloadService
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
             response.EnsureSuccessStatusCode();
+            var contentLength = response.Content.Headers.ContentLength
+                ?? throw new InvalidDataException("GitHub не указал размер архива обновления.");
+            LauncherSelfUpdateService.EnsureSpaceForDownload(destinationDirectory, contentLength);
 
             await using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
             await using (var destination = new FileStream(

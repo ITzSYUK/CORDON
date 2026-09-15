@@ -9,14 +9,18 @@ internal sealed record LauncherUpdateRequest(
     int ParentProcessId,
     string TargetDirectory,
     string StagingDirectory,
-    LauncherReleasePackage Package);
+    LauncherReleasePackage Package,
+    string ReadyEventName);
 
 internal static class LauncherSelfUpdateService
 {
     private const string ApplyArgument = "--apply-launcher-update";
     private const string CleanupArgument = "--cleanup-launcher-updater";
+    private const string ReadyEventPrefix = @"Local\CORDON-Update-Ready-";
     private const long MaximumUncompressedSize = 512L * 1024 * 1024;
     private const int MaximumFileCount = 32;
+    private const long FreeSpaceMargin = 64L * 1024 * 1024;
+    private static readonly TimeSpan UpdaterReadyTimeout = TimeSpan.FromSeconds(10);
     private static readonly string[] RequiredCommonFiles =
     [
         "StalkerModLauncher.UsvfsX86Host.exe",
@@ -31,21 +35,34 @@ internal static class LauncherSelfUpdateService
 
     public static void PrepareAndLaunch(string archivePath, LauncherReleasePackage package)
     {
+        var launcherPath = Path.GetFullPath(Environment.ProcessPath
+            ?? throw new InvalidOperationException("Не удалось определить путь лаунчера."));
+        var targetDirectory = Path.GetDirectoryName(launcherPath)
+            ?? throw new InvalidOperationException("Не удалось определить папку лаунчера.");
         var stagingDirectory = Path.Combine(
             Path.GetTempPath(),
             $"CORDON-Update-{Guid.NewGuid():N}");
         var updaterDirectory = Path.Combine(
             Path.GetTempPath(),
             $"CORDON-Updater-{Guid.NewGuid():N}");
+        var readyEventName = $"{ReadyEventPrefix}{Guid.NewGuid():N}";
 
         try
         {
+            EnsureSufficientSpaceForUpdate(archivePath, targetDirectory, package);
             ExtractAndValidate(archivePath, stagingDirectory, package);
             Directory.CreateDirectory(updaterDirectory);
             var updaterPath = Path.Combine(updaterDirectory, "CORDON-Updater.exe");
-            File.Copy(
-                Environment.ProcessPath ?? throw new InvalidOperationException("Не удалось определить путь лаунчера."),
-                updaterPath);
+            File.Copy(launcherPath, updaterPath);
+            using var readyEvent = new EventWaitHandle(
+                initialState: false,
+                EventResetMode.ManualReset,
+                readyEventName,
+                out var createdNew);
+            if (!createdNew)
+            {
+                throw new InvalidOperationException("Не удалось создать одноразовый сигнал updater.");
+            }
 
             var startInfo = new ProcessStartInfo
             {
@@ -55,11 +72,16 @@ internal static class LauncherSelfUpdateService
             };
             startInfo.ArgumentList.Add(ApplyArgument);
             startInfo.ArgumentList.Add(Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
-            startInfo.ArgumentList.Add(Path.GetFullPath(AppContext.BaseDirectory));
+            startInfo.ArgumentList.Add(targetDirectory);
             startInfo.ArgumentList.Add(stagingDirectory);
             startInfo.ArgumentList.Add(((int)package).ToString(CultureInfo.InvariantCulture));
+            startInfo.ArgumentList.Add(readyEventName);
             using var updater = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("Не удалось запустить установщик обновления.");
+            if (!readyEvent.WaitOne(UpdaterReadyTimeout))
+            {
+                throw new TimeoutException("Updater не подтвердил исходный лаунчер за отведённое время.");
+            }
         }
         catch
         {
@@ -72,12 +94,13 @@ internal static class LauncherSelfUpdateService
     public static bool TryParseRequest(string[] arguments, out LauncherUpdateRequest? request)
     {
         request = null;
-        if (arguments.Length != 5 ||
+        if (arguments.Length != 6 ||
             !arguments[0].Equals(ApplyArgument, StringComparison.Ordinal) ||
             !int.TryParse(arguments[1], out var parentProcessId) ||
             parentProcessId <= 0 ||
             !int.TryParse(arguments[4], out var packageValue) ||
-            !Enum.IsDefined(typeof(LauncherReleasePackage), packageValue))
+            !Enum.IsDefined(typeof(LauncherReleasePackage), packageValue) ||
+            !IsReadyEventName(arguments[5]))
         {
             return false;
         }
@@ -88,7 +111,8 @@ internal static class LauncherSelfUpdateService
                 parentProcessId,
                 Path.GetFullPath(arguments[2]),
                 Path.GetFullPath(arguments[3]),
-                (LauncherReleasePackage)packageValue);
+                (LauncherReleasePackage)packageValue,
+                arguments[5]);
             return true;
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
@@ -105,7 +129,10 @@ internal static class LauncherSelfUpdateService
         }
 
         ValidateStagingDirectory(request.StagingDirectory, request.Package);
-        await WaitForParentExitAsync(request.ParentProcessId, request.TargetDirectory);
+        await WaitForParentExitAsync(
+            request.ParentProcessId,
+            request.TargetDirectory,
+            request.ReadyEventName);
         ValidateStagingDirectory(request.StagingDirectory, request.Package);
         ApplyStagedFiles(request.StagingDirectory, request.TargetDirectory, request.Package);
 
@@ -123,11 +150,25 @@ internal static class LauncherSelfUpdateService
             ?? throw new InvalidOperationException("Не удалось запустить обновлённый лаунчер.");
     }
 
-    internal static async Task WaitForParentExitAsync(int parentProcessId, string targetDirectory)
+    internal static async Task WaitForParentExitAsync(
+        int parentProcessId,
+        string targetDirectory,
+        string readyEventName)
     {
+        Process parent;
         try
         {
-            using var parent = Process.GetProcessById(parentProcessId);
+            parent = Process.GetProcessById(parentProcessId);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new InvalidOperationException(
+                "Исходный лаунчер завершился до подтверждения updater.",
+                ex);
+        }
+
+        using (parent)
+        {
             var parentPath = parent.MainModule?.FileName
                 ?? throw new InvalidOperationException("Не удалось проверить запущенный лаунчер.");
             var parentFileName = Path.GetFileName(parentPath);
@@ -139,11 +180,9 @@ internal static class LauncherSelfUpdateService
                 throw new InvalidOperationException("Запрос обновления создан не текущим лаунчером.");
             }
 
+            using var readyEvent = EventWaitHandle.OpenExisting(readyEventName);
+            readyEvent.Set();
             await parent.WaitForExitAsync();
-        }
-        catch (ArgumentException)
-        {
-            // Основной лаунчер мог штатно завершиться между запуском updater и этой проверкой.
         }
     }
 
@@ -200,32 +239,9 @@ internal static class LauncherSelfUpdateService
         try
         {
             using var archive = ZipFile.OpenRead(archivePath);
-            var files = archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)).ToArray();
-            if (files.Length == 0 || files.Length > MaximumFileCount ||
-                files.Sum(entry => entry.Length) > MaximumUncompressedSize)
+            var files = GetValidatedArchiveFiles(archive);
+            foreach (var entry in files)
             {
-                throw new InvalidDataException("Архив обновления имеет недопустимый размер или состав.");
-            }
-
-            foreach (var entry in archive.Entries)
-            {
-                if (entry.FullName.Replace('\\', '/').StartsWith("Data/", StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new InvalidDataException("Архив обновления не может содержать папку Data.");
-                }
-
-                if (string.IsNullOrEmpty(entry.Name))
-                {
-                    throw new InvalidDataException("Архив обновления не должен содержать папки.");
-                }
-
-                if (!entry.FullName.Equals(entry.Name, StringComparison.Ordinal) ||
-                    entry.Name.Equals("Data", StringComparison.OrdinalIgnoreCase) ||
-                    entry.Length > 0 && (entry.CompressedLength == 0 || entry.Length / entry.CompressedLength > 200))
-                {
-                    throw new InvalidDataException($"Недопустимая запись в архиве обновления: {entry.FullName}");
-                }
-
                 entry.ExtractToFile(Path.Combine(stagingDirectory, entry.Name));
             }
 
@@ -237,6 +253,134 @@ internal static class LauncherSelfUpdateService
             throw;
         }
     }
+
+    internal static IReadOnlyDictionary<string, long> CalculateRequiredFreeSpace(
+        string targetDirectory,
+        string stagingDirectory,
+        long stagingBytes,
+        long backupBytes,
+        long largestReplacementBytes)
+    {
+        if (stagingBytes < 0 || backupBytes < 0 || largestReplacementBytes < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stagingBytes));
+        }
+
+        var requiredByRoot = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        AddRequiredSpace(requiredByRoot, targetDirectory, largestReplacementBytes);
+        AddRequiredSpace(requiredByRoot, stagingDirectory, checked(stagingBytes + backupBytes));
+        foreach (var root in requiredByRoot.Keys.ToArray())
+        {
+            requiredByRoot[root] = checked(requiredByRoot[root] + FreeSpaceMargin);
+        }
+
+        return requiredByRoot;
+    }
+
+    internal static void EnsureSpaceForDownload(string destinationDirectory, long archiveBytes)
+    {
+        if (archiveBytes < 0)
+        {
+            throw new InvalidDataException("GitHub вернул недопустимый размер архива.");
+        }
+
+        EnsureAvailableSpace(CalculateRequiredFreeSpace(
+            destinationDirectory,
+            destinationDirectory,
+            stagingBytes: 0,
+            backupBytes: 0,
+            largestReplacementBytes: archiveBytes));
+    }
+
+    private static void EnsureSufficientSpaceForUpdate(
+        string archivePath,
+        string targetDirectory,
+        LauncherReleasePackage package)
+    {
+        using var archive = ZipFile.OpenRead(archivePath);
+        var files = GetValidatedArchiveFiles(archive);
+        var stagingBytes = files.Sum(entry => entry.Length);
+        var backupBytes = files
+            .Select(entry => Path.Combine(targetDirectory, entry.Name))
+            .Where(File.Exists)
+            .Sum(path => new FileInfo(path).Length);
+        var obsoleteExecutable = Path.Combine(
+            targetDirectory,
+            GetExecutableName(package == LauncherReleasePackage.Minimal
+                ? LauncherReleasePackage.Standalone
+                : LauncherReleasePackage.Minimal));
+        if (File.Exists(obsoleteExecutable))
+        {
+            backupBytes = checked(backupBytes + new FileInfo(obsoleteExecutable).Length);
+        }
+
+        EnsureAvailableSpace(CalculateRequiredFreeSpace(
+            targetDirectory,
+            Path.GetTempPath(),
+            stagingBytes,
+            backupBytes,
+            files.Max(entry => entry.Length)));
+    }
+
+    private static ZipArchiveEntry[] GetValidatedArchiveFiles(ZipArchive archive)
+    {
+        var files = archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)).ToArray();
+        if (files.Length == 0 || files.Length > MaximumFileCount ||
+            files.Sum(entry => entry.Length) > MaximumUncompressedSize)
+        {
+            throw new InvalidDataException("Архив обновления имеет недопустимый размер или состав.");
+        }
+
+        foreach (var entry in archive.Entries)
+        {
+            if (entry.FullName.Replace('\\', '/').StartsWith("Data/", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidDataException("Архив обновления не может содержать папку Data.");
+            }
+
+            if (string.IsNullOrEmpty(entry.Name))
+            {
+                throw new InvalidDataException("Архив обновления не должен содержать папки.");
+            }
+
+            if (!entry.FullName.Equals(entry.Name, StringComparison.Ordinal) ||
+                entry.Name.Equals("Data", StringComparison.OrdinalIgnoreCase) ||
+                entry.Length > 0 && (entry.CompressedLength == 0 || entry.Length / entry.CompressedLength > 200))
+            {
+                throw new InvalidDataException($"Недопустимая запись в архиве обновления: {entry.FullName}");
+            }
+        }
+
+        return files;
+    }
+
+    private static void EnsureAvailableSpace(IReadOnlyDictionary<string, long> requiredByRoot)
+    {
+        foreach (var (root, requiredBytes) in requiredByRoot)
+        {
+            var availableBytes = new DriveInfo(root).AvailableFreeSpace;
+            if (availableBytes < requiredBytes)
+            {
+                throw new IOException(
+                    $"Недостаточно свободного места на диске {root}: требуется {requiredBytes / 1024 / 1024} МБ, доступно {availableBytes / 1024 / 1024} МБ.");
+            }
+        }
+    }
+
+    private static void AddRequiredSpace(
+        Dictionary<string, long> requiredByRoot,
+        string directory,
+        long bytes)
+    {
+        var root = Path.GetPathRoot(Path.GetFullPath(directory))
+            ?? throw new InvalidOperationException("Не удалось определить том для обновления.");
+        requiredByRoot.TryGetValue(root, out var currentBytes);
+        requiredByRoot[root] = checked(currentBytes + bytes);
+    }
+
+    private static bool IsReadyEventName(string value) =>
+        value.StartsWith(ReadyEventPrefix, StringComparison.Ordinal) &&
+        Guid.TryParseExact(value[ReadyEventPrefix.Length..], "N", out _);
 
     internal static void ValidateStagingDirectory(
         string stagingDirectory,

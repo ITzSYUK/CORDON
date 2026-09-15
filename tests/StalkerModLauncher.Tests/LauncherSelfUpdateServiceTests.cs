@@ -99,14 +99,41 @@ public sealed class LauncherSelfUpdateServiceTests : IDisposable
     public void TryParseRequestRejectsInvalidPathsWithoutThrowing()
     {
         Assert.False(LauncherSelfUpdateService.TryParseRequest(
-            ["--apply-launcher-update", "1", "invalid\0path", _root, "0"],
+            ["--apply-launcher-update", "1", "invalid\0path", _root, "0", ReadyEventName()],
             out _));
     }
 
     [Fact]
-    public async Task WaitForParentExitAsyncAllowsAlreadyExitedParent()
+    public void TryParseRequestAcceptsOneTimeReadyEvent()
     {
-        await LauncherSelfUpdateService.WaitForParentExitAsync(int.MaxValue, _root);
+        var eventName = ReadyEventName();
+
+        Assert.True(LauncherSelfUpdateService.TryParseRequest(
+            ["--apply-launcher-update", "1", _root, _root, "0", eventName],
+            out var request));
+
+        Assert.Equal(eventName, request!.ReadyEventName);
+    }
+
+    [Fact]
+    public async Task WaitForParentExitAsyncRejectsAlreadyExitedParent()
+    {
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            LauncherSelfUpdateService.WaitForParentExitAsync(int.MaxValue, _root, ReadyEventName()));
+    }
+
+    [Fact]
+    public void CalculateRequiredFreeSpaceCombinesRequirementsOnOneVolume()
+    {
+        var required = LauncherSelfUpdateService.CalculateRequiredFreeSpace(
+            _root,
+            Path.Combine(_root, "staging"),
+            stagingBytes: 100,
+            backupBytes: 200,
+            largestReplacementBytes: 300);
+        var root = Path.GetPathRoot(Path.GetFullPath(_root))!;
+
+        Assert.Equal(64L * 1024 * 1024 + 600, required[root]);
     }
 
     public void Dispose()
@@ -150,4 +177,6 @@ public sealed class LauncherSelfUpdateServiceTests : IDisposable
         addEntries?.Invoke(archive);
         return archivePath;
     }
+
+    private static string ReadyEventName() => $"Local\\CORDON-Update-Ready-{Guid.NewGuid():N}";
 }
