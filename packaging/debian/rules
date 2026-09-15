@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+# Черновая заготовка упаковки: проверьте пути и зависимости под свой дистрибутив.
+export PYBUILD_NAME = cordon-linux
+export PYBUILD_DISABLE = test
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_install:
+	dh_auto_install -- --no-compile-bytecode
+	install -Dm644 packaging/cordon-linux.desktop \
+		debian/cordon-linux/usr/share/applications/cordon-linux.desktop
+	install -Dm644 packaging/cordon-linux.svg \
+		debian/cordon-linux/usr/share/icons/hicolor/scalable/apps/cordon-linux.svg

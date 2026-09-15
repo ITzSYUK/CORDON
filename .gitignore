@@ -16,3 +16,15 @@ docs/RELEASE_NOTES_v*.md
 /radiation_*.png
 /icon.png
 /ui
+
+# --- Python port (CORDON-LINUX) ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+*.spec.local

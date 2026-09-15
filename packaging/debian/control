@@ -1,0 +1,36 @@
+Source: cordon-linux
+Section: games
+Priority: optional
+Maintainer: CORDON-LINUX contributors <noreply@example.org>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               pybuild-plugin-pyproject,
+               python3-all,
+               python3-setuptools,
+               python3-pyqt6 | python3-pyside6.qtcore
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Homepage: https://github.com/ITzSYUK/CORDON
+Vcs-Git: https://github.com/ITzSYUK/CORDON.git
+
+Package: cordon-linux
+Architecture: all
+Depends: ${python3:Depends},
+         ${misc:Depends},
+         python3-pyqt6 | python3-pyside6.qtcore | python3-pyside6.qtwidgets,
+         xdg-utils
+Recommends: fuse3,
+            fuse-overlayfs,
+            p7zip-full,
+            libarchive-tools
+Suggests: unrar
+Description: S.T.A.L.K.E.R. mod launcher for Linux (OpenXRay)
+ CORDON-LINUX manages game profiles and mods for S.T.A.L.K.E.R. games running on the
+ OpenXRay engine.  Every profile gets its own overlay directory, its own fsgame.ltx and
+ its own save/log directory; the engine is started with -fsltx/-overlaypath so the
+ installed game files are never modified.
+ .
+ Mods are joined with symbolic links by default, or with fuse-overlayfs if the user
+ prefers a real overlay mount.  The launcher also offers conflict analysis,
+ pre-flight checks and a case sensitivity audit that creates alias links for mods
+ shipped with Windows-style file name casing.

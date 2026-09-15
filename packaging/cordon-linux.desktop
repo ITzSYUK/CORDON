@@ -1,0 +1,20 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=CORDON-LINUX
+Name[ru]=CORDON-LINUX (лаунчер S.T.A.L.K.E.R.)
+GenericName=S.T.A.L.K.E.R. mod launcher
+GenericName[ru]=Лаунчер модов S.T.A.L.K.E.R.
+Comment=Manage profiles and mods for OpenXRay (S.T.A.L.K.E.R.) on Linux
+Comment[ru]=Профили и моды для OpenXRay (S.T.A.L.K.E.R.) в Linux
+Exec=cordon-gui %u
+TryExec=cordon-gui
+Icon=cordon-linux
+Terminal=false
+Categories=Game;Utility;
+Keywords=stalker;openxray;anomaly;mod;launcher;моды;
+Keywords[ru]=сталкер;моды;лаунчер;аномалия;
+StartupNotify=true
+StartupWMClass=cordon-linux
+EOF
+X-GNOME-Autostart-enabled=false
