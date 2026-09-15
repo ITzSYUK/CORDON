@@ -45,6 +45,7 @@ class MainWindow(QMainWindow):
         self.settings = service.settings
         self._task: Task | None = None
         self._session_thread: SessionThread | None = None
+        self._presence = None
         self._status = None
         self.actions_map: dict[str, QAction] = {}
 
@@ -791,6 +792,30 @@ class MainWindow(QMainWindow):
     def _on_game_started(self, command_line: str) -> None:
         self._log(f"Запуск: {command_line}")
         self.statusBar().showMessage("Игра запущена")
+        self._start_presence()
+
+    # ------------------------------------------------------------------ discord
+    def _start_presence(self) -> None:
+        profile = self.current_profile()
+        if profile is None or not self.settings.discord_presence:
+            return
+        from ..core.discord import announce_launch
+
+        self._presence = announce_launch(self.settings.discord_client_id, profile.name, game_id=profile.game_id)
+        if self._presence is None:
+            self._log("Discord не найден — статус не публикуется")
+        else:
+            self._log("Статус Discord включён")
+
+    def _stop_presence(self) -> None:
+        if self._presence is None:
+            return
+        try:
+            self._presence.clear()
+            self._presence.close()
+        except Exception:  # noqa: BLE001 - presence must never break the UI
+            pass
+        self._presence = None
 
     def _append_game_line(self, line: str) -> None:
         self.log_view.appendPlainText(line)
@@ -799,6 +824,7 @@ class MainWindow(QMainWindow):
 
     def _on_game_finished(self, code: int, duration: float) -> None:
         self._session_thread = None
+        self._stop_presence()
         self.progress.setVisible(False)
         self.launch_button.setEnabled(True)
         self.stop_button.setEnabled(False)
@@ -812,6 +838,7 @@ class MainWindow(QMainWindow):
 
     def _on_game_failed(self, message: str) -> None:
         self._session_thread = None
+        self._stop_presence()
         self.progress.setVisible(False)
         self.launch_button.setEnabled(True)
         self.stop_button.setEnabled(False)
@@ -987,6 +1014,7 @@ class MainWindow(QMainWindow):
             if answer != QMessageBox.Yes:
                 event.ignore()
                 return
+        self._stop_presence()
         try:
             self.settings.window_geometry = bytes(self.saveGeometry().toHex()).decode("ascii")
             self.service.save()

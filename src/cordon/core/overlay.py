@@ -183,6 +183,16 @@ class ProfileWorkspace:
             result.duration = time.monotonic() - started
             return result
 
+        if self.profile.backend == BACKEND_FUSE:
+            # fail before touching anything: otherwise a missing package would leave the
+            # previous build half-deleted
+            mounts.require_tool("fuse-overlayfs")
+            if not mounts.layer_gamedata_dirs(plan):
+                raise OverlayError(
+                    "fuse-overlayfs: ни один слой не содержит каталог gamedata — "
+                    "проверьте путь к игре и включённые моды"
+                )
+
         signature = self.build_signature(plan, engine_executable)
         manifest = self.load_manifest()
         reuse = (

@@ -86,11 +86,21 @@ def mounts() -> dict[str, str]:
 
 
 def is_mounted(path: str) -> bool:
+    """True when *path* **itself** is a mount point.
+
+    Note the difference from "is inside a mounted filesystem": every path is inside ``/``, so a
+    prefix check would report the whole disk as mounted and the overlay would never be mounted.
+    """
     target = os.path.realpath(util.norm(path))
-    table = mounts()
-    if target in table:
-        return True
-    return any(util.is_inside(target, mount_point) for mount_point in table)
+    for mount_point in mounts():
+        if os.path.realpath(mount_point) == target:
+            return True
+    try:
+        here = os.stat(target)
+        parent = os.stat(os.path.dirname(target) or "/")
+    except OSError:
+        return False
+    return here.st_dev != parent.st_dev
 
 
 def layer_gamedata_dirs(plan: LayerPlan) -> list[tuple[int, str]]:
@@ -168,11 +178,17 @@ class OverlayMount:
             return
         candidates = [shutil.which(name) for name in UNMOUNT_TOOLS]
         tool = next((path for path in candidates if path), "")
+        attempts: list[list[str]] = []
+        if tool:
+            attempts.append([tool, "-uz", self.mount_point])
+        attempts.append(["umount", "-l", self.mount_point])
         last_error = ""
-        for attempt in ([tool, "-uz", self.mount_point] if tool else []) + [["umount", "-l", self.mount_point]]:
-            if not attempt[0]:
+        for attempt in attempts:
+            try:
+                result = subprocess.run(attempt, capture_output=True, text=True, check=False)
+            except OSError as exc:
+                last_error = str(exc)
                 continue
-            result = subprocess.run(attempt, capture_output=True, text=True, check=False)
             if result.returncode == 0 and not is_mounted(self.mount_point):
                 if logger:
                     logger.info("оверлей отмонтирован: %s", self.mount_point)

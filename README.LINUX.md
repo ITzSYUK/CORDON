@@ -3,6 +3,8 @@
 **Лаунчер профилей и модов S.T.A.L.K.E.R. для Linux с адаптацией под движок [OpenXRay](https://github.com/OpenXRay/xray-16).**
 
 Это порт [CORDON](https://github.com/ITzSYUK/CORDON) (WPF, .NET 8, Windows) на Python + Qt (PySide6).
+Подробное руководство: **[docs/USER_GUIDE_LINUX_RU.md](docs/USER_GUIDE_LINUX_RU.md)**,
+устройство порта: **[docs/TECHNICAL_LINUX_EN.md](docs/TECHNICAL_LINUX_EN.md)**.
 Идея, формат профилей, порядок модов и «чем ниже в списке — тем выше приоритет» сохранены,
 Windows-специфичная часть (USVFS, NTFS-жёсткие ссылки, реестр) заменена на нативные
 Linux-механизмы: символические ссылки, `fuse-overlayfs` и ключи командной строки OpenXRay.
@@ -146,7 +148,7 @@ cordon launch  "Anomaly 1.5.2"                       # играть
 
 | Команда | Назначение |
 |---|---|
-| `cordon list` / `new` / `show` / `edit` / `delete` / `duplicate` | профили |
+| `cordon list` / `new` / `show` / `edit` / `duplicate` / `delete` | профили |
 | `cordon mods` / `mod-add` / `mod-scan` / `mod-install` / `mod-state` / `mod-move` / `mod-remove` | моды |
 | `cordon prepare` | собрать оверлей профиля (`--force` — пересобрать) |
 | `cordon launch [--dry-run] [--detach] [--skip-check] [--presence]` | запуск игры |
@@ -191,7 +193,8 @@ cordon launch  "Anomaly 1.5.2"                       # играть
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[gui,dev]"
-.venv/bin/python -m pytest tests/cordon -q      # 112 тестов (ядро, CLI, GUI); тесты GUI пропускаются без PySide6/libGL
+.venv/bin/python -m pytest tests/cordon -q      # 154 теста (ядро, CLI, GUI, интеграция с реальным процессом);
+                                               # GUI-тесты пропускаются, если нет PySide6/libGL
 .venv/bin/ruff check src tests                  # линтер (если установлен)
 ```
 
@@ -207,7 +210,9 @@ tests/cordon/  # pytest: мини-установка игры/движка/мо�
 ```
 
 Ядро не импортирует PySide6 — CLI, GUI и тесты используют один и тот же сервисный слой
-(`cordon.core.service.CordonService`).
+(`cordon.core.service.CordonService`). Интеграционные тесты запускают
+`/usr/bin/true` в роли движка, поэтому реально проверяются сборка оверлея, `Popen`,
+захват вывода и коды возврата.
 
 ## Лицензия
 

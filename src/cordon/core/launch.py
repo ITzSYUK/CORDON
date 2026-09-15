@@ -165,6 +165,12 @@ class Session:
         with self._lock:
             return self._lines[-count:]
 
+    def wait_for_reader(self, timeout: float = 5.0) -> None:
+        """Wait for the output reader to drain the pipe after the process has exited."""
+        thread = self._thread
+        if thread is not None and thread.is_alive():
+            thread.join(timeout=timeout)
+
     def running(self) -> bool:
         return self.process.poll() is None
 
@@ -274,6 +280,7 @@ def finish_session(
 ) -> LaunchOutcome:
     """Collect statistics and diagnostics after the game exited."""
     returncode = session.process.wait()
+    session.wait_for_reader()
     finished = time.time()
     started = session.started_at
     duration = max(0.0, finished - started)
