@@ -193,7 +193,7 @@ cordon launch  "Anomaly 1.5.2"                       # играть
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[gui,dev]"
-.venv/bin/python -m pytest tests/cordon -q      # 154 теста (ядро, CLI, GUI, интеграция с реальным процессом);
+.venv/bin/python -m pytest tests/cordon -q      # 155 тестов (ядро, CLI, GUI, интеграция с реальным процессом);
                                                # GUI-тесты пропускаются, если нет PySide6/libGL
 .venv/bin/ruff check src tests                  # линтер (если установлен)
 ```
