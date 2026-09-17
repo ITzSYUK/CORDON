@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Themes;
 
 namespace StalkerModLauncher.Views.Controls;
@@ -16,7 +17,7 @@ public partial class ConflictExplorerContentView : UserControl
         nameof(CloseButtonText),
         typeof(string),
         typeof(ConflictExplorerContentView),
-        new PropertyMetadata("Закрыть"));
+        new PropertyMetadata(Strings.Common_Close));
 
     private ResourceDictionary? _pdaTheme;
 

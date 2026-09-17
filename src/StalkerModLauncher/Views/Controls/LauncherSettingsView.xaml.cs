@@ -2,6 +2,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using StalkerModLauncher.Resources;
+using StalkerModLauncher.Services;
 using StalkerModLauncher.ViewModels;
 
 namespace StalkerModLauncher.Views.Controls;
@@ -23,6 +25,11 @@ public partial class LauncherSettingsView : UserControl
     {
         if (DataContext is LauncherSettingsViewModel viewModel && await viewModel.TrySaveAsync())
         {
+            if (viewModel.IsLanguageChangePending)
+            {
+                DialogService.ShowInfo(Strings.Settings_LanguageRestartTitle, Strings.Settings_LanguageRestartMessage);
+            }
+
             Saved?.Invoke(this, EventArgs.Empty);
         }
     }

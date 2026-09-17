@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -22,16 +23,16 @@ public static class ProfileReadinessService
         var messages = new List<string>();
         if (!profile.IsEnabled)
         {
-            messages.Add("Выбранный профиль отключён.");
+            messages.Add(Strings.Ready_ProfileDisabled);
         }
 
         if (enabledMods.Length != 1)
         {
-            messages.Add("Автономный профиль должен содержать ровно один включённый мод.");
+            messages.Add(Strings.Ready_StandaloneModCount);
         }
         else if (!Directory.Exists(enabledMods[0].SourcePath))
         {
-            messages.Add($"Папка мода не найдена: {enabledMods[0].Name}");
+            messages.Add(LocalizedText.Format(Strings.Ready_ModFolderMissingFormat, enabledMods[0].Name));
         }
 
         var executableIsSafe = ValidateExecutablePath(profile, messages);
@@ -39,7 +40,7 @@ public static class ProfileReadinessService
                     enabledMods.Length == 1 &&
                     Directory.Exists(enabledMods[0].SourcePath) &&
                     executableIsSafe;
-        return CreateResult(ready, ready ? "Готов к запуску." : string.Join(Environment.NewLine, messages), messages);
+        return CreateResult(ready, ready ? Strings.Ready_Ready : string.Join(Environment.NewLine, messages), messages);
     }
 
     private static ValidationResult ValidateOverlay(ModProfile profile)
@@ -50,19 +51,19 @@ public static class ProfileReadinessService
         var missingMods = enabledMods.Where(mod => !Directory.Exists(mod.SourcePath)).ToArray();
         if (!profile.IsEnabled)
         {
-            messages.Add("Выбранный профиль отключён.");
+            messages.Add(Strings.Ready_ProfileDisabled);
         }
 
         foreach (var mod in missingMods)
         {
-            messages.Add($"Папка мода не найдена: {mod.Name}");
+            messages.Add(LocalizedText.Format(Strings.Ready_ModFolderMissingFormat, mod.Name));
         }
 
         var overwriteExists = string.IsNullOrWhiteSpace(profile.Mo2OverwritePath) ||
                               Directory.Exists(profile.Mo2OverwritePath);
         if (!overwriteExists)
         {
-            messages.Add($"Папка MO2 overwrite не найдена: {profile.Mo2OverwritePath}");
+            messages.Add(LocalizedText.Format(Strings.Ready_OverwriteMissingFormat, profile.Mo2OverwritePath));
         }
 
         var executableIsSafe = ValidateExecutablePath(profile, messages);
@@ -75,7 +76,7 @@ public static class ProfileReadinessService
                     exclusionsAreValid &&
                     fsgameIsValid &&
                     executableIsSafe;
-        return CreateResult(ready, ready ? "Готов к запуску." : string.Join(Environment.NewLine, messages.Distinct()), messages);
+        return CreateResult(ready, ready ? Strings.Ready_Ready : string.Join(Environment.NewLine, messages.Distinct()), messages);
     }
 
     private static bool ValidateExcludedFiles(
@@ -91,7 +92,7 @@ public static class ProfileReadinessService
             {
                 try
                 {
-                    FileSystemSafety.EnsureRelativePath(excluded, "Excluded mod file");
+                    FileSystemSafety.EnsureRelativePath(excluded, Strings.Safety_ExcludedModFile);
                     var hasOtherProvider = File.Exists(Path.Combine(profile.GameInstallPath, excluded)) ||
                                            orderedMods.Any(other =>
                                                !ReferenceEquals(other, mod) &&
@@ -99,7 +100,7 @@ public static class ProfileReadinessService
                                                !other.ExcludedFiles.Contains(excluded, StringComparer.OrdinalIgnoreCase));
                     if (!hasOtherProvider)
                     {
-                        messages.Add($"Исключённый файл больше не имеет другого поставщика: {mod.Name} — {excluded}");
+                        messages.Add(LocalizedText.Format(Strings.Ready_ExcludedProviderMissingFormat, mod.Name, excluded));
                         valid = false;
                     }
                 }
@@ -118,7 +119,7 @@ public static class ProfileReadinessService
     {
         try
         {
-            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, "Launch executable");
+            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Safety_LaunchExecutable);
             if (profile.IsStandalone)
             {
                 return true;
@@ -142,7 +143,7 @@ public static class ProfileReadinessService
                 return true;
             }
 
-            messages.Add(executable?.Reason ?? $"Файл запуска не найден: {profile.ExecutableRelativePath}");
+            messages.Add(executable?.Reason ?? LocalizedText.Format(Strings.Ready_ExecutableMissingFormat, profile.ExecutableRelativePath));
             return false;
         }
         catch (Exception ex)
@@ -165,8 +166,8 @@ public static class ProfileReadinessService
 
             var relativePath = FileLayerPlan.ResolveFsgameLaunchArgument(profile.LaunchArguments);
             messages.Add(relativePath is null
-                ? "Файл fsgame.ltx не найден во включённых слоях."
-                : $"Файл из параметра -fsltx не найден во включённых слоях: {relativePath}");
+                ? Strings.Ready_FsgameMissing
+                : LocalizedText.Format(Strings.Ready_FsltxMissingFormat, relativePath));
             return false;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)

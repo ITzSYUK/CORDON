@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 using Xunit;
 
@@ -22,11 +23,12 @@ public sealed class ProfileManagerTests
     [Fact]
     public void CreateUsesUniqueNameAndStartsWithoutInheritedPaths()
     {
-        var existing = new List<ModProfile> { new() { Name = "Profile 2" } };
+        var expectedBaseName = LocalizedText.Format(Strings.Profile_DefaultNameFormat, 2);
+        var existing = new List<ModProfile> { new() { Name = expectedBaseName } };
 
         var created = _manager.Create(existing);
 
-        Assert.Equal("Profile 2 (2)", created.Name);
+        Assert.Equal($"{expectedBaseName} (2)", created.Name);
         Assert.Empty(created.GameInstallPath);
         Assert.Empty(created.WorkspacePath);
         Assert.EndsWith("Mods", created.ModInstallPath);

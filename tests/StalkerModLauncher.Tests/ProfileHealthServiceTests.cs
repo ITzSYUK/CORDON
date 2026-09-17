@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 using Xunit;
 
@@ -39,7 +40,7 @@ public sealed class ProfileHealthServiceTests : IDisposable
         Assert.Contains(
             report.Checks,
             check => check.Title == "Сохранения" &&
-                     check.Details.StartsWith("1 файл", StringComparison.Ordinal));
+                     check.Details.StartsWith("Файлов: 1.", StringComparison.Ordinal));
         Assert.Contains(
             report.Checks,
             check => check.Title == "Источник fsgame.ltx" &&
@@ -110,7 +111,7 @@ public sealed class ProfileHealthServiceTests : IDisposable
         Assert.Contains(
             report.Checks,
             check => check.Title == "Сохранения" &&
-                     check.Details.StartsWith("2 файл", StringComparison.Ordinal));
+                     check.Details.StartsWith("Файлов: 2.", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -215,7 +216,7 @@ public sealed class ProfileHealthServiceTests : IDisposable
         Assert.Equal(dump, report.LatestCrashDumpPath);
         Assert.Equal(modRoot, report.ProfileFolderPath);
         Assert.Equal(2, report.WarningCount);
-        Assert.Contains("Crash dump", report.ToText("Standalone"));
+        Assert.Contains(Strings.Check_CrashDump, report.ToText("Standalone"));
     }
 
     [Fact]
@@ -239,7 +240,7 @@ public sealed class ProfileHealthServiceTests : IDisposable
         Assert.Contains(
             report.Checks,
             check => check.Title == "Сохранения" &&
-                     check.Details.StartsWith("1 файл", StringComparison.Ordinal));
+                     check.Details.StartsWith("Файлов: 1.", StringComparison.Ordinal));
     }
 
     [Fact]

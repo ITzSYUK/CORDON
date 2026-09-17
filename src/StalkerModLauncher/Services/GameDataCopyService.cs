@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 internal static class GameDataCopyService
@@ -12,7 +14,7 @@ internal static class GameDataCopyService
     {
         if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination) ||
             FileSystemSafety.IsDirectoryInside(source, destination) || FileSystemSafety.IsDirectoryInside(destination, source))
-            throw new InvalidOperationException("Каталоги копирования должны быть отдельными и не вложенными друг в друга.");
+            throw new InvalidOperationException(Strings.Copy_SeparateFolders);
         return CopyMissingCore(source, destination);
     }
 
@@ -20,13 +22,13 @@ internal static class GameDataCopyService
     {
         var overwrite = Path.Combine(Path.GetFullPath(destination), "overwrite");
         if (!FileSystemSafety.IsDirectoryInside(source, overwrite))
-            throw new InvalidOperationException($"Источник должен находиться в профильном overwrite: {overwrite}");
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Copy_SourceOutsideOverwriteFormat, overwrite));
         return CopyMissingCore(source, destination);
     }
 
     private static (int Copied, int Skipped) CopyMissingCore(string source, string destination)
     {
-        if (!Directory.Exists(source)) throw new DirectoryNotFoundException($"Нет данных для копирования: {source}");
+        if (!Directory.Exists(source)) throw new DirectoryNotFoundException(LocalizedText.Format(Strings.Copy_NoDataFormat, source));
         EnsureNoLinks(source);
         EnsureNoLinks(destination);
         var copied = 0;
@@ -74,6 +76,6 @@ internal static class GameDataCopyService
     {
         for (var directory = new DirectoryInfo(Path.GetFullPath(path)); directory is not null; directory = directory.Parent)
             if (directory.Exists && (directory.Attributes & FileAttributes.ReparsePoint) != 0)
-                throw new IOException($"Копирование через ссылку запрещено: {directory.FullName}");
+                throw new IOException(LocalizedText.Format(Strings.Copy_ThroughLinkForbiddenFormat, directory.FullName));
     }
 }

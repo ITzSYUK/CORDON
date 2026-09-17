@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Windows;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.Views;
@@ -27,8 +28,8 @@ public partial class AboutWindow : Window
         var informationalVersion = assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion;
-        var version = informationalVersion?.Split('+')[0] ?? assembly.GetName().Version?.ToString(3) ?? "неизвестна";
-        return $"Версия {version}";
+        var version = informationalVersion?.Split('+')[0] ?? assembly.GetName().Version?.ToString(3) ?? Strings.Common_Unknown;
+        return LocalizedText.Format(Strings.About_VersionFormat, version);
     }
 
     private void AboutWindow_OnSourceInitialized(object? sender, EventArgs e)

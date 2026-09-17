@@ -118,6 +118,7 @@ dotnet run --project .\src\StalkerModLauncher\StalkerModLauncher.csproj
 
 - [Техническая документация на русском](docs/TECHNICAL_RU.md)
 - [Technical documentation in English](docs/TECHNICAL_EN.md)
+- [User guide in English](docs/USER_GUIDE_EN.md)
 - [Лицензии сторонних компонентов](THIRD_PARTY_NOTICES.md)
 
 ---
@@ -158,7 +159,7 @@ CORDON is an open-source Windows profile launcher for the original trilogy, Anom
 
 Windows 10/11 x64 is required. USVFS may also require the Microsoft Visual C++ 2015–2022 Redistributable for both x64 and x86.
 
-See the [English technical documentation](docs/TECHNICAL_EN.md) for architecture, Workspace safety, USVFS limitations and release packaging.
+See the [English user guide](docs/USER_GUIDE_EN.md) for detailed usage and the [English technical documentation](docs/TECHNICAL_EN.md) for architecture, Workspace safety, USVFS limitations and release packaging.
 
 ---
 

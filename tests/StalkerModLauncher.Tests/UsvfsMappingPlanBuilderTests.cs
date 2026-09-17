@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 using Xunit;
 
@@ -48,14 +49,14 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
         Assert.Equal(
             [Path.GetFullPath(firstMod), Path.GetFullPath(patch)],
             plan.Operations
-                .Where(operation => operation.SourceName != "profile overwrite")
+                .Where(operation => operation.SourceName != Strings.Layer_ProfileOverwrite)
                 .Select(operation => operation.SourcePath)
                 .ToArray());
         Assert.DoesNotContain(
             plan.Operations,
             operation => string.Equals(operation.SourcePath, plan.VirtualRoot, StringComparison.OrdinalIgnoreCase));
         Assert.All(
-            plan.Operations.Where(operation => operation.SourceName != "profile overwrite"),
+            plan.Operations.Where(operation => operation.SourceName != Strings.Layer_ProfileOverwrite),
             operation => Assert.Equal(Path.GetFullPath(game), operation.DestinationPath));
     }
 
@@ -74,7 +75,7 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
 
         var plan = UsvfsMappingPlanBuilder.Build(layerPlan, manifest);
 
-        var overwrite = Assert.Single(plan.Operations, operation => operation.SourceName == "profile overwrite");
+        var overwrite = Assert.Single(plan.Operations, operation => operation.SourceName == Strings.Layer_ProfileOverwrite);
         Assert.Equal(UsvfsMappingKind.DirectoryStatic, overwrite.Kind);
         Assert.Equal(Path.GetFullPath(manifest.WriteOverlayRoot), overwrite.SourcePath);
         Assert.Equal(Path.GetFullPath(game), overwrite.DestinationPath);
@@ -131,12 +132,12 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
 
         var knownWritable = Assert.Single(
             plan.Operations,
-            operation => operation.Kind == UsvfsMappingKind.File && operation.SourceName == "profile writable files");
+            operation => operation.Kind == UsvfsMappingKind.File && operation.SourceName == Strings.Layer_ProfileWritableData);
         Assert.Equal(Path.GetFullPath(writableFile.StoragePath), knownWritable.SourcePath);
         Assert.Equal(
             Path.Combine(Path.GetFullPath(game), "gamedata", "configs", "localization.ltx"),
             knownWritable.DestinationPath);
-        Assert.True(knownWritable.Order < plan.Operations.Single(operation => operation.SourceName == "profile overwrite").Order);
+        Assert.True(knownWritable.Order < plan.Operations.Single(operation => operation.SourceName == Strings.Layer_ProfileOverwrite).Order);
     }
 
     [Fact]
@@ -190,7 +191,11 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
 
         var plan = UsvfsMappingPlanBuilder.Build(layerPlan, manifest);
 
-        var fallback = Assert.Single(plan.Operations, operation => operation.SourceName.StartsWith("excluded file fallback:", StringComparison.Ordinal));
+        var fallback = Assert.Single(
+            plan.Operations,
+            operation => operation.SourceName == LocalizedText.Format(
+                Strings.Layer_ExcludedFallbackFormat,
+                LocalizedText.Format(Strings.Layer_ModFormat, "First")));
         Assert.Equal(UsvfsMappingKind.File, fallback.Kind);
         Assert.Equal(Path.GetFullPath(firstFile), fallback.SourcePath);
         Assert.Equal(Path.Combine(Path.GetFullPath(game), "shared.ltx"), fallback.DestinationPath);

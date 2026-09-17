@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text.Json;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -40,7 +41,7 @@ public static class LauncherReleaseDownloadService
                 cancellationToken);
             response.EnsureSuccessStatusCode();
             var contentLength = response.Content.Headers.ContentLength
-                ?? throw new InvalidDataException("GitHub не указал размер архива обновления.");
+                ?? throw new InvalidDataException(Strings.Update_ArchiveSizeMissing);
             LauncherSelfUpdateService.EnsureSpaceForDownload(destinationDirectory, contentLength);
 
             await using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -90,7 +91,7 @@ public static class LauncherReleaseDownloadService
                 $"/{GitHubRepository}/releases/tag/{releaseTag}",
                 StringComparison.Ordinal))
         {
-            throw new InvalidDataException("GitHub returned an unexpected release URL.");
+            throw new InvalidDataException(Strings.Update_UnexpectedReleaseUrl);
         }
 
         var fileName = package switch
@@ -107,14 +108,14 @@ public static class LauncherReleaseDownloadService
     {
         if (expectedHash.Length != 64 || !expectedHash.All(Uri.IsHexDigit))
         {
-            throw new InvalidDataException("Релиз не содержит корректную контрольную сумму архива.");
+            throw new InvalidDataException(Strings.Update_ChecksumInvalid);
         }
 
         using var stream = File.OpenRead(archivePath);
         var actualHash = Convert.ToHexString(SHA256.HashData(stream));
         if (!actualHash.Equals(expectedHash, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidDataException("Контрольная сумма скачанного архива не совпадает.");
+            throw new InvalidDataException(Strings.Update_ChecksumMismatch);
         }
     }
 
@@ -146,7 +147,7 @@ public static class LauncherReleaseDownloadService
             !release.TryGetProperty("assets", out var assets) ||
             assets.ValueKind != JsonValueKind.Array)
         {
-            throw new InvalidDataException("GitHub вернул неполные данные релиза.");
+            throw new InvalidDataException(Strings.Update_ReleaseDataIncomplete);
         }
 
         var asset = assets.EnumerateArray().SingleOrDefault(candidate =>
@@ -157,13 +158,13 @@ public static class LauncherReleaseDownloadService
             digest.ValueKind != JsonValueKind.String ||
             !digest.GetString()!.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidDataException($"Релиз не содержит SHA-256 для {assetFileName}.");
+            throw new InvalidDataException(LocalizedText.Format(Strings.Update_ShaMissingFormat, assetFileName));
         }
 
         var hash = digest.GetString()!["sha256:".Length..];
         if (hash.Length != 64 || !hash.All(Uri.IsHexDigit))
         {
-            throw new InvalidDataException($"SHA-256 для {assetFileName} имеет недопустимый формат.");
+            throw new InvalidDataException(LocalizedText.Format(Strings.Update_ShaInvalidFormat, assetFileName));
         }
 
         return hash;
@@ -183,7 +184,7 @@ public static class LauncherReleaseDownloadService
             total += read;
             if (total > maximumBytes)
             {
-                throw new InvalidDataException("Архив обновления слишком велик.");
+                throw new InvalidDataException(Strings.Update_ArchiveTooLarge);
             }
 
             await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);

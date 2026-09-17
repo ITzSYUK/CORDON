@@ -1,6 +1,7 @@
 <Application x:Class="StalkerModLauncher.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:res="clr-namespace:StalkerModLauncher.Resources">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -301,7 +302,7 @@
                                 </Grid.RowDefinitions>
                                 <GridViewRowPresenter Grid.Row="0" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                                 <TextBlock Grid.Row="1"
-                                           Text="Перезаписывает файлы вышестоящих модификаций: могут возникать конфликты."
+                                           Text="{x:Static res:Strings.Mod_OverwriteWarning}"
                                            Foreground="{StaticResource DangerBrush}"
                                            FontSize="9"
                                             Margin="86,0,0,2"

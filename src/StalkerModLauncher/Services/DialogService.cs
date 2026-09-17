@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Media;
 using Microsoft.Win32;
 using System.Windows;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -26,7 +27,7 @@ public class DialogService
         var dialog = new OpenFileDialog
         {
             Title = title,
-            Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*",
+            Filter = Strings.Dialog_ExecutableFilter,
             InitialDirectory = Directory.Exists(initialPath) ? initialPath : string.Empty,
             CheckFileExists = true,
             Multiselect = false
@@ -90,7 +91,7 @@ public class DialogService
     {
         if (!File.Exists(path))
         {
-            throw new FileNotFoundException("File was not found.", path);
+            throw new FileNotFoundException(Strings.Error_FileNotFound, path);
         }
 
         Process.Start(new ProcessStartInfo
@@ -106,7 +107,7 @@ public class DialogService
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
-            throw new ArgumentException("Указан некорректный адрес сайта.", nameof(url));
+            throw new ArgumentException(Strings.Dialog_InvalidUrl, nameof(url));
         }
 
         Process.Start(new ProcessStartInfo

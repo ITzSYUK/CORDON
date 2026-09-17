@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:StalkerModLauncher.Views.Controls"
-        Title="О программе"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="{x:Static res:Strings.About_Title}"
         Width="700"
         Height="680"
         MinWidth="540"
@@ -41,7 +42,7 @@
         <CheckBox Grid.Row="2"
                   Margin="0,16,0,0"
                   IsChecked="{Binding DontShowAgain, RelativeSource={RelativeSource AncestorType=Window}}"
-                  Content="Не показывать при запуске"
+                  Content="{x:Static res:Strings.About_DontShowAtStartup}"
                   FontSize="12"
                   Foreground="{StaticResource MutedTextBrush}"
                   VerticalAlignment="Center"/>

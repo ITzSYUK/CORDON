@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 internal sealed class UsvfsSessionReservation : IDisposable
@@ -14,7 +16,7 @@ internal sealed class UsvfsSessionReservation : IDisposable
         if (Interlocked.CompareExchange(ref _activeSession, 1, 0) != 0)
         {
             throw new InvalidOperationException(
-                "Другой профиль уже запущен через USVFS. Завершите его перед запуском второго USVFS-профиля.");
+                Strings.Usvfs_AlreadyRunning);
         }
 
         return new UsvfsSessionReservation();

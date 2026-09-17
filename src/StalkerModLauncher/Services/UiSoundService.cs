@@ -2,6 +2,7 @@ using System.Reflection;
 using NAudio.Vorbis;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -60,7 +61,7 @@ public sealed class UiSoundService : IDisposable
                 if (!buttonPress.WaveFormat.Equals(opened.WaveFormat) ||
                     !buttonPress.WaveFormat.Equals(closed.WaveFormat))
                 {
-                    throw new InvalidOperationException("Interface sound files must use the same audio format.");
+                    throw new InvalidOperationException(Strings.Error_SoundFormatMismatch);
                 }
 
                 _mixer = new MixingSampleProvider(buttonPress.WaveFormat)
@@ -184,7 +185,7 @@ public sealed class UiSoundService : IDisposable
 
         using var source = Assembly.GetExecutingAssembly()
             .GetManifestResourceStream(ResourcePrefix + fileName)
-            ?? throw new InvalidOperationException($"Sound resource '{fileName}' was not found.");
+            ?? throw new InvalidOperationException(LocalizedText.Format(Strings.Error_SoundMissingFormat, fileName));
         using var destination = File.Create(path);
         source.CopyTo(destination);
 

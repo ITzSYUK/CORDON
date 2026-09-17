@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 public sealed record LaunchExecutableSearchRoot(
@@ -14,7 +16,7 @@ public sealed record LaunchExecutableDetection(
     int Score,
     int CandidateCount)
 {
-    public string Summary => $"{RelativePath} — {Reason}. Источник: {SourceName}.";
+    public string Summary => LocalizedText.Format(Strings.Executable_SummaryFormat, RelativePath, Reason, SourceName);
 }
 
 public static class LaunchExecutableDetector
@@ -38,7 +40,7 @@ public static class LaunchExecutableDetector
                         launcherPath,
                         Path.GetFileName(launcherPath),
                         root.DisplayName,
-                        "найден Anomaly Launcher базовой игры",
+                        Strings.Executable_AnomalyLauncher,
                         Score: 0,
                         CandidateCount: 1);
                 }
@@ -126,68 +128,68 @@ public static class LaunchExecutableDetector
         if (!string.IsNullOrWhiteSpace(requestedRelativePath) &&
             normalized.Equals(requestedRelativePath, StringComparison.OrdinalIgnoreCase))
         {
-            reason = "найден выбранный пользователем путь";
+            reason = Strings.Executable_SelectedPath;
             return 0;
         }
 
         if (normalized.Equals("AnomalyLauncher.exe", StringComparison.OrdinalIgnoreCase))
         {
-            reason = "найден лаунчер автономной сборки";
+            reason = Strings.Executable_StandaloneLauncher;
             return 5;
         }
 
         if (normalized.Equals(@"bin_x64\xrEngine.exe", StringComparison.OrdinalIgnoreCase))
         {
-            reason = "найден основной 64-битный движок OGSR/X-Ray";
+            reason = Strings.Executable_MainX64Engine;
             return 10;
         }
 
         if (IsEngineDirectoryExecutable(normalized))
         {
-            reason = "найден движок OGSR/X-Ray в каталоге bin_*";
+            reason = Strings.Executable_BinEngine;
             return 11;
         }
 
         if (normalized.Equals(@"bin\xrEngine.exe", StringComparison.OrdinalIgnoreCase))
         {
-            reason = "найден движок X-Ray/OGSR";
+            reason = Strings.Executable_XrayEngine;
             return 12;
         }
 
         if (normalized.Equals(@"bin\xr_3da.exe", StringComparison.OrdinalIgnoreCase) ||
             normalized.Equals(@"bin\XR_3DA.exe", StringComparison.OrdinalIgnoreCase))
         {
-            reason = "найден стандартный бинарник S.T.A.L.K.E.R.";
+            reason = Strings.Executable_StalkerBinary;
             return 13;
         }
 
         if (fileName.Equals("xr_3da.exe", StringComparison.OrdinalIgnoreCase) ||
             fileName.Equals("XR_3DA.exe", StringComparison.OrdinalIgnoreCase))
         {
-            reason = "найден бинарник X-Ray";
+            reason = Strings.Executable_XrayBinary;
             return 20;
         }
 
         if (fileName.Contains("xrEngine", StringComparison.OrdinalIgnoreCase) ||
             fileName.Contains("OGSR", StringComparison.OrdinalIgnoreCase))
         {
-            reason = "имя похоже на движок X-Ray/OGSR";
+            reason = Strings.Executable_XrayLikeName;
             return 25;
         }
 
         if (fileName.StartsWith("Anomaly", StringComparison.OrdinalIgnoreCase))
         {
-            reason = "имя похоже на бинарник Anomaly";
+            reason = Strings.Executable_AnomalyLikeName;
             return 35;
         }
 
         if (fileName.Contains("xr", StringComparison.OrdinalIgnoreCase))
         {
-            reason = "имя похоже на X-Ray бинарник";
+            reason = Strings.Executable_XrayBinaryLikeName;
             return 45;
         }
 
-        reason = "единственный или запасной исполняемый файл";
+        reason = Strings.Executable_Fallback;
         return 100;
     }
 

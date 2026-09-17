@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -22,14 +23,14 @@ internal static class WorkspaceMaterializer
             // Old workspace versions could contain read-only hard links. NTFS shares
             // attributes between hard links, so we temporarily unlock only the
             // workspace entries and restore the source attributes immediately after.
-            progress?.Report("Обнаружены защищённые ссылки от старой сборки. Подготавливаю безопасную очистку workspace...");
+            progress?.Report(Strings.Materializer_OldLinksFound);
         }
 
         var sourceAttributes = CaptureReadOnlySourceAttributes(snapshotFactory());
         try
         {
             var releasedFiles = ClearReadOnlyWorkspaceAttributes(workspaceDirectory);
-            progress?.Report($"Освобождено защищённых ссылок старого workspace: {releasedFiles:N0}. Атрибуты исходных файлов будут восстановлены.");
+            progress?.Report(LocalizedText.Format(Strings.Materializer_OldLinksReleasedFormat, releasedFiles));
             FileSystemSafety.DeleteDirectoryContents(workspaceDirectory, allowedRoot);
         }
         finally
@@ -55,7 +56,7 @@ internal static class WorkspaceMaterializer
             return;
         }
 
-        progress.Report("Проверка symbolic link для файлов на других дисках...");
+        progress.Report(Strings.Materializer_CheckingSymlinks);
         foreach (var sourceFile in crossVolumeFiles)
         {
             var testLink = Path.Combine(workspaceRoot, $".stalker-launcher-link-test-{Guid.NewGuid():N}");
@@ -96,7 +97,7 @@ internal static class WorkspaceMaterializer
 
             if (++fileCount % 500 == 0)
             {
-                progress.Report($"Подключено файлов базовой игры: {fileCount:N0}...");
+                progress.Report(LocalizedText.Format(Strings.Materializer_GameFilesFormat, fileCount));
             }
         }
     }
@@ -109,7 +110,7 @@ internal static class WorkspaceMaterializer
         WorkspaceBuildStats stats,
         CancellationToken cancellationToken)
     {
-        progress.Report($"Подключение мода: {mod.Name}");
+        progress.Report(LocalizedText.Format(Strings.Materializer_ConnectingModFormat, mod.Name));
         foreach (var relativePath in source.Directories)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -127,7 +128,7 @@ internal static class WorkspaceMaterializer
                 continue;
             }
 
-            FileSystemSafety.EnsureRelativePath(file.RelativePath, "Mod file");
+            FileSystemSafety.EnsureRelativePath(file.RelativePath, Strings.Safety_ModFile);
             var targetFile = Path.Combine(workspaceRoot, file.RelativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
             if (File.Exists(targetFile))
@@ -138,10 +139,10 @@ internal static class WorkspaceMaterializer
             LinkFile(file.FullPath, targetFile, file.RelativePath, stats, IsAnomalyLauncherConfiguration(file.RelativePath));
         }
 
-        progress.Report($"Мод подключён: {mod.Name}. Файлов: {source.Files.Count:N0}; папок: {source.Directories.Count:N0}.");
+        progress.Report(LocalizedText.Format(Strings.Materializer_ModConnectedFormat, mod.Name, source.Files.Count, source.Directories.Count));
         if (source.Files.Count == 0)
         {
-            progress.Report($"Предупреждение: в моде «{mod.Name}» не найдено файлов. Проверьте, что выбрана корневая папка мода, а не пустая внешняя папка.");
+            progress.Report(LocalizedText.Format(Strings.Materializer_EmptyModFormat, mod.Name));
         }
     }
 
@@ -151,7 +152,7 @@ internal static class WorkspaceMaterializer
         string relativePath,
         WorkspaceBuildStats stats)
     {
-        FileSystemSafety.EnsureRelativePath(relativePath, "Workspace file");
+        FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_WorkspaceFile);
         var targetFile = Path.Combine(workspaceRoot, relativePath);
         Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
         if (File.Exists(targetFile))
@@ -315,23 +316,16 @@ internal static class WorkspaceMaterializer
         var sourceVolume = GetVolumeDisplayName(sourceFile);
         var workspaceVolume = GetVolumeDisplayName(targetFile);
         var reason = !string.Equals(sourceVolume, workspaceVolume, StringComparison.OrdinalIgnoreCase)
-            ? $"Файлы мода находятся на диске {sourceVolume}, а workspace создаётся на диске {workspaceVolume}. Windows не разрешила создать символическую ссылку между ними."
-            : $"Windows не разрешила создать ссылку на диске {sourceVolume}. Возможно, диск не использует NTFS или у лаунчера недостаточно прав.";
+            ? LocalizedText.Format(Strings.Materializer_CrossDriveReasonFormat, sourceVolume, workspaceVolume)
+            : LocalizedText.Format(Strings.Materializer_LinkReasonFormat, sourceVolume);
 
-        return new IOException(
-            "Не удалось подключить файлы мода к профилю без копирования." + Environment.NewLine +
-            Environment.NewLine + reason + Environment.NewLine + Environment.NewLine +
-            "Чтобы исправить проблему:" + Environment.NewLine +
-            "1. Включите «Режим разработчика» в параметрах Windows: Система → Для разработчиков." + Environment.NewLine +
-            "2. Или запустите лаунчер от имени администратора." + Environment.NewLine +
-            $"3. Или перенесите мод на диск {workspaceVolume}." + Environment.NewLine + Environment.NewLine +
-            "Сборка остановлена. Файлы игры и мода не изменены.");
+        return new IOException(LocalizedText.Format(Strings.Materializer_LinkFailureFormat, Environment.NewLine, reason, workspaceVolume));
     }
 
     private static string GetVolumeDisplayName(string path)
     {
         var root = Path.GetPathRoot(Path.GetFullPath(path));
-        return string.IsNullOrWhiteSpace(root) ? "неизвестный" : root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return string.IsNullOrWhiteSpace(root) ? Strings.Materializer_UnknownVolume : root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
     }
 
     private static string NormalizeRelativePath(string path) =>

@@ -1,5 +1,6 @@
 using System.Text;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -64,7 +65,7 @@ public sealed class LinkedWorkspaceLaunchBackend : IProfileLaunchBackend
         // the cleanup never writes back into the mod folder.
         File.Delete(scriptPath);
         File.WriteAllText(scriptPath, cleanedText, Encoding.Default);
-        progress.Report("Removed legacy save autoload hook from profile workspace.");
+        progress.Report(Strings.Progress_LegacySaveHookRemoved);
     }
 
     private static string RemoveAutoloadBlock(string text)

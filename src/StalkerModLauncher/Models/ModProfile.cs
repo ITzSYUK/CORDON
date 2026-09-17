@@ -2,13 +2,14 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.Json.Serialization;
 using StalkerModLauncher.Infrastructure;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Models;
 
 public sealed class ModProfile : ObservableObject
 {
     private string _id = Guid.NewGuid().ToString("N");
-    private string _name = "New profile";
+    private string _name = Strings.Creation_DefaultName;
     private string _description = string.Empty;
     private bool _isEnabled = true;
     private bool _isDiscordStatusEnabled = true;
@@ -141,15 +142,15 @@ public sealed class ModProfile : ObservableObject
             var total = TimeSpan.FromSeconds(_totalPlaytimeSeconds);
             if (total.TotalHours >= 1)
             {
-                return $"{(int)total.TotalHours} ч {total.Minutes} мин";
+                return LocalizedText.Format(Strings.Common_DurationHoursFormat, (int)total.TotalHours, total.Minutes);
             }
 
             if (total.TotalMinutes >= 1)
             {
-                return $"{(int)total.TotalMinutes} мин";
+                return LocalizedText.Format(Strings.Common_DurationMinutesFormat, (int)total.TotalMinutes);
             }
 
-            return $"{total.TotalSeconds:N0} сек";
+            return LocalizedText.Format(Strings.Common_DurationSecondsFormat, total.TotalSeconds);
         }
     }
 

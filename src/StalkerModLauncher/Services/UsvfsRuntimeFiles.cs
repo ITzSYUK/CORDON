@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -26,9 +27,7 @@ public sealed record UsvfsRuntimeFileStatus(
                 var actualArchitecture = WindowsExecutableArchitectureDetector.Detect(file.Path);
                 if (actualArchitecture != file.Architecture)
                 {
-                    errors.Add(
-                        $"{file.Name}: ожидалась архитектура {FormatArchitecture(file.Architecture)}, " +
-                        $"обнаружена {FormatArchitecture(actualArchitecture)}.");
+                    errors.Add(LocalizedText.Format(Strings.Usvfs_ArchitectureMismatchFormat, file.Name, FormatArchitecture(file.Architecture), FormatArchitecture(actualArchitecture)));
                 }
             }
 
@@ -42,7 +41,7 @@ public sealed record UsvfsRuntimeFileStatus(
                 .ToArray();
             foreach (var file in versionedFiles.Where(file => string.IsNullOrWhiteSpace(file.Version)))
             {
-                errors.Add($"{file.Name}: отсутствует версия файла.");
+                errors.Add(LocalizedText.Format(Strings.Usvfs_FileVersionMissingFormat, file.Name));
             }
 
             var versions = versionedFiles
@@ -52,7 +51,7 @@ public sealed record UsvfsRuntimeFileStatus(
                 .ToArray();
             if (versions.Length > 1)
             {
-                errors.Add($"Версии компонентов USVFS не совпадают: {string.Join(", ", versions)}.");
+                errors.Add(LocalizedText.Format(Strings.Usvfs_VersionMismatchFormat, string.Join(", ", versions)));
             }
 
             return errors;
@@ -87,17 +86,16 @@ public sealed record UsvfsRuntimeFileStatus(
         }
 
         var problems = MissingFileNames
-            .Select(name => $"не найден {name}")
+            .Select(name => LocalizedText.Format(Strings.Usvfs_FileMissingFormat, name))
             .Concat(ValidationErrors)
             .ToArray();
         var target = architecture switch
         {
-            WindowsExecutableArchitecture.X86 => "32-битной игры",
-            WindowsExecutableArchitecture.X64 => "64-битной игры",
-            _ => "выбранной игры"
+            WindowsExecutableArchitecture.X86 => Strings.Usvfs_TargetX86,
+            WindowsExecutableArchitecture.X64 => Strings.Usvfs_TargetX64,
+            _ => Strings.Usvfs_TargetSelected
         };
-        return $"Комплект USVFS для {target} не прошёл проверку. " +
-               $"{string.Join(" ", problems)} Папка runtime: {Directory}";
+        return LocalizedText.Format(Strings.Usvfs_RuntimeInvalidFormat, target, string.Join(" ", problems), Directory);
     }
 
     private IReadOnlyList<RuntimeFile> RuntimeFiles =>
@@ -114,7 +112,7 @@ public sealed record UsvfsRuntimeFileStatus(
         {
             WindowsExecutableArchitecture.X86 => "x86",
             WindowsExecutableArchitecture.X64 => "x64",
-            _ => "неизвестная"
+            _ => Strings.Usvfs_ArchitectureUnknown
         };
 
     private sealed record RuntimeFile(

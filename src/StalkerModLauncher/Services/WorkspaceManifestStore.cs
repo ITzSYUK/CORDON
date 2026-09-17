@@ -1,4 +1,5 @@
 using System.Text.Json;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Models;
 
 namespace StalkerModLauncher.Services;
@@ -18,13 +19,13 @@ internal static class WorkspaceManifestStore
         var manifestPath = Path.Combine(workspaceRoot, ManifestFileName);
         if (!Directory.Exists(currentWorkspace))
         {
-            progress.Report("Workspace будет подготовлен: папка current ещё не создана.");
+            progress.Report(Strings.WorkspaceManifest_CurrentMissing);
             return null;
         }
 
         if (!File.Exists(manifestPath))
         {
-            progress.Report("Workspace будет подготовлен: кэш сборки отсутствует.");
+            progress.Report(Strings.WorkspaceManifest_CacheMissing);
             return null;
         }
 
@@ -40,16 +41,16 @@ internal static class WorkspaceManifestStore
             var executablePath = Path.Combine(currentWorkspace, profile.ExecutableRelativePath);
             if (!File.Exists(executablePath))
             {
-                progress.Report("Workspace будет пересобран: выбранный EXE отсутствует в текущей сборке.");
+                progress.Report(Strings.WorkspaceManifest_ExecutableMissing);
                 return null;
             }
 
-            progress.Report("Workspace уже актуален: изменений в игре и модах не найдено.");
+            progress.Report(Strings.WorkspaceManifest_Current);
             return executablePath;
         }
         catch
         {
-            progress.Report("Workspace будет пересобран: не удалось прочитать кэш сборки.");
+            progress.Report(Strings.WorkspaceManifest_CacheUnreadable);
             return null;
         }
     }
@@ -83,10 +84,10 @@ internal static class WorkspaceManifestStore
         IProgress<string> progress)
     {
         var changes = DescribeFingerprintChanges(previous, current);
-        progress.Report($"Workspace будет пересобран: {changes[0]}.");
+        progress.Report(LocalizedText.Format(Strings.WorkspaceManifest_RebuildReasonFormat, changes[0]));
         foreach (var change in changes.Skip(1))
         {
-            progress.Report($"Дополнительная причина пересборки: {change}.");
+            progress.Report(LocalizedText.Format(Strings.WorkspaceManifest_AdditionalReasonFormat, change));
         }
     }
 
@@ -96,13 +97,13 @@ internal static class WorkspaceManifestStore
     {
         if (previous is null)
         {
-            return ["обновлён формат диагностической подписи Workspace"];
+            return [Strings.WorkspaceManifest_DiagnosticFormatChanged];
         }
 
         var changes = new List<string>();
         if (!string.Equals(previous.FormatVersion, current.FormatVersion, StringComparison.Ordinal))
         {
-            changes.Add($"изменился формат Workspace: {previous.FormatVersion} → {current.FormatVersion}");
+            changes.Add(LocalizedText.Format(Strings.WorkspaceManifest_FormatChangedFormat, previous.FormatVersion, current.FormatVersion));
         }
 
         if (!string.Equals(
@@ -110,8 +111,7 @@ internal static class WorkspaceManifestStore
                 current.ExecutableRelativePath,
                 StringComparison.OrdinalIgnoreCase))
         {
-            changes.Add(
-                $"сменился файл запуска: {DisplayValue(previous.ExecutableRelativePath)} → {DisplayValue(current.ExecutableRelativePath)}");
+            changes.Add(LocalizedText.Format(Strings.WorkspaceManifest_ExecutableChangedFormat, DisplayValue(previous.ExecutableRelativePath), DisplayValue(current.ExecutableRelativePath)));
         }
 
         if (!string.Equals(
@@ -119,20 +119,19 @@ internal static class WorkspaceManifestStore
                 current.ExecutableSourcePath,
                 StringComparison.OrdinalIgnoreCase))
         {
-            changes.Add(
-                $"сменился источник EXE: {DisplayValue(previous.ExecutableSourcePath, "авто")} → {DisplayValue(current.ExecutableSourcePath, "авто")}");
+            changes.Add(LocalizedText.Format(Strings.WorkspaceManifest_SourceChangedFormat, DisplayValue(previous.ExecutableSourcePath, Strings.WorkspaceManifest_Auto), DisplayValue(current.ExecutableSourcePath, Strings.WorkspaceManifest_Auto)));
         }
 
         if (!string.Equals(previous.ProfileMode, current.ProfileMode, StringComparison.Ordinal))
         {
-            changes.Add($"сменился тип профиля: {previous.ProfileMode} → {current.ProfileMode}");
+            changes.Add(LocalizedText.Format(Strings.WorkspaceManifest_ProfileModeChangedFormat, previous.ProfileMode, current.ProfileMode));
         }
 
         AddLayerChanges(previous.Layers, current.Layers, changes);
         AddSourceChanges(previous.Sources, current.Sources, changes);
         if (changes.Count == 0)
         {
-            changes.Add("изменились входные данные Workspace");
+            changes.Add(Strings.WorkspaceManifest_InputsChanged);
         }
 
         const int maximumReportedChanges = 6;
@@ -144,7 +143,7 @@ internal static class WorkspaceManifestStore
         return
         [
             .. changes.Take(maximumReportedChanges),
-            $"не показано дополнительных изменений: {changes.Count - maximumReportedChanges:N0}"
+            LocalizedText.Format(Strings.WorkspaceManifest_MoreChangesFormat, changes.Count - maximumReportedChanges)
         ];
     }
 
@@ -157,13 +156,13 @@ internal static class WorkspaceManifestStore
         var currentIds = current.Select(layer => layer.Id).ToArray();
         if (!previousIds.ToHashSet(StringComparer.Ordinal).SetEquals(currentIds))
         {
-            changes.Add("изменился состав включённых слоёв");
+            changes.Add(Strings.WorkspaceManifest_LayersChanged);
             return;
         }
 
         if (!previousIds.SequenceEqual(currentIds, StringComparer.Ordinal))
         {
-            changes.Add("изменился порядок модов");
+            changes.Add(Strings.WorkspaceManifest_ModOrderChanged);
         }
 
         var previousById = previous.ToDictionary(layer => layer.Id, StringComparer.Ordinal);
@@ -176,12 +175,11 @@ internal static class WorkspaceManifestStore
 
             if (!string.Equals(oldLayer.RootPath, layer.RootPath, StringComparison.OrdinalIgnoreCase))
             {
-                changes.Add(
-                    $"сменился путь слоя «{layer.DisplayName}»: {oldLayer.RootPath} → {layer.RootPath}");
+                changes.Add(LocalizedText.Format(Strings.WorkspaceManifest_LayerPathChangedFormat, layer.DisplayName, oldLayer.RootPath, layer.RootPath));
             }
             else if (oldLayer.Order != layer.Order)
             {
-                changes.Add($"сменился приоритет слоя «{layer.DisplayName}»: {oldLayer.Order} → {layer.Order}");
+                changes.Add(LocalizedText.Format(Strings.WorkspaceManifest_LayerPriorityChangedFormat, layer.DisplayName, oldLayer.Order, layer.Order));
             }
         }
     }
@@ -201,7 +199,7 @@ internal static class WorkspaceManifestStore
 
             if (!oldSource.ExcludedFiles.SequenceEqual(source.ExcludedFiles, StringComparer.OrdinalIgnoreCase))
             {
-                changes.Add($"изменились исключённые файлы слоя «{source.DisplayName}»");
+                changes.Add(LocalizedText.Format(Strings.WorkspaceManifest_ExclusionsChangedFormat, source.DisplayName));
             }
 
             AddFileChanges(oldSource, source, changes);
@@ -219,12 +217,12 @@ internal static class WorkspaceManifestStore
         {
             if (!oldFiles.TryGetValue(file.RelativePath, out var oldFile))
             {
-                changes.Add($"добавлен файл слоя «{current.DisplayName}»: {file.RelativePath}");
+                changes.Add(LocalizedText.Format(Strings.WorkspaceManifest_FileAddedFormat, current.DisplayName, file.RelativePath));
             }
             else if (oldFile.Length != file.Length ||
                      oldFile.LastWriteTimeUtcTicks != file.LastWriteTimeUtcTicks)
             {
-                changes.Add($"изменён файл слоя «{current.DisplayName}»: {file.RelativePath}");
+                changes.Add(LocalizedText.Format(Strings.WorkspaceManifest_FileChangedFormat, current.DisplayName, file.RelativePath));
             }
         }
 
@@ -232,13 +230,13 @@ internal static class WorkspaceManifestStore
         {
             if (!newFiles.ContainsKey(file.RelativePath))
             {
-                changes.Add($"удалён файл слоя «{current.DisplayName}»: {file.RelativePath}");
+                changes.Add(LocalizedText.Format(Strings.WorkspaceManifest_FileRemovedFormat, current.DisplayName, file.RelativePath));
             }
         }
     }
 
-    private static string DisplayValue(string value, string emptyValue = "не задан") =>
-        string.IsNullOrWhiteSpace(value) ? emptyValue : value;
+    private static string DisplayValue(string value, string? emptyValue = null) =>
+        string.IsNullOrWhiteSpace(value) ? emptyValue ?? Strings.WorkspaceManifest_NotSet : value;
 }
 
 internal sealed class WorkspaceBuildManifest

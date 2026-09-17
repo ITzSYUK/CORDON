@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -16,17 +17,18 @@ public sealed partial class MainViewModel
             {
                 if (await _settingsStore.TryImportRoamingSettingsAsync())
                 {
-                    Log($"Settings imported automatically: {_paths.RoamingSettingsFile}");
+                    Log(LocalizedText.Format(Strings.Log_SettingsImportedAutomaticallyFormat, _paths.RoamingSettingsFile));
                 }
             }
             catch (Exception ex)
             {
-                Log($"Automatic settings import failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
-                _dialogService.ShowError("Не удалось импортировать настройки из AppData", ex.Message);
+                Log(LocalizedText.Format(Strings.Log_AutomaticSettingsImportFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+                _dialogService.ShowError(Strings.Settings_ImportAppDataFailed, ex.Message);
             }
 
             var loadResult = await _settingsStore.LoadWithRecoveryAsync();
             var settings = loadResult.Settings;
+            _uiLanguage = settings.UiLanguage;
             _lastBrowsedGamePath = settings.LastBrowsedGamePath;
             _isPdaInterfaceEnabled = settings.IsPdaInterfaceEnabled;
             _useNewPdaInterface = settings.UseNewPdaInterface;
@@ -47,6 +49,7 @@ public sealed partial class MainViewModel
             OnPropertyChanged(nameof(AutoCheckForUpdates));
             OnPropertyChanged(nameof(ShowUpdateNotifications));
             OnPropertyChanged(nameof(LogLevel));
+            OnPropertyChanged(nameof(UiLanguage));
             OnPropertyChanged(nameof(GameInstallPath));
             ActivityLog.Load([], settings.IsLogVisible);
 
@@ -58,7 +61,7 @@ public sealed partial class MainViewModel
                 }
                 catch (Exception ex)
                 {
-                    Log($"Windows startup registration refresh failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+                    Log(LocalizedText.Format(Strings.Log_StartupRefreshFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
                 }
             }
 
@@ -78,7 +81,7 @@ public sealed partial class MainViewModel
 
             SelectedProfile = Profiles.FirstOrDefault();
             RefreshValidation();
-            Log("Settings loaded.");
+            Log(Strings.Log_SettingsLoaded);
 
             if (loadResult.Recovery is not null)
             {
@@ -87,15 +90,15 @@ public sealed partial class MainViewModel
         }
         catch (SettingsPersistenceException ex)
         {
-            Log($"Settings load blocked: {ex}", LauncherLogLevel.ErrorsOnly);
+            Log(LocalizedText.Format(Strings.Log_SettingsLoadBlockedFormat, ex), LauncherLogLevel.ErrorsOnly);
             _dialogService.ShowError(
-                "Настройки недоступны",
+                Strings.Settings_Unavailable,
                 $"{ex.Message}{Environment.NewLine}{Environment.NewLine}" +
-                "Файл не изменён. Закройте программу, которая может удерживать его, и перезапустите лаунчер.");
+                Strings.Settings_WriteBlocked);
         }
         catch (Exception ex)
         {
-            Log($"Settings load failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+            Log(LocalizedText.Format(Strings.Log_SettingsLoadFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
         }
     }
 
@@ -128,13 +131,14 @@ public sealed partial class MainViewModel
                 AutoCheckForUpdates = AutoCheckForUpdates,
                 ShowUpdateNotifications = ShowUpdateNotifications,
                 LogLevel = LogLevel,
+                UiLanguage = UiLanguage,
                 DiscordClientId = existing.DiscordClientId
             });
-            Log("Settings saved.");
+            Log(Strings.Log_SettingsSaved);
         }
         catch (Exception ex)
         {
-            Log($"Settings save failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+            Log(LocalizedText.Format(Strings.Log_SettingsSaveFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
             if (throwOnFailure)
             {
                 throw;
@@ -255,7 +259,7 @@ public sealed partial class MainViewModel
         }
 
         _automaticExecutableRefreshTimes[profile] = DateTime.UtcNow;
-        RefreshAutomaticExecutableSelection(profile, "изменения списка модов");
+        RefreshAutomaticExecutableSelection(profile, Strings.Log_ReasonModListChanged);
         if (ReferenceEquals(profile, SelectedProfile))
         {
             CreateFilteredModsView();
@@ -282,7 +286,7 @@ public sealed partial class MainViewModel
         {
             SynchronizeModSubscriptions(profile);
             _automaticExecutableRefreshTimes[profile] = DateTime.UtcNow;
-            RefreshAutomaticExecutableSelection(profile, "замены списка модов");
+            RefreshAutomaticExecutableSelection(profile, Strings.Log_ReasonModListReplaced);
             if (ReferenceEquals(profile, SelectedProfile))
             {
                 CreateFilteredModsView();
@@ -358,7 +362,7 @@ public sealed partial class MainViewModel
         if (affectsOverlay)
         {
             _automaticExecutableRefreshTimes[profile] = DateTime.UtcNow;
-            RefreshAutomaticExecutableSelection(profile, "изменения приоритета модов");
+            RefreshAutomaticExecutableSelection(profile, Strings.Log_ReasonModPriorityChanged);
         }
 
         if (ReferenceEquals(profile, SelectedProfile))
@@ -379,23 +383,25 @@ public sealed partial class MainViewModel
         foreach (var file in recovery.Files)
         {
             Log(
-                $"Settings recovery: {file.OriginalPath} -> {file.RecoveryPath}. {file.Error}",
+                LocalizedText.Format(Strings.Log_SettingsRecoveryFormat, file.OriginalPath, file.RecoveryPath, file.Error),
                 LauncherLogLevel.ErrorsOnly);
         }
 
         var message = recovery.Mode == SettingsRecoveryMode.Backup
             ? recovery.Files.Count > 0
-                ? "Основной файл настроек повреждён. Настройки восстановлены из резервной копии."
-                : "Основной файл настроек отсутствовал. Настройки восстановлены из резервной копии."
-            : "Файлы настроек повреждены и не читаются. Создана новая конфигурация; профили автоматически восстановить не удалось.";
+                ? Strings.Settings_PrimaryRecoveredDamaged
+                : Strings.Settings_PrimaryRecoveredMissing
+            : Strings.Settings_RecoveryFailed;
 
         Log(message, LauncherLogLevel.ErrorsOnly);
         var preservedFiles = recovery.Files.Count == 0
             ? string.Empty
-            : $"{Environment.NewLine}{Environment.NewLine}Повреждённые файлы сохранены:{Environment.NewLine}" +
-              string.Join(Environment.NewLine, recovery.Files.Select(file => file.RecoveryPath));
+            : LocalizedText.Format(
+                Strings.Settings_DamagedFilesFormat,
+                Environment.NewLine,
+                string.Join(Environment.NewLine, recovery.Files.Select(file => file.RecoveryPath)));
         DialogService.ShowInfo(
-            "Восстановление настроек",
+            Strings.Settings_RecoveryTitle,
             message + preservedFiles);
     }
 
@@ -429,7 +435,7 @@ public sealed partial class MainViewModel
 
         profile.ExecutableRelativePath = selection.RelativePath;
         Log(
-            $"Launch executable auto-detected after {reason}: {selection.RelativePath} from {selection.SourceName}",
+            LocalizedText.Format(Strings.Log_ExecutableDetectedAfterFormat, reason, selection.RelativePath, selection.SourceName),
             LauncherLogLevel.Detailed);
     }
 

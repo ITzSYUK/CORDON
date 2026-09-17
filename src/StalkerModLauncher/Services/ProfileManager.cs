@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using System.Collections.ObjectModel;
 
 namespace StalkerModLauncher.Services;
@@ -18,8 +19,8 @@ public sealed class ProfileManager
     {
         var profile = new ModProfile
         {
-            Name = GetUniqueName(profiles, $"Profile {profiles.Count + 1}"),
-            Description = "S.T.A.L.K.E.R. mod profile",
+            Name = GetUniqueName(profiles, LocalizedText.Format(Strings.Profile_DefaultNameFormat, profiles.Count + 1)),
+            Description = Strings.Profile_DefaultDescription,
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
 
@@ -31,7 +32,7 @@ public sealed class ProfileManager
     {
         var duplicate = new ModProfile
         {
-            Name = GetUniqueName(profiles, $"{source.Name} — копия"),
+            Name = GetUniqueName(profiles, LocalizedText.Format(Strings.Profile_CopyNameFormat, source.Name)),
             Description = source.Description,
             IsEnabled = source.IsEnabled,
             IsDiscordStatusEnabled = source.IsDiscordStatusEnabled,
@@ -148,7 +149,7 @@ public sealed class ProfileManager
     {
         if (profile.IsStandalone)
         {
-            throw new InvalidOperationException("Автономный профиль не использует workspace.");
+            throw new InvalidOperationException(Strings.Profile_StandaloneNoWorkspace);
         }
 
         var workspacePath = _workspaceManager.EnsureProfileWorkspace(
@@ -163,7 +164,7 @@ public sealed class ProfileManager
     {
         var profileList = profiles.ToList();
         var baseName = string.IsNullOrWhiteSpace(requestedName)
-            ? $"Profile {profileList.Count + 1}"
+            ? LocalizedText.Format(Strings.Profile_DefaultNameFormat, profileList.Count + 1)
             : requestedName.Trim();
         var name = baseName;
         var counter = 1;

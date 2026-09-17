@@ -1,7 +1,8 @@
 <Window x:Class="StalkerModLauncher.Views.ScreenshotsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Скриншоты"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="{x:Static res:Strings.Screenshots_Title}"
         Width="1100"
         Height="700"
         MinWidth="800"
@@ -44,7 +45,7 @@
                                 Cursor="Hand">
                             <Border.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Header="Скопировать в буфер обмена"
+                                    <MenuItem Header="{x:Static res:Strings.Screenshots_Copy}"
                                               Click="CopyScreenshotMenuItem_OnClick"
                                               CommandParameter="{Binding}"/>
                                 </ContextMenu>
@@ -99,7 +100,7 @@
                    Source="{Binding SelectedScreenshot}"
                    Stretch="Uniform"
                    Margin="0,0,0,0"
-                   ToolTip="Двойной щелчок копирует скриншот в буфер обмена"
+                   ToolTip="{x:Static res:Strings.Screenshots_CopyTooltip}"
                    MouseLeftButtonDown="FullScreenImage_OnMouseLeftButtonDown"/>
 
             <Grid Grid.Column="2">
@@ -138,14 +139,14 @@
             </Grid>
         </Grid>
 
-        <TextBlock Text="Скриншоты не найдены."
+        <TextBlock Text="{x:Static res:Strings.Screenshots_None}"
                    Foreground="{StaticResource MutedTextBrush}"
                    FontSize="16"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    Visibility="{Binding HasNoScreenshots, Converter={StaticResource BoolToVis}}"/>
 
-        <TextBlock Text="Поиск скриншотов..."
+        <TextBlock Text="{x:Static res:Strings.Screenshots_Loading}"
                    Foreground="{StaticResource MutedTextBrush}"
                    FontSize="16"
                    HorizontalAlignment="Center"

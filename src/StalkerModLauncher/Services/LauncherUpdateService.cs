@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Json;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -51,8 +52,8 @@ public sealed class LauncherUpdateService
         var releaseUrl = GetRequiredString(root, "html_url");
         ValidateReleaseUrl(releaseUrl);
 
-        var current = ParseVersion(_currentVersion, "current application version");
-        var latest = ParseVersion(tagName, "latest GitHub release tag");
+        var current = ParseVersion(_currentVersion, Strings.Update_CurrentVersionValue);
+        var latest = ParseVersion(tagName, Strings.Update_LatestTagValue);
         return new LauncherUpdateResult(
             _currentVersion,
             tagName.Trim(),
@@ -66,7 +67,7 @@ public sealed class LauncherUpdateService
             property.ValueKind != JsonValueKind.String ||
             string.IsNullOrWhiteSpace(property.GetString()))
         {
-            throw new InvalidDataException($"GitHub response does not contain '{propertyName}'.");
+            throw new InvalidDataException(LocalizedText.Format(Strings.Update_MissingPropertyFormat, propertyName));
         }
 
         return property.GetString()!;
@@ -81,7 +82,7 @@ public sealed class LauncherUpdateService
                 $"/{GitHubRepository}/releases/",
                 StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidDataException("GitHub returned an unexpected release URL.");
+            throw new InvalidDataException(Strings.Update_UnexpectedReleaseUrl);
         }
     }
 
@@ -96,7 +97,7 @@ public sealed class LauncherUpdateService
 
         if (!Version.TryParse(normalized, out var version))
         {
-            throw new InvalidDataException($"Invalid {description}: {value}");
+            throw new InvalidDataException(LocalizedText.Format(Strings.Update_InvalidValueFormat, description, value));
         }
 
         return new Version(

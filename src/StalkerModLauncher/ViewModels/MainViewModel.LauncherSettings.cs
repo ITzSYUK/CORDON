@@ -5,6 +5,7 @@ namespace StalkerModLauncher.ViewModels;
 
 public sealed partial class MainViewModel
 {
+    private string _uiLanguage = Services.UiLanguage.System;
     private bool _showTrayIcon = true;
     private bool _startWithWindows;
     private bool _startMinimizedToTrayOnWindowsStartup = true;
@@ -20,6 +21,7 @@ public sealed partial class MainViewModel
     public bool AutoCheckForUpdates => _autoCheckForUpdates;
     public bool ShowUpdateNotifications => _showUpdateNotifications;
     public LauncherLogLevel LogLevel => _logLevel;
+    public string UiLanguage => _uiLanguage;
     public event EventHandler? LauncherUpdateInstallationRequested;
 
     public LauncherSettingsViewModel CreateLauncherSettingsViewModel(
@@ -52,6 +54,7 @@ public sealed partial class MainViewModel
 
         try
         {
+            _uiLanguage = preferences.UiLanguage;
             _showTrayIcon = preferences.ShowTrayIcon;
             _startWithWindows = preferences.StartWithWindows;
             _startMinimizedToTrayOnWindowsStartup = preferences.StartMinimizedToTrayOnWindowsStartup;
@@ -67,6 +70,7 @@ public sealed partial class MainViewModel
         }
         catch
         {
+            _uiLanguage = previous.UiLanguage;
             _showTrayIcon = previous.ShowTrayIcon;
             _startWithWindows = previous.StartWithWindows;
             _startMinimizedToTrayOnWindowsStartup = previous.StartMinimizedToTrayOnWindowsStartup;
@@ -107,9 +111,11 @@ public sealed partial class MainViewModel
         OnPropertyChanged(nameof(AutoCheckForUpdates));
         OnPropertyChanged(nameof(ShowUpdateNotifications));
         OnPropertyChanged(nameof(LogLevel));
+        OnPropertyChanged(nameof(UiLanguage));
     }
 
     private LauncherPreferences GetLauncherPreferences() => new(
+        UiLanguage,
         IsPdaInterfaceEnabled,
         UseNewPdaInterface,
         ShowTrayIcon,

@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using StalkerModLauncher.Resources;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 
@@ -77,9 +78,9 @@ public sealed class ApProCatalogService : IDisposable
 
     public static string GetCategoryTitle(ApProCatalogCategory category) => category switch
     {
-        ApProCatalogCategory.ShadowOfChernobyl => "Тень Чернобыля",
-        ApProCatalogCategory.ClearSky => "Чистое Небо",
-        ApProCatalogCategory.CallOfPripyat => "Зов Припяти",
+        ApProCatalogCategory.ShadowOfChernobyl => Strings.Catalog_ShadowOfChernobyl,
+        ApProCatalogCategory.ClearSky => Strings.Catalog_ClearSky,
+        ApProCatalogCategory.CallOfPripyat => Strings.Catalog_CallOfPripyat,
         _ => throw new ArgumentOutOfRangeException(nameof(category), category, null)
     };
 
@@ -137,7 +138,7 @@ public sealed class ApProCatalogService : IDisposable
         if (html.Contains("cf-chl", StringComparison.OrdinalIgnoreCase) ||
             html.Contains("Just a moment...", StringComparison.OrdinalIgnoreCase))
         {
-            throw new HttpRequestException("AP-PRO временно запросил проверку браузера.");
+            throw new HttpRequestException(Strings.Catalog_BrowserCheck);
         }
 
         var content = ApProCatalogParser.ParsePage(html);
@@ -162,7 +163,7 @@ public sealed class ApProCatalogService : IDisposable
             return await ReadContentWithLimitAsync(
                 response.Content,
                 _maximumThumbnailBytes,
-                "AP-PRO thumbnail",
+                Strings.Catalog_ThumbnailDescription,
                 cancellationToken);
         }
         catch (HttpRequestException)
@@ -186,7 +187,7 @@ public sealed class ApProCatalogService : IDisposable
             var bytes = await ReadContentWithLimitAsync(
                 response.Content,
                 _maximumCatalogPageBytes,
-                "AP-PRO catalog page",
+                Strings.Catalog_PageDescription,
                 cancellationToken);
             return DecodeText(response.Content, bytes);
         }
@@ -235,7 +236,7 @@ public sealed class ApProCatalogService : IDisposable
         if (contentLength.HasValue && contentLength.Value > maximumBytes)
         {
             throw new HttpRequestException(
-                $"{description} is larger than the allowed {maximumBytes:N0} bytes.");
+                LocalizedText.Format(Strings.Catalog_ContentTooLargeFormat, description, maximumBytes));
         }
 
         await using var stream = await content.ReadAsStreamAsync(cancellationToken);
@@ -257,7 +258,7 @@ public sealed class ApProCatalogService : IDisposable
                 if (output.Length + read > maximumBytes)
                 {
                     throw new HttpRequestException(
-                        $"{description} is larger than the allowed {maximumBytes:N0} bytes.");
+                        LocalizedText.Format(Strings.Catalog_ContentTooLargeFormat, description, maximumBytes));
                 }
 
                 await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);

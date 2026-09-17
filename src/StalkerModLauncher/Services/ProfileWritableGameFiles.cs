@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 public sealed record ProfileWritableGameFileRule(
@@ -15,10 +17,10 @@ public static class ProfileWritableGameFiles
         new(
             Path.Combine("gamedata", "configs", "localization.ltx"),
             Path.Combine(WritableGameFilesRootRelativePath, "gamedata", "configs", "localization.ltx"),
-            "Anomaly and some X-Ray builds write language selection into gamedata."),
+            Strings.Writable_LocalizationReason),
         new(
             Path.Combine("gamedata", "configs", "axr_options.ltx"),
             Path.Combine(WritableGameFilesRootRelativePath, "gamedata", "configs", "axr_options.ltx"),
-            "Anomaly writes launcher and runtime option state into axr_options.ltx.")
+            Strings.Writable_OptionsReason)
     ];
 }

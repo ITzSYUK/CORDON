@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -42,7 +43,7 @@ public sealed class ActivityLogViewModel : ObservableObject
         }
     }
 
-    public string ToggleText => IsVisible ? "Скрыть журнал" : "Показать журнал";
+    public string ToggleText => IsVisible ? Strings.Log_Hide : Strings.Log_Show;
     public GridLength RowHeight => IsVisible ? new GridLength(125) : new GridLength(0);
     public RelayCommand ToggleCommand { get; }
 

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 using StalkerModLauncher.ViewModels;
 
@@ -42,7 +43,7 @@ public sealed partial class ScanResultsWindow : Window
     {
         if (ModsListView.SelectedItems.Count == 0)
         {
-            MessageBox.Show("Не выбран ни один мод.", "Добавление модов", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Strings.Scan_NoneSelected, Strings.Scan_AddingTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 

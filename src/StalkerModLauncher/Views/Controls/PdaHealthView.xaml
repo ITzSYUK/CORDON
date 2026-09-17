@@ -1,6 +1,7 @@
 <UserControl x:Class="StalkerModLauncher.Views.Controls.PdaHealthView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:res="clr-namespace:StalkerModLauncher.Resources"
              xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
              xmlns:infrastructure="clr-namespace:StalkerModLauncher.Infrastructure"
              Background="{DynamicResource PdaPageBackgroundBrush}">
@@ -35,9 +36,9 @@
                     <StackPanel><TextBlock Text="{Binding ThirdMetricTitle}" Foreground="#858E7D" FontSize="10"/><TextBlock Text="{Binding ThirdMetricValue}" FontWeight="SemiBold"/></StackPanel>
                 </UniformGrid>
                 <WrapPanel Grid.Column="2">
-                    <Button Content="Пересобрать" Command="{Binding RebuildWorkspaceCommand}" Margin="0,0,5,0"
+                    <Button Content="{x:Static res:Strings.Health_RebuildWorkspace}" Command="{Binding RebuildWorkspaceCommand}" Margin="0,0,5,0"
                             Visibility="{Binding UsesLinkedWorkspace, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    <Button Content="Перенести..." Command="{Binding MoveWorkspaceCommand}"/>
+                    <Button Content="{x:Static res:Strings.Health_MoveWorkspace}" Command="{Binding MoveWorkspaceCommand}"/>
                 </WrapPanel>
             </Grid>
         </Border>
@@ -76,12 +77,12 @@
             </Grid>
         </Border>
         <WrapPanel Grid.Row="2" HorizontalAlignment="Right" Margin="0,8,0,0">
-                <Button Content="Обновить" Command="{Binding RefreshCommand}" Margin="0,0,5,0"/>
-                <Button Content="Профиль" Command="{Binding OpenProfileCommand}" Margin="0,0,5,0"/>
-                <Button Content="Сохранения" Command="{Binding OpenSavesCommand}" Margin="0,0,5,0"/>
-                <Button Content="Последний лог" Command="{Binding OpenLatestLogCommand}" Margin="0,0,5,0"/>
-                <Button Content="Crash dump" Command="{Binding OpenCrashDumpCommand}" Margin="0,0,5,0"/>
-                <Button Content="Копировать отчет" Command="{Binding CopyReportCommand}"/>
+                <Button Content="{x:Static res:Strings.Common_Refresh}" Command="{Binding RefreshCommand}" Margin="0,0,5,0"/>
+                <Button Content="{x:Static res:Strings.Common_Profile}" Command="{Binding OpenProfileCommand}" Margin="0,0,5,0"/>
+                <Button Content="{x:Static res:Strings.Health_Saves}" Command="{Binding OpenSavesCommand}" Margin="0,0,5,0"/>
+                <Button Content="{x:Static res:Strings.Health_LatestLog}" Command="{Binding OpenLatestLogCommand}" Margin="0,0,5,0"/>
+                <Button Content="{x:Static res:Strings.Check_CrashDump}" Command="{Binding OpenCrashDumpCommand}" Margin="0,0,5,0"/>
+                <Button Content="{x:Static res:Strings.Health_CopyReport}" Command="{Binding CopyReportCommand}"/>
         </WrapPanel>
     </Grid>
 </UserControl>

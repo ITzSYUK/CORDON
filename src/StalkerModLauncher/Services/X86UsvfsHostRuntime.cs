@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -85,14 +86,14 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
             ObjectDisposedException.ThrowIf(_disposed, this);
             if (_hostProcess is not null)
             {
-                throw new InvalidOperationException("This USVFS x86 session already started a process.");
+                throw new InvalidOperationException(Strings.Error_UsvfsX86SessionAlreadyStarted);
             }
 
             UsvfsRuntime.ValidateLaunchRequest(launchRequest);
             var hostPath = Path.Combine(_runtimeDirectory, UsvfsRuntimeFiles.X86HostFileName);
             if (!File.Exists(hostPath))
             {
-                throw new FileNotFoundException("USVFS x86 host was not found.", hostPath);
+                throw new FileNotFoundException(Strings.Error_UsvfsX86HostMissing, hostPath);
             }
 
             _configurationPath = Path.Combine(
@@ -101,7 +102,7 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
             _processListPath = _configurationPath + ".pids";
             Directory.CreateDirectory(Path.GetDirectoryName(_configurationPath)!);
             WriteConfiguration(_configurationPath, _mappingPlan, launchRequest, _options);
-            progress?.Report($"USVFS x86 host starting: {launchRequest.ExecutablePath}");
+            progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsX86StartingFormat, launchRequest.ExecutablePath));
             _hostProcess = Process.Start(new ProcessStartInfo
             {
                 FileName = hostPath,
@@ -109,14 +110,14 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
                 WorkingDirectory = _runtimeDirectory,
                 UseShellExecute = false,
                 CreateNoWindow = true
-            }) ?? throw new InvalidOperationException("USVFS x86 host did not start.");
+            }) ?? throw new InvalidOperationException(Strings.Error_UsvfsX86HostStartFailed);
             return _hostProcess;
         }
 
         public async Task<int> GetExitCodeAsync(CancellationToken cancellationToken = default)
         {
             var process = _hostProcess ??
-                          throw new InvalidOperationException("The USVFS x86 session has not started a process.");
+                          throw new InvalidOperationException(Strings.Error_UsvfsX86SessionNotStarted);
             await process.WaitForExitAsync(cancellationToken);
             return process.ExitCode;
         }

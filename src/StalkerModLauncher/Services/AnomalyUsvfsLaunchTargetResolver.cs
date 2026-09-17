@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -18,9 +19,9 @@ internal static class AnomalyUsvfsLaunchTargetResolver
         LaunchPlanResolution launchResolution)
     {
         var plan = launchResolution.Plan
-            ?? throw new InvalidOperationException("USVFS launch plan is not ready.");
+            ?? throw new InvalidOperationException(Strings.Error_UsvfsLaunchPlanNotReady);
         var executable = launchResolution.Executable
-            ?? throw new InvalidOperationException("USVFS launch executable is not ready.");
+            ?? throw new InvalidOperationException(Strings.Error_UsvfsExecutableNotReady);
 
         var isLauncher = AnomalyLauncherLocator.IsBaseGameLauncher(
                              profile.GameInstallPath,
@@ -34,12 +35,12 @@ internal static class AnomalyUsvfsLaunchTargetResolver
                     out _))
             {
                 throw new InvalidOperationException(
-                    $"Некорректный движок Anomaly для USVFS: {profile.UsvfsExecutableOverrideRelativePath}");
+                    LocalizedText.Format(Strings.Usvfs_InvalidAnomalyEngineFormat, profile.UsvfsExecutableOverrideRelativePath));
             }
 
             var selectedEngine = layerPlan.FindFinalFile(profile.UsvfsExecutableOverrideRelativePath)
                 ?? throw new FileNotFoundException(
-                    $"Выбранный движок Anomaly не найден во включенных слоях: {profile.UsvfsExecutableOverrideRelativePath}");
+                    LocalizedText.Format(Strings.Usvfs_AnomalyEngineMissingFormat, profile.UsvfsExecutableOverrideRelativePath));
             return CreateEngineTarget(profile, layerPlan, plan, selectedEngine, isLauncher);
         }
 

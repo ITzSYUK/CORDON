@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 internal static class ProfileDataConfigurator
@@ -5,12 +7,7 @@ internal static class ProfileDataConfigurator
     private const string LegacyManualDataMigrationMarkerFileName = ".stalker-launcher-manual-data-migrated";
 
     internal static string MissingFsgameMessage =>
-        "Файл fsgame.ltx не найден во включённых слоях. Выберите его вручную в одном из включённых слоёв." +
-        Environment.NewLine + Environment.NewLine +
-        "Перейдите: «Настройки профиля» → «Источник fsgame.ltx» → «Выбрать файл...»." +
-        Environment.NewLine + Environment.NewLine +
-        "Обратите внимание: в зависимости от модификации файл может называться по-разному: " +
-        "fsgame.ltx, fsgame_coc.ltx или fsolr.ltx.";
+        LocalizedText.Format(Strings.Fsgame_NotFoundHelpFormat, Environment.NewLine);
 
     public static string Configure(
         string gamePath,
@@ -30,7 +27,7 @@ internal static class ProfileDataConfigurator
             : FileSystemSafety.ResolvePathInside(
                 currentWorkspace,
                 selectedSource.RelativePath,
-                "Profile fsgame.ltx");
+                Strings.Safety_ProfileFsgame);
         if (fsgamePath is null)
         {
             throw new FileNotFoundException(MissingFsgameMessage);
@@ -43,7 +40,7 @@ internal static class ProfileDataConfigurator
             : relativeDir;
         if (workingDirectoryRelative.Length > 0)
         {
-            progress.Report($"Detected fsgame.ltx in '{relativeDir}' — using as working directory.");
+            progress.Report(LocalizedText.Format(Strings.Progress_FsgameDetectedFormat, relativeDir));
         }
 
         var profileDataPath = layerPlan?.GameDataRoot ?? Path.Combine(profileWorkspace, "userdata");
@@ -61,7 +58,7 @@ internal static class ProfileDataConfigurator
             var launchArgumentPath = FileSystemSafety.ResolvePathInside(
                 currentWorkspace,
                 layerPlan.FsgameLaunchRelativePath,
-                "fsgame.ltx from -fsltx");
+                Strings.Fsgame_ArgumentFile);
             if (!launchArgumentPath.Equals(fsgamePath, StringComparison.OrdinalIgnoreCase))
             {
                 WriteProfileFsgame(sourcePath, launchArgumentPath, profileDataPath);
@@ -69,12 +66,12 @@ internal static class ProfileDataConfigurator
         }
         if (manualSource is not null)
         {
-            progress.Report($"Используется выбранная вручную конфигурация fsgame: {manualSource.FullPath}");
+            progress.Report(LocalizedText.Format(Strings.Fsgame_ManualUsingFormat, manualSource.FullPath));
         }
         Directory.CreateDirectory(profileDataPath);
         if (layerPlan?.UsesSharedGameData == true)
         {
-            progress.Report($"Используются общие данные базовой игры: {profileDataPath}. Существующие файлы не копируются и не заменяются.");
+            progress.Report(LocalizedText.Format(Strings.ProfileData_SharedFormat, profileDataPath));
             return workingDirectoryRelative;
         }
         if (layerPlan is null)
@@ -90,7 +87,7 @@ internal static class ProfileDataConfigurator
             ProfileShaderCacheSeeder.Seed(layerPlan, profileDataPath, progress, cancellationToken);
         }
 
-        progress.Report("fsgame.ltx rewritten for profile-local saves and logs.");
+        progress.Report(Strings.Progress_FsgameRewritten);
         return workingDirectoryRelative;
     }
 
@@ -113,7 +110,10 @@ internal static class ProfileDataConfigurator
         }
 
         var relativePath = Path.GetRelativePath(baseRoot, configuredRoot);
-        var legacyRoot = FileSystemSafety.ResolvePathInside(writeOverlayRoot, relativePath, "Legacy profile data");
+        var legacyRoot = FileSystemSafety.ResolvePathInside(
+            writeOverlayRoot,
+            relativePath,
+            Strings.Safety_LegacyProfileData);
         if (!Directory.Exists(legacyRoot))
         {
             return;
@@ -128,7 +128,7 @@ internal static class ProfileDataConfigurator
         var result = GameDataCopyService.CopyMissingFromProfileOverwrite(legacyRoot, layerPlan.GameDataRoot);
         File.WriteAllText(markerPath, string.Empty);
         progress?.Report(
-            $"Перенесены ранее перенаправленные данные профиля: {result.Copied:N0}; пропущено существующих: {result.Skipped:N0}.");
+            LocalizedText.Format(Strings.ProfileData_MigratedFormat, result.Copied, result.Skipped));
     }
 
     internal static void WriteProfileFsgame(string sourcePath, string destinationPath, string profileDataPath)
@@ -169,9 +169,7 @@ internal static class ProfileDataConfigurator
             line => line.TrimStart().StartsWith("$app_data_root$", StringComparison.OrdinalIgnoreCase));
         if (appDataLineIndex < 0)
         {
-            throw new InvalidDataException(
-                $"fsgame.ltx does not contain $app_data_root$: {sourcePath}. " +
-                "Profile-local saves and logs cannot be guaranteed, so launch was blocked.");
+            throw new InvalidDataException(LocalizedText.Format(Strings.Fsgame_AppDataMissingFormat, sourcePath));
         }
 
         return (lines, appDataLineIndex);
@@ -198,7 +196,7 @@ internal static class ProfileDataConfigurator
     public static void EnsureProfileUserLtx(string gamePath, string profileDataPath, IProgress<string>? progress)
     {
         EnsureProfileUserLtx(
-            [("base game", ProfileAppDataSourceLocator.EnumerateRoots(gamePath))],
+            [(Strings.Layer_BaseGame, ProfileAppDataSourceLocator.EnumerateRoots(gamePath))],
             profileDataPath,
             progress);
     }
@@ -238,7 +236,7 @@ internal static class ProfileDataConfigurator
         {
             if (FilesAreEqual(selected.Path, destination))
             {
-                progress?.Report("Keeping existing profile-local user.ltx.");
+                progress?.Report(Strings.Progress_KeepingExistingUserLtx);
                 return;
             }
 
@@ -247,7 +245,7 @@ internal static class ProfileDataConfigurator
                 .Any(candidate => FilesAreEqual(candidate.Path, destination));
             if (!stillMatchesLowerLayer)
             {
-                progress?.Report("Keeping modified profile-local user.ltx.");
+                progress?.Report(Strings.Progress_KeepingModifiedUserLtx);
                 return;
             }
         }
@@ -269,11 +267,11 @@ internal static class ProfileDataConfigurator
                 }
             }
 
-            progress?.Report($"Profile user.ltx prepared from {selected.SourceName}: {selected.Path}");
+            progress?.Report(LocalizedText.Format(Strings.Progress_UserLtxPreparedFormat, selected.SourceName, selected.Path));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            progress?.Report($"Warning: could not copy user.ltx from {selected.Path}: {ex.Message}");
+            progress?.Report(LocalizedText.Format(Strings.Progress_UserLtxCopyFailedFormat, selected.Path, ex.Message));
         }
     }
 

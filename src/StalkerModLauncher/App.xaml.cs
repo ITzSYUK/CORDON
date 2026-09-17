@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using StalkerModLauncher.Infrastructure;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher;
@@ -20,8 +21,10 @@ public sealed partial class App : Application, IDisposable
     private bool _startMinimized;
     private bool _isExiting;
     private bool _disposed;
-    private AppServices Services => _services ?? throw new InvalidOperationException("Сервисы приложения не инициализированы.");
-    private SingleInstanceGuard SingleInstance => _singleInstance ?? throw new InvalidOperationException("Контроль экземпляра не инициализирован.");
+    private AppServices Services => _services ?? throw new InvalidOperationException(Strings.App_ServicesNotInitialized);
+    private SingleInstanceGuard SingleInstance => _singleInstance ?? throw new InvalidOperationException(Strings.App_InstanceNotInitialized);
+
+    public App() => UiLanguage.ApplyAtStartup(AppPaths.Current);
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -42,7 +45,7 @@ public sealed partial class App : Application, IDisposable
         if (!SingleInstance.IsPrimaryInstance)
         {
             MessageBox.Show(
-                "Лаунчер уже запущен. Используйте открытое окно программы.",
+                Strings.App_AlreadyRunning,
                 "CORDON",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
@@ -58,8 +61,9 @@ public sealed partial class App : Application, IDisposable
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show($"Портативная папка недоступна для записи:\n{Services.Paths.ConfigDirectory}\n\n{ex.Message}",
-                "Ошибка хранения данных", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(
+                LocalizedText.Format(Strings.App_PortableStorageErrorFormat, Environment.NewLine, Services.Paths.ConfigDirectory, ex.Message),
+                Strings.App_StorageErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(-1);
             return;
         }
@@ -94,7 +98,7 @@ public sealed partial class App : Application, IDisposable
         catch (Exception ex)
         {
             Services.ApplicationLogService.Write(
-                $"Splash screen loading failed: {ex}",
+                LocalizedText.Format(Strings.App_SplashLogFailedFormat, ex),
                 messageLevel: Models.LauncherLogLevel.ErrorsOnly);
         }
 
@@ -250,11 +254,11 @@ public sealed partial class App : Application, IDisposable
         catch (Exception ex)
         {
             Services.ApplicationLogService.Write(
-                $"Launcher UI startup failed: {ex}",
+                LocalizedText.Format(Strings.App_UiStartupLogFailedFormat, ex),
                 messageLevel: Models.LauncherLogLevel.ErrorsOnly);
             MessageBox.Show(
-                $"Не удалось открыть окно лаунчера. Подробности записаны в журнал.\n\n{ex.Message}",
-                "Ошибка запуска лаунчера",
+                LocalizedText.Format(Strings.App_OpenWindowErrorFormat, Environment.NewLine, ex.Message),
+                Strings.App_LauncherErrorTitle,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown(-1);
@@ -278,14 +282,14 @@ public sealed partial class App : Application, IDisposable
                     _trayIconService?.ShowUpdateAvailable(result);
                 }
                 _mainViewModel?.AppendLog(
-                    $"Launcher update available: {result.LatestVersion}.",
+                    LocalizedText.Format(Strings.Log_UpdateAvailableFormat, result.LatestVersion),
                     Models.LauncherLogLevel.Standard);
             }
         }
         catch (Exception ex)
         {
             _mainViewModel?.AppendLog(
-                $"Automatic update check failed: {ex.Message}",
+                LocalizedText.Format(Strings.Log_AutomaticUpdateFailedFormat, ex.Message),
                 Models.LauncherLogLevel.ErrorsOnly);
         }
     }
@@ -318,8 +322,8 @@ public sealed partial class App : Application, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(
-                $"Не удалось установить обновление.\n\n{ex.Message}",
-                "Ошибка обновления CORDON",
+                LocalizedText.Format(Strings.App_UpdateErrorFormat, Environment.NewLine, ex.Message),
+                Strings.App_UpdateErrorTitle,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }

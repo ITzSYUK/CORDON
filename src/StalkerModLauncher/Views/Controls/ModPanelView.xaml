@@ -2,6 +2,7 @@
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:res="clr-namespace:StalkerModLauncher.Resources"
              Background="Transparent">
     <UserControl.Resources>
         <ResourceDictionary>
@@ -107,16 +108,16 @@
                         </Style.Triggers>
                     </Style>
                 </StackPanel.Style>
-                <TextBlock Text="Моды"
+                <TextBlock Text="{x:Static res:Strings.Mod_Heading}"
                            FontSize="18"
                            FontWeight="SemiBold"/>
-                <TextBlock Text="Моды ниже в списке перезаписывают моды выше"
+                <TextBlock Text="{x:Static res:Strings.Mod_PriorityHint}"
                            Foreground="{StaticResource MutedTextBrush}"
                            FontSize="11"
                            Margin="0,2,0,0"/>
             </StackPanel>
             <WrapPanel Grid.Column="1" HorizontalAlignment="Right">
-                <ToggleButton Content="Автономная сборка"
+                <ToggleButton Content="{x:Static res:Strings.Profile_Standalone}"
                               IsChecked="{Binding SelectedProfile.IsStandalone}"
                               IsEnabled="{Binding CanEditSelectedProfile}"
                               Style="{StaticResource ProfileToggleButtonStyle}"
@@ -126,15 +127,13 @@
                               ToolTipService.BetweenShowDelay="0">
                     <ToggleButton.ToolTip>
                         <ToolTip>
-                            <TextBlock TextWrapping="Wrap" MaxWidth="260">
-                                Автономная сборка имеет свой движок и все файлы игры, запускается из своей папки
-                            </TextBlock>
+                            <TextBlock Text="{x:Static res:Strings.Profile_StandaloneTooltip}" TextWrapping="Wrap" MaxWidth="260"/>
                         </ToolTip>
                     </ToggleButton.ToolTip>
                 </ToggleButton>
                 <Button Command="{Binding ScanForModsCommand}"
                         Style="{StaticResource ModToolbarIconButtonStyle}"
-                        ToolTip="Найти моды в выбранной папке"
+                        ToolTip="{x:Static res:Strings.Mod_ScanFolderTooltip}"
                         ToolTipService.InitialShowDelay="600"
                         ToolTipService.BetweenShowDelay="0"
                         Margin="0,0,8,8">
@@ -168,7 +167,7 @@
                 </Button>
                 <Button Command="{Binding InstallModArchiveCommand}"
                         Style="{StaticResource ModToolbarIconButtonStyle}"
-                        ToolTip="Установить мод из ZIP, 7Z или RAR"
+                        ToolTip="{x:Static res:Strings.Mod_InstallArchiveTooltip}"
                         ToolTipService.InitialShowDelay="600"
                         ToolTipService.BetweenShowDelay="0"
                         Margin="0,0,8,8">
@@ -184,7 +183,7 @@
                 </Button>
                 <Button Command="{Binding AddModCommand}"
                         Style="{StaticResource ModToolbarIconButtonStyle}"
-                        ToolTip="Добавить папку мода"
+                        ToolTip="{x:Static res:Strings.Mod_AddFolderTooltip}"
                         ToolTipService.InitialShowDelay="600"
                         ToolTipService.BetweenShowDelay="0"
                         Margin="0,0,8,8">
@@ -241,7 +240,7 @@
                                 Padding="{Binding Padding, ElementName=ModSearchBox}"
                                 Background="Transparent"
                                 IsHitTestVisible="False">
-                            <TextBlock Text="Поиск по названию, группе или папке"
+                            <TextBlock Text="{x:Static res:Strings.Mod_SearchWatermark}"
                                        Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource MutedTextBrush}">
@@ -264,8 +263,8 @@
                     <ComboBox Grid.Column="1" Margin="7,0,0,0" ItemsSource="{Binding ModFilterOptions}"
                               SelectedValue="{Binding SelectedModFilter}" SelectedValuePath="Value" DisplayMemberPath="Name"
                               Style="{StaticResource Mo2ComboBoxStyle}"/>
-                    <Button Grid.Column="2" Margin="7,0,0,0" Content="Конфликты"
-                            Command="{Binding ShowSelectedModConflictsCommand}" ToolTip="Подробности выбранного мода"
+                    <Button Grid.Column="2" Margin="7,0,0,0" Content="{x:Static res:Strings.Mod_Conflicts}"
+                            Command="{Binding ShowSelectedModConflictsCommand}" ToolTip="{x:Static res:Strings.Mod_SelectedDetailsTooltip}"
                             ToolTipService.InitialShowDelay="600" ToolTipService.BetweenShowDelay="0"/>
                 </Grid>
             <ListView x:Name="ModsList"
@@ -288,7 +287,7 @@
                       PreviewMouseRightButtonDown="ModsList_OnPreviewMouseRightButtonDown"
                       MouseDoubleClick="ModsList_OnMouseDoubleClick"
                       MouseMove="ModsList_OnMouseMove"
-                      ToolTip="Моды можно перетаскивать между строками; нижние имеют больший приоритет"
+                      ToolTip="{x:Static res:Strings.Mod_DragTooltip}"
                       ToolTipService.InitialShowDelay="600"
                       ToolTipService.BetweenShowDelay="0"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -300,7 +299,7 @@
                 <ListView.View>
                     <GridView AllowsColumnReorder="False">
                         <GridViewColumn Header="#" Width="36" DisplayMemberBinding="{Binding Order}"/>
-                        <GridViewColumn Header="Вкл." Width="50">
+                        <GridViewColumn Header="{x:Static res:Strings.Mod_Enabled}" Width="50">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <CheckBox IsChecked="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}"
@@ -316,12 +315,12 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Header="Мод" Width="220">
+                        <GridViewColumn Header="{x:Static res:Strings.Common_Mod}" Width="220">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel>
                                         <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding GroupName, StringFormat=Группа: {0}}"
+                                        <TextBlock Text="{Binding GroupName, StringFormat={x:Static res:Strings.Mod_GroupFormat}}"
                                                    Foreground="{StaticResource MutedTextBrush}"
                                                    FontSize="10"
                                                    TextTrimming="CharacterEllipsis">
@@ -339,7 +338,7 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Header="Папка">
+                        <GridViewColumn Header="{x:Static res:Strings.Common_Folder}">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding SourcePath}" TextTrimming="CharacterEllipsis"/>
@@ -382,7 +381,7 @@
                         Margin="0,8,0,0"
                         Visibility="{Binding IsModArchiveInstallDestinationConflict, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
-                        <TextBlock Text="ПАПКА МОДА УЖЕ ЕСТЬ"
+                        <TextBlock Text="{x:Static res:Strings.Mod_ArchiveConflictHeading}"
                                    Foreground="{DynamicResource AccentBrush}"
                                    FontWeight="SemiBold"/>
                         <TextBlock Text="{Binding ModArchiveInstallDestinationConflictText}"
@@ -393,11 +392,11 @@
                                    Margin="0,2,0,0"
                                    TextTrimming="CharacterEllipsis"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
-                            <Button Content="Установить в новую папку"
+                            <Button Content="{x:Static res:Strings.Mod_InstallInNewFolder}"
                                     Command="{Binding ContinueModArchiveInstallCommand}"
                                     Style="{DynamicResource PrimaryButtonStyle}"
                                     Margin="0,0,6,0"/>
-                            <Button Content="Отменить"
+                            <Button Content="{x:Static res:Strings.Common_Cancel}"
                                     Command="{Binding CancelModArchiveInstallCommand}"/>
                         </StackPanel>
                     </StackPanel>
@@ -432,7 +431,7 @@
                                Margin="0,1,9,0"
                                VerticalAlignment="Top"/>
                         <StackPanel Grid.Column="1">
-                            <TextBlock Text="МОД УСТАНОВЛЕН"
+                            <TextBlock Text="{x:Static res:Strings.Mod_InstalledHeading}"
                                        Foreground="{DynamicResource AccentBrush}"
                                        FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding InstalledModArchiveName}"

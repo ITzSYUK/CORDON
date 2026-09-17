@@ -1,6 +1,6 @@
 # Руководство пользователя
 
-[README](../README.md) | [Техническая документация](TECHNICAL_RU.md)
+[Русский](USER_GUIDE_RU.md) | [English](USER_GUIDE_EN.md) | [README](../README.md) | [Техническая документация](TECHNICAL_RU.md)
 
 ## Что делает лаунчер
 

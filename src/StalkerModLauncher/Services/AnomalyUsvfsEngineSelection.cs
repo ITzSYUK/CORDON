@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 internal static class AnomalyUsvfsEngineSelection
@@ -9,7 +11,7 @@ internal static class AnomalyUsvfsEngineSelection
         var normalized = renderer.Trim().ToUpperInvariant();
         if (!Renderers.Contains(normalized, StringComparer.OrdinalIgnoreCase))
         {
-            throw new ArgumentException($"Unsupported Anomaly renderer: {renderer}", nameof(renderer));
+            throw new ArgumentException(LocalizedText.Format(Strings.Error_UnsupportedAnomalyRendererFormat, renderer), nameof(renderer));
         }
 
         return Path.Combine("bin", $"Anomaly{normalized}{(useAvx ? "AVX" : string.Empty)}.exe");

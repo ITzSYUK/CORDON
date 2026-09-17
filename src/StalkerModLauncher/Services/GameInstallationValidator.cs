@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -8,18 +9,18 @@ public static class GameInstallationValidator
     {
         if (string.IsNullOrWhiteSpace(gamePath))
         {
-            return Invalid("Папка игры не выбрана.", "Выберите папку с установленной игрой.");
+            return Invalid(Strings.Validation_GameNotSelected, Strings.Main_SelectGame);
         }
 
         if (!Directory.Exists(gamePath))
         {
-            return Invalid("Папка игры не существует.", gamePath);
+            return Invalid(Strings.Validation_GameMissing, gamePath);
         }
 
         return new ValidationResult
         {
             IsValid = true,
-            Summary = "Папка базовой игры доступна.",
+            Summary = Strings.Validation_GameAvailable,
             Messages = new[] { gamePath }
         };
 

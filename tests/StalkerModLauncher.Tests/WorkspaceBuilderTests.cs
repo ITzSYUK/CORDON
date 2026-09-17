@@ -241,7 +241,7 @@ public sealed class WorkspaceBuilderTests : IDisposable
         Assert.Equal("precompiled shader", File.ReadAllText(profileCacheFile));
         Assert.Contains(
             progress.Messages,
-            message => message.Contains("Profile shader cache prepared", StringComparison.Ordinal));
+            message => message.Contains("Кэш шейдеров профиля подготовлен", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -625,7 +625,7 @@ public sealed class WorkspaceBuilderTests : IDisposable
         var exception = await Assert.ThrowsAsync<FileNotFoundException>(
             () => _builder.BuildAsync(_gamePath, profile, new ProgressLog()));
 
-        Assert.Contains("Profile executable was not found", exception.Message);
+        Assert.Contains("не найден файл запуска профиля", exception.Message);
     }
 
     [Fact]
@@ -649,7 +649,7 @@ public sealed class WorkspaceBuilderTests : IDisposable
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             () => _builder.BuildAsync(_gamePath, profile, new ProgressLog()));
 
-        Assert.Contains("profile-specific folder", exception.Message);
+        Assert.Contains("должна быть отдельной папкой", exception.Message);
     }
 
     [Fact]
@@ -757,7 +757,7 @@ public sealed class WorkspaceBuilderTests : IDisposable
             () => _builder.BuildAsync(_gamePath, profile, new ProgressLog()));
 
         Assert.Contains("$app_data_root$", error.Message);
-        Assert.Contains("launch was blocked", error.Message);
+        Assert.Contains("запуск заблокирован", error.Message);
         Assert.Equal(original, File.ReadAllText(sourceFsgame));
     }
 

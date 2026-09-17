@@ -86,4 +86,31 @@ public sealed class AppSettingsNormalizerTests
         Assert.False(normalized.MinimizeToTrayOnClose);
     }
 
+    [Fact]
+    public void NormalizeKeepsRussianForSettingsCreatedBeforeLocalization()
+    {
+        var settings = new AppSettings { SchemaVersion = 8 };
+
+        var normalized = AppSettingsNormalizer.Normalize(settings);
+
+        Assert.Equal(UiLanguage.Russian, normalized.UiLanguage);
+        Assert.Equal(AppSettings.CurrentSchemaVersion, normalized.SchemaVersion);
+    }
+
+    [Theory]
+    [InlineData("en", UiLanguage.English)]
+    [InlineData("RU", UiLanguage.Russian)]
+    [InlineData("unknown", UiLanguage.System)]
+    [InlineData(null, UiLanguage.System)]
+    public void NormalizeRepairsUiLanguage(string? value, string expected)
+    {
+        var settings = new AppSettings
+        {
+            SchemaVersion = AppSettings.CurrentSchemaVersion,
+            UiLanguage = value!
+        };
+
+        Assert.Equal(expected, AppSettingsNormalizer.Normalize(settings).UiLanguage);
+    }
+
 }

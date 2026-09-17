@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Windows.Data;
 using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -40,7 +41,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private string _lastBrowsedGamePath = string.Empty;
     private ModProfile? _selectedProfile;
     private ModEntry? _selectedMod;
-    private string _validationSummary = "Выберите папку с установленной игрой.";
+    private string _validationSummary = Strings.Main_SelectGame;
     private bool _isGameValid;
     private bool _isBuilding;
     private bool _isPdaInterfaceEnabled;
@@ -238,7 +239,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                     _automaticExecutableRefreshTimes[_selectedProfile] = DateTime.UtcNow;
                     RefreshAutomaticExecutableSelection(
                         _selectedProfile,
-                        "выбора профиля",
+                        Strings.Log_ReasonProfileSelection,
                         preferExistingRelativePath: true);
                 }
             }
@@ -286,13 +287,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public IReadOnlyList<ModListFilterOption> ModFilterOptions { get; } =
     [
-        new(ModListFilter.All, "Все моды"),
-        new(ModListFilter.Conflicts, "Конфликтующие"),
-        new(ModListFilter.Overwrite, "Перезаписывающие"),
-        new(ModListFilter.Overwritten, "Перезаписанные"),
-        new(ModListFilter.Mixed, "Смешанные"),
-        new(ModListFilter.Redundant, "Полностью перекрытые"),
-        new(ModListFilter.Binaries, "EXE и DLL")
+        new(ModListFilter.All, Strings.ModFilter_All),
+        new(ModListFilter.Conflicts, Strings.ModFilter_Conflicts),
+        new(ModListFilter.Overwrite, Strings.ModFilter_Overwrite),
+        new(ModListFilter.Overwritten, Strings.ModFilter_Overwritten),
+        new(ModListFilter.Mixed, Strings.ModFilter_Mixed),
+        new(ModListFilter.Redundant, Strings.ModFilter_Redundant),
+        new(ModListFilter.Binaries, Strings.ModFilter_Binaries)
     ];
 
     public string ModSearchText
@@ -535,7 +536,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         if (SelectedProfile is not { IsStandalone: false } profile)
         {
-            throw new InvalidOperationException("Выберите обычный профиль.");
+            throw new InvalidOperationException(Strings.Main_RegularProfileRequired);
         }
 
         return new ConflictExplorerViewModel(

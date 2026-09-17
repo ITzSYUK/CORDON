@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json.Serialization;
 using StalkerModLauncher.Models;
 
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 internal static class WorkspaceSourceScanner
@@ -16,7 +18,7 @@ internal static class WorkspaceSourceScanner
             cancellationToken.ThrowIfCancellationRequested();
             if (!Directory.Exists(layer.RootPath))
             {
-                throw new DirectoryNotFoundException($"Mod folder was not found: {layer.RootPath}");
+                throw new DirectoryNotFoundException(LocalizedText.Format(Strings.Error_ModFolderNotFoundFormat, layer.RootPath));
             }
 
             mods.Add(layer.Id, CaptureDirectory(layer.RootPath, cancellationToken));
@@ -34,7 +36,7 @@ internal static class WorkspaceSourceScanner
             cancellationToken.ThrowIfCancellationRequested();
             if (!Directory.Exists(mod.SourcePath))
             {
-                throw new DirectoryNotFoundException($"Mod folder was not found: {mod.SourcePath}");
+                throw new DirectoryNotFoundException(LocalizedText.Format(Strings.Error_ModFolderNotFoundFormat, mod.SourcePath));
             }
 
             mods.Add(mod.Id, CaptureDirectory(mod.SourcePath, cancellationToken));

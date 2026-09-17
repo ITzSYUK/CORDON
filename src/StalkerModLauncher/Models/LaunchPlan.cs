@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Models;
 
 public sealed class LaunchPlan
@@ -14,12 +16,12 @@ public sealed class LaunchPlan
     {
         if (string.IsNullOrWhiteSpace(executablePath))
         {
-            throw new ArgumentException("Launch executable path cannot be empty.", nameof(executablePath));
+            throw new ArgumentException(Strings.Error_LaunchExecutablePathEmpty, nameof(executablePath));
         }
 
         if (string.IsNullOrWhiteSpace(workingDirectory))
         {
-            throw new ArgumentException("Launch working directory cannot be empty.", nameof(workingDirectory));
+            throw new ArgumentException(Strings.Error_LaunchWorkingDirectoryEmpty, nameof(workingDirectory));
         }
 
         BackendKind = backendKind;

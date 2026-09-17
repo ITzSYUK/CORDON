@@ -2,6 +2,7 @@ using System.Windows;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.ViewModels;
 using StalkerModLauncher.Views;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -58,8 +59,8 @@ public sealed class WindowNavigationService
         catch (Exception ex)
         {
             _dialogService.ShowError(
-                "Не удалось открыть импорт MO2",
-                $"Мастер не был открыт. Лаунчер продолжит работу.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
+                Strings.Navigation_Mo2FailedTitle,
+                LocalizedText.Format(Strings.Navigation_WizardFailedFormat, Environment.NewLine, ex.Message));
         }
     }
 

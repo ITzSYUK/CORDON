@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
 using StalkerModLauncher.Infrastructure;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -18,7 +19,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
     private string _modsPath = string.Empty;
     private string _overwritePath = string.Empty;
     private string _profileName = string.Empty;
-    private string _message = "Выберите папку MO2, папку профиля или modlist.txt.";
+    private string _message = Strings.Mo2_SelectSource;
     private bool _isMessageWarning;
     private bool _includeOverwrite;
 
@@ -146,9 +147,13 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
     public string PreviewSummary => Preview is null
         ? string.Empty
-        : $"Найдено модов: {Preview.FoundModCount}; включено: {Preview.EnabledModCount}; " +
-          $"отсутствует: {Preview.MissingModCount}; неоднозначно: {Preview.AmbiguousModCount}; " +
-          $"разделителей: {Preview.SeparatorCount}.";
+        : LocalizedText.Format(
+            Strings.Mo2_PreviewSummaryFormat,
+            Preview.FoundModCount,
+            Preview.EnabledModCount,
+            Preview.MissingModCount,
+            Preview.AmbiguousModCount,
+            Preview.SeparatorCount);
 
     public ICommand BrowseSourceFolderCommand { get; }
     public ICommand BrowseModListCommand { get; }
@@ -176,7 +181,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
             }
 
             SelectedMo2Profile = discovery.SelectedProfile;
-            SetMessage($"Найдено профилей MO2: {Profiles.Count}. Проверьте обнаруженные пути.");
+            SetMessage(LocalizedText.Format(Strings.Mo2_ProfilesFoundFormat, Profiles.Count));
         }
         catch (Exception ex)
         {
@@ -186,7 +191,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
     private void BrowseSourceFolder()
     {
-        var path = DialogService.PickFolder("Выберите папку Mod Organizer 2 или профиль MO2", SourcePath);
+        var path = DialogService.PickFolder(Strings.Mo2_PickSource, SourcePath);
         if (path is not null)
         {
             LoadSource(path);
@@ -196,8 +201,8 @@ public sealed class Mo2ImportViewModel : ObservableObject
     private void BrowseModList()
     {
         var path = DialogService.PickFile(
-            "Выберите modlist.txt из профиля Mod Organizer 2",
-            "Mod Organizer mod list (modlist.txt)|modlist.txt|Text files (*.txt)|*.txt");
+            Strings.Mo2_PickModList,
+            Strings.Dialog_ModListFilter);
         if (path is not null)
         {
             LoadSource(path);
@@ -206,7 +211,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
     private void BrowseGame()
     {
-        var path = DialogService.PickFolder("Выберите папку базовой игры", GamePath);
+        var path = DialogService.PickFolder(Strings.Common_ChooseBaseGame, GamePath);
         if (path is not null)
         {
             GamePath = path;
@@ -215,7 +220,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
     private void BrowseMods()
     {
-        var path = DialogService.PickFolder("Выберите папку mods Mod Organizer 2", ModsPath);
+        var path = DialogService.PickFolder(Strings.Mo2_PickModsFolder, ModsPath);
         if (path is not null)
         {
             ModsPath = path;
@@ -224,7 +229,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
     private void BrowseOverwrite()
     {
-        var path = DialogService.PickFolder("Выберите папку overwrite Mod Organizer 2", OverwritePath);
+        var path = DialogService.PickFolder(Strings.Mo2_PickOverwriteFolder, OverwritePath);
         if (path is not null)
         {
             OverwritePath = path;
@@ -259,10 +264,10 @@ public sealed class Mo2ImportViewModel : ObservableObject
             Step = 2;
             SetMessage(
                 preview.AmbiguousModCount > 0
-                    ? "Для неоднозначных модов выберите правильную папку в столбце «Папка». До этого профиль создать нельзя."
+                    ? Strings.Mo2_AmbiguousHint
                     : preview.MissingModCount > 0
-                        ? "Некоторые папки модов отсутствуют. Такие моды показаны в предпросмотре и не будут добавлены."
-                    : "Проверьте порядок, состояние модов и найденный EXE перед импортом.",
+                        ? Strings.Mo2_MissingHint
+                    : Strings.Mo2_ReviewHint,
                 preview.MissingModCount > 0 || preview.AmbiguousModCount > 0);
         }
         catch (Exception ex)
@@ -274,7 +279,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
     private void Back()
     {
         Step = 1;
-        SetMessage("Проверьте источник, профиль MO2 и обнаруженные пути.");
+        SetMessage(Strings.Mo2_CheckSourceHint);
     }
 
     private bool CanImport() =>
@@ -341,7 +346,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
         OnPropertyChanged(nameof(PreviewSummary));
         if (Preview?.AmbiguousModCount == 0)
         {
-            SetMessage("Папки неоднозначных модов выбраны. Проверьте результат и создайте профиль.");
+            SetMessage(Strings.Mo2_AmbiguousResolved);
         }
 
         RaiseCommandStates();

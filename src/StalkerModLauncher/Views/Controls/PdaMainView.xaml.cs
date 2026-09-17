@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using StalkerModLauncher.Resources;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
@@ -72,7 +73,7 @@ public partial class PdaMainView : UserControl
         PageHost.Visibility = Visibility.Collapsed;
         ProfilePage.ClearValue(VisibilityProperty);
         EmptyProfilePage.ClearValue(VisibilityProperty);
-        PageTitleText.SetBinding(TextBlock.TextProperty, new Binding("SelectedProfile.Name") { FallbackValue = "Профиль не выбран" });
+        PageTitleText.SetBinding(TextBlock.TextProperty, new Binding("SelectedProfile.Name") { FallbackValue = Strings.Profile_NoneSelected });
         PageStatusText.SetBinding(TextBlock.TextProperty, new Binding("ValidationSummary"));
         ProfileTypeIcon.Visibility = Visibility.Visible;
         PageSectionIcon.Visibility = Visibility.Collapsed;

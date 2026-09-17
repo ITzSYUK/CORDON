@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -37,7 +38,7 @@ internal static class ProfileAppDataSourceLocator
     internal static string ResolveConfiguredRoot(string layerRoot)
     {
         var configDirectory = ProfileDataConfigurator.FindFileDirectory(layerRoot, "fsgame.ltx")
-            ?? throw new FileNotFoundException($"Не найден fsgame.ltx базовой игры: {layerRoot}");
+            ?? throw new FileNotFoundException(LocalizedText.Format(Strings.ProfileData_BaseFsgameMissingFormat, layerRoot));
         return ResolveConfiguredRootFromFile(Path.Combine(configDirectory, "fsgame.ltx"), layerRoot);
     }
 
@@ -61,11 +62,11 @@ internal static class ProfileAppDataSourceLocator
             if (alias.Equals("$fs_root$", StringComparison.OrdinalIgnoreCase)) return Path.GetFullPath(fsRoot);
             if (!visiting.Add(alias) || !aliases.TryGetValue(alias, out var parts) || parts.Length < 3)
             {
-                throw new InvalidDataException($"Не удалось определить каталог данных базовой игры: неизвестный или циклический alias {alias}.");
+                throw new InvalidDataException(LocalizedText.Format(Strings.ProfileData_AliasInvalidFormat, alias));
             }
 
             var root = parts[2].Trim('"');
-            if (string.IsNullOrWhiteSpace(root)) throw new InvalidDataException($"Пустой путь {alias} в fsgame.ltx.");
+            if (string.IsNullOrWhiteSpace(root)) throw new InvalidDataException(LocalizedText.Format(Strings.ProfileData_AliasEmptyFormat, alias));
             var path = root.StartsWith('$') ? Resolve(root) : Path.GetFullPath(root, fsRoot);
             if (parts.Length > 3 && !string.IsNullOrWhiteSpace(parts[3])) path = Path.GetFullPath(parts[3].Trim('"'), path);
             visiting.Remove(alias);

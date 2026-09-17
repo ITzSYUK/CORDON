@@ -90,7 +90,8 @@ public sealed class SettingsStoreTests : IDisposable
             MinimizeToTrayOnClose = true,
             AutoCheckForUpdates = false,
             ShowUpdateNotifications = false,
-            LogLevel = LauncherLogLevel.Detailed
+            LogLevel = LauncherLogLevel.Detailed,
+            UiLanguage = UiLanguage.English
         });
 
         var loaded = await _store.LoadAsync();
@@ -104,6 +105,7 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.False(loaded.AutoCheckForUpdates);
         Assert.False(loaded.ShowUpdateNotifications);
         Assert.Equal(LauncherLogLevel.Detailed, loaded.LogLevel);
+        Assert.Equal(UiLanguage.English, loaded.UiLanguage);
     }
 
     [Fact]

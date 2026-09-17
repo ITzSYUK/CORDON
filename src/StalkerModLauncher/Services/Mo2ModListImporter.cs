@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -14,13 +15,13 @@ public static class Mo2ModListImporter
     {
         if (!File.Exists(filePath))
         {
-            throw new FileNotFoundException("Файл modlist.txt не найден.", filePath);
+            throw new FileNotFoundException(Strings.Mo2Service_ModListFileMissing, filePath);
         }
 
         var entries = Parse(File.ReadLines(filePath));
         if (entries.Count == 0)
         {
-            throw new InvalidDataException("В modlist.txt не найдено ни одной записи о модах.");
+            throw new InvalidDataException(Strings.Mo2Service_ModListNoEntries);
         }
 
         var available = profile.Mods.ToList();

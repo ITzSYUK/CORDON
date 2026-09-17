@@ -32,9 +32,11 @@ public sealed class LauncherSettingsViewModelTests
         viewModel.AutoCheckForUpdates = false;
         viewModel.ShowUpdateNotifications = false;
         viewModel.LogLevel = LauncherLogLevel.Detailed;
+        viewModel.UiLanguage = UiLanguage.English;
 
         Assert.True(await viewModel.TrySaveAsync());
         Assert.Equal(new LauncherPreferences(
+            UiLanguage: UiLanguage.English,
             IsPdaInterfaceEnabled: true,
             UseNewPdaInterface: true,
             ShowTrayIcon: true,
@@ -229,6 +231,7 @@ public sealed class LauncherSettingsViewModelTests
         var saveCalls = 0;
         var viewModel = new LauncherSettingsViewModel(
             new LauncherPreferences(
+                UiLanguage: UiLanguage.Russian,
                 IsPdaInterfaceEnabled: true,
                 UseNewPdaInterface: true,
                 ShowTrayIcon: false,
@@ -258,6 +261,7 @@ public sealed class LauncherSettingsViewModelTests
         Assert.True(viewModel.AutoCheckForUpdates);
         Assert.True(viewModel.ShowUpdateNotifications);
         Assert.Equal(LauncherLogLevel.Standard, viewModel.LogLevel);
+        Assert.Equal(UiLanguage.System, viewModel.UiLanguage);
         Assert.Equal(0, saveCalls);
     }
 

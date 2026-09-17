@@ -1,6 +1,7 @@
 using System.Net.Http;
 using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -17,6 +18,8 @@ public sealed class LauncherSettingsViewModel : ObservableObject
     private readonly Action? _requestExit;
     private readonly bool _isStandaloneBuild;
     private readonly Func<bool> _confirmReset;
+    private readonly string _initialUiLanguage;
+    private string _uiLanguage;
     private bool _showTrayIcon;
     private bool _startWithWindows;
     private bool _startMinimizedToTrayOnWindowsStartup;
@@ -47,9 +50,11 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         Func<bool>? canInstallUpdate = null,
         Action? requestExit = null)
     {
+        _initialUiLanguage = Services.UiLanguage.Normalize(preferences.UiLanguage);
+        _uiLanguage = _initialUiLanguage;
         StorageDescription = isPortable
-            ? "Портативный режим: настройки, журналы, кэш и временные файлы хранятся в .\\Data\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой. Если локального settings.json ещё нет, настройки автоматически импортируются из AppData."
-            : "Обычный режим: настройки лаунчера хранятся в %AppData%\\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой.";
+            ? Strings.Settings_StoragePortable
+            : Strings.Settings_StorageRegular;
         _isPdaInterfaceEnabled = preferences.IsPdaInterfaceEnabled;
         _useNewPdaInterface = preferences.UseNewPdaInterface;
         _showTrayIcon = preferences.ShowTrayIcon;
@@ -70,13 +75,12 @@ public sealed class LauncherSettingsViewModel : ObservableObject
                 releaseTag,
                 package));
         _isStandaloneBuild = isStandaloneBuild ?? AppPaths.IsStandaloneExecutable(Environment.ProcessPath);
-        _confirmInstall = confirmInstall ?? (message => DialogService.Confirm("Установить обновление?", message));
+        _confirmInstall = confirmInstall ?? (message => DialogService.Confirm(Strings.Update_InstallTitle, message));
         _canInstallUpdate = canInstallUpdate ?? (() => true);
         _requestExit = requestExit;
         _confirmReset = confirmReset ?? (() => DialogService.Confirm(
-            "Сбросить настройки лаунчера?",
-            "Будут восстановлены настройки интерфейса, поведения, журналирования и обновлений.\n\n" +
-            "Профили, моды и игровые файлы останутся без изменений."));
+            Strings.Settings_ResetTitle,
+            Strings.Settings_ResetMessage));
         OpenSettingsFolderCommand = new RelayCommand(OpenSettingsFolder);
         CheckForUpdatesCommand = new AsyncRelayCommand(CheckForUpdatesAsync, () => _checkForUpdates is not null);
         OpenReleaseCommand = new RelayCommand(OpenRelease, () => HasAvailableUpdate);
@@ -193,6 +197,20 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         set => SetProperty(ref _logLevel, value);
     }
 
+    public string UiLanguage
+    {
+        get => _uiLanguage;
+        set
+        {
+            if (SetProperty(ref _uiLanguage, Services.UiLanguage.Normalize(value)))
+            {
+                OnPropertyChanged(nameof(IsLanguageChangePending));
+            }
+        }
+    }
+
+    public bool IsLanguageChangePending => UiLanguage != _initialUiLanguage;
+
     public bool IsSaving
     {
         get => _isSaving;
@@ -240,7 +258,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
 
         SetRelease(null);
-        UpdateStatus = "Проверяем GitHub...";
+        UpdateStatus = Strings.Update_Checking;
 
         try
         {
@@ -248,24 +266,24 @@ public sealed class LauncherSettingsViewModel : ObservableObject
             if (result.IsUpdateAvailable)
             {
                 SetRelease(result.ReleaseUrl, result.LatestVersion);
-                UpdateStatus = $"Доступна версия {result.LatestVersion}. Установлена {result.CurrentVersion}.";
+                UpdateStatus = LocalizedText.Format(Strings.Update_AvailableFormat, result.LatestVersion, result.CurrentVersion);
             }
             else
             {
-                UpdateStatus = $"Установлена актуальная версия лаунчера: {result.CurrentVersion}.";
+                UpdateStatus = LocalizedText.Format(Strings.Update_CurrentFormat, result.CurrentVersion);
             }
         }
         catch (TaskCanceledException)
         {
-            UpdateStatus = "GitHub не ответил вовремя. Проверьте подключение к интернету.";
+            UpdateStatus = Strings.Update_Timeout;
         }
         catch (HttpRequestException)
         {
-            UpdateStatus = "Не удалось подключиться к GitHub. Проверьте подключение к интернету.";
+            UpdateStatus = Strings.Update_ConnectionFailed;
         }
         catch (Exception ex)
         {
-            UpdateStatus = $"Не удалось проверить обновления: {ex.Message}";
+            UpdateStatus = LocalizedText.Format(Strings.Update_CheckFailedFormat, ex.Message);
         }
     }
 
@@ -280,6 +298,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         try
         {
             await _save(new LauncherPreferences(
+                UiLanguage,
                 _isPdaInterfaceEnabled,
                 _useNewPdaInterface,
                 ShowTrayIcon,
@@ -293,7 +312,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError("Не удалось сохранить настройки лаунчера", ex.Message);
+            _dialogService.ShowError(Strings.Settings_SaveFailed, ex.Message);
             return false;
         }
         finally
@@ -311,7 +330,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError("Не удалось открыть папку настроек", ex.Message);
+            _dialogService.ShowError(Strings.Settings_OpenFolderFailed, ex.Message);
         }
     }
 
@@ -323,6 +342,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
 
         var defaults = LauncherPreferences.Default;
+        UiLanguage = defaults.UiLanguage;
         SetPdaInterface(defaults.IsPdaInterfaceEnabled, defaults.UseNewPdaInterface);
         ShowTrayIcon = defaults.ShowTrayIcon;
         StartWithWindows = defaults.StartWithWindows;
@@ -346,7 +366,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError("Не удалось открыть страницу релиза", ex.Message);
+            _dialogService.ShowError(Strings.Update_OpenReleaseFailed, ex.Message);
         }
     }
 
@@ -361,7 +381,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
 
         if (!_canInstallUpdate())
         {
-            UpdateStatus = "Перед обновлением завершите запущенную игру и текущие операции лаунчера.";
+            UpdateStatus = Strings.Update_Busy;
             return;
         }
 
@@ -371,28 +391,28 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
 
         var packageName = package == LauncherReleasePackage.Minimal
-            ? "обычной версии"
-            : "Standalone-версии";
-        UpdateStatus = $"Скачивается пакет {packageName}...";
+            ? Strings.Update_MinimalPackage
+            : Strings.Update_StandalonePackage;
+        UpdateStatus = LocalizedText.Format(Strings.Update_DownloadingFormat, packageName);
 
         try
         {
             var path = await _downloadReleasePackage(_releaseUrl, _releaseTag, package);
             SetDownloadedReleaseDirectory(Path.GetDirectoryName(path));
-            UpdateStatus = $"Пакет {packageName} проверен и готов к установке: {Path.GetFileName(path)}.";
+            UpdateStatus = LocalizedText.Format(Strings.Update_ReadyFormat, packageName, Path.GetFileName(path));
             _requestExit?.Invoke();
         }
         catch (HttpRequestException ex) when (ex.StatusCode is not null)
         {
-            UpdateStatus = $"GitHub вернул HTTP {(int)ex.StatusCode.Value}. Проверьте файлы выбранного релиза.";
+            UpdateStatus = LocalizedText.Format(Strings.Update_HttpErrorFormat, (int)ex.StatusCode.Value);
         }
         catch (HttpRequestException)
         {
-            UpdateStatus = $"Не удалось скачать пакет {packageName}. Проверьте подключение к интернету.";
+            UpdateStatus = LocalizedText.Format(Strings.Update_DownloadConnectionFormat, packageName);
         }
         catch (Exception ex)
         {
-            UpdateStatus = $"Не удалось скачать пакет {packageName}: {ex.Message}";
+            UpdateStatus = LocalizedText.Format(Strings.Update_DownloadFailedFormat, packageName, ex.Message);
         }
     }
 
@@ -402,14 +422,10 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         var mismatchWarning = selectedStandalone == _isStandaloneBuild
             ? string.Empty
             : _isStandaloneBuild
-                ? "\n\nВНИМАНИЕ: сейчас запущена Standalone-версия, а выбрана обычная. " +
-                  "Она требует установленный .NET 8 Desktop Runtime и будет использовать настройки из AppData. " +
-                  "Папка Data останется без изменений."
-                : "\n\nВНИМАНИЕ: сейчас запущена обычная версия, а выбрана Standalone. " +
-                  "После обновления настройки будут храниться в папке Data рядом с лаунчером.";
+                ? Strings.Update_MismatchFromStandalone
+                : Strings.Update_MismatchToStandalone;
 
-        return $"Архив будет скачан в папку лаунчера. После проверки лаунчер закроется, " +
-               $"заменит свои файлы и запустится снова. Папка Data не изменяется.{mismatchWarning}";
+        return LocalizedText.Format(Strings.Update_InstallMessageFormat, mismatchWarning);
     }
 
     private void SetRelease(string? releaseUrl, string? releaseTag = null)
@@ -446,7 +462,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError("Не удалось открыть Загрузки", ex.Message);
+            _dialogService.ShowError(Strings.Update_OpenDownloadsFailed, ex.Message);
         }
     }
 

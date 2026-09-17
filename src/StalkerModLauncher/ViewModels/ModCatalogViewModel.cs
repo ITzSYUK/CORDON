@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Windows.Media.Imaging;
 using StalkerModLauncher.Infrastructure;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -99,11 +100,11 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
 
             var shown = Items.Count;
             var pages = _totalPageCount > 1
-                ? $" · страниц: {Math.Min(_nextPageNumber - 1, _totalPageCount)}/{_totalPageCount}"
+                ? LocalizedText.Format(Strings.Catalog_PagesFormat, Math.Min(_nextPageNumber - 1, _totalPageCount), _totalPageCount)
                 : string.Empty;
             return string.IsNullOrWhiteSpace(SearchQuery)
-                ? $"Загружено: {loaded:N0}{pages}"
-                : $"Показано: {shown:N0} из {loaded:N0}{pages}";
+                ? LocalizedText.Format(Strings.Catalog_LoadedFormat, loaded, pages)
+                : LocalizedText.Format(Strings.Catalog_ShownFormat, shown, loaded, pages);
         }
     }
 
@@ -126,7 +127,7 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
             IsLoading = true;
             IsLoadingMore = false;
             _isSearchLoadingAll = false;
-            StatusText = "Загружаем каталог AP-PRO...";
+            StatusText = Strings.Catalog_LoadingService;
             OnPropertyChanged(nameof(CatalogProgressText));
 
             DisposeItems();
@@ -156,7 +157,7 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
         {
             if (generation == _loadGeneration)
             {
-                StatusText = "AP-PRO недоступен или не отвечает. Проверьте интернет и попробуйте обновить каталог.";
+                StatusText = Strings.Catalog_Unavailable;
             }
         }
         finally
@@ -208,7 +209,7 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
         {
             if (generation == _loadGeneration)
             {
-                StatusText = "Не удалось загрузить страницу AP-PRO. Попробуйте обновить каталог.";
+                StatusText = Strings.Catalog_PageFailed;
                 HasMorePages = false;
             }
         }
@@ -304,13 +305,13 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
 
         if (string.IsNullOrWhiteSpace(SearchQuery))
         {
-            StatusText = "В этом разделе пока не найдено модификаций.";
+            StatusText = Strings.Catalog_Empty;
             return;
         }
 
         StatusText = _isSearchLoadingAll || IsLoadingMore || HasMorePages
-            ? "Ищем модификации..."
-            : "По этому запросу ничего не найдено.";
+            ? Strings.Catalog_Searching
+            : Strings.Catalog_NoResults;
     }
 
     private async Task EnsureAllPagesLoadedForSearchAsync()
@@ -379,7 +380,7 @@ public sealed class ModCatalogItemViewModel : ObservableObject, IDisposable
     public string DetailUrl => _listing.DetailUrl;
     public string Metadata => string.Join("  ", new[]
     {
-        _listing.Rating is null ? null : $"Оценка: {_listing.Rating:0.#} / 10",
+        _listing.Rating is null ? null : LocalizedText.Format(Strings.Catalog_RatingFormat, _listing.Rating),
         _listing.Views
     }.Where(value => !string.IsNullOrWhiteSpace(value))!);
 

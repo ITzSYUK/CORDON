@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 using StalkerModLauncher.ViewModels;
 using Xunit;
@@ -644,7 +645,7 @@ public sealed class MainViewModelTests
     {
         for (var attempt = 0; attempt < 100; attempt++)
         {
-            if (viewModel.ActivityLog.Entries.Any(entry => entry.Contains("Settings loaded.", StringComparison.Ordinal)))
+            if (viewModel.ActivityLog.Entries.Any(entry => entry.Contains(Strings.Log_SettingsLoaded, StringComparison.Ordinal)))
             {
                 return;
             }

@@ -1,5 +1,6 @@
 using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -15,7 +16,7 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
     private ModEntry? _selectedMod;
     private string _searchText = string.Empty;
     private FinalFileFilter _finalFileFilter;
-    private string _summary = "Анализ файлов...";
+    private string _summary = Strings.Conflict_Analyzing;
     private bool _isBusy;
     private int _selectedTabIndex;
     private IReadOnlyList<ConflictFileEntry> _winningFiles = [];
@@ -51,10 +52,10 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
     public IReadOnlyList<ModEntry> Mods => _profile.Mods.OrderBy(mod => mod.Order).ToArray();
     public IReadOnlyList<FinalFileFilterOption> FinalFileFilters { get; } =
     [
-        new(FinalFileFilter.All, "Все файлы"),
-        new(FinalFileFilter.Conflicts, "Только конфликты"),
-        new(FinalFileFilter.Binaries, "EXE и DLL"),
-        new(FinalFileFilter.Configuration, "Настройки и скрипты")
+        new(FinalFileFilter.All, Strings.Conflict_FilterAll),
+        new(FinalFileFilter.Conflicts, Strings.Conflict_FilterConflicts),
+        new(FinalFileFilter.Binaries, Strings.ModFilter_Binaries),
+        new(FinalFileFilter.Configuration, Strings.Conflict_FilterConfiguration)
     ];
 
     public IReadOnlyList<ConflictFileEntry> WinningFiles
@@ -168,7 +169,7 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
         try
         {
             IsBusy = true;
-            Summary = "Анализ файлов...";
+            Summary = Strings.Conflict_Analyzing;
             var workspace = string.IsNullOrWhiteSpace(_profile.WorkspacePath)
                 ? Path.Combine(AppPaths.Current.TempDirectory, "analysis", _profile.Id)
                 : _profile.WorkspacePath;
@@ -182,14 +183,14 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
 
             PopulateModFiles(await conflictTask);
             ApplyFinalFileFilter();
-            Summary = $"Итоговых файлов: {FinalFiles.Count:N0}; конфликтов путей: {FinalFiles.Count(file => file.HasConflict):N0}.";
+            Summary = LocalizedText.Format(Strings.Conflict_SummaryFormat, FinalFiles.Count, FinalFiles.Count(file => file.HasConflict));
         }
         catch (OperationCanceledException)
         {
         }
         catch (Exception ex)
         {
-            Summary = $"Анализ не выполнен: {ex.Message}";
+            Summary = LocalizedText.Format(Strings.Conflict_AnalysisFailedFormat, ex.Message);
         }
         finally
         {
@@ -245,7 +246,7 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
             var isExcluded = analysis.Mod.ExcludedFiles.Contains(relativePath, StringComparer.OrdinalIgnoreCase);
             if (!conflicts.TryGetValue(relativePath, out var conflict))
             {
-                unique.Add(new ConflictFileEntry(relativePath, "Уникальный файл", "—", false, isExcluded));
+                unique.Add(new ConflictFileEntry(relativePath, Strings.Conflict_UniqueFile, "—", false, isExcluded));
                 continue;
             }
 
@@ -255,7 +256,7 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
                 : conflict.LowerPriorityModNames;
             var item = new ConflictFileEntry(
                 relativePath,
-                loses ? "Проигрывает" : "Побеждает",
+                loses ? Strings.Conflict_Losing : Strings.Conflict_Winning,
                 string.Join(", ", otherMods),
                 true,
                 isExcluded);
@@ -302,7 +303,7 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
                 mod.ExcludedFiles.RemoveAll(path => path.Equals(file.RelativePath, StringComparison.OrdinalIgnoreCase));
             }
 
-            _dialogService.ShowError("Не удалось изменить файл мода", ex.Message);
+            _dialogService.ShowError(Strings.Conflict_ChangeFailed, ex.Message);
         }
     }
 
@@ -347,7 +348,7 @@ public sealed record ConflictFileEntry(
     bool CanExclude,
     bool IsExcluded)
 {
-    public string ActionText => IsExcluded ? "Вернуть" : "Исключить";
+    public string ActionText => IsExcluded ? Strings.Conflict_Restore : Strings.Conflict_Exclude;
 }
 
 public enum FinalFileFilter

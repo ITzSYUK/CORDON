@@ -1,4 +1,5 @@
 using DiscordRPC;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -109,6 +110,6 @@ public sealed class DiscordPresenceService : IDisposable
         }
 
         _failureReported = true;
-        _diagnostic?.Invoke($"Discord: статус недоступен ({ex.Message}). Игра продолжит работать без него.");
+        _diagnostic?.Invoke(LocalizedText.Format(Strings.Discord_UnavailableFormat, ex.Message));
     }
 }

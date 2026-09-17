@@ -186,7 +186,7 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             new Progress<string>()));
 
         Assert.Contains("$app_data_root$", error.Message);
-        Assert.Contains("launch was blocked", error.Message);
+        Assert.Contains("запуск заблокирован", error.Message);
         Assert.False(File.Exists(Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx")));
     }
 

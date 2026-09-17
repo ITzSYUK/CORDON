@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -36,7 +37,7 @@ public sealed class ProfileHealthService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
         {
-            checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Error, "Подготовка профиля", ex.Message));
+            checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Error, Strings.Check_ProfilePreparation, ex.Message));
         }
         var launchPlan = TryCreateLaunchPlan(profile, fileLayerPlan, profileFolderPath, cancellationToken);
         var overlayManifest = TryCreateOverlayManifest(profile, fileLayerPlan, profileFolderPath, cancellationToken);
@@ -45,25 +46,25 @@ public sealed class ProfileHealthService
         {
             checks.Add(new ProfileHealthCheck(
                 ProfileHealthStatus.Healthy,
-                "Режим профиля",
-                "Автономная сборка запускается непосредственно из своей папки."));
+                Strings.Check_ProfileMode,
+                Strings.Check_StandaloneMode));
         }
         else
         {
             try
             {
                 var dataRoot = ProfileDataPathResolver.GetGameDataRoot(profile, profileFolderPath);
-                checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Healthy, "Данные игры",
-                    $"{(profile.UseBaseGameData ? "Общий каталог базовой игры" : "Данные профиля")}: {dataRoot}"));
+                checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Healthy, Strings.Check_GameData,
+                    $"{(profile.UseBaseGameData ? Strings.Check_SharedGameData : Strings.Check_ProfileData)}: {dataRoot}"));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException)
             {
-                checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Error, "Данные игры", ex.Message));
+                checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Error, Strings.Check_GameData, ex.Message));
             }
             var validation = GameInstallationValidator.Validate(gamePath);
             checks.Add(new ProfileHealthCheck(
                 validation.IsValid ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Error,
-                "Базовая игра",
+                Strings.Check_BaseGame,
                 $"{validation.Summary} {string.Join(" ", validation.Messages)}".Trim()));
 
             AddFsgameSourceCheck(checks, profile, fileLayerPlan);
@@ -75,18 +76,18 @@ public sealed class ProfileHealthService
             var exists = Directory.Exists(mod.SourcePath);
             checks.Add(new ProfileHealthCheck(
                 exists ? ProfileHealthStatus.Healthy : mod.IsEnabled ? ProfileHealthStatus.Error : ProfileHealthStatus.Warning,
-                $"Мод #{mod.Order}: {mod.Name}",
+                LocalizedText.Format(Strings.Check_ModTitleFormat, mod.Order, mod.Name),
                 exists
-                    ? $"{(mod.IsEnabled ? "Включен" : "Выключен")}: {mod.SourcePath}"
-                    : $"{(mod.IsEnabled ? "Включенный" : "Выключенный")} мод, папка не найдена: {mod.SourcePath}"));
+                    ? LocalizedText.Format(mod.IsEnabled ? Strings.Check_EnabledPathFormat : Strings.Check_DisabledPathFormat, mod.SourcePath)
+                    : LocalizedText.Format(mod.IsEnabled ? Strings.Check_EnabledMissingFormat : Strings.Check_DisabledMissingFormat, mod.SourcePath)));
         }
 
         if (profile.Mods.Count == 0)
         {
             checks.Add(new ProfileHealthCheck(
                 profile.IsStandalone ? ProfileHealthStatus.Error : ProfileHealthStatus.Warning,
-                "Список модов",
-                profile.IsStandalone ? "Для автономного профиля требуется папка мода." : "Профиль не содержит модов."));
+                Strings.Check_ModList,
+                profile.IsStandalone ? Strings.Check_StandaloneNeedsMod : Strings.Check_NoMods));
         }
 
         var executableSource = launchPlan?.Executable ?? FindExecutableSource(profile, gamePath, fileLayerPlan, cancellationToken);
@@ -94,9 +95,9 @@ public sealed class ProfileHealthService
             executableSource is null || !executableSource.IsAvailable
                 ? ProfileHealthStatus.Error
                 : executableSource.UsedRequestedRelativePath ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Warning,
-            "Бинарник запуска",
+            Strings.Check_LaunchBinary,
             executableSource is null
-                ? $"Не найден: {profile.ExecutableRelativePath}"
+                ? LocalizedText.Format(Strings.Check_NotFoundFormat, profile.ExecutableRelativePath)
                 : FormatExecutableSource(executableSource, profile.ExecutableRelativePath)));
 
         var savedGamePaths = ProfileDataPathResolver.GetSavedGameDirectories(profile);
@@ -117,8 +118,8 @@ public sealed class ProfileHealthService
             ".scop");
         checks.Add(new ProfileHealthCheck(
             Directory.Exists(savedGamesPath) ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Warning,
-            "Сохранения",
-            Directory.Exists(savedGamesPath) ? $"{saveCount} файл(ов): {savedGamesPath}" : "Папка сохранений еще не создана."));
+            Strings.Check_Saves,
+            Directory.Exists(savedGamesPath) ? LocalizedText.Format(Strings.Check_SaveCountFormat, saveCount, savedGamesPath) : Strings.Check_SaveFolderMissing));
 
         var logPaths = ProfileDataPathResolver.GetLogDirectories(profile);
         var latestLog = FindLatest(logPaths, [".log", ".txt"], cancellationToken);
@@ -134,14 +135,14 @@ public sealed class ProfileHealthService
         var usvfsLogPath = UsvfsDiagnosticPaths.Resolve(profileFolderPath);
         checks.Add(new ProfileHealthCheck(
             ProfileHealthStatus.Healthy,
-            "Последний лог",
-            latestLog is not null ? latestLog : "Логи пока не найдены."));
+            Strings.Check_LatestLog,
+            latestLog is not null ? latestLog : Strings.Check_LogsMissing));
         checks.Add(new ProfileHealthCheck(
             latestDump is null ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Warning,
-            "Crash dump",
+            Strings.Check_CrashDump,
             latestDump is not null
-                ? $"Найден файл аварийного дампа: {latestDump}"
-                : "Файлы аварийного дампа не найдены."));
+                ? LocalizedText.Format(Strings.Check_CrashDumpFoundFormat, latestDump)
+                : Strings.Check_CrashDumpMissing));
 
         return new ProfileHealthReport(
             checks,
@@ -166,25 +167,25 @@ public sealed class ProfileHealthService
             {
                 checks.Add(new ProfileHealthCheck(
                     ProfileHealthStatus.Warning,
-                    "Источник fsgame.ltx",
-                    "Файл не найден автоматически во включённых слоях. Выберите его вручную в настройках профиля."));
+                    Strings.Check_FsgameSource,
+                    Strings.Check_FsgameMissing));
                 return;
             }
 
             ProfileDataConfigurator.ValidateFsgameSource(source.FullPath);
             var selection = !string.IsNullOrWhiteSpace(profile.FsgameSourcePath)
-                ? "Выбран вручную"
+                ? Strings.Check_SelectedManually
                 : FileLayerPlan.ResolveFsgameLaunchArgument(profile.LaunchArguments) is null
-                    ? "Найден автоматически"
-                    : "Найден автоматически по параметру -fsltx";
+                    ? Strings.Check_FoundAutomatically
+                    : Strings.Check_FoundByFsltx;
             checks.Add(new ProfileHealthCheck(
                 ProfileHealthStatus.Healthy,
-                "Источник fsgame.ltx",
-                $"{selection}: {source.FullPath}{Environment.NewLine}Источник: {source.SourceName}."));
+                Strings.Check_FsgameSource,
+                LocalizedText.Format(Strings.Check_SourceDetailsFormat, selection, source.FullPath, Environment.NewLine, source.SourceName)));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
         {
-            checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Error, "Источник fsgame.ltx", ex.Message));
+            checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Error, Strings.Check_FsgameSource, ex.Message));
         }
     }
 
@@ -244,8 +245,8 @@ public sealed class ProfileHealthService
                 ProfileHealthStatus.Warning,
                 checkTitle,
                 usesVirtualFileSystem
-                    ? "Профильная папка будет назначена при первом запуске. Папка current для USVFS не требуется."
-                    : "Путь еще не назначен."));
+                    ? Strings.Check_ProfilePathPendingUsvfs
+                    : Strings.Check_PathPending));
             return;
         }
 
@@ -254,7 +255,7 @@ public sealed class ProfileHealthService
             checks.Add(new ProfileHealthCheck(
                 ProfileHealthStatus.Warning,
                 checkTitle,
-                $"Профильная папка будет создана при запуске: {workspacePath}"));
+                LocalizedText.Format(Strings.Check_ProfileFolderCreatedFormat, workspacePath)));
             return;
         }
 
@@ -264,9 +265,9 @@ public sealed class ProfileHealthService
             checkTitle,
             markerExists
                 ? usesVirtualFileSystem
-                    ? $"Профильные данные хранятся отдельно: {workspacePath}. Папка current не используется."
-                    : $"Управляемая папка: {workspacePath}"
-                : $"Отсутствует защитный маркер: {workspacePath}"));
+                    ? LocalizedText.Format(Strings.Check_ProfileDataSeparateFormat, workspacePath)
+                    : LocalizedText.Format(Strings.Check_ManagedFolderFormat, workspacePath)
+                : LocalizedText.Format(Strings.Check_MarkerMissingFormat, workspacePath)));
 
         if (usesVirtualFileSystem)
         {
@@ -277,8 +278,8 @@ public sealed class ProfileHealthService
         var manifestExists = File.Exists(Path.Combine(workspacePath, "build-manifest.json"));
         checks.Add(new ProfileHealthCheck(
             currentExists && manifestExists ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Warning,
-            "Кэш workspace",
-            currentExists && manifestExists ? "Подготовленный workspace и manifest присутствуют." : "Workspace будет подготовлен или пересобран при следующем запуске."));
+            Strings.Check_WorkspaceCache,
+            currentExists && manifestExists ? Strings.Check_WorkspacePresent : Strings.Check_WorkspacePending));
     }
 
     private static FileLayerPlan? TryCreateLinkedFileLayerPlan(ModProfile profile, string profileFolderPath)
@@ -304,7 +305,7 @@ public sealed class ProfileHealthService
             : FileLayerSourceResolver.CreateExecutableRoots(fileLayerPlan);
         try
         {
-            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, "Бинарник запуска");
+            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Check_LaunchBinary);
         }
         catch
         {
@@ -324,14 +325,14 @@ public sealed class ProfileHealthService
     {
         if (!profile.IsStandalone)
         {
-            yield return new LaunchExecutableSearchRoot(gamePath, "базовая игра", 0);
+            yield return new LaunchExecutableSearchRoot(gamePath, Strings.Creation_BaseGameSource, 0);
         }
 
         foreach (var mod in profile.Mods
                      .Where(mod => mod.IsEnabled)
                      .OrderBy(mod => mod.Order))
         {
-            yield return new LaunchExecutableSearchRoot(mod.SourcePath, $"мод: {mod.Name}", mod.Order);
+            yield return new LaunchExecutableSearchRoot(mod.SourcePath, LocalizedText.Format(Strings.Creation_ModSourceFormat, mod.Name), mod.Order);
         }
     }
 
@@ -339,23 +340,26 @@ public sealed class ProfileHealthService
     {
         if (!source.IsAvailable)
         {
-            return $"Не найден ручной источник бинарника: {source.FullPath}{Environment.NewLine}{source.Reason}.";
+            return LocalizedText.Format(Strings.Check_ManualSourceMissingFormat, source.FullPath, Environment.NewLine, source.Reason);
         }
 
         if (source.IsPinned)
         {
-            return $"Итоговый файл: {source.FullPath}{Environment.NewLine}Источник: {source.SourceName}. Выбран вручную; приоритет модов не заменит этот EXE.";
+            return LocalizedText.Format(Strings.Check_FinalManualFormat, source.FullPath, Environment.NewLine, source.SourceName);
         }
 
         if (source.UsedRequestedRelativePath)
         {
-            return $"Итоговый файл: {source.FullPath}{Environment.NewLine}Источник: {source.SourceName}. Нижние моды в списке имеют приоритет.";
+            return LocalizedText.Format(Strings.Check_FinalAutomaticFormat, source.FullPath, Environment.NewLine, source.SourceName);
         }
 
-        return
-            $"Выбранный путь не найден: {requestedRelativePath}{Environment.NewLine}" +
-            $"Лаунчер сможет использовать: {source.FullPath}{Environment.NewLine}" +
-            $"Причина выбора: {source.Reason}. Источник: {source.SourceName}.";
+        return LocalizedText.Format(
+            Strings.Check_FinalFallbackFormat,
+            requestedRelativePath,
+            Environment.NewLine,
+            source.FullPath,
+            source.Reason,
+            source.SourceName);
     }
 
     private static int CountFiles(

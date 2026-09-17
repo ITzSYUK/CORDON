@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -29,7 +30,7 @@ public sealed class UsvfsRuntime(IUsvfsNativeApi nativeApi) : IUsvfsRuntime
 
             if (!nativeApi.CreateVfs(parameters))
             {
-                throw new InvalidOperationException("USVFS did not create a virtual file system instance.");
+                throw new InvalidOperationException(Strings.Error_UsvfsCreateFailed);
             }
 
             nativeApi.ClearVirtualMappings();
@@ -122,28 +123,30 @@ public sealed class UsvfsRuntime(IUsvfsNativeApi nativeApi) : IUsvfsRuntime
                 operation.SourcePath,
                 operation.DestinationPath,
                 flags),
-            _ => throw new InvalidOperationException($"Unsupported USVFS mapping kind: {operation.Kind}.")
+            _ => throw new InvalidOperationException(LocalizedText.Format(Strings.Error_UsvfsMappingKindFormat, operation.Kind))
         };
 
         if (!ok)
         {
-            throw new InvalidOperationException(
-                $"USVFS failed to map '{operation.SourcePath}' to '{operation.DestinationPath}'.");
+            throw new InvalidOperationException(LocalizedText.Format(
+                Strings.Error_UsvfsMapFailedFormat,
+                operation.SourcePath,
+                operation.DestinationPath));
         }
 
-        progress?.Report($"USVFS mapped: {operation.SourceName}");
+        progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsMappedFormat, operation.SourceName));
     }
 
     internal static void ValidateLaunchRequest(UsvfsProcessLaunchRequest launchRequest)
     {
         if (string.IsNullOrWhiteSpace(launchRequest.ExecutablePath))
         {
-            throw new ArgumentException("USVFS launch executable path cannot be empty.", nameof(launchRequest));
+            throw new ArgumentException(Strings.Error_LaunchExecutablePathEmpty, nameof(launchRequest));
         }
 
         if (string.IsNullOrWhiteSpace(launchRequest.WorkingDirectory))
         {
-            throw new ArgumentException("USVFS launch working directory cannot be empty.", nameof(launchRequest));
+            throw new ArgumentException(Strings.Error_LaunchWorkingDirectoryEmpty, nameof(launchRequest));
         }
     }
 
@@ -186,11 +189,11 @@ public sealed class UsvfsRuntimeSession : IUsvfsRuntimeSession
             ObjectDisposedException.ThrowIf(_disposed, this);
             if (_exitCodeTask is not null)
             {
-                throw new InvalidOperationException("This USVFS session already started a process.");
+                throw new InvalidOperationException(Strings.Error_UsvfsSessionAlreadyStarted);
             }
 
             var commandLine = UsvfsRuntime.BuildCommandLine(launchRequest.ExecutablePath, launchRequest.Arguments);
-            progress?.Report($"USVFS starting: {launchRequest.ExecutablePath}");
+            progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsStartingFormat, launchRequest.ExecutablePath));
             var handle = _nativeApi.CreateProcessHookedAsync(
                     launchRequest.ExecutablePath,
                     commandLine,
@@ -214,7 +217,7 @@ public sealed class UsvfsRuntimeSession : IUsvfsRuntimeSession
 
         if (task is null)
         {
-            throw new InvalidOperationException("The USVFS session has not started a process.");
+            throw new InvalidOperationException(Strings.Error_UsvfsSessionNotStarted);
         }
 
         return await task.WaitAsync(cancellationToken);

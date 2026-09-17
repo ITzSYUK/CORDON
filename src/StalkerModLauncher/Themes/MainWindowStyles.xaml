@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:res="clr-namespace:StalkerModLauncher.Resources">
         <Style x:Key="ProfileActionsToggleButtonStyle"
                TargetType="ToggleButton">
             <Setter Property="Width" Value="38"/>
@@ -146,7 +147,7 @@
                                     <Button Style="{StaticResource InlineProfileActionButtonStyle}"
                                             Command="{Binding DataContext.InlineDuplicateProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}"
-                                            ToolTip="Создать копию профиля">
+                                            ToolTip="{x:Static res:Strings.Profile_CloneTooltip}">
                                         <Viewbox Width="18" Height="18">
                                             <Canvas Width="24" Height="24">
                                                 <Path Data="M15.5,8.2 V5.8 C15.5,4.81 14.69,4 13.7,4 H6 C5.01,4 4.2,4.81 4.2,5.8 V13.5 C4.2,14.49 5.01,15.3 6,15.3 H8.2"
@@ -169,7 +170,7 @@
                                     <Button Style="{StaticResource InlineProfileActionButtonStyle}"
                                             Command="{Binding DataContext.InlineExportProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}"
-                                            ToolTip="Экспортировать профиль">
+                                            ToolTip="{x:Static res:Strings.Profile_ExportTooltip}">
                                         <Viewbox Width="19" Height="19">
                                             <Canvas Width="24" Height="24">
                                                 <Path Data="M5,3.8 H12.4 L16.8,8.2 V19.2 C16.8,20.19 15.99,21 15,21 H5 C4.01,21 3.2,20.19 3.2,19.2 V5.6 C3.2,4.61 4.01,3.8 5,3.8 Z M12.2,3.8 V8.4 H16.8"
@@ -190,7 +191,7 @@
                                     <Button Style="{StaticResource InlineProfileActionButtonStyle}"
                                             Command="{Binding DataContext.InlineDeleteProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}"
-                                            ToolTip="Удалить профиль">
+                                            ToolTip="{x:Static res:Strings.Profile_DeleteTooltip}">
                                         <Grid Width="16" Height="16">
                                             <Border Width="17"
                                                     Height="2"
@@ -355,19 +356,19 @@
                                                     VerticalAlignment="Center"
                                                     Margin="0,0,40,0"
                                                     Opacity="0">
-                                            <Button Content="Убрать"
+                                            <Button Content="{x:Static res:Strings.Common_Remove}"
                                                     Style="{DynamicResource InlineModActionButtonStyle}"
                                                     Command="{Binding DataContext.InlineRemoveModCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"/>
-                                            <Button Content="Выше"
+                                            <Button Content="{x:Static res:Strings.Common_MoveUp}"
                                                     Style="{DynamicResource InlineModActionButtonStyle}"
                                                     Command="{Binding DataContext.InlineMoveModUpCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"/>
-                                            <Button Content="Ниже"
+                                            <Button Content="{x:Static res:Strings.Common_MoveDown}"
                                                     Style="{DynamicResource InlineModActionButtonStyle}"
                                                     Command="{Binding DataContext.InlineMoveModDownCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"/>
-                                            <Button Content="Открыть"
+                                            <Button Content="{x:Static res:Strings.Common_Open}"
                                                     Style="{DynamicResource InlineModActionButtonStyle}"
                                                     Command="{Binding DataContext.InlineOpenModFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"/>

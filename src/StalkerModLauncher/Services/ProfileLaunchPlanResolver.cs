@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -31,7 +32,7 @@ internal static class ProfileLaunchPlanResolver
             : FileSystemSafety.ResolvePathInside(
                 workspace.WorkspaceRoot,
                 workspace.WorkingDirectoryRelative,
-                "Working directory");
+                Strings.Safety_UsvfsWorkingDirectory);
 
         return new LaunchPlan(
             backendKind,
@@ -47,7 +48,7 @@ internal static class ProfileLaunchPlanResolver
     {
         try
         {
-            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, "Launch executable");
+            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Safety_LaunchExecutable);
             var executable = ResolveExecutableSource(
                 profile,
                 FileLayerSourceResolver.CreateExecutableRoots(fileLayerPlan),
@@ -57,7 +58,10 @@ internal static class ProfileLaunchPlanResolver
 
             if (executable is null)
             {
-                return new LaunchPlanResolution(null, null, $"Executable was not found: {profile.ExecutableRelativePath}");
+                return new LaunchPlanResolution(
+                    null,
+                    null,
+                    LocalizedText.Format(Strings.Ready_ExecutableMissingFormat, profile.ExecutableRelativePath));
             }
 
             if (!executable.IsAvailable)
@@ -69,14 +73,14 @@ internal static class ProfileLaunchPlanResolver
             var executablePath = FileSystemSafety.ResolvePathInside(
                 currentWorkspace,
                 executable.RelativePath,
-                "Launch executable");
+                Strings.Safety_LaunchExecutable);
             var workingDirectoryRelative = FindWorkingDirectoryRelative(fileLayerPlan);
             var workingDirectory = string.IsNullOrWhiteSpace(workingDirectoryRelative)
                 ? currentWorkspace
                 : FileSystemSafety.ResolvePathInside(
                     currentWorkspace,
                     workingDirectoryRelative,
-                    "Working directory");
+                    Strings.Safety_UsvfsWorkingDirectory);
 
             return new LaunchPlanResolution(
                 new LaunchPlan(
@@ -98,16 +102,16 @@ internal static class ProfileLaunchPlanResolver
         var modRoot = profile.Mods.FirstOrDefault(mod => mod.IsEnabled && Directory.Exists(mod.SourcePath))?.SourcePath;
         if (modRoot is null)
         {
-            return new LaunchPlanResolution(null, null, "Standalone profile has no enabled mod with a valid folder.");
+            return new LaunchPlanResolution(null, null, Strings.Error_StandaloneNoValidMod);
         }
 
         modRoot = Path.GetFullPath(modRoot);
         try
         {
-            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, "Launch executable");
+            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Safety_LaunchExecutable);
             var executable = ResolveExecutableSource(
                 profile,
-                [new LaunchExecutableSearchRoot(modRoot, "автономная сборка", 1)],
+            [new LaunchExecutableSearchRoot(modRoot, Strings.Profile_Standalone, 1)],
                 profile.ExecutableRelativePath,
                 allowPinnedSource: false,
                 allowDedicatedFallback: false,
@@ -115,7 +119,10 @@ internal static class ProfileLaunchPlanResolver
 
             if (executable is null)
             {
-                return new LaunchPlanResolution(null, null, $"Executable was not found: {profile.ExecutableRelativePath}");
+                return new LaunchPlanResolution(
+                    null,
+                    null,
+                    LocalizedText.Format(Strings.Ready_ExecutableMissingFormat, profile.ExecutableRelativePath));
             }
 
             if (!executable.IsAvailable)
@@ -129,7 +136,7 @@ internal static class ProfileLaunchPlanResolver
                 : FileSystemSafety.ResolvePathInside(
                     modRoot,
                     workingDirectoryRelative,
-                    "Working directory");
+                    Strings.Safety_UsvfsWorkingDirectory);
 
             return new LaunchPlanResolution(
                 new LaunchPlan(
@@ -150,7 +157,7 @@ internal static class ProfileLaunchPlanResolver
     {
         try
         {
-            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, "Launch executable");
+            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Safety_LaunchExecutable);
             var executable = ResolveExecutableSource(
                 profile,
                 FileLayerSourceResolver.CreateExecutableRoots(fileLayerPlan),
@@ -160,7 +167,10 @@ internal static class ProfileLaunchPlanResolver
 
             if (executable is null)
             {
-                return new LaunchPlanResolution(null, null, $"Executable was not found: {profile.ExecutableRelativePath}");
+                return new LaunchPlanResolution(
+                    null,
+                    null,
+                    LocalizedText.Format(Strings.Ready_ExecutableMissingFormat, profile.ExecutableRelativePath));
             }
 
             if (!executable.IsAvailable)
@@ -175,7 +185,7 @@ internal static class ProfileLaunchPlanResolver
                 : FileSystemSafety.ResolvePathInside(
                     virtualRoot,
                     workingDirectoryRelative,
-                    "Working directory");
+                    Strings.Safety_UsvfsWorkingDirectory);
 
             return new LaunchPlanResolution(
                 new LaunchPlan(
@@ -224,7 +234,7 @@ internal static class ProfileLaunchPlanResolver
                 exact.FullPath,
                 requestedRelativePath,
                 exact.DisplayName,
-                "найден выбранный путь",
+                Strings.LaunchPlan_SelectedPathFound,
                 UsedRequestedRelativePath: true,
                 IsPinned: false);
         }
@@ -256,8 +266,8 @@ internal static class ProfileLaunchPlanResolver
             return new LaunchExecutableResolution(
                 profile.ExecutableSourcePath,
                 requestedRelativePath,
-                "ручной источник",
-                "папка ручного источника недоступна или мод выключен",
+                Strings.LaunchPlan_ManualSource,
+                Strings.LaunchPlan_ManualSourceUnavailable,
                 UsedRequestedRelativePath: true,
                 IsPinned: true,
                 IsAvailable: false);
@@ -266,21 +276,21 @@ internal static class ProfileLaunchPlanResolver
         var pinnedExecutable = FileSystemSafety.ResolvePathInside(
             pinnedSource.RootPath,
             requestedRelativePath,
-            "Launch executable");
+            Strings.Safety_LaunchExecutable);
 
         return File.Exists(pinnedExecutable)
             ? new LaunchExecutableResolution(
                 pinnedExecutable,
                 requestedRelativePath,
                 pinnedSource.DisplayName,
-                "выбран пользователем вручную",
+                Strings.LaunchPlan_SelectedManually,
                 UsedRequestedRelativePath: true,
                 IsPinned: true)
             : new LaunchExecutableResolution(
                 pinnedExecutable,
                 requestedRelativePath,
                 pinnedSource.DisplayName,
-                "ручной источник найден, но файл отсутствует",
+            Strings.LaunchPlan_ManualFileMissing,
                 UsedRequestedRelativePath: true,
                 IsPinned: true,
                 IsAvailable: false);

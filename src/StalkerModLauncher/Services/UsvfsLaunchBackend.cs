@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -26,20 +27,19 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
     {
         if (!UsvfsFeatureGate.IsEnabled(_runtimeDirectory))
         {
-            throw new InvalidOperationException(
-                "Official USVFS backend is unavailable. Put the complete x64/x86 USVFS runtime " +
-                "and StalkerModLauncher.UsvfsX86Host.exe next to the launcher or set " +
-                $"{UsvfsFeatureGate.EnableEnvironmentVariable}=1 for a development build.");
+            throw new InvalidOperationException(LocalizedText.Format(
+                Strings.Error_UsvfsBackendUnavailableFormat,
+                UsvfsFeatureGate.EnableEnvironmentVariable));
         }
 
         if (context.Profile.IsStandalone)
         {
-            throw new InvalidOperationException("USVFS backend is currently available only for non-standalone layered profiles.");
+            throw new InvalidOperationException(Strings.Error_UsvfsLayeredOnly);
         }
 
         if (context.FileLayerPlan is null || context.OverlayManifest is null)
         {
-            throw new InvalidOperationException("USVFS backend requires FileLayerPlan and OverlayManifest.");
+            throw new InvalidOperationException(Strings.Error_UsvfsPlanRequired);
         }
 
         var profile = context.Profile;
@@ -53,22 +53,23 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
         var launchResolution = ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, context.FileLayerPlan);
         if (!launchResolution.IsReady || launchResolution.Plan is null)
         {
-            throw new InvalidOperationException(launchResolution.Error ?? "USVFS launch plan is not ready.");
+            throw new InvalidOperationException(launchResolution.Error ?? Strings.Error_UsvfsLaunchPlanNotReady);
         }
 
         var launchTarget = AnomalyUsvfsLaunchTargetResolver.Resolve(profile, context.FileLayerPlan, launchResolution);
         if (launchTarget.BypassedLauncher)
         {
-            progress.Report(
-                $"USVFS Anomaly manual engine selection: starting {Path.GetFileName(launchTarget.ExecutablePath)} directly instead of AnomalyLauncher.exe.");
+            progress.Report(LocalizedText.Format(
+                Strings.Progress_UsvfsManualEngineFormat,
+                Path.GetFileName(launchTarget.ExecutablePath)));
         }
 
-        progress.Report($"USVFS executable source: {launchTarget.SourceName}.");
+        progress.Report(LocalizedText.Format(Strings.Progress_UsvfsExecutableSourceFormat, launchTarget.SourceName));
         var architecture = WindowsExecutableArchitectureDetector.Detect(launchTarget.ExecutablePath);
         if (architecture == WindowsExecutableArchitecture.Unknown)
         {
             throw new BadImageFormatException(
-                $"Не удалось определить архитектуру USVFS-цели: {launchTarget.ExecutablePath}");
+                LocalizedText.Format(Strings.Usvfs_TargetArchitectureMissingFormat, launchTarget.ExecutablePath));
         }
 
         var runtimeFiles = UsvfsRuntimeFiles.Check(_runtimeDirectory);
@@ -77,10 +78,10 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             throw new FileNotFoundException(runtimeFiles.MissingFilesMessage(architecture));
         }
 
-        progress.Report($"USVFS runtime: {runtimeFiles.RuntimeVersion}.");
+        progress.Report(LocalizedText.Format(Strings.Progress_UsvfsRuntimeVersionFormat, runtimeFiles.RuntimeVersion));
         progress.Report(architecture == WindowsExecutableArchitecture.X86
-            ? "USVFS architecture: x86 target through same-bitness host."
-            : "USVFS architecture: x64 target.");
+            ? Strings.Progress_UsvfsArchitectureX86
+            : Strings.Progress_UsvfsArchitectureX64);
 
         var useAnomalyLauncherBootstrap = AnomalyLauncherLocator.IsBaseGameLauncher(
                                              profile.GameInstallPath,
@@ -148,15 +149,15 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             ? launchTarget.ExecutablePath
             : bootstrap!.ExecutablePath;
         progress.Report(usePhysicalBaseGameRoot
-            ? "USVFS root strategy: physical game root for base executable."
+            ? Strings.Progress_UsvfsRootBase
             : useAnomalyLauncherBootstrap
-                ? "USVFS root strategy: isolated Anomaly launcher bootstrap root."
+                ? Strings.Progress_UsvfsRootAnomalyBootstrap
                 : usePhysicalAnomalyRoot
-                ? "USVFS root strategy: physical Anomaly root."
+                ? Strings.Progress_UsvfsRootAnomaly
                 : usePhysicalArchiveRoot
-                    ? "USVFS root strategy: physical game root for X-Ray archive directories."
-                : "USVFS root strategy: isolated bootstrap root.");
-        progress.Report($"USVFS virtual root: {mappingPlan.VirtualRoot}");
+                    ? Strings.Progress_UsvfsRootXray
+                : Strings.Progress_UsvfsRootIsolated);
+        progress.Report(LocalizedText.Format(Strings.Progress_UsvfsVirtualRootFormat, mappingPlan.VirtualRoot));
 
         var launchRequest = new UsvfsProcessLaunchRequest(
             executablePath,
@@ -166,9 +167,10 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             ? _x86Runtime
             : _runtime;
         var diagnosticLogPath = UsvfsDiagnosticPaths.Prepare(profileWorkspace, progress);
-        progress.Report(
-            $"USVFS overlay plan: {mappingPlan.Operations.Count:N0} mappings; " +
-            $"diagnostic log: {diagnosticLogPath}");
+        progress.Report(LocalizedText.Format(
+            Strings.Progress_UsvfsOverlayPlanFormat,
+            mappingPlan.Operations.Count,
+            diagnosticLogPath));
         var session = selectedRuntime.CreateSession(
             mappingPlan,
             new UsvfsRuntimeOptions(
@@ -207,7 +209,10 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
         foreach (var sourcePath in sourcePaths)
         {
             var relativePath = Path.GetRelativePath(writeOverlayRoot, sourcePath);
-            var destination = FileSystemSafety.ResolvePathInside(bootstrapRoot, relativePath, "Bootstrap fsgame.ltx");
+            var destination = FileSystemSafety.ResolvePathInside(
+                bootstrapRoot,
+                relativePath,
+                Strings.Safety_BootstrapFsgame);
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
             File.Copy(sourcePath, destination, overwrite: true);
         }
@@ -294,11 +299,11 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             return bootstrapRoot;
         }
 
-        FileSystemSafety.EnsureRelativePath(relative, "USVFS working directory");
+        FileSystemSafety.EnsureRelativePath(relative, Strings.Safety_UsvfsWorkingDirectory);
         var workingDirectory = FileSystemSafety.ResolvePathInside(
             bootstrapRoot,
             relative,
-            "USVFS working directory");
+            Strings.Safety_UsvfsWorkingDirectory);
         Directory.CreateDirectory(workingDirectory);
         return workingDirectory;
     }

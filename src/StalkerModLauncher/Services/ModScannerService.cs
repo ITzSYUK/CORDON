@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 public sealed class DiscoveredMod
@@ -104,7 +106,9 @@ public static class ModScannerService
         var archivePath = FindXRayArchive(directoryPath);
         if (archivePath is not null)
         {
-            detectedBy.Add($"archive: {Path.GetRelativePath(directoryPath, archivePath)}");
+            detectedBy.Add(LocalizedText.Format(
+                Strings.Scan_DetectedArchiveFormat,
+                Path.GetRelativePath(directoryPath, archivePath)));
         }
 
         foreach (var binName in new[] { "bin", "bin_x64" })

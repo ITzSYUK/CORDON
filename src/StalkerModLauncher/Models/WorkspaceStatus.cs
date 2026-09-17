@@ -1,4 +1,5 @@
 using System.Globalization;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Models;
 
@@ -21,53 +22,53 @@ public sealed record WorkspaceStatus(
         new(path, false, 0, 0, 0, 0, 0, 0, null, false, Directory.Exists(path), false, false);
 
     public string WorkspacePathDisplay => string.IsNullOrWhiteSpace(WorkspacePath)
-        ? "Путь будет назначен при первой сборке workspace."
+        ? Strings.Workspace_PathPending
         : WorkspacePath;
     public string CurrentPathDisplay => string.IsNullOrWhiteSpace(WorkspacePath)
-        ? "Папка current будет создана при запуске."
+        ? Strings.Workspace_CurrentPending
         : Path.Combine(WorkspacePath, "current");
     public string UserDataPathDisplay => string.IsNullOrWhiteSpace(WorkspacePath)
-        ? "Папка userdata появится рядом с workspace."
+        ? Strings.Workspace_UserdataPending
         : Path.Combine(WorkspacePath, "userdata");
-    public string LogicalSizeDisplay => StatisticsAvailable ? FormatSize(LogicalSizeBytes) : "после пересборки";
-    public string PhysicalSizeDisplay => StatisticsAvailable ? FormatSize(PhysicalSizeBytes) : "после пересборки";
-    public string FileCountDisplay => StatisticsAvailable ? $"{FileCount:N0}" : "после пересборки";
+    public string LogicalSizeDisplay => StatisticsAvailable ? FormatSize(LogicalSizeBytes) : Strings.Workspace_AfterRebuild;
+    public string PhysicalSizeDisplay => StatisticsAvailable ? FormatSize(PhysicalSizeBytes) : Strings.Workspace_AfterRebuild;
+    public string FileCountDisplay => StatisticsAvailable ? $"{FileCount:N0}" : Strings.Workspace_AfterRebuild;
     public string LinkSummaryDisplay => StatisticsAvailable
-        ? $"Жёсткие ссылки: {HardLinkCount:N0}  ·  Символические ссылки: {SymbolicLinkCount:N0}  ·  Локальные файлы: {LocalFileCount:N0}"
-        : "Подробная статистика появится после следующей пересборки workspace.";
-    public string BuiltAtDisplay => BuiltAtUtc?.ToLocalTime().ToString("g", CultureInfo.CurrentCulture) ?? "не подготовлен";
+        ? LocalizedText.Format(Strings.Workspace_LinkSummaryFormat, HardLinkCount, SymbolicLinkCount, LocalFileCount)
+        : Strings.Workspace_StatsPending;
+    public string BuiltAtDisplay => BuiltAtUtc?.ToLocalTime().ToString("g", CultureInfo.CurrentCulture) ?? Strings.Workspace_NotPrepared;
     public string StateDisplay
     {
         get
         {
             if (string.IsNullOrWhiteSpace(WorkspacePath))
             {
-                return "Рабочая папка ещё не выбрана.";
+                return Strings.Workspace_PathMissing;
             }
 
             if (!RootExists)
             {
-                return "Рабочая папка ещё не создана.";
+                return Strings.Workspace_FolderMissing;
             }
 
             if (!CurrentExists)
             {
-                return "Файлы для запуска ещё не подготовлены.";
+                return Strings.Workspace_FilesMissing;
             }
 
             return ManifestExists
-                ? "Рабочая папка готова."
-                : "Рабочая папка есть, но её лучше пересобрать.";
+                ? Strings.Workspace_Ready
+                : Strings.Workspace_RebuildRecommended;
         }
     }
 
     public string SizeExplanationDisplay => StatisticsAvailable
-        ? "Логический размер показывает, сколько данных видит игра. Реально занимает — примерная нагрузка на диск с учётом ссылок."
-        : "Точная статистика появится после следующей сборки workspace.";
+        ? Strings.Workspace_SizeTooltip
+        : Strings.Workspace_SizePending;
 
     public static string FormatSize(long bytes)
     {
-        string[] units = ["Б", "КБ", "МБ", "ГБ", "ТБ"];
+        string[] units = [Strings.Size_Bytes, Strings.Size_Kilobytes, Strings.Size_Megabytes, Strings.Size_Gigabytes, Strings.Size_Terabytes];
         var value = (double)Math.Max(0, bytes);
         var unit = 0;
         while (value >= 1024 && unit < units.Length - 1)

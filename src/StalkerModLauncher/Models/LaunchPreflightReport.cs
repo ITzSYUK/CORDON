@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Models;
 
 public sealed record LaunchPreflightReport(
@@ -14,7 +16,7 @@ public sealed record LaunchPreflightReport(
         var errors = Checks
             .Where(check => check.Status == ProfileHealthStatus.Error)
             .Select(check => $"• {check.Title}: {check.Details}");
-        return "Профиль не прошёл проверку перед запуском:" +
+        return Strings.Preflight_Failed +
                Environment.NewLine + Environment.NewLine +
                string.Join(Environment.NewLine, errors);
     }

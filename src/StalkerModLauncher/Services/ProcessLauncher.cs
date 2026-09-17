@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -66,7 +67,7 @@ public static class ProcessLauncher
         var process = Process.Start(startInfo);
         if (process is null)
         {
-            throw new InvalidOperationException("Windows did not start the game process.");
+            throw new InvalidOperationException(Strings.Error_WindowsDidNotStartGame);
         }
 
         return process;

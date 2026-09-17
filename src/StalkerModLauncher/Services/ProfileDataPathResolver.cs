@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -17,7 +18,7 @@ public static class ProfileDataPathResolver
                 {
                     automaticFsgameSourcePath = FileLayerPlan.ResolveFsgameSource(profile)?.FullPath
                         ?? throw new FileNotFoundException(
-                            $"Файл из параметра -fsltx не найден во включённых слоях: {relativePath}");
+                LocalizedText.Format(Strings.Ready_FsltxMissingFormat, relativePath));
                 }
             }
             catch (InvalidOperationException ex)
@@ -56,16 +57,16 @@ public static class ProfileDataPathResolver
         {
             if (!FileSystemSafety.IsFileSystemRoot(parent.FullName) &&
                 File.Exists(Path.Combine(parent.FullName, WorkspaceBuilder.RootMarkerFileName)))
-                throw new InvalidDataException($"Общий каталог данных {root} находится в управляемом хранилище профилей: {parent.FullName}.");
+                throw new InvalidDataException(LocalizedText.Format(Strings.ProfileData_ManagedRootFormat, root, parent.FullName));
         }
         if (!string.IsNullOrWhiteSpace(workspace) &&
             (FileSystemSafety.IsDirectoryInside(root, workspace) || FileSystemSafety.IsDirectoryInside(workspace, root)))
         {
-            throw new InvalidDataException("Общие данные игры не должны пересекаться с рабочей папкой профиля.");
+            throw new InvalidDataException(Strings.ProfileData_OverlapsWorkspace);
         }
         if (!string.IsNullOrWhiteSpace(baseGamePath) && FileSystemSafety.IsDirectoryInside(baseGamePath, root))
         {
-            throw new InvalidDataException("Каталог данных не должен совпадать с корнем игры либо содержать его.");
+            throw new InvalidDataException(Strings.ProfileData_OverlapsGameRoot);
         }
         if (profile.Mods
             .Select(mod => mod.SourcePath)
@@ -73,7 +74,7 @@ public static class ProfileDataPathResolver
             .Any(path => FileSystemSafety.IsDirectoryInside(path, root) ||
                          FileSystemSafety.IsDirectoryInside(root, path)))
         {
-            throw new InvalidDataException("Каталог данных не должен пересекаться с исходной папкой мода.");
+            throw new InvalidDataException(Strings.ProfileData_OverlapsMod);
         }
         return root;
     }
@@ -93,7 +94,7 @@ public static class ProfileDataPathResolver
         var configPath = Path.GetFullPath(profile.FsgameSourcePath.Trim());
         _ = ProfileExecutableSourceResolver.TryCreateSelection(profile, configPath, includeWorkspace: false)
             ?? throw new InvalidDataException(
-                "Ручной файл .ltx должен находиться в папке базовой игры или включённого мода.");
+                Strings.Fsgame_ManualOutsideLayers);
         return ProfileAppDataSourceLocator.ResolveConfiguredRootFromFile(configPath, baseGamePath);
     }
 

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -9,13 +10,13 @@ namespace StalkerModLauncher.ViewModels;
 public sealed class ProfileCreationViewModel : ObservableObject
 {
     private int _step = 1;
-    private string _name = "Новый профиль";
+    private string _name = Strings.Creation_DefaultName;
     private bool _isStandalone;
     private string _gamePath = string.Empty;
     private string _executableRelativePath = @"bin\xr_3da.exe";
     private string _executableSourcePath = string.Empty;
     private string _launchArguments = "-nointro";
-    private string _message = "Выберите тип профиля и задайте понятное название.";
+    private string _message = Strings.Creation_Intro;
     private string _executableDetectionMessage = string.Empty;
     private bool _isMessageWarning;
 
@@ -56,9 +57,9 @@ public sealed class ProfileCreationViewModel : ObservableObject
 
     public string StepTitle => Step switch
     {
-        1 => "Тип профиля",
-        2 => IsStandalone ? "Автономная сборка" : "Игра и моды",
-        _ => "Запуск профиля"
+        1 => Strings.Creation_StepType,
+        2 => IsStandalone ? Strings.Profile_Standalone : Strings.Creation_StepSources,
+        _ => Strings.Creation_StepLaunch
     };
 
     public bool IsStepOne => Step == 1;
@@ -121,20 +122,20 @@ public sealed class ProfileCreationViewModel : ObservableObject
     public bool HasNoMods => !HasMods;
 
     public string ModListHint => IsStandalone
-        ? "Выберите корневую директорию с модом или игрой."
-        : "Добавьте папки модов. Моды ниже в списке имеют больший приоритет.";
+        ? Strings.Creation_StandaloneRootHint
+        : Strings.Creation_ModListHint;
 
     public string ProfileTypeDescription => IsStandalone
-        ? "Запуск автономной сборки как есть, без добавления модов."
-        : "Выберите игру или готовую сборку, добавляйте и отключайте моды — исходные папки не изменятся.";
+        ? Strings.Creation_StandaloneDescription
+        : Strings.Creation_RegularDescription;
 
     public string ProfileTypeLabel => IsStandalone
-        ? "Автономная сборка"
-        : "Игра с модами";
+        ? Strings.Profile_Standalone
+        : Strings.Creation_ModdedGame;
 
     public string SourceStepDescription => IsStandalone
-        ? "Выберите корневую директорию с модом или игрой."
-        : "Выберите папку базовой игры и добавьте моды в нужном порядке.";
+        ? Strings.Creation_StandaloneRootHint
+        : Strings.Creation_RegularSourceHint;
 
     public string SourceSummary
     {
@@ -143,12 +144,12 @@ public sealed class ProfileCreationViewModel : ObservableObject
             if (IsStandalone)
             {
                 return string.IsNullOrWhiteSpace(StandalonePath)
-                    ? "Автономная папка ещё не выбрана."
-                    : $"Автономная папка: {StandalonePath}";
+                    ? Strings.Creation_StandaloneNotSelected
+                    : LocalizedText.Format(Strings.Creation_StandaloneSummaryFormat, StandalonePath);
             }
 
-            var game = string.IsNullOrWhiteSpace(GamePath) ? "не выбрана" : GamePath;
-            return $"Базовая игра: {game}. Модов в профиле: {Mods.Count}.";
+            var game = string.IsNullOrWhiteSpace(GamePath) ? Strings.Creation_NotSelected : GamePath;
+            return LocalizedText.Format(Strings.Creation_RegularSummaryFormat, game, Mods.Count);
         }
     }
 
@@ -254,7 +255,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
         Step++;
         SetMessage(Step == 2
             ? SourceStepDescription
-            : "Проверьте, какой EXE будет запускаться. При необходимости выберите другой файл вручную.");
+            : Strings.Creation_ReviewExe);
 
         if (Step == 3)
         {
@@ -266,7 +267,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
     {
         Step--;
         SetMessage(Step == 1
-            ? "Выберите тип профиля и задайте понятное название."
+            ? Strings.Creation_Intro
             : SourceStepDescription);
     }
 
@@ -280,7 +281,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
         var profile = new ModProfile
         {
             Name = Name.Trim(),
-            Description = IsStandalone ? "Автономная сборка" : "Мод поверх базовой игры",
+            Description = IsStandalone ? Strings.Profile_Standalone : Strings.Creation_RegularProfileDescription,
             IsStandalone = IsStandalone,
             LaunchBackendKind = IsStandalone
                 ? LaunchBackendKind.LinkedWorkspace
@@ -309,7 +310,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
     {
         if (Step == 1 && string.IsNullOrWhiteSpace(Name))
         {
-            SetMessage("Введите название профиля.", isWarning: true);
+            SetMessage(Strings.Creation_NameRequired, isWarning: true);
             return false;
         }
 
@@ -317,13 +318,13 @@ public sealed class ProfileCreationViewModel : ObservableObject
         {
             if (!IsStandalone && !Directory.Exists(GamePath))
             {
-                SetMessage("Выберите существующую папку базовой игры.", isWarning: true);
+                SetMessage(Strings.Creation_GameRequired, isWarning: true);
                 return false;
             }
 
             if (IsStandalone && (Mods.Count != 1 || !Directory.Exists(Mods[0].SourcePath)))
             {
-                SetMessage("Для автономного профиля выберите одну папку мода.", isWarning: true);
+                SetMessage(Strings.Creation_StandaloneRequired, isWarning: true);
                 return false;
             }
         }
@@ -332,10 +333,10 @@ public sealed class ProfileCreationViewModel : ObservableObject
         {
             try
             {
-                FileSystemSafety.EnsureRelativePath(ExecutableRelativePath, "Бинарник запуска");
+                FileSystemSafety.EnsureRelativePath(ExecutableRelativePath, Strings.Creation_ExecutableField);
                 if (FindExactExecutableSource(CreateExecutableSearchRoots().ToArray(), ExecutableRelativePath) is null)
                 {
-                    SetMessage("Файл запуска не найден в выбранных папках. Выберите EXE вручную или вернитесь к источникам файлов.", isWarning: true);
+                    SetMessage(Strings.Creation_ExecutableMissing, isWarning: true);
                     return false;
                 }
             }
@@ -351,7 +352,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
 
     private void BrowseGame()
     {
-        var selected = DialogService.PickFolder("Выберите папку базовой игры", GamePath);
+        var selected = DialogService.PickFolder(Strings.Common_ChooseBaseGame, GamePath);
         if (selected is not null)
         {
             GamePath = selected;
@@ -361,7 +362,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
 
     private void BrowseStandalone()
     {
-        var selected = DialogService.PickFolder("Выберите папку автономной игры или мода", StandalonePath);
+        var selected = DialogService.PickFolder(Strings.Creation_PickStandalone, StandalonePath);
         if (selected is null)
         {
             return;
@@ -373,7 +374,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
 
     private void AddMod()
     {
-        var selected = DialogService.PickFolder(IsStandalone ? "Выберите папку автономной сборки" : "Выберите папку мода");
+        var selected = DialogService.PickFolder(IsStandalone ? Strings.Creation_StandalonePrompt : Strings.Creation_PickMod);
         if (selected is null)
         {
             return;
@@ -429,7 +430,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
             initial = GamePath;
         }
 
-        var selected = DialogService.PickExecutable("Выберите запускаемый файл", initial);
+        var selected = DialogService.PickExecutable(Strings.Creation_PickExecutable, initial);
         if (selected is null)
         {
             return;
@@ -445,7 +446,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
             }
         }
 
-        SetMessage("Выбранный бинарник должен находиться внутри папки игры или одного из модов.", isWarning: true);
+        SetMessage(Strings.Creation_ExecutableOutside, isWarning: true);
     }
 
     private void AutoDetectExecutable()
@@ -456,20 +457,20 @@ public sealed class ProfileCreationViewModel : ObservableObject
             currentExact is not null)
         {
             ExecutableDetectionMessage =
-                $"Используется выбранный путь: {ExecutableRelativePath}. Источник: {currentExact.Value.SourceName}.";
+                LocalizedText.Format(Strings.Creation_UsingPathFormat, ExecutableRelativePath, currentExact.Value.SourceName);
             return;
         }
 
         var detected = LaunchExecutableDetector.DetectBest(roots, requestedRelativePath: null);
         if (detected is null)
         {
-            ExecutableDetectionMessage = "EXE не найден автоматически. Выберите запускаемый файл вручную.";
+            ExecutableDetectionMessage = Strings.Creation_ExecutableNotDetected;
             return;
         }
 
         ExecutableRelativePath = detected.RelativePath;
         _executableSourcePath = string.Empty;
-        ExecutableDetectionMessage = $"Автоматически выбран: {detected.Summary}";
+        ExecutableDetectionMessage = LocalizedText.Format(Strings.Creation_AutoSelectedFormat, detected.Summary);
     }
 
     private void SetExecutableSelection(string relativePath, string sourceRootPath, string sourceName)
@@ -478,22 +479,22 @@ public sealed class ProfileCreationViewModel : ObservableObject
         _executableSourcePath = IsStandalone ? string.Empty : Path.GetFullPath(sourceRootPath);
         OnPropertyChanged(nameof(ExecutableRelativePath));
         ExecutableDetectionMessage = IsStandalone
-            ? $"Выбран вручную: {relativePath}."
-            : $"Выбран вручную: {relativePath}. Источник: {sourceName}.";
+            ? LocalizedText.Format(Strings.Creation_ManualSelectedFormat, relativePath)
+            : LocalizedText.Format(Strings.Creation_ManualSelectedSourceFormat, relativePath, sourceName);
     }
 
     private IEnumerable<LaunchExecutableSearchRoot> CreateExecutableSearchRoots()
     {
         if (!IsStandalone && Directory.Exists(GamePath))
         {
-            yield return new LaunchExecutableSearchRoot(GamePath, "базовая игра", 0, IsBaseGameRoot: true);
+            yield return new LaunchExecutableSearchRoot(GamePath, Strings.Creation_BaseGameSource, 0, IsBaseGameRoot: true);
         }
 
         foreach (var mod in Mods.OrderBy(mod => mod.Order).Where(mod => Directory.Exists(mod.SourcePath)))
         {
             yield return new LaunchExecutableSearchRoot(
                 mod.SourcePath,
-                $"мод: {mod.Name}",
+                LocalizedText.Format(Strings.Creation_ModSourceFormat, mod.Name),
                 mod.Order,
                 IsBaseGameRoot: IsStandalone);
         }
@@ -505,7 +506,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
     {
         try
         {
-            FileSystemSafety.EnsureRelativePath(relativePath, "Бинарник запуска");
+            FileSystemSafety.EnsureRelativePath(relativePath, Strings.Creation_ExecutableField);
         }
         catch
         {

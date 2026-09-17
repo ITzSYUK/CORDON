@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -108,19 +109,19 @@ public sealed partial class MainViewModel
         var details = new List<string> { mod.ConflictDisplay };
         if (state is { OverwrittenModNames.Count: > 0 })
         {
-            details.Add($"Заменяет файлы модов: {string.Join(", ", state.OverwrittenModNames)}.");
-            details.Add($"Конфигурации и скрипты: {state.OverwrittenConfigurationCount:N0}; бинарные файлы: {state.OverwrittenBinaryCount:N0}.");
+            details.Add(LocalizedText.Format(Strings.ModAnalysis_OverwritesFormat, string.Join(", ", state.OverwrittenModNames)));
+            details.Add(LocalizedText.Format(Strings.ModAnalysis_OverwriteCountsFormat, state.OverwrittenConfigurationCount, state.OverwrittenBinaryCount));
         }
 
         if (state is { OverwrittenByModNames.Count: > 0 })
         {
-            details.Add($"Его файлы заменяются модами: {string.Join(", ", state.OverwrittenByModNames)}.");
-            details.Add($"Проигрывающие конфигурации и скрипты: {state.OverwrittenByConfigurationCount:N0}; бинарные файлы: {state.OverwrittenByBinaryCount:N0}.");
+            details.Add(LocalizedText.Format(Strings.ModAnalysis_OverwrittenByFormat, string.Join(", ", state.OverwrittenByModNames)));
+            details.Add(LocalizedText.Format(Strings.ModAnalysis_OverwrittenCountsFormat, state.OverwrittenByConfigurationCount, state.OverwrittenByBinaryCount));
         }
 
         if (state?.ProvidesLaunchExecutable == true)
         {
-            details.Add($"Итоговый запускаемый файл: {executableRelativePath}");
+            details.Add(LocalizedText.Format(Strings.ModAnalysis_FinalExecutableFormat, executableRelativePath));
         }
 
         mod.OverlayDetails = string.Join(Environment.NewLine, details);

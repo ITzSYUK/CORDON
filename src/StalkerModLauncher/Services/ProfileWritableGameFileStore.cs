@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 internal static class ProfileWritableGameFileStore
@@ -47,13 +49,13 @@ internal static class ProfileWritableGameFileStore
 
         if (captured > 0)
         {
-            progress?.Report($"Сохранены профильные игровые настройки из workspace: {captured:N0}.");
+            progress?.Report(LocalizedText.Format(Strings.Writable_CapturedFormat, captured));
         }
 
         if (skippedAsStale > 0)
         {
             progress?.Report(
-                $"Сохранена более свежая профильная версия; устаревшие файлы current пропущены: {skippedAsStale:N0}.");
+                LocalizedText.Format(Strings.Writable_StaleSkippedFormat, skippedAsStale));
         }
     }
 
@@ -107,12 +109,12 @@ internal static class ProfileWritableGameFileStore
 
         if (seeded > 0)
         {
-            progress?.Report($"Подготовлены профильные изменяемые файлы для USVFS: {seeded:N0}.");
+            progress?.Report(LocalizedText.Format(Strings.Writable_UsvfsPreparedFormat, seeded));
         }
 
         if (migrated > 0)
         {
-            progress?.Report($"Перенесены изменяемые файлы из USVFS overwrite в профильное хранилище: {migrated:N0}.");
+            progress?.Report(LocalizedText.Format(Strings.Writable_UsvfsMigratedFormat, migrated));
         }
     }
 
@@ -142,7 +144,7 @@ internal static class ProfileWritableGameFileStore
 
         if (restored > 0)
         {
-            progress?.Report($"Профильные игровые настройки подготовлены к запуску: {restored:N0}.");
+            progress?.Report(LocalizedText.Format(Strings.Writable_LaunchPreparedFormat, restored));
         }
     }
 
@@ -174,13 +176,13 @@ internal static class ProfileWritableGameFileStore
 
         if (restored > 0)
         {
-            progress?.Report($"Восстановлены профильные игровые настройки в workspace: {restored:N0}.");
+            progress?.Report(LocalizedText.Format(Strings.Writable_WorkspaceRestoredFormat, restored));
         }
     }
 
     private static string GetStoredFilePath(string profileWorkspace, string relativePath)
     {
-        FileSystemSafety.EnsureRelativePath(relativePath, "Profile writable game file");
+        FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_ProfileWritableFile);
         return Path.Combine(profileWorkspace, "userdata", StoreDirectoryName, relativePath);
     }
 
@@ -193,7 +195,7 @@ internal static class ProfileWritableGameFileStore
         }
 
         File.Delete(legacyPath);
-        progress?.Report("Удалён устаревший профильный fsgame.ltx. Лаунчер пересоздаёт этот файл из текущих слоёв профиля.");
+        progress?.Report(Strings.Writable_ObsoleteFsgameRemoved);
     }
 
     private static void CopyThroughTemporaryFile(string sourceFile, string destinationFile)

@@ -1,0 +1,1074 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_Open" xml:space="preserve"><value>Open</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Settings_AutoCheckUpdates" xml:space="preserve"><value>Automatically check for updates at startup</value></data>
+  <data name="Settings_CheckUpdates" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="Settings_ClassicUi" xml:space="preserve"><value>Classic UI</value></data>
+  <data name="Settings_DownloadAndInstall" xml:space="preserve"><value>Download and install</value></data>
+  <data name="Settings_InterfaceHeading" xml:space="preserve"><value>INTERFACE</value></data>
+  <data name="Settings_LanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="Settings_LanguageLabel" xml:space="preserve"><value>Interface language</value></data>
+  <data name="Settings_LanguageRestartMessage" xml:space="preserve"><value>Language setting saved. Restart the launcher to apply it.</value></data>
+  <data name="Settings_LanguageRestartTitle" xml:space="preserve"><value>Restart required</value></data>
+  <data name="Settings_LanguageRussian" xml:space="preserve"><value>Russian</value></data>
+  <data name="Settings_LanguageSystem" xml:space="preserve"><value>System</value></data>
+  <data name="Settings_LogDescriptionDetailed" xml:space="preserve"><value>Standard entries and technical launch, Workspace, and USVFS diagnostics.</value></data>
+  <data name="Settings_LogDescriptionErrors" xml:space="preserve"><value>Launch errors and launcher failures.</value></data>
+  <data name="Settings_LogDescriptionStandard" xml:space="preserve"><value>Errors and main launcher actions.</value></data>
+  <data name="Settings_LoggingHeading" xml:space="preserve"><value>LOGGING</value></data>
+  <data name="Settings_LogLevelDetailed" xml:space="preserve"><value>Detailed</value></data>
+  <data name="Settings_LogLevelErrors" xml:space="preserve"><value>Errors only</value></data>
+  <data name="Settings_LogLevelLabel" xml:space="preserve"><value>launcher.log detail level</value></data>
+  <data name="Settings_LogLevelStandard" xml:space="preserve"><value>Standard</value></data>
+  <data name="Settings_MinimizeToTray" xml:space="preserve"><value>Minimize to tray instead of closing</value></data>
+  <data name="Settings_MinimalVersion" xml:space="preserve"><value>Regular version</value></data>
+  <data name="Settings_OpenLauncherFolder" xml:space="preserve"><value>Open launcher folder</value></data>
+  <data name="Settings_OpenRelease" xml:space="preserve"><value>Open release</value></data>
+  <data name="Settings_PdaUi" xml:space="preserve"><value>PDA UI</value></data>
+  <data name="Settings_PdaUi2" xml:space="preserve"><value>PDA UI 2</value></data>
+  <data name="Settings_Reset" xml:space="preserve"><value>Reset settings</value></data>
+  <data name="Settings_ShowTrayIcon" xml:space="preserve"><value>Show tray icon</value></data>
+  <data name="Settings_ShowUpdateNotifications" xml:space="preserve"><value>Show a system notification when an update is available</value></data>
+  <data name="Settings_StandaloneVersion" xml:space="preserve"><value>Standalone version</value></data>
+  <data name="Settings_StartMinimized" xml:space="preserve"><value>Open in the tray when started with Windows</value></data>
+  <data name="Settings_StartWithWindows" xml:space="preserve"><value>Start with Windows</value></data>
+  <data name="Settings_StorageLabel" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings_UpdateHeading" xml:space="preserve"><value>UPDATE</value></data>
+  <data name="About_AnswerDeleteProfile" xml:space="preserve"><value>For a regular profile, only the profile entry and its workspace with profile settings, logs, and saves are deleted. Game and mod folders are not affected. A standalone profile's build folder also remains in place.</value></data>
+  <data name="About_AnswerModOrder" xml:space="preserve"><value>Mods lower in the list have higher priority and can replace files from mods above them. This is the normal way to install a patch over a main mod. Change the order by dragging or with the buttons in the mod row. On the next launch, Workspace rebuilds the environment, while USVFS creates a virtual overlay in the new order.</value></data>
+  <data name="About_AnswerRemoveMod" xml:space="preserve"><value>Yes. Remove only excludes the mod from this profile. The original mod folder remains untouched on disk.</value></data>
+  <data name="About_AnswerSavesAndLogs" xml:space="preserve"><value>For a regular profile they are stored in workspace\userdata, so saves from different profiles do not mix. For a standalone build, its fsgame.ltx determines the location: the launcher finds common folders but cannot guarantee separate saves for each such build. The Status button shows the detected saves and latest log.</value></data>
+  <data name="About_AnswerStartFailure" xml:space="preserve"><value>Open Status to see path checks, the selected EXE, latest log, and crash dump. First make sure every folder exists and that the EXE belongs to the game or an enabled mod. For the original Shadow of Chernobyl this is usually bin\XR_3DA.exe; for OGSR builds it is often bin_x64\xrEngine.exe.</value></data>
+  <data name="About_AnswerWorkspaceSize" xml:space="preserve"><value>File Explorer counts files linked into the workspace as if each one were a separate copy there. In reality, a hard link does not duplicate data on disk. The Status window shows both the size visible to the game and the approximate occupied space.</value></data>
+  <data name="About_BrowserBody" xml:space="preserve"><value>The Mod Browser button opens the AP-PRO catalog for Shadow of Chernobyl, Clear Sky, and Call of Pripyat. Selecting a card opens the mod's source page in your browser. The launcher does not download or install mods from this catalog.</value></data>
+  <data name="About_BrowserHeading" xml:space="preserve"><value>Mod browser</value></data>
+  <data name="About_CreateBody" xml:space="preserve"><value>Select Create, enter a name, and choose the profile type. For a profile based on a game, select its folder and add mods in priority order. For a ready-made separate build, select Standalone build and choose its root folder. The wizard tries to find a suitable EXE; you can select it manually in Settings if necessary.</value></data>
+  <data name="About_CreateHeading" xml:space="preserve"><value>Creating a profile</value></data>
+  <data name="About_DisclaimerBody" xml:space="preserve"><value>This is an unofficial fan-made tool. It is not affiliated with or endorsed by GSC Game World. S.T.A.L.K.E.R. and related trademarks belong to their respective owners.</value></data>
+  <data name="About_DisclaimerHeading" xml:space="preserve"><value>Unofficial project</value></data>
+  <data name="About_DontShowAtStartup" xml:space="preserve"><value>Do not show at startup</value></data>
+  <data name="About_FaqHeading" xml:space="preserve"><value>Frequently asked questions</value></data>
+  <data name="About_LaunchModesBody" xml:space="preserve"><value>Workspace prepares the environment in advance using file-system links. USVFS overlays the same layers virtually using Mod Organizer 2 technology and uses almost no space for game files. USVFS compatibility depends on the game and launch method; select Workspace in profile settings if you encounter problems.</value></data>
+  <data name="About_LaunchModesHeading" xml:space="preserve"><value>Launch modes</value></data>
+  <data name="About_Mo2Body" xml:space="preserve"><value>The MO2 button transfers an existing game profile: mod order and enabled state, as well as detected base-game and overwrite folders. The source Mod Organizer 2, game, and mod directories are not changed.</value></data>
+  <data name="About_Mo2Heading" xml:space="preserve"><value>Importing from Mod Organizer 2</value></data>
+  <data name="About_ProfileBody" xml:space="preserve"><value>A profile is a saved configuration of one game setup: the base game, enabled mods, their order, launch arguments, and selected EXE. You can create multiple profiles for one game and switch between them without changing the original game and mod folders.</value></data>
+  <data name="About_ProfileHeading" xml:space="preserve"><value>What is a profile?</value></data>
+  <data name="About_QuestionDeleteProfile" xml:space="preserve"><value>What does Delete profile do?</value></data>
+  <data name="About_QuestionModOrder" xml:space="preserve"><value>How does mod order work?</value></data>
+  <data name="About_QuestionRemoveMod" xml:space="preserve"><value>Can I remove a mod without deleting its files?</value></data>
+  <data name="About_QuestionSavesAndLogs" xml:space="preserve"><value>Where are saves and logs stored?</value></data>
+  <data name="About_QuestionStartFailure" xml:space="preserve"><value>If the game does not start</value></data>
+  <data name="About_QuestionWorkspaceSize" xml:space="preserve"><value>Why can a workspace appear large?</value></data>
+  <data name="About_RegularStandaloneBody" xml:space="preserve"><value>A regular profile adds mods on top of a base game and creates a separate environment for launching it. A standalone profile is for a ready-made build with its own engine and runs from its own folder; it does not require a base game.</value></data>
+  <data name="About_RegularStandaloneHeading" xml:space="preserve"><value>Regular and standalone profiles</value></data>
+  <data name="About_Title" xml:space="preserve"><value>About</value></data>
+  <data name="About_WorkspaceBody" xml:space="preserve"><value>Workspace is a separate folder where the launcher combines the game and enabled mods for a regular profile. Large source files are connected with links, so the entire game is not copied for every profile. All changes, profile settings, logs, and saves stay inside this environment; the original game is not modified.</value></data>
+  <data name="About_WorkspaceHeading" xml:space="preserve"><value>Working environment (workspace)</value></data>
+  <data name="Common_Arguments" xml:space="preserve"><value>Arguments</value></data>
+  <data name="Common_BaseGame" xml:space="preserve"><value>Base game</value></data>
+  <data name="Common_Binary" xml:space="preserve"><value>Executable</value></data>
+  <data name="Common_ChooseBaseGame" xml:space="preserve"><value>Select base game</value></data>
+  <data name="Common_ModCount" xml:space="preserve"><value>Mods</value></data>
+  <data name="Common_PlayTime" xml:space="preserve"><value>Play time</value></data>
+  <data name="Common_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Common_MoveUp" xml:space="preserve"><value>Up</value></data>
+  <data name="Common_MoveDown" xml:space="preserve"><value>Down</value></data>
+  <data name="Mod_AddFolderTooltip" xml:space="preserve"><value>Add mod folder</value></data>
+  <data name="Mod_InstallArchiveTooltip" xml:space="preserve"><value>Install a mod from ZIP, 7Z, or RAR</value></data>
+  <data name="Mod_OverwriteWarning" xml:space="preserve"><value>Overrides files from mods above it; conflicts may occur.</value></data>
+  <data name="Mod_ScanFolderTooltip" xml:space="preserve"><value>Find mods in the selected folder</value></data>
+  <data name="Profile_CloneTooltip" xml:space="preserve"><value>Duplicate profile</value></data>
+  <data name="Profile_DeleteTooltip" xml:space="preserve"><value>Delete profile</value></data>
+  <data name="Profile_ExportTooltip" xml:space="preserve"><value>Export profile</value></data>
+  <data name="Profile_ModCount" xml:space="preserve"><value>Mods in profile</value></data>
+  <data name="Common_Action" xml:space="preserve"><value>Action</value></data>
+  <data name="Common_File" xml:space="preserve"><value>File</value></data>
+  <data name="Common_Mod" xml:space="preserve"><value>Mod</value></data>
+  <data name="Common_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Common_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Conflict_FinalTree" xml:space="preserve"><value>Final tree</value></data>
+  <data name="Conflict_Heading" xml:space="preserve"><value>CONFLICTS AND FINAL FILES</value></data>
+  <data name="Conflict_Loses" xml:space="preserve"><value>Loses</value></data>
+  <data name="Conflict_ModConflicts" xml:space="preserve"><value>Mod conflicts</value></data>
+  <data name="Conflict_OtherWinningMods" xml:space="preserve"><value>Winning mods</value></data>
+  <data name="Conflict_OtherReplacedMods" xml:space="preserve"><value>Replaced mods</value></data>
+  <data name="Conflict_ProviderChain" xml:space="preserve"><value>Override chain</value></data>
+  <data name="Conflict_ProviderChainTooltip" xml:space="preserve"><value>Sources are listed from left to right. The last source has the highest priority, and its file is used at launch.</value></data>
+  <data name="Conflict_RelativePath" xml:space="preserve"><value>Relative path</value></data>
+  <data name="Conflict_SearchTooltip" xml:space="preserve"><value>Search by file path or source</value></data>
+  <data name="Conflict_Title" xml:space="preserve"><value>Conflicts and final files</value></data>
+  <data name="Conflict_Unique" xml:space="preserve"><value>Unique</value></data>
+  <data name="Conflict_Wins" xml:space="preserve"><value>Wins</value></data>
+  <data name="Common_Folder" xml:space="preserve"><value>Folder</value></data>
+  <data name="Mod_ArchiveConflictHeading" xml:space="preserve"><value>MOD FOLDER ALREADY EXISTS</value></data>
+  <data name="Mod_Conflicts" xml:space="preserve"><value>Conflicts</value></data>
+  <data name="Mod_DragTooltip" xml:space="preserve"><value>Drag mods between rows; lower entries have higher priority</value></data>
+  <data name="Mod_Enabled" xml:space="preserve"><value>On</value></data>
+  <data name="Mod_GroupFormat" xml:space="preserve"><value>Group: {0}</value></data>
+  <data name="Mod_Heading" xml:space="preserve"><value>Mods</value></data>
+  <data name="Mod_InstallInNewFolder" xml:space="preserve"><value>Install in a new folder</value></data>
+  <data name="Mod_InstalledHeading" xml:space="preserve"><value>MOD INSTALLED</value></data>
+  <data name="Mod_PriorityHint" xml:space="preserve"><value>Mods lower in the list override mods above them</value></data>
+  <data name="Mod_SearchWatermark" xml:space="preserve"><value>Search by name, group, or folder</value></data>
+  <data name="Mod_SelectedDetailsTooltip" xml:space="preserve"><value>Selected mod details</value></data>
+  <data name="Profile_Standalone" xml:space="preserve"><value>Standalone build</value></data>
+  <data name="Profile_StandaloneTooltip" xml:space="preserve"><value>A standalone build has its own engine and all game files and runs from its own folder</value></data>
+  <data name="Common_Profile" xml:space="preserve"><value>Profile</value></data>
+  <data name="Health_ClearCache" xml:space="preserve"><value>Clear cache</value></data>
+  <data name="Health_CopyReport" xml:space="preserve"><value>Copy report</value></data>
+  <data name="Health_LatestLog" xml:space="preserve"><value>Latest log</value></data>
+  <data name="Health_MoveWorkspace" xml:space="preserve"><value>Move...</value></data>
+  <data name="Health_RebuildWorkspace" xml:space="preserve"><value>Rebuild</value></data>
+  <data name="Health_Saves" xml:space="preserve"><value>Saves</value></data>
+  <data name="Health_Title" xml:space="preserve"><value>Profile status</value></data>
+  <data name="Health_WarningHint" xml:space="preserve"><value>Errors prevent launch. Warnings show what you should check.</value></data>
+  <data name="Scan_AddSelected" xml:space="preserve"><value>Add selected</value></data>
+  <data name="Scan_Detected" xml:space="preserve"><value>Detected by</value></data>
+  <data name="Scan_Heading" xml:space="preserve"><value>SELECT MODS TO ADD</value></data>
+  <data name="Scan_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Scan_Path" xml:space="preserve"><value>Path</value></data>
+  <data name="Scan_Prompt" xml:space="preserve"><value>Select mods to add:</value></data>
+  <data name="Scan_Title" xml:space="preserve"><value>Detected mods</value></data>
+  <data name="Screenshots_Copy" xml:space="preserve"><value>Copy to clipboard</value></data>
+  <data name="Screenshots_CopyTooltip" xml:space="preserve"><value>Double-click to copy the screenshot to the clipboard</value></data>
+  <data name="Screenshots_FullscreenHint" xml:space="preserve"><value>Esc — close   •   Mouse wheel or arrow keys — next screenshot</value></data>
+  <data name="Screenshots_Loading" xml:space="preserve"><value>Searching for screenshots...</value></data>
+  <data name="Screenshots_None" xml:space="preserve"><value>No screenshots found.</value></data>
+  <data name="Screenshots_OpenFullscreen" xml:space="preserve"><value>Open full screen</value></data>
+  <data name="Screenshots_Title" xml:space="preserve"><value>Screenshots</value></data>
+  <data name="Screenshots_ViewTitle" xml:space="preserve"><value>Screenshot viewer</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Common_Browse" xml:space="preserve"><value>Browse...</value></data>
+  <data name="Common_Change" xml:space="preserve"><value>Change</value></data>
+  <data name="Common_Create" xml:space="preserve"><value>Create</value></data>
+  <data name="Common_Default" xml:space="preserve"><value>Default</value></data>
+  <data name="Common_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Common_Done" xml:space="preserve"><value>Done</value></data>
+  <data name="Common_Launch" xml:space="preserve"><value>Launch</value></data>
+  <data name="Common_Next" xml:space="preserve"><value>Next</value></data>
+  <data name="Common_ProfileFolder" xml:space="preserve"><value>Profile folder</value></data>
+  <data name="Common_Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Main_About" xml:space="preserve"><value>About</value></data>
+  <data name="Main_Catalog" xml:space="preserve"><value>Catalog</value></data>
+  <data name="Main_CreateFirstProfile" xml:space="preserve"><value>Create first profile</value></data>
+  <data name="Main_EmptyProfileHint" xml:space="preserve"><value>Create a profile, add a game, and connect the mods you need.</value></data>
+  <data name="Main_ImportExistingSettings" xml:space="preserve"><value>Import existing settings</value></data>
+  <data name="Main_ImportSettingsHint" xml:space="preserve"><value>Load an existing settings.json file</value></data>
+  <data name="Main_Log" xml:space="preserve"><value>Log</value></data>
+  <data name="Main_NoProfiles" xml:space="preserve"><value>No profiles yet</value></data>
+  <data name="Profile_ActionsTooltip" xml:space="preserve"><value>Show or hide profile actions</value></data>
+  <data name="Profile_CreateTooltip" xml:space="preserve"><value>Create profile</value></data>
+  <data name="Profile_ImportTooltip" xml:space="preserve"><value>Import profile</value></data>
+  <data name="Profile_Mo2ImportTooltip" xml:space="preserve"><value>Transfer a setup from Mod Organizer 2</value></data>
+  <data name="Profile_Running" xml:space="preserve"><value>Running</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Main_ExitTooltip" xml:space="preserve"><value>Exit launcher</value></data>
+  <data name="Main_MinimizeToTrayTooltip" xml:space="preserve"><value>Minimize launcher to tray</value></data>
+  <data name="Main_OpenLauncher" xml:space="preserve"><value>Open launcher</value></data>
+  <data name="Main_ProfileList" xml:space="preserve"><value>Profile list</value></data>
+  <data name="Profile_EmptyFirstHint" xml:space="preserve"><value>Create your first profile to add a game and mods.</value></data>
+  <data name="Profile_ModBrowser" xml:space="preserve"><value>Mod browser</value></data>
+  <data name="Profile_NoneSelected" xml:space="preserve"><value>No profile selected</value></data>
+  <data name="Profile_Profiles" xml:space="preserve"><value>Profiles</value></data>
+  <data name="Profile_RegularTooltip" xml:space="preserve"><value>Base game + mods</value></data>
+  <data name="Profile_ReorderTooltip" xml:space="preserve"><value>Drag profiles to change their order</value></data>
+  <data name="Creation_AddMod" xml:space="preserve"><value>Add mod</value></data>
+  <data name="Creation_BaseGameFolder" xml:space="preserve"><value>Base game folder</value></data>
+  <data name="Creation_EmptyModsHint" xml:space="preserve"><value>Drag mod folders here or click “Add mod”.</value></data>
+  <data name="Creation_Executable" xml:space="preserve"><value>Executable</value></data>
+  <data name="Creation_LaunchArguments" xml:space="preserve"><value>Launch arguments</value></data>
+  <data name="Creation_LaunchValidationHint" xml:space="preserve"><value>Before launch, the launcher checks the final executable, file sources, and workspace again.</value></data>
+  <data name="Creation_ModdedGame" xml:space="preserve"><value>Game with mods</value></data>
+  <data name="Creation_PriorityHint" xml:space="preserve"><value>Lower entries have higher priority</value></data>
+  <data name="Creation_ProfileName" xml:space="preserve"><value>Profile name</value></data>
+  <data name="Creation_SelectFolder" xml:space="preserve"><value>Select folder</value></data>
+  <data name="Creation_StandalonePrompt" xml:space="preserve"><value>Select or drag the root folder of the mod or game</value></data>
+  <data name="Creation_Title" xml:space="preserve"><value>Create profile</value></data>
+  <data name="SettingsProfile_AnomalyEngine" xml:space="preserve"><value>Anomaly engine</value></data>
+  <data name="SettingsProfile_AutoSelect" xml:space="preserve"><value>Select automatically</value></data>
+  <data name="SettingsProfile_AutoSelectExeTooltip" xml:space="preserve"><value>Clear the manual EXE source. The launcher will use the executable from the highest-priority enabled mod.</value></data>
+  <data name="SettingsProfile_CopyMissingData" xml:space="preserve"><value>Copy missing data to the selected folder</value></data>
+  <data name="SettingsProfile_Discord" xml:space="preserve"><value>Show profile status in Discord</value></data>
+  <data name="SettingsProfile_DiscordTooltip" xml:space="preserve"><value>Status is shown only while this profile is running. Disable it if the mod already provides its own Discord Rich Presence.</value></data>
+  <data name="SettingsProfile_ExePathHint" xml:space="preserve"><value>Path to the .exe relative to the game or mod folder</value></data>
+  <data name="SettingsProfile_Executable" xml:space="preserve"><value>Executable (.exe)</value></data>
+  <data name="SettingsProfile_FsgameSource" xml:space="preserve"><value>fsgame.ltx source</value></data>
+  <data name="SettingsProfile_InstalledModsFolder" xml:space="preserve"><value>Installed mods folder</value></data>
+  <data name="SettingsProfile_Launcher" xml:space="preserve"><value>Launcher</value></data>
+  <data name="SettingsProfile_LaunchMode" xml:space="preserve"><value>Launch system</value></data>
+  <data name="SettingsProfile_LauncherHint" xml:space="preserve"><value>The launcher starts AnomalyLauncher.exe. Manual selection starts the selected engine directly and preserves mod priority.</value></data>
+  <data name="SettingsProfile_ModFolderTooltip" xml:space="preserve"><value>Archives are extracted here, separately from the workspace.</value></data>
+  <data name="SettingsProfile_Mo2Apply" xml:space="preserve"><value>Apply mod order from an MO2 profile...</value></data>
+  <data name="SettingsProfile_Mo2ApplyTooltip" xml:space="preserve"><value>Select modlist.txt from an MO2 profile. The launcher applies order and enabled state only to mods already added; no new mods or folders are imported.</value></data>
+  <data name="SettingsProfile_Mo2Order" xml:space="preserve"><value>MO2 mod order</value></data>
+  <data name="SettingsProfile_Mo2Overwrite" xml:space="preserve"><value>Additional MO2 overwrite layer</value></data>
+  <data name="SettingsProfile_SelectFile" xml:space="preserve"><value>Select file...</value></data>
+  <data name="SettingsProfile_StandaloneHint" xml:space="preserve"><value> — the mod has its own engine and all game files and runs from its own folder</value></data>
+  <data name="SettingsProfile_Title" xml:space="preserve"><value>Profile settings</value></data>
+  <data name="SettingsProfile_UserData" xml:space="preserve"><value>User data</value></data>
+  <data name="SettingsProfile_UserDataGame" xml:space="preserve"><value>In the base game's data folder</value></data>
+  <data name="SettingsProfile_UserDataProfile" xml:space="preserve"><value>In the profile folder</value></data>
+  <data name="Common_Disable" xml:space="preserve"><value>Disable</value></data>
+  <data name="Mo2_CreateProfile" xml:space="preserve"><value>Create profile</value></data>
+  <data name="Mo2_DetectedPaths" xml:space="preserve"><value>Detected paths</value></data>
+  <data name="Mo2_EnableOverwrite" xml:space="preserve"><value>Add files from MO2 overwrite as a separate highest-priority layer</value></data>
+  <data name="Mo2_Enabled" xml:space="preserve"><value>On</value></data>
+  <data name="Mo2_Group" xml:space="preserve"><value>MO2 group</value></data>
+  <data name="Mo2_ModListFile" xml:space="preserve"><value>modlist.txt file</value></data>
+  <data name="Mo2_ModsFolder" xml:space="preserve"><value>mods folder</value></data>
+  <data name="Mo2_NewProfile" xml:space="preserve"><value>New profile</value></data>
+  <data name="Mo2_Or" xml:space="preserve"><value>or</value></data>
+  <data name="Mo2_OverwriteFolder" xml:space="preserve"><value>overwrite folder</value></data>
+  <data name="Mo2_Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="Mo2_Profile" xml:space="preserve"><value>MO2 profile</value></data>
+  <data name="Mo2_ReadOnlyHint" xml:space="preserve"><value>The launcher does not modify the source game, mods, or overwrite folders.</value></data>
+  <data name="Mo2_SelectMatchingFolder" xml:space="preserve"><value>Select the folder corresponding to this mod</value></data>
+  <data name="Mo2_Source" xml:space="preserve"><value>MO2 source</value></data>
+  <data name="Mo2_SourceFolder" xml:space="preserve"><value>MO2 folder</value></data>
+  <data name="Mo2_Title" xml:space="preserve"><value>Transfer setup from Mod Organizer 2</value></data>
+  <data name="Catalog_CallOfPripyat" xml:space="preserve"><value>Call of Pripyat</value></data>
+  <data name="Catalog_ClearSky" xml:space="preserve"><value>Clear Sky</value></data>
+  <data name="Catalog_Credits" xml:space="preserve"><value>Mods displayed on this page belong to their authors. Information is provided using materials from </value></data>
+  <data name="Catalog_Loading" xml:space="preserve"><value>Loading catalog...</value></data>
+  <data name="Catalog_LoadingMore" xml:space="preserve"><value>Loading more mods...</value></data>
+  <data name="Catalog_OpenSite" xml:space="preserve"><value>Open AP-PRO.RU</value></data>
+  <data name="Catalog_RefreshTooltip" xml:space="preserve"><value>Refresh mod list</value></data>
+  <data name="Catalog_Search" xml:space="preserve"><value>Search by name</value></data>
+  <data name="Catalog_ShadowOfChernobyl" xml:space="preserve"><value>Shadow of Chernobyl</value></data>
+  <data name="Catalog_Title" xml:space="preserve"><value>Mod browser</value></data>
+  <data name="Catalog_ThumbnailDescription" xml:space="preserve"><value>AP-PRO thumbnail</value></data>
+  <data name="Catalog_PageDescription" xml:space="preserve"><value>AP-PRO catalog page</value></data>
+  <data name="Catalog_ContentTooLargeFormat" xml:space="preserve"><value>{0} is larger than the allowed {1:N0} bytes.</value></data>
+  <data name="Settings_Title" xml:space="preserve"><value>Launcher settings</value></data>
+  <data name="SettingsProfile_ArgumentsExample" xml:space="preserve"><value>Example: -nointro -nosound</value></data>
+  <data name="Common_Unknown" xml:space="preserve"><value>unknown</value></data>
+  <data name="About_VersionFormat" xml:space="preserve"><value>Version {0}</value></data>
+  <data name="Log_Hide" xml:space="preserve"><value>Hide log</value></data>
+  <data name="Log_Show" xml:space="preserve"><value>Show log</value></data>
+  <data name="Log_Title" xml:space="preserve"><value>Launcher log</value></data>
+  <data name="Conflict_Details" xml:space="preserve"><value>Conflict details</value></data>
+  <data name="Common_MoveFirst" xml:space="preserve"><value>Move to top</value></data>
+  <data name="Common_MoveLast" xml:space="preserve"><value>Move to bottom</value></data>
+  <data name="Pda_ConflictTitle" xml:space="preserve"><value>Conflicts and files</value></data>
+  <data name="Pda_ProfileSettingsFormat" xml:space="preserve"><value>Settings: {0}</value></data>
+  <data name="Pda_ScreenshotsFormat" xml:space="preserve"><value>Screenshots: {0}</value></data>
+  <data name="Pda_StatusFormat" xml:space="preserve"><value>Status: {0}</value></data>
+  <data name="Scan_NoneSelected" xml:space="preserve"><value>No mods selected.</value></data>
+  <data name="Scan_SelectOne" xml:space="preserve"><value>Select at least one mod.</value></data>
+  <data name="Scan_SelectionFormat" xml:space="preserve"><value>Found: {0}. Selected: {1}.</value></data>
+  <data name="Scan_AddingTitle" xml:space="preserve"><value>Adding mods</value></data>
+  <data name="Settings_StoragePortable" xml:space="preserve"><value>Portable mode: settings, logs, cache, and temporary files are stored in .\Data\StalkerModLauncher. Mods and profile workspaces are stored in StalkerModLauncher at the root of the base-game drive. If there is no local settings.json yet, settings are imported automatically from AppData.</value></data>
+  <data name="Settings_StorageRegular" xml:space="preserve"><value>Regular mode: launcher settings are stored in %AppData%\StalkerModLauncher. Mods and profile workspaces are stored in StalkerModLauncher at the root of the base-game drive.</value></data>
+  <data name="Update_InstallTitle" xml:space="preserve"><value>Install update?</value></data>
+  <data name="Settings_ResetTitle" xml:space="preserve"><value>Reset launcher settings?</value></data>
+  <data name="Settings_ResetMessage" xml:space="preserve"><value>Interface, behavior, logging, and update settings will be restored.&#xA;&#xA;Profiles, mods, and game files will remain unchanged.</value></data>
+  <data name="Update_Checking" xml:space="preserve"><value>Checking GitHub...</value></data>
+  <data name="Update_AvailableFormat" xml:space="preserve"><value>Version {0} is available. Installed: {1}.</value></data>
+  <data name="Update_CurrentFormat" xml:space="preserve"><value>The latest launcher version is installed: {0}.</value></data>
+  <data name="Update_Timeout" xml:space="preserve"><value>GitHub did not respond in time. Check your internet connection.</value></data>
+  <data name="Update_ConnectionFailed" xml:space="preserve"><value>Could not connect to GitHub. Check your internet connection.</value></data>
+  <data name="Update_CheckFailedFormat" xml:space="preserve"><value>Could not check for updates: {0}</value></data>
+  <data name="Settings_SaveFailed" xml:space="preserve"><value>Could not save launcher settings</value></data>
+  <data name="Settings_OpenFolderFailed" xml:space="preserve"><value>Could not open settings folder</value></data>
+  <data name="Update_OpenReleaseFailed" xml:space="preserve"><value>Could not open release page</value></data>
+  <data name="Update_Busy" xml:space="preserve"><value>Before updating, close the running game and wait for current launcher operations to finish.</value></data>
+  <data name="Update_MinimalPackage" xml:space="preserve"><value>regular version</value></data>
+  <data name="Update_StandalonePackage" xml:space="preserve"><value>Standalone version</value></data>
+  <data name="Update_DownloadingFormat" xml:space="preserve"><value>Downloading the {0} package...</value></data>
+  <data name="Update_ReadyFormat" xml:space="preserve"><value>The {0} package has been verified and is ready to install: {1}.</value></data>
+  <data name="Update_HttpErrorFormat" xml:space="preserve"><value>GitHub returned HTTP {0}. Check the files in the selected release.</value></data>
+  <data name="Update_DownloadConnectionFormat" xml:space="preserve"><value>Could not download the {0} package. Check your internet connection.</value></data>
+  <data name="Update_DownloadFailedFormat" xml:space="preserve"><value>Could not download the {0} package: {1}</value></data>
+  <data name="Update_MismatchFromStandalone" xml:space="preserve"><value>&#xA;&#xA;WARNING: the Standalone version is running, but the regular version is selected. It requires .NET 8 Desktop Runtime and will use settings from AppData. The Data folder will remain unchanged.</value></data>
+  <data name="Update_MismatchToStandalone" xml:space="preserve"><value>&#xA;&#xA;WARNING: the regular version is running, but Standalone is selected. After the update, settings will be stored in the Data folder next to the launcher.</value></data>
+  <data name="Update_InstallMessageFormat" xml:space="preserve"><value>The archive will be downloaded to the launcher folder. After verification, the launcher will close, replace its files, and start again. The Data folder is not changed.{0}</value></data>
+  <data name="Update_OpenDownloadsFailed" xml:space="preserve"><value>Could not open Downloads</value></data>
+  <data name="Creation_DefaultName" xml:space="preserve"><value>New profile</value></data>
+  <data name="Creation_Intro" xml:space="preserve"><value>Select a profile type and enter a clear name.</value></data>
+  <data name="Creation_StepType" xml:space="preserve"><value>Profile type</value></data>
+  <data name="Creation_StepSources" xml:space="preserve"><value>Game and mods</value></data>
+  <data name="Creation_StepLaunch" xml:space="preserve"><value>Profile launch</value></data>
+  <data name="Creation_StandaloneRootHint" xml:space="preserve"><value>Select the root folder containing the mod or game.</value></data>
+  <data name="Creation_ModListHint" xml:space="preserve"><value>Add mod folders. Mods lower in the list have higher priority.</value></data>
+  <data name="Creation_StandaloneDescription" xml:space="preserve"><value>Launch a standalone setup as-is, without adding mods.</value></data>
+  <data name="Creation_RegularDescription" xml:space="preserve"><value>Select a game or ready-made setup, then add and disable mods without changing the source folders.</value></data>
+  <data name="Creation_RegularSourceHint" xml:space="preserve"><value>Select the base-game folder and add mods in the required order.</value></data>
+  <data name="Creation_StandaloneNotSelected" xml:space="preserve"><value>Standalone folder has not been selected yet.</value></data>
+  <data name="Creation_StandaloneSummaryFormat" xml:space="preserve"><value>Standalone folder: {0}</value></data>
+  <data name="Creation_NotSelected" xml:space="preserve"><value>not selected</value></data>
+  <data name="Creation_RegularSummaryFormat" xml:space="preserve"><value>Base game: {0}. Mods in profile: {1}.</value></data>
+  <data name="Creation_ReviewExe" xml:space="preserve"><value>Check which EXE will be launched. Select another file manually if necessary.</value></data>
+  <data name="Creation_RegularProfileDescription" xml:space="preserve"><value>Mod over base game</value></data>
+  <data name="Creation_NameRequired" xml:space="preserve"><value>Enter a profile name.</value></data>
+  <data name="Creation_GameRequired" xml:space="preserve"><value>Select an existing base-game folder.</value></data>
+  <data name="Creation_StandaloneRequired" xml:space="preserve"><value>Select one mod folder for a standalone profile.</value></data>
+  <data name="Creation_ExecutableField" xml:space="preserve"><value>Launch executable</value></data>
+  <data name="Creation_ExecutableMissing" xml:space="preserve"><value>The executable was not found in the selected folders. Select an EXE manually or go back to file sources.</value></data>
+  <data name="Creation_PickStandalone" xml:space="preserve"><value>Select a standalone game or mod folder</value></data>
+  <data name="Creation_PickMod" xml:space="preserve"><value>Select mod folder</value></data>
+  <data name="Creation_PickExecutable" xml:space="preserve"><value>Select executable</value></data>
+  <data name="Creation_ExecutableOutside" xml:space="preserve"><value>The selected executable must be inside the game folder or one of the mod folders.</value></data>
+  <data name="Creation_UsingPathFormat" xml:space="preserve"><value>Using selected path: {0}. Source: {1}.</value></data>
+  <data name="Creation_ExecutableNotDetected" xml:space="preserve"><value>No EXE was detected automatically. Select the executable manually.</value></data>
+  <data name="Creation_AutoSelectedFormat" xml:space="preserve"><value>Selected automatically: {0}</value></data>
+  <data name="Creation_ManualSelectedFormat" xml:space="preserve"><value>Selected manually: {0}.</value></data>
+  <data name="Creation_ManualSelectedSourceFormat" xml:space="preserve"><value>Selected manually: {0}. Source: {1}.</value></data>
+  <data name="Creation_BaseGameSource" xml:space="preserve"><value>base game</value></data>
+  <data name="Creation_ModSourceFormat" xml:space="preserve"><value>mod: {0}</value></data>
+  <data name="Screenshots_CopiedFormat" xml:space="preserve"><value>Copied: {0}</value></data>
+  <data name="Screenshots_CopyFailedFormat" xml:space="preserve"><value>Could not copy screenshot: {0}</value></data>
+  <data name="Main_SelectGame" xml:space="preserve"><value>Select the installed game folder.</value></data>
+  <data name="Main_RegularProfileRequired" xml:space="preserve"><value>Select a regular profile.</value></data>
+  <data name="ModFilter_All" xml:space="preserve"><value>All mods</value></data>
+  <data name="ModFilter_Conflicts" xml:space="preserve"><value>Conflicting</value></data>
+  <data name="ModFilter_Overwrite" xml:space="preserve"><value>Overwriting</value></data>
+  <data name="ModFilter_Overwritten" xml:space="preserve"><value>Overwritten</value></data>
+  <data name="ModFilter_Mixed" xml:space="preserve"><value>Mixed</value></data>
+  <data name="ModFilter_Redundant" xml:space="preserve"><value>Fully overridden</value></data>
+  <data name="ModFilter_Binaries" xml:space="preserve"><value>EXE and DLL</value></data>
+  <data name="Catalog_PagesFormat" xml:space="preserve"><value> · pages: {0}/{1}</value></data>
+  <data name="Catalog_LoadedFormat" xml:space="preserve"><value>Loaded: {0:N0}{1}</value></data>
+  <data name="Catalog_ShownFormat" xml:space="preserve"><value>Shown: {0:N0} of {1:N0}{2}</value></data>
+  <data name="Catalog_LoadingService" xml:space="preserve"><value>Loading AP-PRO catalog...</value></data>
+  <data name="Catalog_Unavailable" xml:space="preserve"><value>AP-PRO is unavailable or not responding. Check your internet connection and refresh the catalog.</value></data>
+  <data name="Catalog_PageFailed" xml:space="preserve"><value>Could not load the AP-PRO page. Try refreshing the catalog.</value></data>
+  <data name="Catalog_Empty" xml:space="preserve"><value>No mods have been found in this section yet.</value></data>
+  <data name="Catalog_Searching" xml:space="preserve"><value>Searching for mods...</value></data>
+  <data name="Catalog_NoResults" xml:space="preserve"><value>No results found for this query.</value></data>
+  <data name="Catalog_RatingFormat" xml:space="preserve"><value>Rating: {0:0.#} / 10</value></data>
+  <data name="Conflict_Analyzing" xml:space="preserve"><value>Analyzing files...</value></data>
+  <data name="Conflict_FilterAll" xml:space="preserve"><value>All files</value></data>
+  <data name="Conflict_FilterConflicts" xml:space="preserve"><value>Conflicts only</value></data>
+  <data name="Conflict_FilterConfiguration" xml:space="preserve"><value>Configuration and scripts</value></data>
+  <data name="Conflict_SummaryFormat" xml:space="preserve"><value>Final files: {0:N0}; path conflicts: {1:N0}.</value></data>
+  <data name="Conflict_AnalysisFailedFormat" xml:space="preserve"><value>Analysis failed: {0}</value></data>
+  <data name="Conflict_UniqueFile" xml:space="preserve"><value>Unique file</value></data>
+  <data name="Conflict_Losing" xml:space="preserve"><value>Losing</value></data>
+  <data name="Conflict_Winning" xml:space="preserve"><value>Winning</value></data>
+  <data name="Conflict_ChangeFailed" xml:space="preserve"><value>Could not change mod file</value></data>
+  <data name="Conflict_Restore" xml:space="preserve"><value>Restore</value></data>
+  <data name="Conflict_Exclude" xml:space="preserve"><value>Exclude</value></data>
+  <data name="Profile_ExportTitle" xml:space="preserve"><value>Export profile</value></data>
+  <data name="Profile_ExportError" xml:space="preserve"><value>Export error</value></data>
+  <data name="Profile_ImportTitle" xml:space="preserve"><value>Import profile</value></data>
+  <data name="Profile_ImportError" xml:space="preserve"><value>Import error</value></data>
+  <data name="Settings_ImportTitle" xml:space="preserve"><value>Import CORDON settings</value></data>
+  <data name="Common_JsonFilter" xml:space="preserve"><value>JSON files (*.json)|*.json</value></data>
+  <data name="Settings_ImportFailed" xml:space="preserve"><value>Could not import settings</value></data>
+  <data name="Mo2_TransferFailed" xml:space="preserve"><value>Could not transfer MO2 setup</value></data>
+  <data name="Mo2_TransferCancelledFormat" xml:space="preserve"><value>Profile was not created; changes were rolled back.{0}{0}{1}</value></data>
+  <data name="Profile_DeleteStandaloneFormat" xml:space="preserve"><value>Delete profile '{0}'? Mod files will remain untouched.</value></data>
+  <data name="Profile_DeleteRegularFormat" xml:space="preserve"><value>Delete profile '{0}' together with its workspace, saves, and logs?</value></data>
+  <data name="Profile_DeleteTitle" xml:space="preserve"><value>Delete profile</value></data>
+  <data name="Profile_DeleteFailed" xml:space="preserve"><value>Could not delete profile</value></data>
+  <data name="Profile_StandaloneFolderMissing" xml:space="preserve"><value>Enabled standalone setup folder was not found.</value></data>
+  <data name="Mod_ScanPickFolder" xml:space="preserve"><value>Select folder to scan for mods</value></data>
+  <data name="Mod_Scanning" xml:space="preserve"><value>Scanning for mods...</value></data>
+  <data name="Mod_NotFoundTitle" xml:space="preserve"><value>Not found</value></data>
+  <data name="Mod_NotFound" xml:space="preserve"><value>No mods were found in the selected folder.</value></data>
+  <data name="Mod_ScanFailed" xml:space="preserve"><value>Scan error</value></data>
+  <data name="Mod_PickArchive" xml:space="preserve"><value>Select mod archive</value></data>
+  <data name="Mod_ArchiveFilter" xml:space="preserve"><value>Mod archives (*.zip;*.7z;*.rar)|*.zip;*.7z;*.rar|All files (*.*)|*.*</value></data>
+  <data name="Mod_PreparingFormat" xml:space="preserve"><value>Preparing {0}...</value></data>
+  <data name="Mod_DatabaseNote" xml:space="preserve"><value>Archives .db* were placed in db\mods.</value></data>
+  <data name="Mod_FileCountFormat" xml:space="preserve"><value>Files: {0:N0}{1}</value></data>
+  <data name="Mod_InstallFailed" xml:space="preserve"><value>Could not install mod archive</value></data>
+  <data name="Mod_AnalyzingFormat" xml:space="preserve"><value>Analyzing {0}...</value></data>
+  <data name="Mod_ExtractingPercentFormat" xml:space="preserve"><value>Extracting {0}: {1:0}% · {2} / {3} · {4}</value></data>
+  <data name="Mod_ExtractingSizeFormat" xml:space="preserve"><value>Extracting {0}: {1}</value></data>
+  <data name="Mod_FinalizingFormat" xml:space="preserve"><value>Finishing installation of {0}...</value></data>
+  <data name="Mod_FolderExistsFormat" xml:space="preserve"><value>Mod folder “{0}” already exists. The new extraction will be placed in:</value></data>
+  <data name="Common_EstimatingTime" xml:space="preserve"><value>estimating time...</value></data>
+  <data name="Common_RemainingHoursFormat" xml:space="preserve"><value>~{0} h {1} min remaining</value></data>
+  <data name="Common_RemainingMinutesFormat" xml:space="preserve"><value>~{0} min {1} s remaining</value></data>
+  <data name="Common_RemainingSecondsFormat" xml:space="preserve"><value>~{0} s remaining</value></data>
+  <data name="Mod_FolderInsideGame" xml:space="preserve"><value>The installed mods folder must not be inside the game folder.</value></data>
+  <data name="Mod_FolderOverlapsWorkspace" xml:space="preserve"><value>The installed mods folder must not overlap the profile workspace.</value></data>
+  <data name="Mod_FolderInsideOtherMod" xml:space="preserve"><value>The installed mods folder must not be inside another mod's source folder.</value></data>
+  <data name="ModAnalysis_OverwritesFormat" xml:space="preserve"><value>Overrides files from mods: {0}.</value></data>
+  <data name="ModAnalysis_OverwriteCountsFormat" xml:space="preserve"><value>Configuration and scripts: {0:N0}; binary files: {1:N0}.</value></data>
+  <data name="ModAnalysis_OverwrittenByFormat" xml:space="preserve"><value>Its files are overridden by mods: {0}.</value></data>
+  <data name="ModAnalysis_OverwrittenCountsFormat" xml:space="preserve"><value>Losing configuration and scripts: {0:N0}; binary files: {1:N0}.</value></data>
+  <data name="ModAnalysis_FinalExecutableFormat" xml:space="preserve"><value>Final executable: {0}</value></data>
+  <data name="Launch_BlockedFormat" xml:space="preserve"><value>Launch blocked: profile “{0}” is not ready.</value></data>
+  <data name="Launch_Checking" xml:space="preserve"><value>Checking profile before launch...</value></data>
+  <data name="Launch_WarningFormat" xml:space="preserve"><value>Check warning: {0}: {1}</value></data>
+  <data name="Launch_Preparing" xml:space="preserve"><value>Preparing launch...</value></data>
+  <data name="Launch_ProcessCreatedFormat" xml:space="preserve"><value>Game process created. PID: {0}</value></data>
+  <data name="Launch_ErrorFormat" xml:space="preserve"><value>Launch error: {0}</value></data>
+  <data name="Launch_Failed" xml:space="preserve"><value>Could not launch profile</value></data>
+  <data name="Launch_ReadyFormat" xml:space="preserve"><value>Game is ready: {0}.</value></data>
+  <data name="Launch_ExitedEarlyFormat" xml:space="preserve"><value>Game exited before readiness was confirmed: {0}</value></data>
+  <data name="Launch_PossibleHangFormat" xml:space="preserve"><value>Possible launch hang: {0}</value></data>
+  <data name="Launch_PossibleHangTitle" xml:space="preserve"><value>Possible launch hang</value></data>
+  <data name="Launch_EndProcesses" xml:space="preserve"><value>End related processes? Click “No” to continue waiting.</value></data>
+  <data name="Settings_ImportAppDataFailed" xml:space="preserve"><value>Could not import settings from AppData</value></data>
+  <data name="Settings_Unavailable" xml:space="preserve"><value>Settings unavailable</value></data>
+  <data name="Settings_WriteBlocked" xml:space="preserve"><value>The file was not changed. Close the program that may be holding it, then restart the launcher.</value></data>
+  <data name="Settings_PrimaryRecoveredDamaged" xml:space="preserve"><value>The main settings file was damaged. Settings were restored from the backup.</value></data>
+  <data name="Settings_PrimaryRecoveredMissing" xml:space="preserve"><value>The main settings file was missing. Settings were restored from the backup.</value></data>
+  <data name="Settings_RecoveryFailed" xml:space="preserve"><value>Settings files are damaged and cannot be read. A new configuration was created; profiles could not be restored automatically.</value></data>
+  <data name="Settings_DamagedFilesFormat" xml:space="preserve"><value>{0}{0}Damaged files were saved:{0}{1}</value></data>
+  <data name="Settings_RecoveryTitle" xml:space="preserve"><value>Settings recovery</value></data>
+  <data name="Mo2_SelectSource" xml:space="preserve"><value>Select an MO2 folder, profile folder, or modlist.txt.</value></data>
+  <data name="Mo2_PreviewSummaryFormat" xml:space="preserve"><value>Mods found: {0}; enabled: {1}; missing: {2}; ambiguous: {3}; separators: {4}.</value></data>
+  <data name="Mo2_ProfilesFoundFormat" xml:space="preserve"><value>MO2 profiles found: {0}. Check the detected paths.</value></data>
+  <data name="Mo2_PickSource" xml:space="preserve"><value>Select Mod Organizer 2 or MO2 profile folder</value></data>
+  <data name="Mo2_PickModList" xml:space="preserve"><value>Select modlist.txt from a Mod Organizer 2 profile</value></data>
+  <data name="Mo2_PickModsFolder" xml:space="preserve"><value>Select Mod Organizer 2 mods folder</value></data>
+  <data name="Mo2_PickOverwriteFolder" xml:space="preserve"><value>Select Mod Organizer 2 overwrite folder</value></data>
+  <data name="Mo2_AmbiguousHint" xml:space="preserve"><value>For ambiguous mods, select the correct folder in the Folder column. The profile cannot be created until then.</value></data>
+  <data name="Mo2_MissingHint" xml:space="preserve"><value>Some mod folders are missing. These mods are shown in the preview and will not be added.</value></data>
+  <data name="Mo2_ReviewHint" xml:space="preserve"><value>Check the order, enabled state, and detected EXE before importing.</value></data>
+  <data name="Mo2_CheckSourceHint" xml:space="preserve"><value>Check the source, MO2 profile, and detected paths.</value></data>
+  <data name="Mo2_AmbiguousResolved" xml:space="preserve"><value>Ambiguous mod folders have been selected. Check the result and create the profile.</value></data>
+  <data name="SettingsProfile_FsgameManualFormat" xml:space="preserve"><value>Pinned manually: {0}</value></data>
+  <data name="SettingsProfile_FsgameAuto" xml:space="preserve"><value>Automatically selected from the current profile layer priority.</value></data>
+  <data name="SettingsProfile_ExeAuto" xml:space="preserve"><value>EXE source: automatic by mod order. A lower mod in the list has higher priority.</value></data>
+  <data name="SettingsProfile_ExeManualMissingFormat" xml:space="preserve"><value>EXE source: selected manually, but the folder is currently unavailable: {0}</value></data>
+  <data name="SettingsProfile_ExeManualFormat" xml:space="preserve"><value>EXE source: manually pinned to mod: {0}.</value></data>
+  <data name="SettingsProfile_StandaloneData" xml:space="preserve"><value>A standalone setup uses its own data without redirection.</value></data>
+  <data name="SettingsProfile_SharedData" xml:space="preserve"><value>Shared saves, settings, logs, and screenshots</value></data>
+  <data name="SettingsProfile_SeparateData" xml:space="preserve"><value>Separate profile data</value></data>
+  <data name="SettingsProfile_DataPathFormat" xml:space="preserve"><value>{0}: {1}&#xA;Switching does not move or replace existing files.</value></data>
+  <data name="SettingsProfile_UsvfsAvailable" xml:space="preserve"><value>USVFS connects mods without building a full workspace. Compatibility depends on the specific game and mods.</value></data>
+  <data name="SettingsProfile_UsvfsMissing" xml:space="preserve"><value>USVFS components were not found next to the launcher. Only Workspace is available.</value></data>
+  <data name="SettingsProfile_CreateWorkspaceFirst" xml:space="preserve"><value>First create the profile workspace by launching the game.</value></data>
+  <data name="SettingsProfile_CopyTitle" xml:space="preserve"><value>Copy user data</value></data>
+  <data name="SettingsProfile_CopyConfirmFormat" xml:space="preserve"><value>From: {0}&#xA;To: {1}&#xA;&#xA;Duplicate files will be skipped. Profile service files are not copied. Close other game instances before copying.</value></data>
+  <data name="SettingsProfile_CopyComplete" xml:space="preserve"><value>Copy complete</value></data>
+  <data name="SettingsProfile_CopyResultFormat" xml:space="preserve"><value>Copied: {0}. Skipped: {1}.&#xA;Save profile settings to change the launch data folder.</value></data>
+  <data name="SettingsProfile_CopyFailed" xml:space="preserve"><value>Could not copy all data</value></data>
+  <data name="SettingsProfile_CopyFailedDetailsFormat" xml:space="preserve"><value>{0}&#xA;Files already copied were preserved. Existing files were not replaced.</value></data>
+  <data name="SettingsProfile_Invalid" xml:space="preserve"><value>Invalid profile settings</value></data>
+  <data name="SettingsProfile_SaveFailed" xml:space="preserve"><value>Could not save profile settings</value></data>
+  <data name="SettingsProfile_StopGame" xml:space="preserve"><value>Close the game before changing the data folder.</value></data>
+  <data name="SettingsProfile_SaveFailedDetailsFormat" xml:space="preserve"><value>Changes were not saved. The window will remain open.{0}{0}{1}</value></data>
+  <data name="SettingsProfile_PickFsgame" xml:space="preserve"><value>Select fsgame configuration</value></data>
+  <data name="SettingsProfile_InvalidFsgame" xml:space="preserve"><value>Invalid fsgame.ltx</value></data>
+  <data name="SettingsProfile_FsgameLocation" xml:space="preserve"><value>Select an .ltx file from the base-game folder or an enabled mod.</value></data>
+  <data name="SettingsProfile_AutoExeFailed" xml:space="preserve"><value>Could not select EXE automatically</value></data>
+  <data name="SettingsProfile_AutoExeMissing" xml:space="preserve"><value>The launcher did not find a suitable .exe in the base-game folder or enabled mods. Select the executable manually.</value></data>
+  <data name="SettingsProfile_PickModInstall" xml:space="preserve"><value>Select folder for extracted mods</value></data>
+  <data name="SettingsProfile_ModListApplied" xml:space="preserve"><value>modlist.txt was applied to mods already added.</value></data>
+  <data name="SettingsProfile_ModListMatchedFormat" xml:space="preserve"><value>Mods matched: {0}</value></data>
+  <data name="SettingsProfile_ModListEnabledFormat" xml:space="preserve"><value>Enabled states changed: {0}</value></data>
+  <data name="SettingsProfile_ModListMissingFormat" xml:space="preserve"><value>Not found among added mods: {0}</value></data>
+  <data name="SettingsProfile_ModListUnlistedFormat" xml:space="preserve"><value>Missing from modlist.txt: {0}</value></data>
+  <data name="SettingsProfile_ModListUnmatched" xml:space="preserve"><value>First unmatched entries:</value></data>
+  <data name="SettingsProfile_ModListTitle" xml:space="preserve"><value>Apply modlist.txt only</value></data>
+  <data name="SettingsProfile_ModListFailed" xml:space="preserve"><value>Could not apply modlist.txt</value></data>
+  <data name="Health_Checking" xml:space="preserve"><value>Checking profile status...</value></data>
+  <data name="Health_RegularProfile" xml:space="preserve"><value>Mod over base game</value></data>
+  <data name="Health_UsvfsTooltip" xml:space="preserve"><value>Game and mod files are connected virtually. The current folder is not used.</value></data>
+  <data name="Health_StatePending" xml:space="preserve"><value>Workspace status has not been received yet.</value></data>
+  <data name="Health_Layers" xml:space="preserve"><value>Layers</value></data>
+  <data name="Health_VisibleSize" xml:space="preserve"><value>Visible size</value></data>
+  <data name="Health_LayersTooltip" xml:space="preserve"><value>Base game and enabled mods that USVFS will combine at launch.</value></data>
+  <data name="Health_VisibleSizeTooltip" xml:space="preserve"><value>How much data the game sees in the workspace. Because of links, this is not the same as disk usage.</value></data>
+  <data name="Health_GameData" xml:space="preserve"><value>Game data</value></data>
+  <data name="Health_Occupied" xml:space="preserve"><value>Disk usage</value></data>
+  <data name="Health_SharedData" xml:space="preserve"><value>The shared base-game data folder is used.</value></data>
+  <data name="Health_SeparateData" xml:space="preserve"><value>Saves, settings, and logs are stored separately in the profile userdata.</value></data>
+  <data name="Health_OccupiedTooltip" xml:space="preserve"><value>Approximate disk space used by the workspace, accounting for hardlinks and symlinks.</value></data>
+  <data name="Health_CurrentFolder" xml:space="preserve"><value>current folder</value></data>
+  <data name="Health_Files" xml:space="preserve"><value>Files</value></data>
+  <data name="Health_NotUsed" xml:space="preserve"><value>not used</value></data>
+  <data name="Health_CurrentTooltip" xml:space="preserve"><value>USVFS creates the game view in process memory and does not build the current folder.</value></data>
+  <data name="Health_DataCreated" xml:space="preserve"><value>created</value></data>
+  <data name="Health_DataOnLaunch" xml:space="preserve"><value>on launch</value></data>
+  <data name="Health_CheckFailedFormat" xml:space="preserve"><value>Check failed: {0}</value></data>
+  <data name="Health_ClearTitle" xml:space="preserve"><value>Clear workspace cache</value></data>
+  <data name="Health_ClearConfirm" xml:space="preserve"><value>Delete only the prepared current folder? Saves, settings, and logs in userdata will remain.</value></data>
+  <data name="Health_ClearFailed" xml:space="preserve"><value>Could not clear workspace cache</value></data>
+  <data name="Health_Rebuilding" xml:space="preserve"><value>Rebuilding workspace...</value></data>
+  <data name="Health_RebuildFailed" xml:space="preserve"><value>Could not rebuild workspace</value></data>
+  <data name="Health_PickWorkspace" xml:space="preserve"><value>Select a folder for the workspace</value></data>
+  <data name="Health_MoveDataTitle" xml:space="preserve"><value>Move profile data</value></data>
+  <data name="Health_MoveWorkspaceTitle" xml:space="preserve"><value>Move workspace</value></data>
+  <data name="Health_MoveUsvfsConfirmFormat" xml:space="preserve"><value>Move saves, settings, and logs to the selected folder?{0}{0}The temporary USVFS bootstrap is not copied and will be recreated.</value></data>
+  <data name="Health_MoveWorkspaceConfirmFormat" xml:space="preserve"><value>Move profile userdata to the selected folder?{0}{0}The current folder is not copied and will be rebuilt on next launch.</value></data>
+  <data name="Health_MoveFailed" xml:space="preserve"><value>Could not move workspace</value></data>
+  <data name="Health_MovePartialTitle" xml:space="preserve"><value>Workspace moved</value></data>
+  <data name="Health_MovePartialFormat" xml:space="preserve"><value>Profile data was moved to:{0}{1}{0}{0}Could not delete the old folder:{0}{2}{0}{0}Retry deleting only the old folder?</value></data>
+  <data name="Health_MoveCompleteTitle" xml:space="preserve"><value>Move complete</value></data>
+  <data name="Health_OldDeletedFormat" xml:space="preserve"><value>Old workspace folder deleted:{0}{1}</value></data>
+  <data name="Health_OldRemainsTitle" xml:space="preserve"><value>Workspace moved; old folder remains</value></data>
+  <data name="Health_OldRemainsFormat" xml:space="preserve"><value>The profile already uses the new folder:{0}{1}{0}{0}Could not delete the old folder:{0}{2}{0}{0}{3}</value></data>
+  <data name="Preflight_Failed" xml:space="preserve"><value>Profile failed the pre-launch check:</value></data>
+  <data name="ModConflict_Overwrite" xml:space="preserve"><value>Overwrites</value></data>
+  <data name="ModConflict_Overwritten" xml:space="preserve"><value>Overwritten</value></data>
+  <data name="ModConflict_Mixed" xml:space="preserve"><value>Mixed conflict</value></data>
+  <data name="ModConflict_Redundant" xml:space="preserve"><value>Fully overridden</value></data>
+  <data name="ModConflict_Disabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="ModConflict_None" xml:space="preserve"><value>No conflicts</value></data>
+  <data name="ModConflict_OverwritesSummaryFormat" xml:space="preserve"><value>Overrides files: {0:N0}; affected mods: {1:N0}</value></data>
+  <data name="ModConflict_LosesSummaryFormat" xml:space="preserve"><value>loses files: {0:N0}; winning mods: {1:N0}</value></data>
+  <data name="ModConflict_FullyOverridden" xml:space="preserve"><value>fully overridden by later mods</value></data>
+  <data name="ModConflict_Executable" xml:space="preserve"><value>provides the launch executable</value></data>
+  <data name="Common_DurationHoursFormat" xml:space="preserve"><value>{0} h {1} min</value></data>
+  <data name="Common_DurationMinutesFormat" xml:space="preserve"><value>{0} min</value></data>
+  <data name="Common_DurationSecondsFormat" xml:space="preserve"><value>{0:N0} sec</value></data>
+  <data name="Health_Ready" xml:space="preserve"><value>Profile is ready to launch.</value></data>
+  <data name="Health_ReadyWarningsFormat" xml:space="preserve"><value>Profile is ready, but has warnings: {0}.</value></data>
+  <data name="Health_AttentionFormat" xml:space="preserve"><value>Profile requires attention. Errors: {0}, warnings: {1}.</value></data>
+  <data name="Health_ReportProfileFormat" xml:space="preserve"><value>Profile: {0}</value></data>
+  <data name="Health_ReportWorkspaceFormat" xml:space="preserve"><value>Workspace: logical size {0}, approximate disk usage {1}.</value></data>
+  <data name="Health_ReportFilesFormat" xml:space="preserve"><value>Files: {0:N0}; hardlinks: {1:N0}; symlinks: {2:N0}; local: {3:N0}.</value></data>
+  <data name="Health_ReportUsvfsFormat" xml:space="preserve"><value>Latest USVFS messages ({0}):</value></data>
+  <data name="Health_ReportUsvfsFailedFormat" xml:space="preserve"><value>Could not read USVFS log: {0}</value></data>
+  <data name="Workspace_PathPending" xml:space="preserve"><value>The path will be assigned when the workspace is first built.</value></data>
+  <data name="Workspace_CurrentPending" xml:space="preserve"><value>The current folder will be created at launch.</value></data>
+  <data name="Workspace_UserdataPending" xml:space="preserve"><value>The userdata folder will appear next to the workspace.</value></data>
+  <data name="Workspace_AfterRebuild" xml:space="preserve"><value>after rebuild</value></data>
+  <data name="Workspace_LinkSummaryFormat" xml:space="preserve"><value>Hardlinks: {0:N0}  ·  Symlinks: {1:N0}  ·  Local files: {2:N0}</value></data>
+  <data name="Workspace_StatsPending" xml:space="preserve"><value>Detailed statistics will appear after the next workspace rebuild.</value></data>
+  <data name="Workspace_NotPrepared" xml:space="preserve"><value>not prepared</value></data>
+  <data name="Workspace_PathMissing" xml:space="preserve"><value>Workspace folder has not been selected yet.</value></data>
+  <data name="Workspace_FolderMissing" xml:space="preserve"><value>Workspace folder has not been created yet.</value></data>
+  <data name="Workspace_FilesMissing" xml:space="preserve"><value>Launch files have not been prepared yet.</value></data>
+  <data name="Workspace_Ready" xml:space="preserve"><value>Workspace is ready.</value></data>
+  <data name="Workspace_RebuildRecommended" xml:space="preserve"><value>The workspace exists, but should be rebuilt.</value></data>
+  <data name="Workspace_SizeTooltip" xml:space="preserve"><value>Logical size is the data visible to the game. Disk usage is an estimate that accounts for links.</value></data>
+  <data name="Workspace_SizePending" xml:space="preserve"><value>Exact statistics will appear after the next workspace build.</value></data>
+  <data name="Size_Bytes" xml:space="preserve"><value>B</value></data>
+  <data name="Size_Kilobytes" xml:space="preserve"><value>KB</value></data>
+  <data name="Size_Megabytes" xml:space="preserve"><value>MB</value></data>
+  <data name="Size_Gigabytes" xml:space="preserve"><value>GB</value></data>
+  <data name="Size_Terabytes" xml:space="preserve"><value>TB</value></data>
+  <data name="App_ServicesNotInitialized" xml:space="preserve"><value>Application services are not initialized.</value></data>
+  <data name="App_InstanceNotInitialized" xml:space="preserve"><value>Instance control is not initialized.</value></data>
+  <data name="App_AlreadyRunning" xml:space="preserve"><value>The launcher is already running. Use the open application window.</value></data>
+  <data name="App_PortableStorageErrorFormat" xml:space="preserve"><value>The portable folder is not writable:{0}{1}{0}{0}{2}</value></data>
+  <data name="App_StorageErrorTitle" xml:space="preserve"><value>Data storage error</value></data>
+  <data name="App_OpenWindowErrorFormat" xml:space="preserve"><value>Could not open the launcher window. Details were written to the log.{0}{0}{1}</value></data>
+  <data name="App_LauncherErrorTitle" xml:space="preserve"><value>Launcher startup error</value></data>
+  <data name="App_UpdateErrorFormat" xml:space="preserve"><value>Could not install the update.{0}{0}{1}</value></data>
+  <data name="App_UpdateErrorTitle" xml:space="preserve"><value>CORDON update error</value></data>
+  <data name="Check_ProfilePreparation" xml:space="preserve"><value>Profile preparation</value></data>
+  <data name="Check_ProfileMode" xml:space="preserve"><value>Profile mode</value></data>
+  <data name="Check_StandaloneMode" xml:space="preserve"><value>A standalone setup starts directly from its own folder.</value></data>
+  <data name="Check_GameData" xml:space="preserve"><value>Game data</value></data>
+  <data name="Check_SharedGameData" xml:space="preserve"><value>Shared base-game folder</value></data>
+  <data name="Check_ProfileData" xml:space="preserve"><value>Profile data</value></data>
+  <data name="Check_BaseGame" xml:space="preserve"><value>Base game</value></data>
+  <data name="Check_ModTitleFormat" xml:space="preserve"><value>Mod #{0}: {1}</value></data>
+  <data name="Check_EnabledPathFormat" xml:space="preserve"><value>Enabled: {0}</value></data>
+  <data name="Check_DisabledPathFormat" xml:space="preserve"><value>Disabled: {0}</value></data>
+  <data name="Check_EnabledMissingFormat" xml:space="preserve"><value>Enabled mod, folder not found: {0}</value></data>
+  <data name="Check_DisabledMissingFormat" xml:space="preserve"><value>Disabled mod, folder not found: {0}</value></data>
+  <data name="Check_ModList" xml:space="preserve"><value>Mod list</value></data>
+  <data name="Check_StandaloneNeedsMod" xml:space="preserve"><value>A standalone profile requires a mod folder.</value></data>
+  <data name="Check_NoMods" xml:space="preserve"><value>The profile contains no mods.</value></data>
+  <data name="Check_LaunchBinary" xml:space="preserve"><value>Launch executable</value></data>
+  <data name="Check_NotFoundFormat" xml:space="preserve"><value>Not found: {0}</value></data>
+  <data name="Check_Saves" xml:space="preserve"><value>Saves</value></data>
+  <data name="Check_SaveCountFormat" xml:space="preserve"><value>Files: {0}. Folder: {1}</value></data>
+  <data name="Check_SaveFolderMissing" xml:space="preserve"><value>The saves folder has not been created yet.</value></data>
+  <data name="Check_LatestLog" xml:space="preserve"><value>Latest log</value></data>
+  <data name="Check_LogsMissing" xml:space="preserve"><value>No logs found yet.</value></data>
+  <data name="Check_CrashDumpFoundFormat" xml:space="preserve"><value>Crash dump found: {0}</value></data>
+  <data name="Check_CrashDumpMissing" xml:space="preserve"><value>No crash dump files found.</value></data>
+  <data name="Check_FsgameSource" xml:space="preserve"><value>fsgame.ltx source</value></data>
+  <data name="Check_FsgameMissing" xml:space="preserve"><value>The file was not found automatically in enabled layers. Select it manually in profile settings.</value></data>
+  <data name="Check_SelectedManually" xml:space="preserve"><value>Selected manually</value></data>
+  <data name="Check_FoundAutomatically" xml:space="preserve"><value>Found automatically</value></data>
+  <data name="Check_FoundByFsltx" xml:space="preserve"><value>Found automatically from the -fsltx argument</value></data>
+  <data name="Check_SourceDetailsFormat" xml:space="preserve"><value>{0}: {1}{2}Source: {3}.</value></data>
+  <data name="Check_ProfilePathPendingUsvfs" xml:space="preserve"><value>The profile folder will be assigned on first launch. USVFS does not require a current folder.</value></data>
+  <data name="Check_PathPending" xml:space="preserve"><value>The path has not been assigned yet.</value></data>
+  <data name="Check_ProfileFolderCreatedFormat" xml:space="preserve"><value>The profile folder will be created at launch: {0}</value></data>
+  <data name="Check_ProfileDataSeparateFormat" xml:space="preserve"><value>Profile data is stored separately: {0}. The current folder is not used.</value></data>
+  <data name="Check_ManagedFolderFormat" xml:space="preserve"><value>Managed folder: {0}</value></data>
+  <data name="Check_MarkerMissingFormat" xml:space="preserve"><value>Safety marker missing: {0}</value></data>
+  <data name="Check_WorkspaceCache" xml:space="preserve"><value>Workspace cache</value></data>
+  <data name="Check_WorkspacePresent" xml:space="preserve"><value>Prepared workspace and manifest are present.</value></data>
+  <data name="Check_WorkspacePending" xml:space="preserve"><value>The workspace will be prepared or rebuilt on next launch.</value></data>
+  <data name="Check_ManualSourceMissingFormat" xml:space="preserve"><value>Manual executable source not found: {0}{1}{2}.</value></data>
+  <data name="Check_FinalManualFormat" xml:space="preserve"><value>Final file: {0}{1}Source: {2}. Selected manually; mod priority will not replace this EXE.</value></data>
+  <data name="Check_FinalAutomaticFormat" xml:space="preserve"><value>Final file: {0}{1}Source: {2}. Lower mods in the list have priority.</value></data>
+  <data name="Check_FinalFallbackFormat" xml:space="preserve"><value>Selected path not found: {0}{1}The launcher can use: {2}{1}Selection reason: {3}. Source: {4}.</value></data>
+  <data name="Ready_ProfileDisabled" xml:space="preserve"><value>The selected profile is disabled.</value></data>
+  <data name="Ready_StandaloneModCount" xml:space="preserve"><value>A standalone profile must contain exactly one enabled mod.</value></data>
+  <data name="Ready_ModFolderMissingFormat" xml:space="preserve"><value>Mod folder not found: {0}</value></data>
+  <data name="Ready_Ready" xml:space="preserve"><value>Ready to launch.</value></data>
+  <data name="Ready_OverwriteMissingFormat" xml:space="preserve"><value>MO2 overwrite folder not found: {0}</value></data>
+  <data name="Ready_ExcludedProviderMissingFormat" xml:space="preserve"><value>Excluded file no longer has another provider: {0} — {1}</value></data>
+  <data name="Ready_ExecutableMissingFormat" xml:space="preserve"><value>Executable not found: {0}</value></data>
+  <data name="Ready_FsgameMissing" xml:space="preserve"><value>fsgame.ltx was not found in enabled layers.</value></data>
+  <data name="Ready_FsltxMissingFormat" xml:space="preserve"><value>The file specified by -fsltx was not found in enabled layers: {0}</value></data>
+  <data name="Validation_NameRequired" xml:space="preserve"><value>Enter a profile name.</value></data>
+  <data name="Validation_NameExists" xml:space="preserve"><value>A profile with this name already exists.</value></data>
+  <data name="Validation_Valid" xml:space="preserve"><value>Profile settings are valid.</value></data>
+  <data name="Validation_GameNotSelected" xml:space="preserve"><value>Game folder is not selected.</value></data>
+  <data name="Validation_GameMissing" xml:space="preserve"><value>Game folder does not exist.</value></data>
+  <data name="Validation_GameAvailable" xml:space="preserve"><value>Base-game folder is available.</value></data>
+  <data name="Tray_UpdateAvailable" xml:space="preserve"><value>Update available</value></data>
+  <data name="Tray_UpdateReadyFormat" xml:space="preserve"><value>Version {0} is ready to download.</value></data>
+  <data name="Tray_Exit" xml:space="preserve"><value>Exit</value></data>
+  <data name="Tray_OpenFailed" xml:space="preserve"><value>Could not open the quick-launch panel. Details were written to the log.</value></data>
+  <data name="Tray_ErrorTitle" xml:space="preserve"><value>Tray panel error</value></data>
+  <data name="Tray_ReleaseOpenFailed" xml:space="preserve"><value>Could not open the release page. Details were written to the log.</value></data>
+  <data name="Tray_LinkErrorTitle" xml:space="preserve"><value>Could not open link</value></data>
+  <data name="LaunchReady_ExitedEarly" xml:space="preserve"><value>The process exited before a window, game log, or normal memory usage appeared.</value></data>
+  <data name="LaunchReady_Timeout" xml:space="preserve"><value>No game window, fresh game log, or process with normal memory usage appeared within one minute.</value></data>
+  <data name="LaunchReady_Window" xml:space="preserve"><value>game window detected</value></data>
+  <data name="LaunchReady_Process" xml:space="preserve"><value>the engine process started loading normally</value></data>
+  <data name="LaunchReady_LogFormat" xml:space="preserve"><value>game log updated: {0}</value></data>
+  <data name="Executable_SummaryFormat" xml:space="preserve"><value>{0} — {1}. Source: {2}.</value></data>
+  <data name="Executable_AnomalyLauncher" xml:space="preserve"><value>base-game Anomaly Launcher found</value></data>
+  <data name="Executable_SelectedPath" xml:space="preserve"><value>user-selected path found</value></data>
+  <data name="Executable_StandaloneLauncher" xml:space="preserve"><value>standalone-build launcher found</value></data>
+  <data name="Executable_MainX64Engine" xml:space="preserve"><value>main 64-bit OGSR/X-Ray engine found</value></data>
+  <data name="Executable_BinEngine" xml:space="preserve"><value>OGSR/X-Ray engine found in a bin_* folder</value></data>
+  <data name="Executable_XrayEngine" xml:space="preserve"><value>X-Ray/OGSR engine found</value></data>
+  <data name="Executable_StalkerBinary" xml:space="preserve"><value>standard S.T.A.L.K.E.R. executable found</value></data>
+  <data name="Executable_XrayBinary" xml:space="preserve"><value>X-Ray executable found</value></data>
+  <data name="Executable_XrayLikeName" xml:space="preserve"><value>name resembles an X-Ray/OGSR engine</value></data>
+  <data name="Executable_AnomalyLikeName" xml:space="preserve"><value>name resembles an Anomaly executable</value></data>
+  <data name="Executable_XrayBinaryLikeName" xml:space="preserve"><value>name resembles an X-Ray executable</value></data>
+  <data name="Executable_Fallback" xml:space="preserve"><value>only or fallback executable</value></data>
+  <data name="Preflight_Profile" xml:space="preserve"><value>Profile</value></data>
+  <data name="Preflight_ProfileDisabled" xml:space="preserve"><value>Profile is disabled.</value></data>
+  <data name="Preflight_SharedGameDataFormat" xml:space="preserve"><value>Shared base-game folder: {0}</value></data>
+  <data name="Preflight_InProfileFolder" xml:space="preserve"><value>In the profile folder</value></data>
+  <data name="Preflight_SourceFormat" xml:space="preserve"><value>Source: {0}</value></data>
+  <data name="Preflight_EmptyModTitleFormat" xml:space="preserve"><value>Empty mod: {0}</value></data>
+  <data name="Preflight_EmptyMod" xml:space="preserve"><value>No files were found in the folder. An outer or incorrect mod folder may have been selected.</value></data>
+  <data name="Preflight_FinalExecutable" xml:space="preserve"><value>Final executable</value></data>
+  <data name="Preflight_FinalExecutableMissingFormat" xml:space="preserve"><value>{0} was not found in the game or enabled mods.</value></data>
+  <data name="Preflight_FsgameOptional" xml:space="preserve"><value>File not found. Some engines can start without it, but profile saves may not be isolated.</value></data>
+  <data name="Preflight_WorkspacePathMissing" xml:space="preserve"><value>Could not determine the workspace path.</value></data>
+  <data name="Preflight_FreeSpace" xml:space="preserve"><value>Free space</value></data>
+  <data name="Preflight_WorkspaceDriveMissing" xml:space="preserve"><value>Could not determine the workspace drive.</value></data>
+  <data name="Preflight_FreeSpaceFormat" xml:space="preserve"><value>{0} available on {1}</value></data>
+  <data name="Preflight_UsvfsLayeredOnly" xml:space="preserve"><value>USVFS is available only for regular layered profiles.</value></data>
+  <data name="Preflight_ArchitectureMissingFormat" xml:space="preserve"><value>Could not determine the final EXE architecture: {0}</value></data>
+  <data name="Preflight_UsvfsReadyFormat" xml:space="preserve"><value>Complete USVFS {0} runtime is ready. Target: {1}, {2}</value></data>
+  <data name="Preflight_CrossDriveLinks" xml:space="preserve"><value>Cross-drive links</value></data>
+  <data name="Preflight_CrossDriveAllowedFormat" xml:space="preserve"><value>Windows allows files from drive {0} to be connected without copying.</value></data>
+  <data name="Preflight_CrossDriveDeniedFormat" xml:space="preserve"><value>Windows could not create a symbolic link. Enable Developer Mode, run the launcher as administrator, or move the mod to the workspace drive. {0}</value></data>
+  <data name="Preflight_EngineFiles" xml:space="preserve"><value>Engine files</value></data>
+  <data name="Preflight_EngineDllFound" xml:space="preserve"><value>Engine DLLs were found next to the executable.</value></data>
+  <data name="Preflight_EngineDllMissing" xml:space="preserve"><value>Typical engine DLLs were not found next to the selected executable. Some builds may still work.</value></data>
+  <data name="Layer_BaseGame" xml:space="preserve"><value>base game</value></data>
+  <data name="Layer_ModFormat" xml:space="preserve"><value>mod: {0}</value></data>
+  <data name="Log_HealthCacheClearedFormat" xml:space="preserve"><value>Workspace cache cleared from Health: {0}</value></data>
+  <data name="Log_HealthCacheClearFailedFormat" xml:space="preserve"><value>Workspace cache cleanup failed: {0}</value></data>
+  <data name="Log_HealthRebuildStartedFormat" xml:space="preserve"><value>Workspace rebuild started from Health: {0}</value></data>
+  <data name="Log_HealthRebuildFinishedFormat" xml:space="preserve"><value>Workspace rebuild finished from Health: {0}</value></data>
+  <data name="Log_HealthRebuildFailedFormat" xml:space="preserve"><value>Workspace rebuild failed: {0}</value></data>
+  <data name="Log_HealthMoveStartedFormat" xml:space="preserve"><value>Workspace move started from Health: {0}</value></data>
+  <data name="Log_HealthAlreadyThereFormat" xml:space="preserve"><value>Workspace is already in the selected folder: {0}</value></data>
+  <data name="Log_HealthMoveFinishedFormat" xml:space="preserve"><value>Workspace moved from Health: {0}</value></data>
+  <data name="Log_HealthMoveFailedFormat" xml:space="preserve"><value>Workspace move failed:{0}{1}</value></data>
+  <data name="Log_HealthOldFolderRemainsFormat" xml:space="preserve"><value>Workspace moved to {0}, but the old folder was not deleted: {1}{2}{3}</value></data>
+  <data name="Log_HealthOldFolderRetryFormat" xml:space="preserve"><value>Retrying old workspace cleanup: {0}</value></data>
+  <data name="Log_HealthOldFolderDeletedFormat" xml:space="preserve"><value>Old workspace deleted after retry: {0}</value></data>
+  <data name="Log_HealthOldFolderRetryFailedFormat" xml:space="preserve"><value>Old workspace cleanup retry failed: {0}{1}{2}</value></data>
+  <data name="Log_HealthActionFailedFormat" xml:space="preserve"><value>Health action failed: {0}</value></data>
+  <data name="Log_ReasonProfileSelection" xml:space="preserve"><value>profile selection</value></data>
+  <data name="Log_ReasonModListChanged" xml:space="preserve"><value>mod list change</value></data>
+  <data name="Log_ReasonModListReplaced" xml:space="preserve"><value>mod list replacement</value></data>
+  <data name="Log_ReasonModPriorityChanged" xml:space="preserve"><value>mod priority change</value></data>
+  <data name="Workspace_GameFolderRequired" xml:space="preserve"><value>Select a game folder for a regular profile.</value></data>
+  <data name="Workspace_CheckingFiles" xml:space="preserve"><value>Checking game and mod files...</value></data>
+  <data name="Workspace_ScanCompleteFormat" xml:space="preserve"><value>Sources checked in {0}. Rebuild is not required.</value></data>
+  <data name="Workspace_Preparing" xml:space="preserve"><value>Preparing a clean profile workspace...</value></data>
+  <data name="Workspace_ConnectingGame" xml:space="preserve"><value>Connecting the base game to the workspace...</value></data>
+  <data name="Workspace_ReadyFormat" xml:space="preserve"><value>Workspace ready. Hard links: {0:N0}; symbolic links: {1:N0}; local files: {2:N0}.</value></data>
+  <data name="Workspace_LocalFilesFormat" xml:space="preserve"><value>Local workspace files: {0:N0}. Service files: {1:N0}; read-only copies: {2:N0}. Source game and mod files were not changed.</value></data>
+  <data name="Workspace_ReadOnlyFilesFormat" xml:space="preserve"><value>Read-only files: {0:N0}. Symbolic links: {1:N0}; independent copies: {2:N0}. Source mod files were not changed.</value></data>
+  <data name="Workspace_TimingFormat" xml:space="preserve"><value>Preparation time: scan {0}; cleanup {1}; game {2}; mods {3}; configuration {4}; total {5}.</value></data>
+  <data name="Workspace_ManualSourceUnavailable" xml:space="preserve"><value>The manual executable source is no longer available. Select the executable again or reset the source to automatic.</value></data>
+  <data name="Workspace_ManualFileMissingFormat" xml:space="preserve"><value>The manual executable source was found, but the file is missing: {0}</value></data>
+  <data name="Workspace_ManualExecutableFormat" xml:space="preserve"><value>Using manually selected executable: {0}. Source: {1}.</value></data>
+  <data name="Workspace_SafetyMarkerRequired" xml:space="preserve"><value>The launcher refused to clean a folder without a workspace safety marker.</value></data>
+  <data name="Workspace_ProfileMarkerRestored" xml:space="preserve"><value>Profile safety marker restored. The workspace can be cleaned safely again.</value></data>
+  <data name="Workspace_ExistingFolderFormat" xml:space="preserve"><value>Existing profile workspace found: {0}</value></data>
+  <data name="Workspace_RootMarkerRestored" xml:space="preserve"><value>Workspace root service marker restored.</value></data>
+  <data name="Workspace_ProfileMarkerRebuildRestored" xml:space="preserve"><value>Profile safety marker restored. The workspace can be rebuilt safely again.</value></data>
+  <data name="Workspace_MovedToAsciiFormat" xml:space="preserve"><value>Workspace moved to a compatible ASCII path: {0}</value></data>
+  <data name="Workspace_DriveRootForbidden" xml:space="preserve"><value>A drive root cannot be used as the workspace root.</value></data>
+  <data name="Workspace_MillisecondsFormat" xml:space="preserve"><value>{0:0} ms</value></data>
+  <data name="Workspace_SecondsFormat" xml:space="preserve"><value>{0:0.0} s</value></data>
+  <data name="Workspace_ExecutableAutoSelectedFormat" xml:space="preserve"><value>Profile executable not found. Automatically selected '{0}': {1}.</value></data>
+  <data name="WorkspaceManifest_CurrentMissing" xml:space="preserve"><value>Workspace will be prepared: the current folder has not been created yet.</value></data>
+  <data name="WorkspaceManifest_CacheMissing" xml:space="preserve"><value>Workspace will be prepared: build cache is missing.</value></data>
+  <data name="WorkspaceManifest_ExecutableMissing" xml:space="preserve"><value>Workspace will be rebuilt: the selected EXE is missing from the current build.</value></data>
+  <data name="WorkspaceManifest_Current" xml:space="preserve"><value>Workspace is current: no game or mod changes were found.</value></data>
+  <data name="WorkspaceManifest_CacheUnreadable" xml:space="preserve"><value>Workspace will be rebuilt: build cache could not be read.</value></data>
+  <data name="WorkspaceManifest_RebuildReasonFormat" xml:space="preserve"><value>Workspace will be rebuilt: {0}.</value></data>
+  <data name="WorkspaceManifest_AdditionalReasonFormat" xml:space="preserve"><value>Additional rebuild reason: {0}.</value></data>
+  <data name="WorkspaceManifest_DiagnosticFormatChanged" xml:space="preserve"><value>Workspace diagnostic signature format was updated</value></data>
+  <data name="WorkspaceManifest_FormatChangedFormat" xml:space="preserve"><value>Workspace format changed: {0} → {1}</value></data>
+  <data name="WorkspaceManifest_ExecutableChangedFormat" xml:space="preserve"><value>launch executable changed: {0} → {1}</value></data>
+  <data name="WorkspaceManifest_SourceChangedFormat" xml:space="preserve"><value>EXE source changed: {0} → {1}</value></data>
+  <data name="WorkspaceManifest_Auto" xml:space="preserve"><value>auto</value></data>
+  <data name="WorkspaceManifest_ProfileModeChangedFormat" xml:space="preserve"><value>profile mode changed: {0} → {1}</value></data>
+  <data name="WorkspaceManifest_InputsChanged" xml:space="preserve"><value>Workspace inputs changed</value></data>
+  <data name="WorkspaceManifest_MoreChangesFormat" xml:space="preserve"><value>additional changes not shown: {0:N0}</value></data>
+  <data name="WorkspaceManifest_LayersChanged" xml:space="preserve"><value>enabled layer set changed</value></data>
+  <data name="WorkspaceManifest_ModOrderChanged" xml:space="preserve"><value>mod order changed</value></data>
+  <data name="WorkspaceManifest_LayerPathChangedFormat" xml:space="preserve"><value>layer “{0}” path changed: {1} → {2}</value></data>
+  <data name="WorkspaceManifest_LayerPriorityChangedFormat" xml:space="preserve"><value>layer “{0}” priority changed: {1} → {2}</value></data>
+  <data name="WorkspaceManifest_ExclusionsChangedFormat" xml:space="preserve"><value>excluded files changed for layer “{0}”</value></data>
+  <data name="WorkspaceManifest_FileAddedFormat" xml:space="preserve"><value>file added to layer “{0}”: {1}</value></data>
+  <data name="WorkspaceManifest_FileChangedFormat" xml:space="preserve"><value>file changed in layer “{0}”: {1}</value></data>
+  <data name="WorkspaceManifest_FileRemovedFormat" xml:space="preserve"><value>file removed from layer “{0}”: {1}</value></data>
+  <data name="WorkspaceManifest_NotSet" xml:space="preserve"><value>not set</value></data>
+  <data name="Materializer_OldLinksFound" xml:space="preserve"><value>Protected links from an older build were found. Preparing safe workspace cleanup...</value></data>
+  <data name="Materializer_OldLinksReleasedFormat" xml:space="preserve"><value>Released protected links from the old workspace: {0:N0}. Source-file attributes will be restored.</value></data>
+  <data name="Materializer_CheckingSymlinks" xml:space="preserve"><value>Checking symbolic links for files on other drives...</value></data>
+  <data name="Materializer_GameFilesFormat" xml:space="preserve"><value>Base-game files connected: {0:N0}...</value></data>
+  <data name="Materializer_ConnectingModFormat" xml:space="preserve"><value>Connecting mod: {0}</value></data>
+  <data name="Materializer_ModConnectedFormat" xml:space="preserve"><value>Mod connected: {0}. Files: {1:N0}; folders: {2:N0}.</value></data>
+  <data name="Materializer_EmptyModFormat" xml:space="preserve"><value>Warning: no files were found in mod “{0}”. Make sure the mod's root folder is selected, not an empty outer folder.</value></data>
+  <data name="Materializer_CrossDriveReasonFormat" xml:space="preserve"><value>Mod files are on drive {0}, but the workspace is created on drive {1}. Windows could not create a symbolic link between them.</value></data>
+  <data name="Materializer_LinkReasonFormat" xml:space="preserve"><value>Windows could not create a link on drive {0}. The drive might not use NTFS, or the launcher might not have enough permissions.</value></data>
+  <data name="Materializer_LinkFailureFormat" xml:space="preserve"><value>Could not connect mod files to the profile without copying.{0}{0}{1}{0}{0}To fix the problem:{0}1. Enable Developer Mode in Windows Settings: System → For developers.{0}2. Or run the launcher as administrator.{0}3. Or move the mod to drive {2}.{0}{0}The build was stopped. Game and mod files were not changed.</value></data>
+  <data name="Materializer_UnknownVolume" xml:space="preserve"><value>unknown</value></data>
+  <data name="Mo2Service_SelectFolder" xml:space="preserve"><value>Select folder</value></data>
+  <data name="Mo2Service_SelectOneOfFormat" xml:space="preserve"><value>Select one of {0} folders</value></data>
+  <data name="Mo2Service_SelectedManually" xml:space="preserve"><value>Selected manually</value></data>
+  <data name="Mo2Service_Found" xml:space="preserve"><value>Found</value></data>
+  <data name="Mo2Service_FolderMissing" xml:space="preserve"><value>Folder is missing</value></data>
+  <data name="Mo2Service_OverwriteFormat" xml:space="preserve"><value>overwrite: {0} files. {1}{2}</value></data>
+  <data name="Mo2Service_OverwriteEmpty" xml:space="preserve"><value>overwrite is empty or missing.</value></data>
+  <data name="Mo2Service_SelectSource" xml:space="preserve"><value>Select a Mod Organizer 2 folder, an MO2 profile, or modlist.txt.</value></data>
+  <data name="Mo2Service_FolderNotFoundFormat" xml:space="preserve"><value>MO2 folder not found: {0}</value></data>
+  <data name="Mo2Service_ModListRequired" xml:space="preserve"><value>Select modlist.txt from an MO2 profile.</value></data>
+  <data name="Mo2Service_NoProfiles" xml:space="preserve"><value>No MO2 profile containing modlist.txt was found in the selected folder.</value></data>
+  <data name="Mo2Service_ModListMissing" xml:space="preserve"><value>The selected profile's modlist.txt was not found.</value></data>
+  <data name="Mo2Service_NoMods" xml:space="preserve"><value>No mods were found in modlist.txt.</value></data>
+  <data name="Mo2Service_GameFolderMissing" xml:space="preserve"><value>Base-game folder not found. Select it before importing.</value></data>
+  <data name="Mo2Service_AmbiguousFolders" xml:space="preserve"><value>Select source folders for ambiguous mods before importing.</value></data>
+  <data name="Mo2Service_ImportedDescriptionFormat" xml:space="preserve"><value>Imported from Mod Organizer 2: {0}</value></data>
+  <data name="Mo2Service_ExecutableUncertain" xml:space="preserve"><value>The EXE could not be identified reliably; select it in profile settings after import.</value></data>
+  <data name="Catalog_BrowserCheck" xml:space="preserve"><value>AP-PRO temporarily requested a browser verification.</value></data>
+  <data name="Usvfs_InvalidAnomalyEngineFormat" xml:space="preserve"><value>Invalid Anomaly engine for USVFS: {0}</value></data>
+  <data name="Usvfs_AnomalyEngineMissingFormat" xml:space="preserve"><value>The selected Anomaly engine was not found in enabled layers: {0}</value></data>
+  <data name="Portable_SourceOverlap" xml:space="preserve"><value>The game or mod folder overlaps the portable launcher's service data. Place the launcher outside source game and mod folders.</value></data>
+  <data name="Portable_PathEscapes" xml:space="preserve"><value>The relative path escapes the portable folder.</value></data>
+  <data name="Discord_UnavailableFormat" xml:space="preserve"><value>Discord: status unavailable ({0}). The game will continue without it.</value></data>
+  <data name="Dialog_InvalidUrl" xml:space="preserve"><value>The website address is invalid.</value></data>
+  <data name="Layer_ProfileWritableData" xml:space="preserve"><value>profile writable data</value></data>
+  <data name="Layer_ProfileOverwrite" xml:space="preserve"><value>profile overwrite</value></data>
+  <data name="Copy_SeparateFolders" xml:space="preserve"><value>Copy folders must be separate and must not contain each other.</value></data>
+  <data name="Copy_SourceOutsideOverwriteFormat" xml:space="preserve"><value>The source must be inside the profile overwrite folder: {0}</value></data>
+  <data name="Copy_NoDataFormat" xml:space="preserve"><value>No data to copy: {0}</value></data>
+  <data name="Copy_ThroughLinkForbiddenFormat" xml:space="preserve"><value>Copying through a link is not allowed: {0}</value></data>
+  <data name="Mo2Service_ModListFileMissing" xml:space="preserve"><value>modlist.txt was not found.</value></data>
+  <data name="Mo2Service_ModListNoEntries" xml:space="preserve"><value>No mod entries were found in modlist.txt.</value></data>
+  <data name="Executable_AutomaticPriority" xml:space="preserve"><value>Automatic selection by mod priority.</value></data>
+  <data name="Executable_ManualSourceFormat" xml:space="preserve"><value>Manually selected source: {0}.</value></data>
+  <data name="ProfileData_BaseFsgameMissingFormat" xml:space="preserve"><value>Base-game fsgame.ltx was not found: {0}</value></data>
+  <data name="ProfileData_AliasInvalidFormat" xml:space="preserve"><value>Could not determine the base-game data folder: unknown or circular alias {0}.</value></data>
+  <data name="ProfileData_AliasEmptyFormat" xml:space="preserve"><value>Empty {0} path in fsgame.ltx.</value></data>
+  <data name="Profile_ImportInvalid" xml:space="preserve"><value>The profile file is empty or has an invalid format.</value></data>
+  <data name="Profile_CopyNameFormat" xml:space="preserve"><value>{0} — copy</value></data>
+  <data name="Profile_StandaloneNoWorkspace" xml:space="preserve"><value>A standalone profile does not use a workspace.</value></data>
+  <data name="Usvfs_LogCleanupFailedFormat" xml:space="preserve"><value>Could not remove the service USVFS log from the game log folder: {0}</value></data>
+  <data name="Startup_ExecutablePathMissing" xml:space="preserve"><value>Could not determine the launcher path.</value></data>
+  <data name="Startup_RegistryUnavailable" xml:space="preserve"><value>Could not open the Windows startup registry key.</value></data>
+  <data name="Usvfs_TargetArchitectureMissingFormat" xml:space="preserve"><value>Could not determine the USVFS target architecture: {0}</value></data>
+  <data name="Usvfs_SharedDataFormat" xml:space="preserve"><value>USVFS: shared base-game data: {0}. Existing files were preserved.</value></data>
+  <data name="Usvfs_ProfileFsgameFormat" xml:space="preserve"><value>USVFS: profile fsgame.ltx prepared from layer “{0}”{1}.</value></data>
+  <data name="Usvfs_ManualSelectionSuffix" xml:space="preserve"><value> (manual selection)</value></data>
+  <data name="Usvfs_AlreadyRunning" xml:space="preserve"><value>Another profile is already running through USVFS. Close it before starting a second USVFS profile.</value></data>
+  <data name="Navigation_Mo2FailedTitle" xml:space="preserve"><value>Could not open MO2 import</value></data>
+  <data name="Navigation_WizardFailedFormat" xml:space="preserve"><value>The wizard was not opened. The launcher will continue.{0}{0}{1}</value></data>
+  <data name="Workspace_ExecutableFallbackFormat" xml:space="preserve"><value>Executable '{0}' was not found. Using '{1}': {2}.</value></data>
+  <data name="Layer_ProfileData" xml:space="preserve"><value>profile data</value></data>
+  <data name="Fsgame_ArgumentPathRequired" xml:space="preserve"><value>Specify a relative .ltx file path after -fsltx.</value></data>
+  <data name="Fsgame_ArgumentFile" xml:space="preserve"><value>File from the -fsltx argument</value></data>
+  <data name="Fsgame_ArgumentExtensionFormat" xml:space="preserve"><value>The -fsltx argument must reference an .ltx file: {0}</value></data>
+  <data name="Fsgame_ManualExtension" xml:space="preserve"><value>The manually selected configuration file must have an .ltx extension.</value></data>
+  <data name="Fsgame_ManualMissingFormat" xml:space="preserve"><value>Manually selected .ltx file not found: {0}</value></data>
+  <data name="Fsgame_ManualOutsideLayers" xml:space="preserve"><value>The manually selected .ltx file must be inside the base game or an enabled mod folder.</value></data>
+  <data name="Layer_Mo2OverwriteFiles" xml:space="preserve"><value>MO2 overwrite files</value></data>
+  <data name="Usvfs_ArchitectureMismatchFormat" xml:space="preserve"><value>{0}: expected architecture {1}, detected {2}.</value></data>
+  <data name="Usvfs_FileVersionMissingFormat" xml:space="preserve"><value>{0}: file version is missing.</value></data>
+  <data name="Usvfs_VersionMismatchFormat" xml:space="preserve"><value>USVFS component versions do not match: {0}.</value></data>
+  <data name="Usvfs_FileMissingFormat" xml:space="preserve"><value>{0} not found</value></data>
+  <data name="Usvfs_TargetX86" xml:space="preserve"><value>32-bit game</value></data>
+  <data name="Usvfs_TargetX64" xml:space="preserve"><value>64-bit game</value></data>
+  <data name="Usvfs_TargetSelected" xml:space="preserve"><value>selected game</value></data>
+  <data name="Usvfs_RuntimeInvalidFormat" xml:space="preserve"><value>The USVFS runtime for the {0} failed validation. {1} Runtime folder: {2}</value></data>
+  <data name="Usvfs_ArchitectureUnknown" xml:space="preserve"><value>unknown</value></data>
+  <data name="Fsgame_NotFoundHelpFormat" xml:space="preserve"><value>fsgame.ltx was not found in enabled layers. Select it manually in an enabled layer.{0}{0}Open: “Profile settings” → “fsgame.ltx source” → “Select file...”.{0}{0}Depending on the modification, the file may have another name: fsgame.ltx, fsgame_coc.ltx, or fsolr.ltx.</value></data>
+  <data name="Fsgame_ManualUsingFormat" xml:space="preserve"><value>Using manually selected fsgame configuration: {0}</value></data>
+  <data name="ProfileData_SharedFormat" xml:space="preserve"><value>Using shared base-game data: {0}. Existing files are not copied or replaced.</value></data>
+  <data name="ProfileData_MigratedFormat" xml:space="preserve"><value>Previously redirected profile data migrated: {0:N0}; existing files skipped: {1:N0}.</value></data>
+  <data name="Launch_UsvfsFailedFormat" xml:space="preserve"><value>USVFS launch failed: {0}</value></data>
+  <data name="Launch_UsvfsNoAutoFallback" xml:space="preserve"><value>The profile was not switched to Workspace automatically. To retry through Workspace, select that mode in profile settings.</value></data>
+  <data name="Launch_BackendFormat" xml:space="preserve"><value>Launch mode: {0}.</value></data>
+  <data name="Launch_ExecutableFormat" xml:space="preserve"><value>Launching: {0}</value></data>
+  <data name="Launch_UsvfsUnavailable" xml:space="preserve"><value>USVFS is selected for the profile, but its components are unavailable. Install a launcher build containing usvfs_x64.dll and usvfs_proxy_x64.exe, or select Workspace in profile settings.</value></data>
+  <data name="Launch_BackendUnavailableFormat" xml:space="preserve"><value>Profile launch backend is unavailable: {0}.</value></data>
+  <data name="Writable_CapturedFormat" xml:space="preserve"><value>Profile game settings captured from workspace: {0:N0}.</value></data>
+  <data name="Writable_StaleSkippedFormat" xml:space="preserve"><value>A newer profile version was kept; stale current files skipped: {0:N0}.</value></data>
+  <data name="Writable_UsvfsPreparedFormat" xml:space="preserve"><value>Profile writable files prepared for USVFS: {0:N0}.</value></data>
+  <data name="Writable_UsvfsMigratedFormat" xml:space="preserve"><value>Writable files moved from USVFS overwrite to profile storage: {0:N0}.</value></data>
+  <data name="Writable_LaunchPreparedFormat" xml:space="preserve"><value>Profile game settings prepared for launch: {0:N0}.</value></data>
+  <data name="Writable_WorkspaceRestoredFormat" xml:space="preserve"><value>Profile game settings restored to workspace: {0:N0}.</value></data>
+  <data name="Writable_ObsoleteFsgameRemoved" xml:space="preserve"><value>Obsolete profile fsgame.ltx removed. The launcher will recreate it from the current profile layers.</value></data>
+  <data name="Workspace_ActiveCannotDeleteFormat" xml:space="preserve"><value>Cannot delete the active profile workspace: {0}</value></data>
+  <data name="Workspace_NestedDestination" xml:space="preserve"><value>The new workspace folder must not be inside the old folder or contain it.</value></data>
+  <data name="Workspace_DestinationExistsFormat" xml:space="preserve"><value>Destination folder already exists: {0}</value></data>
+  <data name="Workspace_CopyingUserData" xml:space="preserve"><value>Copying saves, settings, and logs...</value></data>
+  <data name="Workspace_MovedFormat" xml:space="preserve"><value>Workspace moved: {0}. The current folder will be rebuilt.</value></data>
+  <data name="ProfileData_ManagedRootFormat" xml:space="preserve"><value>Shared data folder {0} is inside managed profile storage: {1}.</value></data>
+  <data name="ProfileData_OverlapsWorkspace" xml:space="preserve"><value>Shared game data must not overlap the profile workspace.</value></data>
+  <data name="ProfileData_OverlapsGameRoot" xml:space="preserve"><value>The data folder must not equal or contain the game root.</value></data>
+  <data name="ProfileData_OverlapsMod" xml:space="preserve"><value>The data folder must not overlap a source mod folder.</value></data>
+  <data name="LaunchPlan_SelectedPathFound" xml:space="preserve"><value>selected path found</value></data>
+  <data name="LaunchPlan_ManualSource" xml:space="preserve"><value>manual source</value></data>
+  <data name="LaunchPlan_ManualSourceUnavailable" xml:space="preserve"><value>manual source folder is unavailable or the mod is disabled</value></data>
+  <data name="LaunchPlan_SelectedManually" xml:space="preserve"><value>selected manually by the user</value></data>
+  <data name="LaunchPlan_ManualFileMissing" xml:space="preserve"><value>manual source found, but the file is missing</value></data>
+  <data name="Settings_JsonRequired" xml:space="preserve"><value>Select a settings file with a .json extension.</value></data>
+  <data name="Settings_FileUnavailable" xml:space="preserve"><value>Settings file is unavailable.</value></data>
+  <data name="Settings_FileInvalid" xml:space="preserve"><value>The selected file does not contain CORDON settings.</value></data>
+  <data name="Settings_EmptyJson" xml:space="preserve"><value>The file contains an empty JSON document.</value></data>
+  <data name="Settings_InvalidJsonFormat" xml:space="preserve"><value>Invalid JSON: {0}</value></data>
+  <data name="Settings_ReadErrorFormat" xml:space="preserve"><value>Read error: {0}</value></data>
+  <data name="Settings_AccessDeniedFormat" xml:space="preserve"><value>File access denied: {0}</value></data>
+  <data name="Settings_DamagedBackupFailed" xml:space="preserve"><value>Could not safely preserve the damaged settings file. The original file will not be overwritten.</value></data>
+  <data name="Settings_TemporarilyUnavailableFormat" xml:space="preserve"><value>Settings file is temporarily unavailable and will not be changed: {0}. {1}</value></data>
+  <data name="Settings_WriteBlockedFormat" xml:space="preserve"><value>Writing settings is blocked until a successful reload. {0}</value></data>
+  <data name="Update_ArchiveSizeMissing" xml:space="preserve"><value>GitHub did not provide the update archive size.</value></data>
+  <data name="Update_ChecksumInvalid" xml:space="preserve"><value>The release does not contain a valid archive checksum.</value></data>
+  <data name="Update_ChecksumMismatch" xml:space="preserve"><value>The downloaded archive checksum does not match.</value></data>
+  <data name="Update_ReleaseDataIncomplete" xml:space="preserve"><value>GitHub returned incomplete release data.</value></data>
+  <data name="Update_ShaMissingFormat" xml:space="preserve"><value>The release does not contain SHA-256 for {0}.</value></data>
+  <data name="Update_ShaInvalidFormat" xml:space="preserve"><value>SHA-256 for {0} has an invalid format.</value></data>
+  <data name="Update_ArchiveTooLarge" xml:space="preserve"><value>The update archive is too large.</value></data>
+  <data name="Update_LauncherDirectoryMissing" xml:space="preserve"><value>Could not determine the launcher folder.</value></data>
+  <data name="Update_SignalFailed" xml:space="preserve"><value>Could not create a one-time updater signal.</value></data>
+  <data name="Update_InstallerStartFailed" xml:space="preserve"><value>Could not start the update installer.</value></data>
+  <data name="Update_AcknowledgeTimeout" xml:space="preserve"><value>The updater did not acknowledge the original launcher in time.</value></data>
+  <data name="Update_TempFolderInvalid" xml:space="preserve"><value>The temporary update folder is invalid.</value></data>
+  <data name="Update_RestartFailed" xml:space="preserve"><value>Could not start the updated launcher.</value></data>
+  <data name="Update_LauncherExitedEarly" xml:space="preserve"><value>The original launcher exited before updater acknowledgement.</value></data>
+  <data name="Update_ProcessCheckFailed" xml:space="preserve"><value>Could not verify the running launcher.</value></data>
+  <data name="Update_WrongLauncher" xml:space="preserve"><value>The update request was not created by the current launcher.</value></data>
+  <data name="Update_ArchiveSizeInvalid" xml:space="preserve"><value>GitHub returned an invalid archive size.</value></data>
+  <data name="Update_ArchiveInvalid" xml:space="preserve"><value>The update archive has an invalid size or contents.</value></data>
+  <data name="Update_DataFolderForbidden" xml:space="preserve"><value>The update archive must not contain the Data folder.</value></data>
+  <data name="Update_FoldersForbidden" xml:space="preserve"><value>The update archive must not contain folders.</value></data>
+  <data name="Update_EntryInvalidFormat" xml:space="preserve"><value>Invalid update archive entry: {0}</value></data>
+  <data name="Update_NoSpaceFormat" xml:space="preserve"><value>Not enough free space on drive {0}: {1} MB required, {2} MB available.</value></data>
+  <data name="Update_VolumeMissing" xml:space="preserve"><value>Could not determine the update volume.</value></data>
+  <data name="Update_RequiredFileMissingFormat" xml:space="preserve"><value>{0} is missing from the update archive.</value></data>
+  <data name="Update_WrongBuildType" xml:space="preserve"><value>The archive contains an executable for a different build type.</value></data>
+  <data name="Update_ChecksumsIncomplete" xml:space="preserve"><value>Checksums do not cover every update file.</value></data>
+  <data name="Update_FileChecksumMismatchFormat" xml:space="preserve"><value>Checksum mismatch for {0}.</value></data>
+  <data name="Update_DataChangeForbidden" xml:space="preserve"><value>The update must not modify Data.</value></data>
+  <data name="Update_RollbackIncompleteFormat" xml:space="preserve"><value>The update could not be rolled back completely. Backups were saved to {0}</value></data>
+  <data name="Update_ChecksumFileInvalid" xml:space="preserve"><value>The checksum file has an invalid format.</value></data>
+  <data name="Check_CrashDump" xml:space="preserve"><value>Crash dump</value></data>
+  <data name="Dialog_ProfileFilter" xml:space="preserve"><value>Profile files (*.stalkerprofile)|*.stalkerprofile|JSON files (*.json)|*.json|All files (*.*)|*.*</value></data>
+  <data name="Dialog_LtxFilter" xml:space="preserve"><value>LTX files (*.ltx)|*.ltx</value></data>
+  <data name="Dialog_ModListFilter" xml:space="preserve"><value>Mod Organizer mod list (modlist.txt)|modlist.txt|Text files (*.txt)|*.txt</value></data>
+  <data name="Dialog_SelectLaunchExecutable" xml:space="preserve"><value>Select launch executable</value></data>
+  <data name="Dialog_SelectGameExecutable" xml:space="preserve"><value>Select game executable</value></data>
+  <data name="Dialog_InvalidExecutable" xml:space="preserve"><value>Invalid executable</value></data>
+  <data name="Dialog_ExecutableOutsideSources" xml:space="preserve"><value>Select an executable from the game folder, an enabled mod folder, or the generated profile workspace.</value></data>
+  <data name="Dialog_NoModFolder" xml:space="preserve"><value>No mod folder</value></data>
+  <data name="Dialog_AddModBeforeExecutable" xml:space="preserve"><value>Add a mod to the profile first, then select the executable from its folder.</value></data>
+  <data name="Dialog_ExecutableOutsideModTitle" xml:space="preserve"><value>Outside mod folder</value></data>
+  <data name="Dialog_ExecutableOutsideMod" xml:space="preserve"><value>The executable must be inside the standalone mod folder.</value></data>
+  <data name="Dialog_SelectGogFolder" xml:space="preserve"><value>Select S.T.A.L.K.E.R. GOG folder</value></data>
+  <data name="Log_HungProcessesTerminated" xml:space="preserve"><value>Hung launch processes were terminated by the user.</value></data>
+  <data name="Log_NoLaunchProcesses" xml:space="preserve"><value>No active launch processes were found to terminate.</value></data>
+  <data name="Log_LaunchReadinessFailedFormat" xml:space="preserve"><value>Launch readiness check failed: {0}</value></data>
+  <data name="Log_PlaytimeRecordedFormat" xml:space="preserve"><value>Play time recorded: {0} (total: {1})</value></data>
+  <data name="Log_PlaytimeFailedFormat" xml:space="preserve"><value>Play-time tracking failed: {0}</value></data>
+  <data name="Log_ExitCodeFormat" xml:space="preserve"><value> Exit code: {0}.</value></data>
+  <data name="Log_GameExitedEarlyFormat" xml:space="preserve"><value>Game exited shortly after launch ({0}).{1}</value></data>
+  <data name="Log_GameExitedCodeFormat" xml:space="preserve"><value>Game process exited with code {0}.</value></data>
+  <data name="Log_LatestGameLogFormat" xml:space="preserve"><value>Latest game log: {0}</value></data>
+  <data name="Log_CrashDumpDetectedFormat" xml:space="preserve"><value>Crash dump detected: {0}</value></data>
+  <data name="Log_NoModsFound" xml:space="preserve"><value>No mods found in the selected folder.</value></data>
+  <data name="Log_ScanResultsFormat" xml:space="preserve"><value>Scan results: {0} total, {1} selected.</value></data>
+  <data name="Log_NoModsSelected" xml:space="preserve"><value>No mods selected.</value></data>
+  <data name="Log_ModsAddedFromScanFormat" xml:space="preserve"><value>Added {0} mod(s) from scan.</value></data>
+  <data name="Log_ScanFailedFormat" xml:space="preserve"><value>Scan failed: {0}</value></data>
+  <data name="Log_ModAddedFormat" xml:space="preserve"><value>Mod added: {0}</value></data>
+  <data name="Log_ArchiveCancelledFormat" xml:space="preserve"><value>Mod archive installation cancelled because the folder already exists: {0}</value></data>
+  <data name="Log_ArchiveInstalledFormat" xml:space="preserve"><value>Mod archive installed: {0} → {1}</value></data>
+  <data name="Log_ArchiveFailedFormat" xml:space="preserve"><value>Mod archive installation failed: {0}</value></data>
+  <data name="Log_ExecutableSelectedSourceFormat" xml:space="preserve"><value>Launch executable selected: {0} from {1}</value></data>
+  <data name="Log_ExecutableSelectedFormat" xml:space="preserve"><value>Launch executable selected: {0}</value></data>
+  <data name="Log_StandaloneExeDetectedFormat" xml:space="preserve"><value>Standalone executable detected automatically: {0}</value></data>
+  <data name="Log_ModsRemovedFormat" xml:space="preserve"><value>Removed {0} mod(s).</value></data>
+  <data name="Log_ModRemovedFormat" xml:space="preserve"><value>Mod removed: {0}</value></data>
+  <data name="Log_OpenModFolderFailedFormat" xml:space="preserve"><value>Could not open mod folder: {0}</value></data>
+  <data name="Log_SettingsImportedAutomaticallyFormat" xml:space="preserve"><value>Settings imported automatically: {0}</value></data>
+  <data name="Log_AutomaticSettingsImportFailedFormat" xml:space="preserve"><value>Automatic settings import failed: {0}</value></data>
+  <data name="Log_StartupRefreshFailedFormat" xml:space="preserve"><value>Windows startup registration refresh failed: {0}</value></data>
+  <data name="Log_SettingsLoaded" xml:space="preserve"><value>Settings loaded.</value></data>
+  <data name="Log_SettingsLoadBlockedFormat" xml:space="preserve"><value>Settings load blocked: {0}</value></data>
+  <data name="Log_SettingsLoadFailedFormat" xml:space="preserve"><value>Settings load failed: {0}</value></data>
+  <data name="Log_SettingsSaved" xml:space="preserve"><value>Settings saved.</value></data>
+  <data name="Log_SettingsSaveFailedFormat" xml:space="preserve"><value>Settings save failed: {0}</value></data>
+  <data name="Log_SettingsRecoveryFormat" xml:space="preserve"><value>Settings recovery: {0} → {1}. {2}</value></data>
+  <data name="Log_ExecutableDetectedAfterFormat" xml:space="preserve"><value>Launch executable detected automatically after {0}: {1} from {2}</value></data>
+  <data name="Log_ProfileExportedFormat" xml:space="preserve"><value>Profile exported: {0}</value></data>
+  <data name="Log_ExportFailedFormat" xml:space="preserve"><value>Export failed: {0}</value></data>
+  <data name="Log_ProfileImportedFormat" xml:space="preserve"><value>Profile imported: {0}</value></data>
+  <data name="Log_ImportFailedFormat" xml:space="preserve"><value>Import failed: {0}</value></data>
+  <data name="Log_SettingsImportedFormat" xml:space="preserve"><value>Settings imported: {0}</value></data>
+  <data name="Log_SettingsImportFailedFormat" xml:space="preserve"><value>Settings import failed: {0}</value></data>
+  <data name="Log_GameFolderSelectedFormat" xml:space="preserve"><value>Game folder selected: {0}</value></data>
+  <data name="Log_ProfileCreatedFormat" xml:space="preserve"><value>Profile created: {0}</value></data>
+  <data name="Log_Mo2ProfileImportedFormat" xml:space="preserve"><value>MO2 profile imported: {0}</value></data>
+  <data name="Log_Mo2ImportRolledBackFormat" xml:space="preserve"><value>MO2 import rolled back: {0}</value></data>
+  <data name="Log_ProfileDuplicatedFormat" xml:space="preserve"><value>Profile duplicated: {0}</value></data>
+  <data name="Log_ProfileDeletedFormat" xml:space="preserve"><value>Profile deleted: {0}</value></data>
+  <data name="Log_ProfileWorkspaceDeletedFormat" xml:space="preserve"><value>Profile and workspace deleted: {0}</value></data>
+  <data name="Log_ProfileDeleteFailedFormat" xml:space="preserve"><value>Profile deletion failed: {0}</value></data>
+  <data name="Log_OpenProfileFolderFailedFormat" xml:space="preserve"><value>Could not open profile folder: {0}</value></data>
+  <data name="Mod_DefaultName" xml:space="preserve"><value>New mod</value></data>
+  <data name="Mod_DefaultNameFormat" xml:space="preserve"><value>Mod {0}</value></data>
+  <data name="Profile_DefaultNameFormat" xml:space="preserve"><value>Profile {0}</value></data>
+  <data name="Profile_DefaultDescription" xml:space="preserve"><value>S.T.A.L.K.E.R. mod profile</value></data>
+  <data name="Progress_LegacySaveHookRemoved" xml:space="preserve"><value>Removed the legacy save autoload hook from the profile workspace.</value></data>
+  <data name="Progress_FsgameDetectedFormat" xml:space="preserve"><value>Detected fsgame.ltx in “{0}”; using it as the working directory.</value></data>
+  <data name="Progress_FsgameRewritten" xml:space="preserve"><value>fsgame.ltx rewritten for profile-local saves and logs.</value></data>
+  <data name="Progress_KeepingExistingUserLtx" xml:space="preserve"><value>Keeping the existing profile-local user.ltx.</value></data>
+  <data name="Progress_KeepingModifiedUserLtx" xml:space="preserve"><value>Keeping the modified profile-local user.ltx.</value></data>
+  <data name="Progress_UserLtxPreparedFormat" xml:space="preserve"><value>Profile user.ltx prepared from {0}: {1}</value></data>
+  <data name="Progress_UserLtxCopyFailedFormat" xml:space="preserve"><value>Warning: could not copy user.ltx from {0}: {1}</value></data>
+  <data name="Progress_ShaderCachePreparedFormat" xml:space="preserve"><value>Profile shader cache prepared: {0:N0} file(s) copied from game and mod sources.</value></data>
+  <data name="Progress_ShaderCacheFailedFormat" xml:space="preserve"><value>Warning: {0:N0} shader-cache file(s) could not be copied to the profile.</value></data>
+  <data name="Progress_UsvfsDiagnosticMovedFormat" xml:space="preserve"><value>USVFS diagnostic log moved outside the game log folder: {0}</value></data>
+  <data name="Progress_UsvfsManualEngineFormat" xml:space="preserve"><value>USVFS Anomaly manual engine selection: starting {0} directly instead of AnomalyLauncher.exe.</value></data>
+  <data name="Progress_UsvfsExecutableSourceFormat" xml:space="preserve"><value>USVFS executable source: {0}.</value></data>
+  <data name="Progress_UsvfsRuntimeVersionFormat" xml:space="preserve"><value>USVFS runtime: {0}.</value></data>
+  <data name="Progress_UsvfsArchitectureX86" xml:space="preserve"><value>USVFS architecture: x86 target through a same-bitness host.</value></data>
+  <data name="Progress_UsvfsArchitectureX64" xml:space="preserve"><value>USVFS architecture: x64 target.</value></data>
+  <data name="Progress_UsvfsRootBase" xml:space="preserve"><value>USVFS root strategy: physical game root for the base executable.</value></data>
+  <data name="Progress_UsvfsRootAnomalyBootstrap" xml:space="preserve"><value>USVFS root strategy: isolated Anomaly launcher bootstrap root.</value></data>
+  <data name="Progress_UsvfsRootAnomaly" xml:space="preserve"><value>USVFS root strategy: physical Anomaly root.</value></data>
+  <data name="Progress_UsvfsRootXray" xml:space="preserve"><value>USVFS root strategy: physical game root for X-Ray archive folders.</value></data>
+  <data name="Progress_UsvfsRootIsolated" xml:space="preserve"><value>USVFS root strategy: isolated bootstrap root.</value></data>
+  <data name="Progress_UsvfsVirtualRootFormat" xml:space="preserve"><value>USVFS virtual root: {0}</value></data>
+  <data name="Progress_UsvfsOverlayPlanFormat" xml:space="preserve"><value>USVFS overlay plan: {0:N0} mappings; diagnostic log: {1}</value></data>
+  <data name="Progress_UsvfsMappedFormat" xml:space="preserve"><value>USVFS mapped: {0}</value></data>
+  <data name="Progress_UsvfsStartingFormat" xml:space="preserve"><value>USVFS starting: {0}</value></data>
+  <data name="Progress_UsvfsX86StartingFormat" xml:space="preserve"><value>USVFS x86 host starting: {0}</value></data>
+  <data name="Progress_UsvfsBootstrapFormat" xml:space="preserve"><value>USVFS executable bootstrap prepared: {0:N0} linked files in {1}</value></data>
+  <data name="Progress_UsvfsAnomalyBootstrapFormat" xml:space="preserve"><value>USVFS Anomaly launcher bootstrap prepared: {0:N0} linked files in {1}</value></data>
+  <data name="Progress_StandaloneReadyFormat" xml:space="preserve"><value>Standalone setup ready: {0}</value></data>
+  <data name="Error_UnsupportedAnomalyRendererFormat" xml:space="preserve"><value>Unsupported Anomaly renderer: {0}</value></data>
+  <data name="Error_UsvfsLaunchPlanNotReady" xml:space="preserve"><value>USVFS launch plan is not ready.</value></data>
+  <data name="Error_UsvfsExecutableNotReady" xml:space="preserve"><value>USVFS launch executable is not ready.</value></data>
+  <data name="Error_LaunchExecutablePathEmpty" xml:space="preserve"><value>Launch executable path cannot be empty.</value></data>
+  <data name="Error_LaunchWorkingDirectoryEmpty" xml:space="preserve"><value>Launch working directory cannot be empty.</value></data>
+  <data name="Error_FileNotFound" xml:space="preserve"><value>File not found.</value></data>
+  <data name="Error_StandaloneLayerPlanUnsupported" xml:space="preserve"><value>A standalone profile cannot use the linked-workspace layer plan.</value></data>
+  <data name="Error_OutsideManagedWorkspaceFormat" xml:space="preserve"><value>Operation outside the managed workspace was blocked: {0}</value></data>
+  <data name="Update_UnexpectedReleaseUrl" xml:space="preserve"><value>GitHub returned an unexpected release URL.</value></data>
+  <data name="Update_MissingPropertyFormat" xml:space="preserve"><value>The GitHub response does not contain “{0}”.</value></data>
+  <data name="Update_InvalidValueFormat" xml:space="preserve"><value>Invalid {0}: {1}</value></data>
+  <data name="Archive_NotFound" xml:space="preserve"><value>Archive not found.</value></data>
+  <data name="Archive_SupportedFormats" xml:space="preserve"><value>Supported mod archive formats: ZIP, 7Z, and RAR.</value></data>
+  <data name="Archive_Empty" xml:space="preserve"><value>The archive contains no files.</value></data>
+  <data name="Archive_PasswordProtected" xml:space="preserve"><value>Password-protected archives are not supported.</value></data>
+  <data name="Archive_TooManyFilesFormat" xml:space="preserve"><value>The archive contains more than {0:N0} files.</value></data>
+  <data name="Archive_InvalidEntryPathFormat" xml:space="preserve"><value>Invalid archive entry path: {0}</value></data>
+  <data name="Archive_EntryPathMissing" xml:space="preserve"><value>The archive contains an entry without a path.</value></data>
+  <data name="Archive_UnsafeEntryPathFormat" xml:space="preserve"><value>Unsafe archive entry path: {0}</value></data>
+  <data name="Archive_EntryOutsideDestinationFormat" xml:space="preserve"><value>Archive entry leaves the destination folder: {0}</value></data>
+  <data name="Archive_InvalidInstallFolder" xml:space="preserve"><value>Invalid archive installation folder name.</value></data>
+  <data name="Archive_InstallFolderUnavailableFormat" xml:space="preserve"><value>Archive installation folder is unavailable: {0}</value></data>
+  <data name="Archive_AllocateFolderFailedFormat" xml:space="preserve"><value>Could not allocate an installation folder for “{0}”.</value></data>
+  <data name="Archive_NotEnoughSpace" xml:space="preserve"><value>Not enough free space to extract the archive.</value></data>
+  <data name="Archive_NotEnoughSafeSpace" xml:space="preserve"><value>Not enough free space to extract this archive safely.</value></data>
+  <data name="Error_NativeOperationFailedFormat" xml:space="preserve"><value>Native operation failed: {0}.</value></data>
+  <data name="Error_UsvfsParametersNull" xml:space="preserve"><value>USVFS returned empty creation parameters.</value></data>
+  <data name="Error_WindowsDidNotStartGame" xml:space="preserve"><value>Windows did not start the game process.</value></data>
+  <data name="Error_LinkedBackendRequired" xml:space="preserve"><value>The linked-workspace launch backend must be registered.</value></data>
+  <data name="Error_StandaloneNoValidMod" xml:space="preserve"><value>The standalone profile has no enabled mod with a valid folder.</value></data>
+  <data name="Error_SoundFormatMismatch" xml:space="preserve"><value>Interface sound files must use the same audio format.</value></data>
+  <data name="Error_SoundMissingFormat" xml:space="preserve"><value>Sound resource “{0}” was not found.</value></data>
+  <data name="Error_UsvfsBootstrapMissing" xml:space="preserve"><value>USVFS bootstrap executable was not created.</value></data>
+  <data name="Error_UsvfsAnomalyBootstrapMissing" xml:space="preserve"><value>USVFS Anomaly launcher bootstrap executable was not created.</value></data>
+  <data name="Error_UsvfsLayeredOnly" xml:space="preserve"><value>The USVFS backend is available only for regular layered profiles.</value></data>
+  <data name="Error_UsvfsPlanRequired" xml:space="preserve"><value>The USVFS backend requires FileLayerPlan and OverlayManifest.</value></data>
+  <data name="Error_UsvfsCreateFailed" xml:space="preserve"><value>USVFS did not create a virtual file-system instance.</value></data>
+  <data name="Error_UsvfsMappingKindFormat" xml:space="preserve"><value>Unsupported USVFS mapping kind: {0}.</value></data>
+  <data name="Error_UsvfsMapFailedFormat" xml:space="preserve"><value>USVFS could not map “{0}” to “{1}”.</value></data>
+  <data name="Error_UsvfsSessionAlreadyStarted" xml:space="preserve"><value>This USVFS session has already started a process.</value></data>
+  <data name="Error_UsvfsSessionNotStarted" xml:space="preserve"><value>The USVFS session has not started a process.</value></data>
+  <data name="Error_GameFolderNotFoundFormat" xml:space="preserve"><value>Game folder not found: {0}</value></data>
+  <data name="Error_WorkspaceDeleteOutsideRootFormat" xml:space="preserve"><value>Deletion of a workspace outside the managed launcher folders was blocked: {0}</value></data>
+  <data name="Error_WorkspaceMarkerMissingFormat" xml:space="preserve"><value>Deletion of a profile workspace without its safety marker was blocked: {0}</value></data>
+  <data name="Error_WorkspaceProfilePathFormat" xml:space="preserve"><value>The profile workspace must be a profile-specific folder inside a managed launcher folder: {0}</value></data>
+  <data name="Error_WorkspaceParentMissingFormat" xml:space="preserve"><value>The workspace has no parent folder: {0}</value></data>
+  <data name="Error_WorkspaceLegacyDestinationExistsFormat" xml:space="preserve"><value>Cannot migrate the legacy workspace because the destination already exists: {0}</value></data>
+  <data name="Error_StandaloneNoModHelp" xml:space="preserve"><value>The standalone profile has no enabled mod with a valid folder. Add and enable a mod.</value></data>
+  <data name="Error_StandaloneExeMissingFormat" xml:space="preserve"><value>No executable was found in the standalone mod folder: {0}</value></data>
+  <data name="Error_ModFolderNotFoundFormat" xml:space="preserve"><value>Mod folder not found: {0}</value></data>
+  <data name="Error_UsvfsX86SessionAlreadyStarted" xml:space="preserve"><value>This USVFS x86 session has already started a process.</value></data>
+  <data name="Error_UsvfsX86HostMissing" xml:space="preserve"><value>USVFS x86 host not found.</value></data>
+  <data name="Error_UsvfsX86HostStartFailed" xml:space="preserve"><value>USVFS x86 host did not start.</value></data>
+  <data name="Error_UsvfsX86SessionNotStarted" xml:space="preserve"><value>The USVFS x86 session has not started a process.</value></data>
+  <data name="App_SplashLogFailedFormat" xml:space="preserve"><value>Splash-screen loading failed: {0}</value></data>
+  <data name="App_UiStartupLogFailedFormat" xml:space="preserve"><value>Launcher UI startup failed: {0}</value></data>
+  <data name="Log_UpdateAvailableFormat" xml:space="preserve"><value>Launcher update available: {0}.</value></data>
+  <data name="Log_AutomaticUpdateFailedFormat" xml:space="preserve"><value>Automatic update check failed: {0}</value></data>
+  <data name="Dialog_ExecutableFilter" xml:space="preserve"><value>Executable files (*.exe)|*.exe|All files (*.*)|*.*</value></data>
+  <data name="Scan_DetectedArchiveFormat" xml:space="preserve"><value>archive: {0}</value></data>
+  <data name="Archive_XrayRootMissing" xml:space="preserve"><value>The archive does not contain a recognizable X-Ray mod root (gamedata, bin, db, patches, or gamedata.db*).</value></data>
+  <data name="Archive_MultipleRoots" xml:space="preserve"><value>The archive contains several possible mod roots. Repack it or add the extracted folder manually.</value></data>
+  <data name="Fsgame_AppDataMissingFormat" xml:space="preserve"><value>fsgame.ltx does not contain $app_data_root$: {0}. Profile-local saves and logs cannot be guaranteed, so launch was blocked.</value></data>
+  <data name="Health_StatusHealthy" xml:space="preserve"><value>OK</value></data>
+  <data name="Health_StatusWarning" xml:space="preserve"><value>Warning</value></data>
+  <data name="Health_StatusError" xml:space="preserve"><value>Error</value></data>
+  <data name="Writable_LocalizationReason" xml:space="preserve"><value>Anomaly and some X-Ray builds write language selection into gamedata.</value></data>
+  <data name="Writable_OptionsReason" xml:space="preserve"><value>Anomaly writes launcher and runtime option state into axr_options.ltx.</value></data>
+  <data name="Log_TrayPanelFailedFormat" xml:space="preserve"><value>Tray panel failed: {0}</value></data>
+  <data name="Log_ReleasePageFailedFormat" xml:space="preserve"><value>Opening the launcher release page failed: {0}</value></data>
+  <data name="Error_UsvfsAnomalyRootFormat" xml:space="preserve"><value>The USVFS Anomaly launcher must be in the game root: {0}</value></data>
+  <data name="Error_UsvfsAsciiPath" xml:space="preserve"><value>USVFS requires an ASCII-only profile workspace. Move the profile workspace to a path without non-Latin characters.</value></data>
+  <data name="Error_UsvfsBackendUnavailableFormat" xml:space="preserve"><value>The official USVFS backend is unavailable. Place the complete x64/x86 USVFS runtime and StalkerModLauncher.UsvfsX86Host.exe next to the launcher, or set {0}=1 for a development build.</value></data>
+  <data name="Error_NoExecutablesInWorkspace" xml:space="preserve"><value>No executable files were found in the built workspace.</value></data>
+  <data name="Error_ExecutablesFoundFormat" xml:space="preserve"><value>Executables found: {0}</value></data>
+  <data name="Error_ProfileExeAfterBuildFormat" xml:space="preserve"><value>The profile executable was not found after building the workspace: {0}. {1}</value></data>
+  <data name="Safety_PathEmptyFormat" xml:space="preserve"><value>{0} is empty.</value></data>
+  <data name="Safety_PathRelativeFormat" xml:space="preserve"><value>{0} must be a relative path inside the profile workspace.</value></data>
+  <data name="Safety_PathEscapesFormat" xml:space="preserve"><value>{0} must not leave the profile workspace.</value></data>
+  <data name="Safety_PathInvalidCharsFormat" xml:space="preserve"><value>{0} contains invalid path characters.</value></data>
+  <data name="Safety_PathInsideFormat" xml:space="preserve"><value>{0} must stay inside: {1}</value></data>
+  <data name="Safety_LayerFile" xml:space="preserve"><value>Layer file</value></data>
+  <data name="Safety_ProfileFsgame" xml:space="preserve"><value>Profile fsgame.ltx</value></data>
+  <data name="Safety_LegacyProfileData" xml:space="preserve"><value>Legacy profile data</value></data>
+  <data name="Safety_AutomaticExecutable" xml:space="preserve"><value>Automatically selected executable</value></data>
+  <data name="Safety_LaunchExecutable" xml:space="preserve"><value>Launch executable</value></data>
+  <data name="Safety_ExcludedModFile" xml:space="preserve"><value>Excluded mod file</value></data>
+  <data name="Safety_ProfileWritableFile" xml:space="preserve"><value>Profile writable game file</value></data>
+  <data name="Safety_UsvfsExecutable" xml:space="preserve"><value>USVFS executable</value></data>
+  <data name="Safety_UsvfsAnomalyLauncher" xml:space="preserve"><value>USVFS Anomaly launcher</value></data>
+  <data name="Safety_AnomalyLauncherProfileFile" xml:space="preserve"><value>Anomaly launcher profile file</value></data>
+  <data name="Safety_BootstrapFsgame" xml:space="preserve"><value>Bootstrap fsgame.ltx</value></data>
+  <data name="Safety_UsvfsWorkingDirectory" xml:space="preserve"><value>USVFS working directory</value></data>
+  <data name="Safety_UsvfsWritableFile" xml:space="preserve"><value>USVFS writable file</value></data>
+  <data name="Safety_ModFile" xml:space="preserve"><value>Mod file</value></data>
+  <data name="Safety_WorkspaceFile" xml:space="preserve"><value>Workspace file</value></data>
+  <data name="Safety_ProfileShaderCacheFile" xml:space="preserve"><value>Profile shader-cache file</value></data>
+  <data name="Safety_PinnedExecutable" xml:space="preserve"><value>Pinned launch executable</value></data>
+  <data name="Layer_ExcludedFallbackFormat" xml:space="preserve"><value>excluded-file fallback: {0}</value></data>
+  <data name="Layer_UsvfsLogCollector" xml:space="preserve"><value>USVFS log collector</value></data>
+  <data name="Update_CurrentVersionValue" xml:space="preserve"><value>current application version</value></data>
+  <data name="Update_LatestTagValue" xml:space="preserve"><value>latest GitHub release tag</value></data>
+</root>

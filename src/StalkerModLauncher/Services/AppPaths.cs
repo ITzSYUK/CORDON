@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 public sealed class AppPaths
@@ -77,7 +79,7 @@ public sealed class AppPaths
                 FileSystemSafety.IsDirectoryInside(source, root) ||
                 FileSystemSafety.IsDirectoryInside(root, source)))
         {
-            throw new InvalidOperationException("Папка игры или мода пересекается со служебными данными портативного лаунчера. Разместите лаунчер вне исходной игры и модов.");
+            throw new InvalidOperationException(Strings.Portable_SourceOverlap);
         }
     }
 
@@ -86,7 +88,7 @@ public sealed class AppPaths
         if (!IsPortable || string.IsNullOrWhiteSpace(path) || Path.IsPathRooted(path)) return path;
         var fullPath = Path.GetFullPath(path, ExecutableDirectory);
         if (!FileSystemSafety.IsDirectoryInside(fullPath, ExecutableDirectory))
-            throw new InvalidDataException("Относительный путь выходит за пределы портативной папки.");
+            throw new InvalidDataException(Strings.Portable_PathEscapes);
         return fullPath;
     }
 

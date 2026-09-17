@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:StalkerModLauncher.Views.Controls"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
         mc:Ignorable="d"
         Title="CORDON"
         MinWidth="1280"
@@ -106,20 +107,20 @@
                             <StackPanel Width="420"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center">
-                                <TextBlock Text="Профилей пока нет"
+                                <TextBlock Text="{x:Static res:Strings.Main_NoProfiles}"
                                            FontSize="28"
                                            FontWeight="SemiBold"
                                            Foreground="{StaticResource TextBrush}"
                                            TextAlignment="Center"
                                            Margin="0,0,0,8"/>
-                                <TextBlock Text="Создайте профиль, добавьте игру и подключите нужные моды."
+                                <TextBlock Text="{x:Static res:Strings.Main_EmptyProfileHint}"
                                            FontSize="14"
                                            Foreground="{StaticResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            TextAlignment="Center"
                                            LineHeight="21"
                                            Margin="0,0,0,22"/>
-                                <Button Content="Создать первый профиль"
+                                <Button Content="{x:Static res:Strings.Main_CreateFirstProfile}"
                                         Command="{Binding NewProfileCommand}"
                                         FontSize="15"
                                         FontWeight="SemiBold"
@@ -127,11 +128,11 @@
                                         MinWidth="220"/>
                                 <StackPanel Margin="0,12,0,0"
                                             Visibility="{Binding CanImportSettings, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <Button Content="Импортировать существующие настройки"
+                                    <Button Content="{x:Static res:Strings.Main_ImportExistingSettings}"
                                             Command="{Binding ImportSettingsCommand}"
                                             Padding="18,9"
                                             MinWidth="220"/>
-                                    <TextBlock Text="Загрузить существующий файл настроек settings.json"
+                                    <TextBlock Text="{x:Static res:Strings.Main_ImportSettingsHint}"
                                                FontSize="12"
                                                Foreground="{StaticResource MutedTextBrush}"
                                                TextAlignment="Center"

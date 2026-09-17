@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -36,9 +37,9 @@ internal static class LauncherSelfUpdateService
     public static void PrepareAndLaunch(string archivePath, LauncherReleasePackage package)
     {
         var launcherPath = Path.GetFullPath(Environment.ProcessPath
-            ?? throw new InvalidOperationException("Не удалось определить путь лаунчера."));
+            ?? throw new InvalidOperationException(Strings.Startup_ExecutablePathMissing));
         var targetDirectory = Path.GetDirectoryName(launcherPath)
-            ?? throw new InvalidOperationException("Не удалось определить папку лаунчера.");
+            ?? throw new InvalidOperationException(Strings.Update_LauncherDirectoryMissing);
         var stagingDirectory = Path.Combine(
             Path.GetTempPath(),
             $"CORDON-Update-{Guid.NewGuid():N}");
@@ -61,7 +62,7 @@ internal static class LauncherSelfUpdateService
                 out var createdNew);
             if (!createdNew)
             {
-                throw new InvalidOperationException("Не удалось создать одноразовый сигнал updater.");
+                throw new InvalidOperationException(Strings.Update_SignalFailed);
             }
 
             var startInfo = new ProcessStartInfo
@@ -77,10 +78,10 @@ internal static class LauncherSelfUpdateService
             startInfo.ArgumentList.Add(((int)package).ToString(CultureInfo.InvariantCulture));
             startInfo.ArgumentList.Add(readyEventName);
             using var updater = Process.Start(startInfo)
-                ?? throw new InvalidOperationException("Не удалось запустить установщик обновления.");
+                ?? throw new InvalidOperationException(Strings.Update_InstallerStartFailed);
             if (!readyEvent.WaitOne(UpdaterReadyTimeout))
             {
-                throw new TimeoutException("Updater не подтвердил исходный лаунчер за отведённое время.");
+                throw new TimeoutException(Strings.Update_AcknowledgeTimeout);
             }
         }
         catch
@@ -125,7 +126,7 @@ internal static class LauncherSelfUpdateService
     {
         if (!IsOwnedTemporaryDirectory(request.StagingDirectory, "CORDON-Update-"))
         {
-            throw new InvalidOperationException("Временная папка обновления недопустима.");
+            throw new InvalidOperationException(Strings.Update_TempFolderInvalid);
         }
 
         ValidateStagingDirectory(request.StagingDirectory, request.Package);
@@ -147,7 +148,7 @@ internal static class LauncherSelfUpdateService
         startInfo.ArgumentList.Add(CleanupArgument);
         startInfo.ArgumentList.Add(Environment.ProcessPath!);
         using var launcher = Process.Start(startInfo)
-            ?? throw new InvalidOperationException("Не удалось запустить обновлённый лаунчер.");
+            ?? throw new InvalidOperationException(Strings.Update_RestartFailed);
     }
 
     internal static async Task WaitForParentExitAsync(
@@ -163,21 +164,21 @@ internal static class LauncherSelfUpdateService
         catch (ArgumentException ex)
         {
             throw new InvalidOperationException(
-                "Исходный лаунчер завершился до подтверждения updater.",
+                Strings.Update_LauncherExitedEarly,
                 ex);
         }
 
         using (parent)
         {
             var parentPath = parent.MainModule?.FileName
-                ?? throw new InvalidOperationException("Не удалось проверить запущенный лаунчер.");
+                ?? throw new InvalidOperationException(Strings.Update_ProcessCheckFailed);
             var parentFileName = Path.GetFileName(parentPath);
             if ((!parentFileName.Equals("CORDON.exe", StringComparison.OrdinalIgnoreCase) &&
                  !parentFileName.Equals("CORDON-Standalone.exe", StringComparison.OrdinalIgnoreCase)) ||
                 !Path.GetDirectoryName(Path.GetFullPath(parentPath))!
                     .Equals(targetDirectory.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("Запрос обновления создан не текущим лаунчером.");
+                throw new InvalidOperationException(Strings.Update_WrongLauncher);
             }
 
             using var readyEvent = EventWaitHandle.OpenExisting(readyEventName);
@@ -281,7 +282,7 @@ internal static class LauncherSelfUpdateService
     {
         if (archiveBytes < 0)
         {
-            throw new InvalidDataException("GitHub вернул недопустимый размер архива.");
+            throw new InvalidDataException(Strings.Update_ArchiveSizeInvalid);
         }
 
         EnsureAvailableSpace(CalculateRequiredFreeSpace(
@@ -328,26 +329,26 @@ internal static class LauncherSelfUpdateService
         if (files.Length == 0 || files.Length > MaximumFileCount ||
             files.Sum(entry => entry.Length) > MaximumUncompressedSize)
         {
-            throw new InvalidDataException("Архив обновления имеет недопустимый размер или состав.");
+            throw new InvalidDataException(Strings.Update_ArchiveInvalid);
         }
 
         foreach (var entry in archive.Entries)
         {
             if (entry.FullName.Replace('\\', '/').StartsWith("Data/", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidDataException("Архив обновления не может содержать папку Data.");
+                throw new InvalidDataException(Strings.Update_DataFolderForbidden);
             }
 
             if (string.IsNullOrEmpty(entry.Name))
             {
-                throw new InvalidDataException("Архив обновления не должен содержать папки.");
+                throw new InvalidDataException(Strings.Update_FoldersForbidden);
             }
 
             if (!entry.FullName.Equals(entry.Name, StringComparison.Ordinal) ||
                 entry.Name.Equals("Data", StringComparison.OrdinalIgnoreCase) ||
                 entry.Length > 0 && (entry.CompressedLength == 0 || entry.Length / entry.CompressedLength > 200))
             {
-                throw new InvalidDataException($"Недопустимая запись в архиве обновления: {entry.FullName}");
+                throw new InvalidDataException(LocalizedText.Format(Strings.Update_EntryInvalidFormat, entry.FullName));
             }
         }
 
@@ -362,7 +363,7 @@ internal static class LauncherSelfUpdateService
             if (availableBytes < requiredBytes)
             {
                 throw new IOException(
-                    $"Недостаточно свободного места на диске {root}: требуется {requiredBytes / 1024 / 1024} МБ, доступно {availableBytes / 1024 / 1024} МБ.");
+                    LocalizedText.Format(Strings.Update_NoSpaceFormat, root, requiredBytes / 1024 / 1024, availableBytes / 1024 / 1024));
             }
         }
     }
@@ -373,7 +374,7 @@ internal static class LauncherSelfUpdateService
         long bytes)
     {
         var root = Path.GetPathRoot(Path.GetFullPath(directory))
-            ?? throw new InvalidOperationException("Не удалось определить том для обновления.");
+            ?? throw new InvalidOperationException(Strings.Update_VolumeMissing);
         requiredByRoot.TryGetValue(root, out var currentBytes);
         requiredByRoot[root] = checked(currentBytes + bytes);
     }
@@ -389,14 +390,14 @@ internal static class LauncherSelfUpdateService
         var files = Directory.GetFiles(stagingDirectory, "*", SearchOption.TopDirectoryOnly);
         if (Directory.GetDirectories(stagingDirectory).Length != 0)
         {
-            throw new InvalidDataException("Архив обновления не должен содержать папки.");
+            throw new InvalidDataException(Strings.Update_FoldersForbidden);
         }
 
         foreach (var requiredFile in RequiredCommonFiles.Append(GetExecutableName(package)))
         {
             if (!File.Exists(Path.Combine(stagingDirectory, requiredFile)))
             {
-                throw new InvalidDataException($"В архиве обновления отсутствует {requiredFile}.");
+                throw new InvalidDataException(LocalizedText.Format(Strings.Update_RequiredFileMissingFormat, requiredFile));
             }
         }
 
@@ -405,7 +406,7 @@ internal static class LauncherSelfUpdateService
             : LauncherReleasePackage.Minimal);
         if (File.Exists(Path.Combine(stagingDirectory, otherExecutable)))
         {
-            throw new InvalidDataException("Архив содержит исполняемый файл другого типа сборки.");
+            throw new InvalidDataException(Strings.Update_WrongBuildType);
         }
 
         var checksums = ReadChecksums(Path.Combine(stagingDirectory, "checksums.txt"));
@@ -414,7 +415,7 @@ internal static class LauncherSelfUpdateService
             .ToArray();
         if (checksums.Count != payloadFiles.Length)
         {
-            throw new InvalidDataException("Контрольные суммы не покрывают все файлы обновления.");
+            throw new InvalidDataException(Strings.Update_ChecksumsIncomplete);
         }
 
         foreach (var path in payloadFiles)
@@ -423,7 +424,7 @@ internal static class LauncherSelfUpdateService
             if (!checksums.TryGetValue(fileName, out var expectedHash) ||
                 !GetSha256(path).Equals(expectedHash, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidDataException($"Контрольная сумма файла {fileName} не совпадает.");
+                throw new InvalidDataException(LocalizedText.Format(Strings.Update_FileChecksumMismatchFormat, fileName));
             }
         }
     }
@@ -445,7 +446,7 @@ internal static class LauncherSelfUpdateService
                 var fileName = Path.GetFileName(source);
                 if (fileName.Equals("Data", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new InvalidDataException("Обновление не может изменять Data.");
+                    throw new InvalidDataException(Strings.Update_DataChangeForbidden);
                 }
 
                 var target = Path.Combine(targetDirectory, fileName);
@@ -508,7 +509,7 @@ internal static class LauncherSelfUpdateService
             {
                 keepBackup = true;
                 throw new AggregateException(
-                    $"Не удалось полностью откатить обновление. Резервные копии сохранены в {backupDirectory}",
+                    LocalizedText.Format(Strings.Update_RollbackIncompleteFormat, backupDirectory),
                     updateError,
                     rollbackError);
             }
@@ -535,7 +536,7 @@ internal static class LauncherSelfUpdateService
                 Path.GetFileName(line[(separator + 2)..]) != line[(separator + 2)..] ||
                 !checksums.TryAdd(line[(separator + 2)..], line[..separator]))
             {
-                throw new InvalidDataException("Файл контрольных сумм имеет недопустимый формат.");
+                throw new InvalidDataException(Strings.Update_ChecksumFileInvalid);
             }
         }
 

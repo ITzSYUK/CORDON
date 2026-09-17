@@ -1,5 +1,6 @@
 using System.Text.Json;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -21,7 +22,7 @@ public static class ProfileTransferService
     {
         var json = File.ReadAllText(filePath);
         var exported = JsonSerializer.Deserialize<ExportedProfile>(json, JsonOptions)
-            ?? throw new InvalidDataException("Файл профиля пуст или имеет неверный формат.");
+                      ?? throw new InvalidDataException(Strings.Profile_ImportInvalid);
 
         var validation = ProfileSettingsValidator.Validate(exported.Name, exported.ExecutableRelativePath, _ => false);
         if (!validation.IsValid)

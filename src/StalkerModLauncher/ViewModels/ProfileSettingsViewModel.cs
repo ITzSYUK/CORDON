@@ -1,6 +1,7 @@
 using System.Windows.Input;
 using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -150,8 +151,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     public bool HasManualFsgameSource => !string.IsNullOrWhiteSpace(FsgameSourcePath);
 
     public string FsgameSourceDisplay => HasManualFsgameSource
-        ? $"Закреплён вручную: {FsgameSourcePath}"
-        : "Автоматически по текущему приоритету слоёв профиля.";
+        ? LocalizedText.Format(Strings.SettingsProfile_FsgameManualFormat, FsgameSourcePath)
+        : Strings.SettingsProfile_FsgameAuto;
 
     public string ExecutableSourceDisplay
     {
@@ -159,14 +160,14 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         {
             if (string.IsNullOrWhiteSpace(ExecutableSourcePath))
             {
-                return "Источник EXE: автоматически по порядку модов. Нижний мод в списке имеет больший приоритет.";
+                return Strings.SettingsProfile_ExeAuto;
             }
 
             var source = ProfileExecutableSourceResolver.GetSourceRoots(_profile, includeWorkspace: false)
                 .FirstOrDefault(root => FileSystemSafety.IsSameDirectory(root.RootPath, ExecutableSourcePath));
             return source is null
-                ? $"Источник EXE: выбран вручную, но папка сейчас недоступна: {ExecutableSourcePath}"
-                : $"Источник EXE: вручную закреплен за модом: {source.DisplayName}.";
+                ? LocalizedText.Format(Strings.SettingsProfile_ExeManualMissingFormat, ExecutableSourcePath)
+                : LocalizedText.Format(Strings.SettingsProfile_ExeManualFormat, source.DisplayName);
         }
     }
 
@@ -264,11 +265,14 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     {
         get
         {
-            if (IsStandalone) return "Автономная сборка использует свои данные без перенаправления.";
+            if (IsStandalone) return Strings.SettingsProfile_StandaloneData;
             try
             {
                 var path = GetSelectedGameDataRoot();
-                return $"{(UseBaseGameData ? "Общие сохранения, настройки, логи и скриншоты" : "Отдельные данные профиля")}: {path}\nПереключение не переносит и не заменяет существующие файлы.";
+                return LocalizedText.Format(
+                    Strings.SettingsProfile_DataPathFormat,
+                    UseBaseGameData ? Strings.SettingsProfile_SharedData : Strings.SettingsProfile_SeparateData,
+                    path);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException)
             {
@@ -294,8 +298,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     public bool CanUseUsvfs => IsUsvfsAvailable && !IsStandalone;
 
     public string UsvfsAvailabilityText => IsUsvfsAvailable
-        ? "USVFS подключает моды без сборки полного workspace. Совместимость зависит от конкретной игры и модификаций."
-        : "Компоненты USVFS не найдены рядом с лаунчером. Доступен только Workspace.";
+        ? Strings.SettingsProfile_UsvfsAvailable
+        : Strings.SettingsProfile_UsvfsMissing;
 
     public bool UseLinkedWorkspace
     {
@@ -392,7 +396,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         try
         {
             var profileData = Path.Combine(WorkspacePath, "userdata");
-            if (string.IsNullOrWhiteSpace(WorkspacePath)) throw new InvalidOperationException("Сначала создайте рабочую папку профиля запуском игры.");
+            if (string.IsNullOrWhiteSpace(WorkspacePath)) throw new InvalidOperationException(Strings.SettingsProfile_CreateWorkspaceFirst);
             var sharedData = ProfileDataPathResolver.GetGameDataRoot(new ModProfile
             {
                 GameInstallPath = _profile.GameInstallPath,
@@ -404,14 +408,19 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             });
             var source = UseBaseGameData ? profileData : sharedData;
             var destination = UseBaseGameData ? sharedData : profileData;
-            if (!DialogService.Confirm("Копирование пользовательских данных",
-                $"Откуда: {source}\nКуда: {destination}\n\nДубликаты файлов будут пропущены. Служебные файлы профиля не копируются. Закройте другие экземпляры игры перед копированием.")) return;
+            if (!DialogService.Confirm(
+                    Strings.SettingsProfile_CopyTitle,
+                    LocalizedText.Format(Strings.SettingsProfile_CopyConfirmFormat, source, destination))) return;
             var result = await Task.Run(() => GameDataCopyService.CopyMissing(source, destination));
-            DialogService.ShowInfo("Копирование завершено", $"Скопировано: {result.Copied}. Пропущено: {result.Skipped}.\nДля смены каталога запуска сохраните настройки профиля.");
+            DialogService.ShowInfo(
+                Strings.SettingsProfile_CopyComplete,
+                LocalizedText.Format(Strings.SettingsProfile_CopyResultFormat, result.Copied, result.Skipped));
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError("Не удалось скопировать все данные", $"{ex.Message}\nУже скопированные файлы сохранены. Существующие файлы не заменены.");
+            _dialogService.ShowError(
+                Strings.SettingsProfile_CopyFailed,
+                LocalizedText.Format(Strings.SettingsProfile_CopyFailedDetailsFormat, ex.Message));
         }
     }
 
@@ -420,7 +429,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         var validation = ProfileSettingsValidator.Validate(ProfileName, ExecutableRelativePath, _isNameTaken);
         if (!validation.IsValid)
         {
-            _dialogService.ShowError("Некорректные настройки профиля", string.Join(Environment.NewLine, validation.Messages));
+            _dialogService.ShowError(Strings.SettingsProfile_Invalid, string.Join(Environment.NewLine, validation.Messages));
             return false;
         }
 
@@ -432,7 +441,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
                 if (source is null)
                 {
                     _dialogService.ShowError(
-                        "Не удалось сохранить настройки профиля",
+                        Strings.SettingsProfile_SaveFailed,
                         ProfileDataConfigurator.MissingFsgameMessage);
                     return false;
                 }
@@ -441,7 +450,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
             {
-                _dialogService.ShowError("Не удалось сохранить настройки профиля", ex.Message);
+                _dialogService.ShowError(Strings.SettingsProfile_SaveFailed, ex.Message);
                 return false;
             }
         }
@@ -450,7 +459,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         try
         {
             if (_profile.IsRunning && UseBaseGameData != _profile.UseBaseGameData)
-                throw new InvalidOperationException("Завершите игру перед изменением каталога данных.");
+                throw new InvalidOperationException(Strings.SettingsProfile_StopGame);
             if (!IsStandalone && UseBaseGameData) _ = GetSelectedGameDataRoot();
             ApplyToProfile();
             await _onSave();
@@ -460,8 +469,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         {
             snapshot.Restore(_profile);
             _dialogService.ShowError(
-                "Не удалось сохранить настройки профиля",
-                $"Изменения не сохранены. Окно останется открытым.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
+                Strings.SettingsProfile_SaveFailed,
+                LocalizedText.Format(Strings.SettingsProfile_SaveFailedDetailsFormat, Environment.NewLine, ex.Message));
             return false;
         }
     }
@@ -498,7 +507,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         }
 
         var initialPath = Directory.Exists(_workspacePath) ? _workspacePath : null;
-        var selected = DialogService.PickExecutable("Choose launch executable", initialPath);
+        var selected = DialogService.PickExecutable(Strings.Dialog_SelectLaunchExecutable, initialPath);
         if (selected is null)
         {
             return;
@@ -508,8 +517,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         if (selection is null)
         {
             _dialogService.ShowError(
-                "Invalid executable",
-                "Choose an executable from the game folder, an enabled mod folder, or the generated profile workspace.");
+                Strings.Dialog_InvalidExecutable,
+                Strings.Dialog_ExecutableOutsideSources);
             return;
         }
 
@@ -522,8 +531,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             ? Path.GetDirectoryName(FsgameSourcePath)
             : _profile.GameInstallPath;
         var selected = DialogService.PickFile(
-            "Выберите конфигурацию fsgame",
-            "LTX files (*.ltx)|*.ltx",
+            Strings.SettingsProfile_PickFsgame,
+            Strings.Dialog_LtxFilter,
             Directory.Exists(initialPath) ? initialPath : null);
         if (selected is null)
         {
@@ -537,8 +546,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
                 Directory.Exists(root) && FileSystemSafety.IsDirectoryInside(selected, root)))
         {
             _dialogService.ShowError(
-                "Некорректный fsgame.ltx",
-                "Выберите файл .ltx из папки базовой игры или включённого мода.");
+                Strings.SettingsProfile_InvalidFsgame,
+                Strings.SettingsProfile_FsgameLocation);
             return;
         }
 
@@ -556,12 +565,12 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         if (modRoot is null)
         {
             _dialogService.ShowError(
-                "No mod folder",
-                "Add a mod to the profile first, then choose the executable from its folder.");
+                Strings.Dialog_NoModFolder,
+                Strings.Dialog_AddModBeforeExecutable);
             return;
         }
 
-        var selected = DialogService.PickExecutable("Choose game executable", modRoot);
+        var selected = DialogService.PickExecutable(Strings.Dialog_SelectGameExecutable, modRoot);
         if (selected is null)
         {
             return;
@@ -571,12 +580,12 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         if (relative.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relative))
         {
             _dialogService.ShowError(
-                "Outside mod folder",
-                "The executable must be inside the standalone mod's folder.");
+                Strings.Dialog_ExecutableOutsideModTitle,
+                Strings.Dialog_ExecutableOutsideMod);
             return;
         }
 
-        SetExecutableSelection(new ProfileExecutableSelection(relative, modRoot, "автономная сборка", true));
+        SetExecutableSelection(new ProfileExecutableSelection(relative, modRoot, Strings.Profile_Standalone, true));
     }
 
     private void SetExecutableSelection(ProfileExecutableSelection selection)
@@ -592,8 +601,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         if (selection is null)
         {
             _dialogService.ShowError(
-                "Не удалось выбрать EXE автоматически",
-                "Лаунчер не нашел подходящий .exe в папке базовой игры или во включенных модах. Выберите файл запуска вручную.");
+                Strings.SettingsProfile_AutoExeFailed,
+                Strings.SettingsProfile_AutoExeMissing);
             return;
         }
 
@@ -629,7 +638,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     private void BrowseModInstallPath()
     {
         var selected = DialogService.PickFolder(
-            "Выберите папку для распакованных модов",
+            Strings.SettingsProfile_PickModInstall,
             Directory.Exists(ModInstallPath) ? ModInstallPath : null);
         if (selected is not null)
         {
@@ -651,8 +660,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             .Select(mod => Path.GetDirectoryName(mod.SourcePath))
             .FirstOrDefault(Directory.Exists);
         var filePath = DialogService.PickFile(
-            "Выберите modlist.txt из профиля Mod Organizer 2",
-            "Mod Organizer mod list (modlist.txt)|modlist.txt|Text files (*.txt)|*.txt",
+            Strings.Mo2_PickModList,
+            Strings.Dialog_ModListFilter,
             initialPath);
         if (filePath is null)
         {
@@ -666,26 +675,26 @@ public sealed class ProfileSettingsViewModel : ObservableObject
 
             var report = new List<string>
             {
-                "Файл modlist.txt применён к уже добавленным модам.",
+                Strings.SettingsProfile_ModListApplied,
                 string.Empty,
-                $"Сопоставлено модов: {result.MatchedCount}",
-                $"Изменено состояний включения: {result.EnabledStateChanges}",
-                $"Не найдены среди добавленных модов: {result.MissingProfileMods.Count}",
-                $"Отсутствуют в modlist.txt: {result.UnlistedLauncherMods.Count}"
+                LocalizedText.Format(Strings.SettingsProfile_ModListMatchedFormat, result.MatchedCount),
+                LocalizedText.Format(Strings.SettingsProfile_ModListEnabledFormat, result.EnabledStateChanges),
+                LocalizedText.Format(Strings.SettingsProfile_ModListMissingFormat, result.MissingProfileMods.Count),
+                LocalizedText.Format(Strings.SettingsProfile_ModListUnlistedFormat, result.UnlistedLauncherMods.Count)
             };
 
             if (result.MissingProfileMods.Count > 0)
             {
                 report.Add(string.Empty);
-                report.Add("Первые несопоставленные записи:");
+                report.Add(Strings.SettingsProfile_ModListUnmatched);
                 report.AddRange(result.MissingProfileMods.Take(8).Select(name => $"• {name}"));
             }
 
-            DialogService.ShowInfo("Применить только modlist.txt", string.Join(Environment.NewLine, report));
+            DialogService.ShowInfo(Strings.SettingsProfile_ModListTitle, string.Join(Environment.NewLine, report));
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError("Не удалось применить modlist.txt", ex.Message);
+            _dialogService.ShowError(Strings.SettingsProfile_ModListFailed, ex.Message);
         }
     }
 

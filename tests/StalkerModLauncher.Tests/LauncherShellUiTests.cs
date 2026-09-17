@@ -24,42 +24,42 @@ public sealed class LauncherShellUiTests
         Assert.DoesNotContain("ПОВЕДЕНИЕ", settings.ToString());
         Assert.Contains("FontSize=\"12\"", settings.ToString());
         Assert.Contains("Width=\"20\" Height=\"20\"", settings.ToString());
-        Assert.Contains("Уровень записи launcher.log", settings.ToString());
-        Assert.Contains("Text=\"Настройки\"", settings.ToString());
+        Assert.Contains("Strings.Settings_LogLevelLabel", settings.ToString());
+        Assert.Contains("Strings.Settings_StorageLabel", settings.ToString());
         Assert.Contains("TextWrapping=\"NoWrap\"", settings.ToString());
-        Assert.Contains("ОБНОВЛЕНИЕ", settings.ToString());
-        Assert.Contains("Проверить обновления", settings.ToString());
+        Assert.Contains("Strings.Settings_UpdateHeading", settings.ToString());
+        Assert.Contains("Strings.Settings_CheckUpdates", settings.ToString());
         Assert.Contains("CheckForUpdatesCommand", settings.ToString());
-        Assert.Contains("Открыть релиз", settings.ToString());
+        Assert.Contains("Strings.Settings_OpenRelease", settings.ToString());
         Assert.Contains("OpenReleaseButton", settings.ToString());
-        Assert.Contains("Скачать и установить", settings.ToString());
+        Assert.Contains("Strings.Settings_DownloadAndInstall", settings.ToString());
         Assert.Contains("DownloadToDownloadsButton", settings.ToString());
-        Assert.Contains("Открыть папку лаунчера", settings.ToString());
-        Assert.Contains("Обычная версия", settings.ToString());
-        Assert.Contains("Standalone-версия", settings.ToString());
-        Assert.Contains("Автоматически проверять обновления при запуске", settings.ToString());
-        Assert.Contains("При запуске вместе с Windows открывать в трее", settings.ToString());
+        Assert.Contains("Strings.Settings_OpenLauncherFolder", settings.ToString());
+        Assert.Contains("Strings.Settings_MinimalVersion", settings.ToString());
+        Assert.Contains("Strings.Settings_StandaloneVersion", settings.ToString());
+        Assert.Contains("Strings.Settings_AutoCheckUpdates", settings.ToString());
+        Assert.Contains("Strings.Settings_StartMinimized", settings.ToString());
         Assert.Contains("StartMinimizedToTrayOnWindowsStartup", settings.ToString());
-        Assert.Contains("Показывать значок в трее", settings.ToString());
+        Assert.Contains("Strings.Settings_ShowTrayIcon", settings.ToString());
         Assert.Contains("CanStartMinimizedToTray", settings.ToString());
-        Assert.Contains("Показывать системное уведомление о доступном обновлении", settings.ToString());
+        Assert.Contains("Strings.Settings_ShowUpdateNotifications", settings.ToString());
         Assert.Contains("ShowUpdateNotifications", settings.ToString());
-        Assert.Contains("Сбросить настройки", settings.ToString());
+        Assert.Contains("Strings.Settings_Reset", settings.ToString());
         Assert.Contains("ResetCommand", settings.ToString());
         Assert.Contains("LauncherSettingsPanelCornerRadius", settings.ToString());
-        Assert.Contains("техническая диагностика запуска, Workspace и USVFS", settings.ToString(), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Strings.Settings_LogDescriptionDetailed", settings.ToString(), StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Только ошибки —", settings.ToString());
         Assert.Equal("760", (string?)classicWindow.Root?.Attribute("Width"));
 
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
         var behaviorOptions = settings.Descendants(presentation + "CheckBox").ToList();
         var startWithWindowsIndex = behaviorOptions.FindIndex(element =>
-            (string?)element.Attribute("Content") == "Запускать вместе с Windows");
+            (string?)element.Attribute("Content") == "{x:Static res:Strings.Settings_StartWithWindows}");
         var showTrayIconIndex = behaviorOptions.FindIndex(element =>
-            (string?)element.Attribute("Content") == "Показывать значок в трее");
+            (string?)element.Attribute("Content") == "{x:Static res:Strings.Settings_ShowTrayIcon}");
         Assert.True(startWithWindowsIndex < showTrayIconIndex);
         var minimizeToTray = Assert.Single(behaviorOptions, element =>
-            (string?)element.Attribute("Content") == "Сворачивать в трей вместо закрытия");
+            (string?)element.Attribute("Content") == "{x:Static res:Strings.Settings_MinimizeToTray}");
         Assert.Equal("26,0,0,0", (string?)minimizeToTray.Attribute("Margin"));
         Assert.Equal("{Binding CanUseTray}", (string?)minimizeToTray.Attribute("IsEnabled"));
 
@@ -164,7 +164,7 @@ public sealed class LauncherShellUiTests
         Assert.Contains("PrimaryProfileActionCommand", trayStyle.ToString());
         Assert.DoesNotContain("Workspace", trayStyle.ToString());
         Assert.DoesNotContain("USVFS", trayStyle.ToString());
-        Assert.Contains("Запустить", trayStyle.ToString());
+        Assert.Contains("Strings.Common_Launch", trayStyle.ToString());
         Assert.DoesNotContain("Запустить профиль", trayStyle.ToString());
         Assert.Contains(
             sidebarDocument.Descendants(presentation + "Setter"),
@@ -223,8 +223,8 @@ public sealed class LauncherShellUiTests
         var classic = LoadProjectXaml("Views", "ProfileSettingsWindow.xaml").ToString();
         var pda = LoadProjectXaml("Views", "Controls", "PdaProfileSettingsView.xaml").ToString();
 
-        Assert.Contains("Content=\"Лаунчер\"", classic);
-        Assert.Contains("Content=\"Лаунчер\"", pda);
+        Assert.Contains("Strings.SettingsProfile_Launcher", classic);
+        Assert.Contains("Strings.SettingsProfile_Launcher", pda);
         Assert.DoesNotContain("Content=\"Авто\"", classic);
         Assert.DoesNotContain("Content=\"Авто\"", pda);
     }
@@ -254,9 +254,9 @@ public sealed class LauncherShellUiTests
 
         foreach (var xaml in interfaces)
         {
-            var renderer = xaml.IndexOf("Text=\"Движок Anomaly\"", StringComparison.Ordinal);
-            var userData = xaml.IndexOf("Text=\"Пользовательские данные\"", StringComparison.Ordinal);
-            var executable = xaml.IndexOf("Text=\"Файл запуска (.exe)\"", StringComparison.Ordinal);
+            var renderer = xaml.IndexOf("Strings.SettingsProfile_AnomalyEngine", StringComparison.Ordinal);
+            var userData = xaml.IndexOf("Strings.SettingsProfile_UserData", StringComparison.Ordinal);
+            var executable = xaml.IndexOf("Strings.SettingsProfile_Executable", StringComparison.Ordinal);
 
             Assert.True(renderer >= 0 && renderer < userData && userData < executable);
             Assert.DoesNotContain("GroupName=", xaml);
@@ -275,7 +275,7 @@ public sealed class LauncherShellUiTests
 
         Assert.All(interfaces, xaml =>
         {
-            Assert.Contains("Источник fsgame.ltx", xaml);
+            Assert.Contains("Strings.SettingsProfile_FsgameSource", xaml);
             Assert.Contains("BrowseFsgameCommand", xaml);
             Assert.Contains("ClearFsgameSourceCommand", xaml);
         });

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -58,7 +59,7 @@ public sealed class GameLaunchReadinessMonitor
             {
                 return new GameLaunchReadinessResult(
                     GameLaunchReadinessStatus.ExitedBeforeReady,
-                    "Процесс завершился до появления окна, игрового лога или нормальной загрузки памяти.",
+                    Strings.LaunchReady_ExitedEarly,
                     processIds);
             }
 
@@ -67,7 +68,7 @@ public sealed class GameLaunchReadinessMonitor
 
         return new GameLaunchReadinessResult(
             GameLaunchReadinessStatus.Stalled,
-            "За 1 минуту не появилось окно игры, свежий игровой лог или процесс с нормальной загрузкой памяти.",
+            Strings.LaunchReady_Timeout,
             launch.GetActiveProcessIds());
     }
 
@@ -78,15 +79,15 @@ public sealed class GameLaunchReadinessMonitor
         var gameProcesses = processStates.Where(state => !state.IsInfrastructureProcess).ToArray();
         if (gameProcesses.Any(state => state.HasMainWindow))
         {
-            return "обнаружено окно игры";
+            return Strings.LaunchReady_Window;
         }
 
         if (gameProcesses.Any(state => state.WorkingSetBytes >= ReadyWorkingSetBytes))
         {
-            return "процесс движка начал нормальную загрузку";
+            return Strings.LaunchReady_Process;
         }
 
-        return freshLogPath is null ? null : $"обновлён игровой лог: {freshLogPath}";
+        return freshLogPath is null ? null : LocalizedText.Format(Strings.LaunchReady_LogFormat, freshLogPath);
     }
 
     private static bool HasCompleted(ProfileLaunchHandle launch)

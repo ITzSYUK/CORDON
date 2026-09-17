@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using StalkerModLauncher.Resources;
 using System.Text;
 
 namespace StalkerModLauncher.Services;
@@ -11,7 +12,7 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
         var parameters = Native.usvfsCreateParameters();
         if (parameters == IntPtr.Zero)
         {
-            throw new InvalidOperationException("usvfsCreateParameters returned a null pointer.");
+            throw new InvalidOperationException(Strings.Error_UsvfsParametersNull);
         }
 
         return parameters;
@@ -42,7 +43,9 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
         nuint count = 0;
         if (!Native.usvfsGetVFSProcessList(ref count, IntPtr.Zero))
         {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "usvfsGetVFSProcessList failed.");
+            throw new Win32Exception(
+                Marshal.GetLastWin32Error(),
+                LocalizedText.Format(Strings.Error_NativeOperationFailedFormat, "usvfsGetVFSProcessList"));
         }
 
         if (count == 0)
@@ -56,7 +59,9 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
             var capacity = count;
             if (!Native.usvfsGetVFSProcessList(ref capacity, buffer))
             {
-                throw new Win32Exception(Marshal.GetLastWin32Error(), "usvfsGetVFSProcessList failed.");
+                throw new Win32Exception(
+                    Marshal.GetLastWin32Error(),
+                    LocalizedText.Format(Strings.Error_NativeOperationFailedFormat, "usvfsGetVFSProcessList"));
             }
 
             var result = new int[Math.Min(checked((int)capacity), checked((int)count))];
@@ -121,7 +126,9 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
                 ref startup,
                 out var processInfo))
         {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "usvfsCreateProcessHooked failed.");
+            throw new Win32Exception(
+                Marshal.GetLastWin32Error(),
+                LocalizedText.Format(Strings.Error_NativeOperationFailedFormat, "usvfsCreateProcessHooked"));
         }
 
         return Task.FromResult(new UsvfsProcessHandle(
@@ -146,13 +153,17 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
 
                     if (wait != 0x00000102)
                     {
-                        throw new Win32Exception(Marshal.GetLastWin32Error(), "WaitForSingleObject failed.");
+                        throw new Win32Exception(
+                            Marshal.GetLastWin32Error(),
+                            LocalizedText.Format(Strings.Error_NativeOperationFailedFormat, "WaitForSingleObject"));
                     }
                 }
 
                 if (!Native.GetExitCodeProcess(processInfo.hProcess, out var exitCode))
                 {
-                    throw new Win32Exception(Marshal.GetLastWin32Error(), "GetExitCodeProcess failed.");
+                    throw new Win32Exception(
+                        Marshal.GetLastWin32Error(),
+                        LocalizedText.Format(Strings.Error_NativeOperationFailedFormat, "GetExitCodeProcess"));
                 }
 
                 WaitForVfsProcessTree(cancellationToken);
@@ -177,7 +188,9 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
             nuint processCount = 0;
             if (!Native.usvfsGetVFSProcessList(ref processCount, IntPtr.Zero))
             {
-                throw new Win32Exception(Marshal.GetLastWin32Error(), "usvfsGetVFSProcessList failed.");
+                throw new Win32Exception(
+                    Marshal.GetLastWin32Error(),
+                    LocalizedText.Format(Strings.Error_NativeOperationFailedFormat, "usvfsGetVFSProcessList"));
             }
 
             emptyPolls = processCount == 0 ? emptyPolls + 1 : 0;

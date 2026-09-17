@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 using Xunit;
 
@@ -205,7 +206,12 @@ public sealed class ApProCatalogParserTests
         var error = await Assert.ThrowsAsync<HttpRequestException>(
             () => service.LoadPageAsync(ApProCatalogCategory.ShadowOfChernobyl, 1));
 
-        Assert.Contains("larger than", error.Message);
+        Assert.Equal(
+            LocalizedText.Format(
+                Strings.Catalog_ContentTooLargeFormat,
+                Strings.Catalog_PageDescription,
+                4),
+            error.Message);
     }
 
     [Fact]

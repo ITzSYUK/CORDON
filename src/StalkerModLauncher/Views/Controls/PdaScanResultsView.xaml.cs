@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.ViewModels;
 
 namespace StalkerModLauncher.Views.Controls;
@@ -52,7 +53,7 @@ public sealed partial class PdaScanResultsView : UserControl, IDisposable
     {
         if (ModsListView.SelectedItems.Count == 0)
         {
-            MessageText.Text = "Выберите хотя бы один мод.";
+            MessageText.Text = Strings.Scan_SelectOne;
             MessageText.Visibility = Visibility.Visible;
             return;
         }
@@ -69,6 +70,6 @@ public sealed partial class PdaScanResultsView : UserControl, IDisposable
 
     private void UpdateSelectionSummary()
     {
-        SelectionSummaryText.Text = $"Найдено: {ModsListView.Items.Count}. Выбрано: {ModsListView.SelectedItems.Count}.";
+        SelectionSummaryText.Text = LocalizedText.Format(Strings.Scan_SelectionFormat, ModsListView.Items.Count, ModsListView.SelectedItems.Count);
     }
 }

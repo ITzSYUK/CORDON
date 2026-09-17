@@ -152,7 +152,7 @@ public sealed class ProfileReadinessServiceTests : IDisposable
         var result = ProfileReadinessService.Validate(profile);
 
         Assert.False(result.IsValid);
-        Assert.Contains("must not leave", result.Summary);
+        Assert.Contains("не должен выходить", result.Summary);
     }
 
     [Fact]

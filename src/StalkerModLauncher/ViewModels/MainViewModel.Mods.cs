@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Media;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -130,7 +131,7 @@ public sealed partial class MainViewModel
             return;
         }
 
-        var folder = DialogService.PickFolder("Выберите папку для поиска модов");
+        var folder = DialogService.PickFolder(Strings.Mod_ScanPickFolder);
         if (folder is null)
         {
             return;
@@ -139,14 +140,14 @@ public sealed partial class MainViewModel
         try
         {
             IsBuilding = true;
-            BuildProgressText = "Сканирование модов...";
+            BuildProgressText = Strings.Mod_Scanning;
             RaiseCommandStates();
             var discovered = await ModScannerService.ScanFolderAsync(folder);
 
             if (discovered.Count == 0)
             {
-                Log("No mods found in selected folder.");
-                _dialogService.ShowError("Не найдено", "В выбранной папке не обнаружено модов.");
+                Log(Strings.Log_NoModsFound);
+                _dialogService.ShowError(Strings.Mod_NotFoundTitle, Strings.Mod_NotFound);
                 return;
             }
 
@@ -174,10 +175,10 @@ public sealed partial class MainViewModel
 
             if (selected is not null)
             {
-                Log($"Scan results: {selectableMods.Count} total, {selected.Count} selected.");
+                Log(LocalizedText.Format(Strings.Log_ScanResultsFormat, selectableMods.Count, selected.Count));
                 if (selected.Count == 0)
                 {
-                    Log("No mods selected.");
+                    Log(Strings.Log_NoModsSelected);
                     return;
                 }
 
@@ -198,13 +199,13 @@ public sealed partial class MainViewModel
 
                 RefreshValidation();
                 _ = SaveAsync();
-                Log($"Added {added} mod(s) from scan.");
+                Log(LocalizedText.Format(Strings.Log_ModsAddedFromScanFormat, added));
             }
         }
         catch (Exception ex)
         {
-            Log($"Scan failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError("Ошибка сканирования", ex.Message);
+            Log(LocalizedText.Format(Strings.Log_ScanFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Mod_ScanFailed, ex.Message);
         }
         finally
         {
@@ -221,7 +222,7 @@ public sealed partial class MainViewModel
             return;
         }
 
-        var selected = DialogService.PickFolder("Choose mod folder");
+        var selected = DialogService.PickFolder(Strings.Creation_PickMod);
         if (selected is null)
         {
             return;
@@ -229,7 +230,7 @@ public sealed partial class MainViewModel
 
         SelectedMod = ModListEditor.Add(SelectedProfile, selected);
         RefreshValidation();
-        Log($"Mod added: {selected}");
+        Log(LocalizedText.Format(Strings.Log_ModAddedFormat, selected));
         _ = SaveAsync();
     }
 
@@ -241,8 +242,8 @@ public sealed partial class MainViewModel
         }
 
         var archivePath = DialogService.PickFile(
-            "Выберите архив мода",
-            "Архивы модов (*.zip;*.7z;*.rar)|*.zip;*.7z;*.rar|Все файлы (*.*)|*.*");
+            Strings.Mod_PickArchive,
+            Strings.Mod_ArchiveFilter);
         if (archivePath is null)
         {
             return;
@@ -256,7 +257,7 @@ public sealed partial class MainViewModel
             IsModArchiveInstallProgressIndeterminate = true;
             ModArchiveInstallProgress = 0;
             var archiveFileName = Path.GetFileName(archivePath);
-            ModArchiveInstallProgressText = $"Подготовка {archiveFileName}...";
+            ModArchiveInstallProgressText = LocalizedText.Format(Strings.Mod_PreparingFormat, archiveFileName);
             BuildProgressText = ModArchiveInstallProgressText;
             RaiseCommandStates();
 
@@ -268,7 +269,7 @@ public sealed partial class MainViewModel
             var destination = ModArchiveInstaller.PlanInstall(archivePath, profile.ModInstallPath);
             if (destination.RequiresConfirmation && !await ConfirmModArchiveInstallDestinationAsync(destination))
             {
-                Log($"Mod archive installation cancelled because folder already exists: {destination.PackagePath}");
+                Log(LocalizedText.Format(Strings.Log_ArchiveCancelledFormat, destination.PackagePath));
                 return;
             }
 
@@ -297,12 +298,12 @@ public sealed partial class MainViewModel
             }
 
             await SaveAsync();
-            Log($"Mod archive installed: {archivePath} -> {result.ModPath}");
+            Log(LocalizedText.Format(Strings.Log_ArchiveInstalledFormat, archivePath, result.ModPath));
 
             var databaseNote = result.DatabaseArchivesRelocated
-                ? Environment.NewLine + "Архивы .db* помещены в db\\mods."
+                ? Environment.NewLine + Strings.Mod_DatabaseNote
                 : string.Empty;
-            var details = $"Файлов: {result.FileCount:N0}{databaseNote}";
+            var details = LocalizedText.Format(Strings.Mod_FileCountFormat, result.FileCount, databaseNote);
             SystemSounds.Asterisk.Play();
             IsInstallingModArchive = false;
             InstalledModArchiveName = result.ModName;
@@ -312,8 +313,8 @@ public sealed partial class MainViewModel
         }
         catch (Exception ex)
         {
-            Log($"Mod archive installation failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError("Не удалось установить архив мода", ex.Message);
+            Log(LocalizedText.Format(Strings.Log_ArchiveFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Mod_InstallFailed, ex.Message);
         }
         finally
         {
@@ -339,7 +340,7 @@ public sealed partial class MainViewModel
             case ModArchiveInstallStage.Inspecting:
                 IsModArchiveInstallProgressIndeterminate = true;
                 ModArchiveInstallProgress = 0;
-                ModArchiveInstallProgressText = $"Анализ {archiveFileName}...";
+                ModArchiveInstallProgressText = LocalizedText.Format(Strings.Mod_AnalyzingFormat, archiveFileName);
                 break;
 
             case ModArchiveInstallStage.Extracting when progress.TotalBytes is > 0:
@@ -349,22 +350,27 @@ public sealed partial class MainViewModel
                     0,
                     100);
                 var remainingText = FormatArchiveInstallRemainingTime(progress, elapsed);
-                ModArchiveInstallProgressText =
-                    $"Распаковка {archiveFileName}: {ModArchiveInstallProgress:0}% · " +
-                    $"{WorkspaceStatus.FormatSize(progress.ExtractedBytes)} / " +
-                    $"{WorkspaceStatus.FormatSize(progress.TotalBytes.Value)} · {remainingText}";
+                ModArchiveInstallProgressText = LocalizedText.Format(
+                    Strings.Mod_ExtractingPercentFormat,
+                    archiveFileName,
+                    ModArchiveInstallProgress,
+                    WorkspaceStatus.FormatSize(progress.ExtractedBytes),
+                    WorkspaceStatus.FormatSize(progress.TotalBytes.Value),
+                    remainingText);
                 break;
 
             case ModArchiveInstallStage.Extracting:
                 IsModArchiveInstallProgressIndeterminate = true;
-                ModArchiveInstallProgressText =
-                    $"Распаковка {archiveFileName}: {WorkspaceStatus.FormatSize(progress.ExtractedBytes)}";
+                ModArchiveInstallProgressText = LocalizedText.Format(
+                    Strings.Mod_ExtractingSizeFormat,
+                    archiveFileName,
+                    WorkspaceStatus.FormatSize(progress.ExtractedBytes));
                 break;
 
             case ModArchiveInstallStage.Finalizing:
                 IsModArchiveInstallProgressIndeterminate = false;
                 ModArchiveInstallProgress = 100;
-                ModArchiveInstallProgressText = $"Завершение установки {archiveFileName}...";
+                ModArchiveInstallProgressText = LocalizedText.Format(Strings.Mod_FinalizingFormat, archiveFileName);
                 break;
         }
 
@@ -375,8 +381,7 @@ public sealed partial class MainViewModel
     {
         IsInstallingModArchive = false;
         IsModArchiveInstallProgressIndeterminate = false;
-        ModArchiveInstallDestinationConflictText =
-            $"Папка мода «{destination.ModName}» уже существует. Новая распаковка будет помещена в:";
+        ModArchiveInstallDestinationConflictText = LocalizedText.Format(Strings.Mod_FolderExistsFormat, destination.ModName);
         ModArchiveInstallDestinationConflictAction = destination.PackagePath;
         IsModArchiveInstallDestinationConflict = true;
         var choice = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -406,7 +411,7 @@ public sealed partial class MainViewModel
             progress.ExtractedBytes >= progress.TotalBytes.Value ||
             elapsed.TotalSeconds < 0.8)
         {
-            return "оценка времени...";
+            return Strings.Common_EstimatingTime;
         }
 
         var remainingSeconds = elapsed.TotalSeconds *
@@ -414,21 +419,21 @@ public sealed partial class MainViewModel
                                progress.ExtractedBytes;
         if (!double.IsFinite(remainingSeconds) || remainingSeconds < 0)
         {
-            return "оценка времени...";
+            return Strings.Common_EstimatingTime;
         }
 
         var remaining = TimeSpan.FromSeconds(Math.Min(remainingSeconds, TimeSpan.FromDays(99).TotalSeconds));
         if (remaining.TotalHours >= 1)
         {
-            return $"осталось ~{(int)remaining.TotalHours} ч {remaining.Minutes} мин";
+            return LocalizedText.Format(Strings.Common_RemainingHoursFormat, (int)remaining.TotalHours, remaining.Minutes);
         }
 
         if (remaining.TotalMinutes >= 1)
         {
-            return $"осталось ~{(int)remaining.TotalMinutes} мин {remaining.Seconds} с";
+            return LocalizedText.Format(Strings.Common_RemainingMinutesFormat, (int)remaining.TotalMinutes, remaining.Seconds);
         }
 
-        return $"осталось ~{Math.Max(1, (int)Math.Ceiling(remaining.TotalSeconds))} с";
+        return LocalizedText.Format(Strings.Common_RemainingSecondsFormat, Math.Max(1, (int)Math.Ceiling(remaining.TotalSeconds)));
     }
 
     private bool CanInstallModArchive() => !IsBuilding && CanAddMod();
@@ -439,21 +444,21 @@ public sealed partial class MainViewModel
         if (!string.IsNullOrWhiteSpace(profile.GameInstallPath) &&
             FileSystemSafety.IsDirectoryInside(fullInstallRoot, profile.GameInstallPath))
         {
-            throw new InvalidOperationException("Папка установленных модов не должна находиться внутри папки игры.");
+            throw new InvalidOperationException(Strings.Mod_FolderInsideGame);
         }
 
         if (!string.IsNullOrWhiteSpace(profile.WorkspacePath) &&
             (FileSystemSafety.IsDirectoryInside(fullInstallRoot, profile.WorkspacePath) ||
              FileSystemSafety.IsDirectoryInside(profile.WorkspacePath, fullInstallRoot)))
         {
-            throw new InvalidOperationException("Папка установленных модов не должна пересекаться с workspace профиля.");
+            throw new InvalidOperationException(Strings.Mod_FolderOverlapsWorkspace);
         }
 
         if (profile.Mods.Any(mod =>
                 !string.IsNullOrWhiteSpace(mod.SourcePath) &&
                 FileSystemSafety.IsDirectoryInside(fullInstallRoot, mod.SourcePath)))
         {
-            throw new InvalidOperationException("Папка установленных модов не должна находиться внутри исходной папки другого мода.");
+            throw new InvalidOperationException(Strings.Mod_FolderInsideOtherMod);
         }
 
         return fullInstallRoot;
@@ -469,7 +474,7 @@ public sealed partial class MainViewModel
         var initialPath = Directory.Exists(SelectedMod?.SourcePath) ? SelectedMod.SourcePath
             : !string.IsNullOrWhiteSpace(SelectedProfile.GameInstallPath) ? SelectedProfile.GameInstallPath
             : _lastBrowsedGamePath;
-        var selected = DialogService.PickExecutable("Choose launch executable", initialPath);
+        var selected = DialogService.PickExecutable(Strings.Dialog_SelectLaunchExecutable, initialPath);
         if (selected is null)
         {
             return;
@@ -479,8 +484,8 @@ public sealed partial class MainViewModel
         if (selection is null)
         {
             _dialogService.ShowError(
-                "Executable is outside profile sources",
-                "Choose an executable from the game folder, an enabled mod folder, or the generated profile workspace.");
+                Strings.Dialog_InvalidExecutable,
+                Strings.Dialog_ExecutableOutsideSources);
             return;
         }
 
@@ -489,8 +494,8 @@ public sealed partial class MainViewModel
             ? selection.SourceRootPath
             : string.Empty;
         Log(!SelectedProfile.IsStandalone && selection.PinsSource
-            ? $"Launch executable selected: {selection.RelativePath} from {selection.SourceName}"
-            : $"Launch executable selected: {selection.RelativePath}");
+            ? LocalizedText.Format(Strings.Log_ExecutableSelectedSourceFormat, selection.RelativePath, selection.SourceName)
+            : LocalizedText.Format(Strings.Log_ExecutableSelectedFormat, selection.RelativePath));
         RefreshValidation();
         _ = SaveAsync();
     }
@@ -513,7 +518,7 @@ public sealed partial class MainViewModel
         }
 
         var found = LaunchExecutableDetector.DetectBest(
-            [new LaunchExecutableSearchRoot(modRoot, "автономная сборка", 1, IsBaseGameRoot: true)],
+            [new LaunchExecutableSearchRoot(modRoot, Strings.Profile_Standalone, 1, IsBaseGameRoot: true)],
             currentExe);
 
         if (found is null)
@@ -523,7 +528,7 @@ public sealed partial class MainViewModel
 
         SelectedProfile.ExecutableRelativePath = found.RelativePath;
         SelectedProfile.ExecutableSourcePath = string.Empty;
-        Log($"Standalone executable auto-detected: {found.RelativePath}");
+        Log(LocalizedText.Format(Strings.Log_StandaloneExeDetectedFormat, found.RelativePath));
     }
 
     public void RemoveMods(IReadOnlyList<ModEntry> mods)
@@ -535,7 +540,7 @@ public sealed partial class MainViewModel
 
         var removed = ModListEditor.Remove(SelectedProfile, mods);
         RefreshValidation();
-        Log($"Removed {removed} mod(s).");
+        Log(LocalizedText.Format(Strings.Log_ModsRemovedFormat, removed));
         _ = SaveAsync();
     }
 
@@ -549,7 +554,7 @@ public sealed partial class MainViewModel
         var removed = SelectedMod;
         ModListEditor.Remove(SelectedProfile, [removed]);
         RefreshValidation();
-        Log($"Mod removed: {removed.Name}");
+        Log(LocalizedText.Format(Strings.Log_ModRemovedFormat, removed.Name));
         _ = SaveAsync();
     }
 
@@ -619,7 +624,7 @@ public sealed partial class MainViewModel
         }
         catch (Exception ex)
         {
-            Log($"Could not open mod folder: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+            Log(LocalizedText.Format(Strings.Log_OpenModFolderFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
         }
     }
 
@@ -646,7 +651,7 @@ public sealed partial class MainViewModel
         }
         catch (Exception ex)
         {
-            Log($"Could not open mod folder: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+            Log(LocalizedText.Format(Strings.Log_OpenModFolderFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
         }
     }
 }

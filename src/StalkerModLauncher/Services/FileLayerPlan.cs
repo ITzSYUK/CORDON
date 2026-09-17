@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -72,7 +73,7 @@ public sealed partial class FileLayerPlan
 
     public IReadOnlyList<FileLayerFile> FindAllProviders(string relativePath)
     {
-        FileSystemSafety.EnsureRelativePath(relativePath, "Layer file");
+        FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_LayerFile);
         return SourceLayers
             .Where(layer => Directory.Exists(layer.RootPath))
             .Where(layer => !IsExcluded(layer, relativePath))
@@ -163,9 +164,9 @@ public sealed partial class FileLayerPlan
     {
         return layer.Kind switch
         {
-            FileLayerKind.BaseGame => "базовая игра",
-            FileLayerKind.Mod => $"мод: {layer.Name}",
-            FileLayerKind.UserData => "данные профиля",
+            FileLayerKind.BaseGame => Strings.Layer_BaseGame,
+            FileLayerKind.Mod => LocalizedText.Format(Strings.Layer_ModFormat, layer.Name),
+            FileLayerKind.UserData => Strings.Layer_ProfileData,
             _ => layer.Name
         };
     }
@@ -174,7 +175,7 @@ public sealed partial class FileLayerPlan
     {
         if (profile.IsStandalone)
         {
-            throw new InvalidOperationException("FileLayerPlan for standalone profiles is not part of the linked workspace pipeline.");
+            throw new InvalidOperationException(Strings.Error_StandaloneLayerPlanUnsupported);
         }
 
         var paths = AppPaths.Current;
@@ -187,7 +188,7 @@ public sealed partial class FileLayerPlan
         layers.Add(new FileLayer(
             FileLayerKind.UserData,
             "__userdata",
-            "Profile user data",
+            Strings.Layer_ProfileWritableData,
             Path.Combine(Path.GetFullPath(workspaceRoot), "userdata"),
             int.MaxValue));
 
@@ -201,7 +202,7 @@ public sealed partial class FileLayerPlan
 
         var launchArgumentSource = plan.UsesFsgameLaunchArgument
             ? plan.FindFsgameSource() ?? throw new FileNotFoundException(
-                $"Файл из параметра -fsltx не найден во включённых слоях: {plan._automaticFsgameRelativePath}")
+                LocalizedText.Format(Strings.Ready_FsltxMissingFormat, plan._automaticFsgameRelativePath))
             : null;
         plan.GameDataRoot = ProfileDataPathResolver.GetGameDataRoot(
             profile,
@@ -229,13 +230,13 @@ public sealed partial class FileLayerPlan
             : match.Groups["plain"].Value).Trim();
         if (relativePath.Length == 0)
         {
-            throw new InvalidOperationException("После параметра -fsltx укажите относительный путь к файлу .ltx.");
+            throw new InvalidOperationException(Strings.Fsgame_ArgumentPathRequired);
         }
 
-        FileSystemSafety.EnsureRelativePath(relativePath, "Файл из параметра -fsltx");
+        FileSystemSafety.EnsureRelativePath(relativePath, Strings.Fsgame_ArgumentFile);
         if (!Path.GetExtension(relativePath).Equals(".ltx", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException($"Параметр -fsltx должен указывать на файл с расширением .ltx: {relativePath}");
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Fsgame_ArgumentExtensionFormat, relativePath));
         }
 
         return NormalizeRelativePath(relativePath);
@@ -256,17 +257,17 @@ public sealed partial class FileLayerPlan
         var fullPath = Path.GetFullPath(profile.FsgameSourcePath.Trim());
         if (!Path.GetExtension(fullPath).Equals(".ltx", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("Ручной файл конфигурации должен иметь расширение .ltx.");
+            throw new InvalidOperationException(Strings.Fsgame_ManualExtension);
         }
 
         if (!File.Exists(fullPath))
         {
-            throw new FileNotFoundException($"Ручной файл .ltx не найден: {fullPath}", fullPath);
+            throw new FileNotFoundException(LocalizedText.Format(Strings.Fsgame_ManualMissingFormat, fullPath), fullPath);
         }
 
         var selection = ProfileExecutableSourceResolver.TryCreateSelection(profile, fullPath, includeWorkspace: false)
             ?? throw new InvalidOperationException(
-                "Ручной файл .ltx должен находиться в папке базовой игры или включённого мода.");
+                Strings.Fsgame_ManualOutsideLayers);
         return new ProfileFsgameSource(fullPath, selection.RelativePath, selection.SourceName);
     }
 
@@ -277,7 +278,7 @@ public sealed partial class FileLayerPlan
             new(
                 FileLayerKind.BaseGame,
                 "__base_game",
-                "Base game",
+                Strings.Common_BaseGame,
                 Path.GetFullPath(gamePath),
                 0)
         };
@@ -298,7 +299,7 @@ public sealed partial class FileLayerPlan
             var overwrite = new ModEntry
             {
                 Id = "__mo2_overwrite",
-                Name = "Файлы overwrite из MO2",
+                Name = Strings.Layer_Mo2OverwriteFiles,
                 SourcePath = Path.GetFullPath(profile.Mo2OverwritePath),
                 IsEnabled = true,
                 Order = profile.Mods.Count == 0 ? 1 : profile.Mods.Max(mod => mod.Order) + 1
@@ -319,7 +320,7 @@ public sealed partial class FileLayerPlan
         IEnumerable<FileLayer> layers,
         string relativePath)
     {
-        FileSystemSafety.EnsureRelativePath(relativePath, "Profile fsgame.ltx");
+        FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_ProfileFsgame);
         return layers
             .Where(layer => layer.Kind != FileLayerKind.UserData && Directory.Exists(layer.RootPath))
             .Where(layer => !IsExcluded(layer, relativePath))

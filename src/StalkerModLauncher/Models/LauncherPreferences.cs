@@ -1,6 +1,7 @@
 namespace StalkerModLauncher.Models;
 
 public sealed record LauncherPreferences(
+    string UiLanguage,
     bool IsPdaInterfaceEnabled,
     bool UseNewPdaInterface,
     bool ShowTrayIcon,
@@ -12,6 +13,7 @@ public sealed record LauncherPreferences(
     LauncherLogLevel LogLevel)
 {
     public static LauncherPreferences Default { get; } = new(
+        UiLanguage: Services.UiLanguage.System,
         IsPdaInterfaceEnabled: false,
         UseNewPdaInterface: false,
         ShowTrayIcon: true,

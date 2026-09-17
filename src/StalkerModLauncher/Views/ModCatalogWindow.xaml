@@ -1,7 +1,8 @@
 <Window x:Class="StalkerModLauncher.Views.ModCatalogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Браузер модификаций"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="{x:Static res:Strings.Catalog_Title}"
         Width="1060"
         Height="720"
         MinWidth="800"
@@ -26,15 +27,15 @@
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
                 <Button x:Name="ShadowOfChernobylButton"
-                        Content="Тень Чернобыля"
+                        Content="{x:Static res:Strings.Catalog_ShadowOfChernobyl}"
                         Click="ShadowOfChernobylButton_OnClick"
                         Margin="0,0,8,0"/>
                 <Button x:Name="ClearSkyButton"
-                        Content="Чистое Небо"
+                        Content="{x:Static res:Strings.Catalog_ClearSky}"
                         Click="ClearSkyButton_OnClick"
                         Margin="0,0,8,0"/>
                 <Button x:Name="CallOfPripyatButton"
-                        Content="Зов Припяти"
+                        Content="{x:Static res:Strings.Catalog_CallOfPripyat}"
                         Click="CallOfPripyatButton_OnClick"/>
             </StackPanel>
             <StackPanel Grid.Column="1"
@@ -97,7 +98,7 @@
                                         </ControlTemplate>
                                     </TextBox.Template>
                                 </TextBox>
-                                <TextBlock Text="Поиск по названию"
+                                <TextBlock Text="{x:Static res:Strings.Catalog_Search}"
                                            Foreground="{StaticResource MutedTextBrush}"
                                            VerticalAlignment="Center"
                                            Margin="1,2,0,0"
@@ -121,7 +122,7 @@
                 </Grid>
                 <Button Style="{StaticResource ModToolbarIconButtonStyle}"
                         Click="RefreshButton_OnClick"
-                        ToolTip="Обновить список модификаций">
+                        ToolTip="{x:Static res:Strings.Catalog_RefreshTooltip}">
                     <Viewbox Width="22" Height="22">
                         <Canvas Width="24" Height="24">
                             <Path Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -211,7 +212,7 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Text="Загружаем ещё модификации..."
+                        <TextBlock Text="{x:Static res:Strings.Catalog_LoadingMore}"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="12"
                                    HorizontalAlignment="Center"
@@ -224,7 +225,7 @@
             <StackPanel HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <TextBlock Text="Загрузка каталога..."
+                <TextBlock Text="{x:Static res:Strings.Catalog_Loading}"
                            Foreground="{StaticResource MutedTextBrush}"
                            FontSize="16"/>
             </StackPanel>
@@ -259,7 +260,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Модификации, отображаемые на странице, принадлежат их авторам. Информация предоставляется с использованием материалов сайта "
+                <TextBlock Text="{x:Static res:Strings.Catalog_Credits}"
                            Foreground="{StaticResource MutedTextBrush}"
                            FontSize="10.5"/>
                 <TextBlock Text="AP-PRO.RU ©"
@@ -267,7 +268,7 @@
                            FontSize="10.5"
                            FontWeight="SemiBold"
                            Cursor="Hand"
-                           ToolTip="Открыть AP-PRO.RU"
+                           ToolTip="{x:Static res:Strings.Catalog_OpenSite}"
                            MouseLeftButtonUp="ApProLink_OnMouseLeftButtonUp"/>
             </StackPanel>
             <TextBlock Grid.Column="1"

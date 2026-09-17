@@ -1,7 +1,8 @@
 <Window x:Class="StalkerModLauncher.Views.ScanResultsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Найденные моды"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="{x:Static res:Strings.Scan_Title}"
         Width="900"
         Height="620"
         MinWidth="680"
@@ -24,7 +25,7 @@
                 xmlns:Infrastructure="clr-namespace:StalkerModLauncher.Infrastructure"/>
         </Grid.Resources>
         <TextBlock Grid.Row="0"
-                   Text="Выберите моды для добавления:"
+                   Text="{x:Static res:Strings.Scan_Prompt}"
                    FontSize="16"
                    FontWeight="SemiBold"
                    Margin="0,0,0,12"/>
@@ -60,11 +61,11 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="Название" Width="250"
+                    <GridViewColumn Header="{x:Static res:Strings.Scan_Name}" Width="250"
                                     DisplayMemberBinding="{Binding Name}"/>
-                    <GridViewColumn Header="Обнаружен" Width="130"
+                    <GridViewColumn Header="{x:Static res:Strings.Scan_Detected}" Width="130"
                                     DisplayMemberBinding="{Binding DetectedBy}"/>
-                    <GridViewColumn Header="Путь" Width="440"
+                    <GridViewColumn Header="{x:Static res:Strings.Scan_Path}" Width="440"
                                     DisplayMemberBinding="{Binding Path}"/>
                 </GridView>
             </ListView.View>
@@ -74,13 +75,13 @@
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,12,0,0">
-            <Button Content="Добавить выбранные"
+            <Button Content="{x:Static res:Strings.Scan_AddSelected}"
                     Click="AddButton_Click"
                     IsDefault="True"
                     Margin="0,0,8,0"
                     MinWidth="140"
                     Padding="12,6"/>
-            <Button Content="Отмена"
+            <Button Content="{x:Static res:Strings.Common_Cancel}"
                     Click="CancelButton_Click"
                     IsCancel="True"
                     MinWidth="80"

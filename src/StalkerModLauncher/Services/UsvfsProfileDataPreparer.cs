@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -21,7 +22,7 @@ internal static class UsvfsProfileDataPreparer
         var destination = FileSystemSafety.ResolvePathInside(
             manifest.WriteOverlayRoot,
             source.RelativePath,
-            "Profile fsgame.ltx");
+            Strings.Safety_ProfileFsgame);
         ProfileDataConfigurator.MigrateLegacyManualData(layerPlan, manifest.WriteOverlayRoot, progress);
         ProfileWritableGameFileStore.PrepareForVirtualFileSystem(
             layerPlan,
@@ -32,7 +33,7 @@ internal static class UsvfsProfileDataPreparer
             ? FileSystemSafety.ResolvePathInside(
                 manifest.WriteOverlayRoot,
                 layerPlan.FsgameLaunchRelativePath,
-                "fsgame.ltx from -fsltx")
+                Strings.Fsgame_ArgumentFile)
             : destination;
         if (!launchDestination.Equals(destination, StringComparison.OrdinalIgnoreCase))
         {
@@ -41,7 +42,7 @@ internal static class UsvfsProfileDataPreparer
         Directory.CreateDirectory(layerPlan.GameDataRoot);
         if (layerPlan.UsesSharedGameData)
         {
-            progress?.Report($"USVFS: общие данные базовой игры: {layerPlan.GameDataRoot}. Существующие файлы сохранены.");
+            progress?.Report(LocalizedText.Format(Strings.Usvfs_SharedDataFormat, layerPlan.GameDataRoot));
             return launchDestination;
         }
         ProfileDataConfigurator.EnsureProfileUserLtx(
@@ -49,7 +50,7 @@ internal static class UsvfsProfileDataPreparer
             profileDataPath,
             progress);
         ProfileShaderCacheSeeder.Seed(layerPlan, profileDataPath, progress, cancellationToken);
-        progress?.Report($"USVFS: профильный fsgame.ltx подготовлен из слоя «{source.SourceName}»{(layerPlan.ManualFsgameSource is null ? string.Empty : " (ручной выбор)")}.");
+        progress?.Report(LocalizedText.Format(Strings.Usvfs_ProfileFsgameFormat, source.SourceName, layerPlan.ManualFsgameSource is null ? string.Empty : Strings.Usvfs_ManualSelectionSuffix));
         return launchDestination;
     }
 }

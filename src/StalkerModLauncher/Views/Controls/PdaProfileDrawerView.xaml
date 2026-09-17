@@ -3,6 +3,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
+             xmlns:res="clr-namespace:StalkerModLauncher.Resources"
              Background="Transparent">
     <UserControl.Resources>
         <ResourceDictionary>
@@ -148,7 +149,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                    <TextBlock Text="ПРОФИЛИ"
+                    <TextBlock Text="{x:Static res:Strings.Profile_Profiles}"
                                FontFamily="Bahnschrift SemiCondensed"
                                FontSize="17"
                                Foreground="#949892"
@@ -157,7 +158,7 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,9,0" VerticalAlignment="Center">
                     <Button Command="{Binding NewProfileCommand}"
                             Style="{StaticResource PdaDrawerActionStyle}"
-                            ToolTip="Создать профиль">
+                            ToolTip="{x:Static res:Strings.Profile_CreateTooltip}">
                         <Viewbox Width="22" Height="22">
                             <Canvas Width="24" Height="24">
                                 <Path Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -167,12 +168,12 @@
                     </Button>
                     <Button Command="{Binding ImportMo2CollectionCommand}"
                             Style="{StaticResource PdaDrawerActionStyle}"
-                            ToolTip="Перенести сборку из Mod Organizer 2">
+                            ToolTip="{x:Static res:Strings.Profile_Mo2ImportTooltip}">
                         <TextBlock Text="MO2" FontSize="9" FontWeight="Bold"/>
                     </Button>
                     <Button Command="{Binding ImportProfileCommand}"
                             Style="{StaticResource PdaDrawerActionStyle}"
-                            ToolTip="Импортировать профиль">
+                            ToolTip="{x:Static res:Strings.Profile_ImportTooltip}">
                         <Viewbox Width="22" Height="22">
                             <Canvas Width="24" Height="24">
                                 <Rectangle Canvas.Left="4" Canvas.Top="3" Width="16" Height="18" RadiusX="3" RadiusY="3"
@@ -256,7 +257,7 @@
                                            TextWrapping="Wrap"
                                            TextTrimming="CharacterEllipsis"
                                            MaxHeight="40"/>
-                                <TextBlock Text="ЗАПУЩЕН"
+                                <TextBlock Text="{x:Static res:Strings.Profile_Running}"
                                            Margin="0,1,0,0"
                                            Foreground="#D39A2D"
                                            FontSize="10"
@@ -288,7 +289,7 @@
                                         VerticalAlignment="Center" Margin="5,0,0,0" Opacity="0" IsHitTestVisible="False">
                                 <StackPanel.RenderTransform><TranslateTransform X="14"/></StackPanel.RenderTransform>
                                 <Button Style="{StaticResource PdaInlineActionStyle}"
-                                        ToolTip="Создать копию"
+                                        ToolTip="{x:Static res:Strings.Profile_CloneTooltip}"
                                         Command="{Binding DataContext.InlineDuplicateProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}">
                                     <Viewbox Width="20" Height="20">
@@ -301,7 +302,7 @@
                                     </Viewbox>
                                 </Button>
                                 <Button Style="{StaticResource PdaInlineActionStyle}"
-                                        ToolTip="Экспортировать"
+                                        ToolTip="{x:Static res:Strings.Profile_ExportTooltip}"
                                         Command="{Binding DataContext.InlineExportProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}">
                                     <Viewbox Width="20" Height="20">
@@ -314,7 +315,7 @@
                                     </Viewbox>
                                 </Button>
                                 <Button Style="{StaticResource PdaInlineActionStyle}"
-                                        ToolTip="Удалить профиль"
+                                        ToolTip="{x:Static res:Strings.Profile_DeleteTooltip}"
                                         Command="{Binding DataContext.InlineDeleteProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}">
                                     <Grid Width="19" Height="19">

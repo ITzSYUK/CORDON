@@ -66,7 +66,7 @@ public sealed class ModArchiveInstallerTests : IDisposable
         var exception = await Assert.ThrowsAsync<InvalidDataException>(
             () => ModArchiveInstaller.InstallAsync(archive, InstallRoot));
 
-        Assert.Contains("Unsafe archive entry", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("Небезопасный путь элемента архива", exception.Message, StringComparison.Ordinal);
         Assert.Empty(Directory.EnumerateFileSystemEntries(InstallRoot));
         Assert.False(File.Exists(Path.Combine(_root, "outside.txt")));
     }

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -42,7 +43,7 @@ internal static class UsvfsExecutableBootstrapper
         IProgress<string>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        FileSystemSafety.EnsureRelativePath(launchTarget.ExecutableRelativePath, "USVFS executable");
+        FileSystemSafety.EnsureRelativePath(launchTarget.ExecutableRelativePath, Strings.Safety_UsvfsExecutable);
         var executableDirectoryRelative = Path.GetDirectoryName(launchTarget.ExecutableRelativePath) ?? string.Empty;
         var bootstrapDirectory = executableDirectoryRelative.Length == 0
             ? bootstrapRoot
@@ -71,11 +72,10 @@ internal static class UsvfsExecutableBootstrapper
         var executablePath = Path.Combine(bootstrapDirectory, selectedRelativeName);
         if (!File.Exists(executablePath))
         {
-            throw new FileNotFoundException("USVFS bootstrap executable was not created.", executablePath);
+            throw new FileNotFoundException(Strings.Error_UsvfsBootstrapMissing, executablePath);
         }
 
-        progress?.Report(
-            $"USVFS executable bootstrap prepared: {files.Count:N0} linked files in {bootstrapDirectory}");
+        progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsBootstrapFormat, files.Count, bootstrapDirectory));
         return new UsvfsBootstrapResult(executablePath, bootstrapRoot, bootstrapDirectory, files.Count);
     }
 
@@ -87,11 +87,12 @@ internal static class UsvfsExecutableBootstrapper
         IProgress<string>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        FileSystemSafety.EnsureRelativePath(launchTarget.ExecutableRelativePath, "USVFS Anomaly launcher");
+        FileSystemSafety.EnsureRelativePath(launchTarget.ExecutableRelativePath, Strings.Safety_UsvfsAnomalyLauncher);
         if (!string.IsNullOrEmpty(Path.GetDirectoryName(launchTarget.ExecutableRelativePath)))
         {
-            throw new InvalidOperationException(
-                $"USVFS Anomaly launcher must be in the game root: {launchTarget.ExecutableRelativePath}");
+            throw new InvalidOperationException(LocalizedText.Format(
+                Strings.Error_UsvfsAnomalyRootFormat,
+                launchTarget.ExecutableRelativePath));
         }
         var launcherFileName = Path.GetFileName(launchTarget.ExecutableRelativePath);
 
@@ -133,11 +134,10 @@ internal static class UsvfsExecutableBootstrapper
         var executablePath = Path.Combine(bootstrapRoot, launcherFileName);
         if (!File.Exists(executablePath))
         {
-            throw new FileNotFoundException("USVFS Anomaly launcher bootstrap executable was not created.", executablePath);
+            throw new FileNotFoundException(Strings.Error_UsvfsAnomalyBootstrapMissing, executablePath);
         }
 
-        progress?.Report(
-            $"USVFS Anomaly launcher bootstrap prepared: {stats.FileCount:N0} linked files in {bootstrapRoot}");
+        progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsAnomalyBootstrapFormat, stats.FileCount, bootstrapRoot));
         return new UsvfsBootstrapResult(executablePath, bootstrapRoot, bootstrapRoot, stats.FileCount);
     }
 
@@ -163,11 +163,11 @@ internal static class UsvfsExecutableBootstrapper
         string writeOverlayRoot,
         string relativePath)
     {
-        FileSystemSafety.EnsureRelativePath(relativePath, "Anomaly launcher profile file");
+        FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_AnomalyLauncherProfileFile);
         var profileFile = FileSystemSafety.ResolvePathInside(
             writeOverlayRoot,
             relativePath,
-            "Anomaly launcher profile file");
+            Strings.Safety_AnomalyLauncherProfileFile);
         if (File.Exists(profileFile))
         {
             return profileFile;
@@ -258,8 +258,7 @@ internal static class UsvfsBootstrapPathResolver
             BootstrapDirectoryName);
         if (!IsAscii(profileRoot))
         {
-            throw new InvalidOperationException(
-                "USVFS requires an ASCII-only profile workspace. Move the profile workspace to a path without non-Latin characters.");
+            throw new InvalidOperationException(Strings.Error_UsvfsAsciiPath);
         }
 
         return profileRoot;

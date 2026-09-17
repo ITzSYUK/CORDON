@@ -1,5 +1,6 @@
 using System.Text.Json;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -73,7 +74,7 @@ public sealed class WorkspaceManagementService
             FileSystemSafety.IsSameDirectory(profile.WorkspacePath, oldWorkspace))
         {
             return Task.FromResult<Exception?>(new InvalidOperationException(
-                $"Нельзя удалить активный workspace профиля: {oldWorkspace}"));
+                LocalizedText.Format(Strings.Workspace_ActiveCannotDeleteFormat, oldWorkspace)));
         }
 
         return Task.Run(
@@ -89,12 +90,12 @@ public sealed class WorkspaceManagementService
     {
         if (profile.IsStandalone)
         {
-            throw new InvalidOperationException("Автономный профиль не использует workspace.");
+            throw new InvalidOperationException(Strings.Profile_StandaloneNoWorkspace);
         }
 
         if (FileSystemSafety.IsFileSystemRoot(destinationRoot))
         {
-            throw new InvalidOperationException("Корень диска нельзя использовать как корень workspace.");
+            throw new InvalidOperationException(Strings.Workspace_DriveRootForbidden);
         }
 
         Directory.CreateDirectory(destinationRoot);
@@ -112,12 +113,12 @@ public sealed class WorkspaceManagementService
             (FileSystemSafety.IsDirectoryInside(destination, oldWorkspace) ||
              FileSystemSafety.IsDirectoryInside(oldWorkspace, destination)))
         {
-            throw new InvalidOperationException("Новая папка workspace не должна находиться внутри старой папки или содержать её.");
+            throw new InvalidOperationException(Strings.Workspace_NestedDestination);
         }
 
         if (Directory.Exists(destination))
         {
-            throw new InvalidOperationException($"Папка назначения уже существует: {destination}");
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Workspace_DestinationExistsFormat, destination));
         }
 
         var temporary = destination + $".moving-{Guid.NewGuid():N}";
@@ -132,7 +133,7 @@ public sealed class WorkspaceManagementService
             var targetUserData = Path.Combine(temporary, "userdata");
             if (Directory.Exists(sourceUserData))
             {
-                progress.Report("Копирование сохранений, настроек и логов...");
+                progress.Report(Strings.Workspace_CopyingUserData);
                 CopyDirectory(
                     sourceUserData,
                     targetUserData,
@@ -144,7 +145,7 @@ public sealed class WorkspaceManagementService
 
             cancellationToken.ThrowIfCancellationRequested();
             Directory.Move(temporary, destination);
-            progress.Report($"Workspace перенесён: {destination}. Папка current будет пересобрана.");
+            progress.Report(LocalizedText.Format(Strings.Workspace_MovedFormat, destination));
             return new WorkspaceMoveResult(destination, oldWorkspace, WasMoved: true);
         }
         catch

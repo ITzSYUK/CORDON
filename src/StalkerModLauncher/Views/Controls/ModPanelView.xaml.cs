@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Themes;
 using StalkerModLauncher.ViewModels;
 
@@ -144,7 +145,7 @@ public partial class ModPanelView : UserControl
         var canEdit = ViewModel?.CanEditSelectedProfile == true;
         var contextMenu = new ContextMenu();
         contextMenu.Items.Add(CreateLeftClickMenuItem(
-            "Подробности конфликтов",
+            Strings.Conflict_Details,
             ViewModel?.ShowSelectedModConflictsCommand.CanExecute(mod) == true,
             () =>
             {
@@ -153,15 +154,15 @@ public partial class ModPanelView : UserControl
             }));
         contextMenu.Items.Add(new Separator());
         contextMenu.Items.Add(CreateLeftClickMenuItem(
-            "В начало",
+            Strings.Common_MoveFirst,
             canEdit,
             () => MoveSelectedMods(selectedMods, moveToEnd: false, contextMenu)));
         contextMenu.Items.Add(CreateLeftClickMenuItem(
-            "В конец",
+            Strings.Common_MoveLast,
             canEdit,
             () => MoveSelectedMods(selectedMods, moveToEnd: true, contextMenu)));
         contextMenu.Items.Add(CreateLeftClickMenuItem(
-            "Убрать",
+            Strings.Common_Remove,
             canEdit,
             () =>
             {

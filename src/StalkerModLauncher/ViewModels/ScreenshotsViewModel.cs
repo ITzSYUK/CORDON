@@ -3,6 +3,7 @@ using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -185,11 +186,11 @@ public sealed class ScreenshotsViewModel : ObservableObject, IDisposable
         try
         {
             _clipboardService.Copy(item.FilePath);
-            ShowTemporaryStatus($"Скопировано: {Path.GetFileName(item.FilePath)}");
+            ShowTemporaryStatus(LocalizedText.Format(Strings.Screenshots_CopiedFormat, Path.GetFileName(item.FilePath)));
         }
         catch (Exception ex)
         {
-            ShowTemporaryStatus($"Не удалось скопировать скриншот: {ex.Message}");
+            ShowTemporaryStatus(LocalizedText.Format(Strings.Screenshots_CopyFailedFormat, ex.Message));
         }
     }
 

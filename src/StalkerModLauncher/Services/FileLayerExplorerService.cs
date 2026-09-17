@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -75,7 +76,7 @@ public static class FileLayerExplorerService
             var storagePath = Path.Combine(workspace, rule.StorageRelativePath);
             if (File.Exists(storagePath))
             {
-                AddProvider(providers, rule.RelativePath, "изменяемые данные профиля");
+                AddProvider(providers, rule.RelativePath, Strings.Layer_ProfileWritableData);
             }
         }
 
@@ -88,7 +89,7 @@ public static class FileLayerExplorerService
         foreach (var file in Directory.EnumerateFiles(overwriteRoot, "*", SafeEnumerationOptions))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            AddProvider(providers, Path.GetRelativePath(overwriteRoot, file), "профильный overwrite");
+            AddProvider(providers, Path.GetRelativePath(overwriteRoot, file), Strings.Layer_ProfileOverwrite);
         }
     }
 

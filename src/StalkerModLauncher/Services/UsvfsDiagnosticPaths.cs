@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 internal static class UsvfsDiagnosticPaths
@@ -45,12 +47,12 @@ internal static class UsvfsDiagnosticPaths
         try
         {
             File.Move(sourcePath, destinationPath, overwrite: true);
-            progress?.Report($"USVFS diagnostic log moved outside the game log directory: {destinationPath}");
+            progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsDiagnosticMovedFormat, destinationPath));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             throw new IOException(
-                $"Не удалось убрать служебный USVFS-лог из игровой папки логов: {sourcePath}",
+                LocalizedText.Format(Strings.Usvfs_LogCleanupFailedFormat, sourcePath),
                 ex);
         }
     }

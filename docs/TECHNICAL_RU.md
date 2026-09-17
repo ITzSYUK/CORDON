@@ -1,6 +1,6 @@
 # Техническая документация
 
-[Русская версия](TECHNICAL_RU.md) | [English version](TECHNICAL_EN.md) | [Руководство пользователя](USER_GUIDE_RU.md)
+[Русская версия](TECHNICAL_RU.md) | [English version](TECHNICAL_EN.md) | [Руководство](USER_GUIDE_RU.md) | [English user guide](USER_GUIDE_EN.md)
 
 Документ описывает устройство CORDON `v1.4.5`: как хранятся профили, как определяется итоговый файл, чем отличаются Workspace и USVFS, где находятся пользовательские данные и какие проверки защищают исходные папки.
 

@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -32,13 +33,13 @@ public sealed class LaunchPreflightService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
         {
-            checks.Add(Error("Подготовка профиля", ex.Message));
+            checks.Add(Error(Strings.Check_ProfilePreparation, ex.Message));
         }
         var launchPlan = TryCreateLaunchPlan(profile, fileLayerPlan, cancellationToken);
         var overlayManifest = TryCreateOverlayManifest(profile, fileLayerPlan, cancellationToken);
         if (!profile.IsEnabled)
         {
-            checks.Add(Error("Профиль", "Профиль выключен."));
+            checks.Add(Error(Strings.Preflight_Profile, Strings.Preflight_ProfileDisabled));
         }
 
         if (!profile.IsStandalone)
@@ -46,24 +47,24 @@ public sealed class LaunchPreflightService
             try
             {
                 var dataRoot = ProfileDataPathResolver.GetGameDataRoot(profile);
-                checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Healthy, "Данные игры",
-                    profile.UseBaseGameData ? $"Общий каталог базовой игры: {dataRoot}" : "В папке профиля"));
+                checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Healthy, Strings.Check_GameData,
+                    profile.UseBaseGameData ? LocalizedText.Format(Strings.Preflight_SharedGameDataFormat, dataRoot) : Strings.Preflight_InProfileFolder));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException)
             {
-                checks.Add(Error("Данные игры", ex.Message));
+                checks.Add(Error(Strings.Check_GameData, ex.Message));
             }
             var game = GameInstallationValidator.Validate(profile.GameInstallPath);
             checks.Add(new ProfileHealthCheck(
                 game.IsValid ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Error,
-                "Базовая игра",
+                Strings.Check_BaseGame,
                 game.IsValid ? profile.GameInstallPath : $"{game.Summary} {string.Join(" ", game.Messages)}".Trim()));
         }
 
         var enabledMods = profile.Mods.Where(mod => mod.IsEnabled).OrderBy(mod => mod.Order).ToArray();
         if (profile.IsStandalone && enabledMods.Length != 1)
         {
-            checks.Add(Error("Автономная сборка", "Автономный профиль должен содержать ровно одну включённую папку мода."));
+            checks.Add(Error(Strings.Profile_Standalone, Strings.Ready_StandaloneModCount));
         }
 
         foreach (var mod in enabledMods)
@@ -72,30 +73,30 @@ public sealed class LaunchPreflightService
             var exists = Directory.Exists(mod.SourcePath);
             checks.Add(new ProfileHealthCheck(
                 exists ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Error,
-                $"Источник: {mod.Name}",
-                exists ? mod.SourcePath : $"Папка не найдена: {mod.SourcePath}"));
+                LocalizedText.Format(Strings.Preflight_SourceFormat, mod.Name),
+                exists ? mod.SourcePath : LocalizedText.Format(Strings.Ready_ModFolderMissingFormat, mod.SourcePath)));
 
             if (exists && !HasAnyFile(mod.SourcePath, cancellationToken))
             {
                 checks.Add(new ProfileHealthCheck(
                     ProfileHealthStatus.Warning,
-                    $"Мод пуст: {mod.Name}",
-                    "В папке не найдено файлов. Возможно, выбрана внешняя или неправильная папка мода."));
+                    LocalizedText.Format(Strings.Preflight_EmptyModTitleFormat, mod.Name),
+                    Strings.Preflight_EmptyMod));
             }
         }
 
         try
         {
-            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, "Бинарник запуска");
+            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Check_LaunchBinary);
             var executableSource = launchPlan?.Executable ??
                                    FindFinalExecutableSource(profile, profile.ExecutableRelativePath, fileLayerPlan, cancellationToken);
             checks.Add(new ProfileHealthCheck(
                 executableSource is null || !executableSource.IsAvailable
                     ? ProfileHealthStatus.Error
                     : executableSource.UsedRequestedRelativePath ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Warning,
-                "Итоговый бинарник",
+                Strings.Preflight_FinalExecutable,
                 executableSource is null
-                    ? $"Не найден файл {profile.ExecutableRelativePath} ни в игре, ни во включённых модах."
+                    ? LocalizedText.Format(Strings.Preflight_FinalExecutableMissingFormat, profile.ExecutableRelativePath)
                     : FormatExecutableSource(executableSource, profile.ExecutableRelativePath)));
 
             if (executableSource is { IsAvailable: true })
@@ -105,7 +106,7 @@ public sealed class LaunchPreflightService
         }
         catch (Exception ex)
         {
-            checks.Add(Error("Бинарник запуска", ex.Message));
+            checks.Add(Error(Strings.Check_LaunchBinary, ex.Message));
         }
 
         try
@@ -113,7 +114,7 @@ public sealed class LaunchPreflightService
             var fsgameSource = FindFinalSource(profile, "fsgame.ltx", fileLayerPlan);
             if (!profile.IsStandalone && fsgameSource is null)
             {
-                throw new FileNotFoundException("Файл fsgame.ltx не найден во включённых слоях.");
+                throw new FileNotFoundException(Strings.Ready_FsgameMissing);
             }
 
             if (!profile.IsStandalone)
@@ -124,7 +125,7 @@ public sealed class LaunchPreflightService
             checks.Add(new ProfileHealthCheck(
                 fsgameSource is null ? ProfileHealthStatus.Warning : ProfileHealthStatus.Healthy,
                 "fsgame.ltx",
-                fsgameSource ?? "Файл не найден. Некоторые движки запускаются без него, но сохранения профиля могут не изолироваться."));
+                fsgameSource ?? Strings.Preflight_FsgameOptional));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
         {
@@ -218,7 +219,7 @@ public sealed class LaunchPreflightService
         var workspace = _profileManager.GetProfileFolderPath(profile);
         if (string.IsNullOrWhiteSpace(workspace))
         {
-            checks.Add(Error("Workspace", "Не удалось определить путь рабочего пространства."));
+            checks.Add(Error("Workspace", Strings.Preflight_WorkspacePathMissing));
             return;
         }
 
@@ -228,12 +229,12 @@ public sealed class LaunchPreflightService
             var drive = root is null ? null : new DriveInfo(root);
             checks.Add(new ProfileHealthCheck(
                 drive is { AvailableFreeSpace: < LowDiskSpaceBytes } ? ProfileHealthStatus.Warning : ProfileHealthStatus.Healthy,
-                "Свободное место",
-                drive is null ? "Не удалось определить диск workspace." : $"{WorkspaceStatus.FormatSize(drive.AvailableFreeSpace)} доступно на {drive.Name}"));
+                Strings.Preflight_FreeSpace,
+                drive is null ? Strings.Preflight_WorkspaceDriveMissing : LocalizedText.Format(Strings.Preflight_FreeSpaceFormat, WorkspaceStatus.FormatSize(drive.AvailableFreeSpace), drive.Name)));
         }
         catch (Exception ex)
         {
-            checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Warning, "Свободное место", ex.Message));
+            checks.Add(new ProfileHealthCheck(ProfileHealthStatus.Warning, Strings.Preflight_FreeSpace, ex.Message));
         }
     }
 
@@ -250,7 +251,7 @@ public sealed class LaunchPreflightService
 
         if (profile.IsStandalone)
         {
-            checks.Add(Error("USVFS", "USVFS доступен только для обычных многослойных профилей."));
+            checks.Add(Error("USVFS", Strings.Preflight_UsvfsLayeredOnly));
             return;
         }
 
@@ -276,15 +277,14 @@ public sealed class LaunchPreflightService
             {
                 checks.Add(Error(
                     "USVFS runtime",
-                    $"Не удалось определить архитектуру итогового EXE: {target.ExecutablePath}"));
+                    LocalizedText.Format(Strings.Preflight_ArchitectureMissingFormat, target.ExecutablePath)));
                 return;
             }
 
             checks.Add(new ProfileHealthCheck(
                 ProfileHealthStatus.Healthy,
                 "USVFS runtime",
-                $"Полный комплект USVFS {runtimeFiles.RuntimeVersion} готов. " +
-                $"Цель: {FormatArchitecture(architecture)}, {target.ExecutablePath}"));
+                LocalizedText.Format(Strings.Preflight_UsvfsReadyFormat, runtimeFiles.RuntimeVersion, FormatArchitecture(architecture), target.ExecutablePath)));
         }
         catch (Exception ex)
         {
@@ -329,8 +329,8 @@ public sealed class LaunchPreflightService
                 File.CreateSymbolicLink(testLink, source);
                 checks.Add(new ProfileHealthCheck(
                     ProfileHealthStatus.Healthy,
-                    "Ссылки между дисками",
-                    $"Windows разрешает подключать файлы с диска {Path.GetPathRoot(source)} без копирования."));
+                    Strings.Preflight_CrossDriveLinks,
+                    LocalizedText.Format(Strings.Preflight_CrossDriveAllowedFormat, Path.GetPathRoot(source))));
             }
             finally
             {
@@ -340,8 +340,8 @@ public sealed class LaunchPreflightService
         catch (Exception ex)
         {
             checks.Add(Error(
-                "Ссылки между дисками",
-                "Windows не разрешила создать символическую ссылку. Включите режим разработчика, запустите лаунчер от имени администратора или разместите мод на диске workspace. " + ex.Message));
+                Strings.Preflight_CrossDriveLinks,
+                LocalizedText.Format(Strings.Preflight_CrossDriveDeniedFormat, ex.Message)));
         }
     }
 
@@ -364,10 +364,10 @@ public sealed class LaunchPreflightService
             .Any(name => FindFinalSource(profile, Path.Combine(relativeDirectory, name), fileLayerPlan) is not null);
         checks.Add(new ProfileHealthCheck(
             hasEngineDll ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Warning,
-            "Файлы движка",
+            Strings.Preflight_EngineFiles,
             hasEngineDll
-                ? "Рядом с бинарником найдены DLL движка."
-                : "Рядом с выбранным бинарником не найдены типичные DLL движка. Это допустимо не для всех сборок."));
+                ? Strings.Preflight_EngineDllFound
+                : Strings.Preflight_EngineDllMissing));
     }
 
     private static bool HasAnyFile(string root, CancellationToken cancellationToken)
@@ -448,14 +448,14 @@ public sealed class LaunchPreflightService
     {
         if (!profile.IsStandalone)
         {
-            yield return new LaunchExecutableSearchRoot(profile.GameInstallPath, "базовая игра", 0);
+            yield return new LaunchExecutableSearchRoot(profile.GameInstallPath, Strings.Layer_BaseGame, 0);
         }
 
         foreach (var mod in profile.Mods
                      .Where(mod => mod.IsEnabled)
                      .OrderBy(mod => mod.Order))
         {
-            yield return new LaunchExecutableSearchRoot(mod.SourcePath, $"мод: {mod.Name}", mod.Order);
+            yield return new LaunchExecutableSearchRoot(mod.SourcePath, LocalizedText.Format(Strings.Layer_ModFormat, mod.Name), mod.Order);
         }
     }
 
@@ -463,23 +463,26 @@ public sealed class LaunchPreflightService
     {
         if (!source.IsAvailable)
         {
-            return $"Не найден ручной источник бинарника: {source.FullPath}. {source.Reason}.";
+            return LocalizedText.Format(Strings.Check_ManualSourceMissingFormat, source.FullPath, " ", source.Reason);
         }
 
         if (source.IsPinned)
         {
-            return $"Итоговый файл: {source.FullPath}. Источник: {source.SourceName}. Выбран вручную; приоритет модов не заменит этот EXE.";
+            return LocalizedText.Format(Strings.Check_FinalManualFormat, source.FullPath, ". ", source.SourceName);
         }
 
         if (source.UsedRequestedRelativePath)
         {
-            return $"Итоговый файл: {source.FullPath}. Источник: {source.SourceName}.";
+            return LocalizedText.Format(Strings.Check_FinalAutomaticFormat, source.FullPath, ". ", source.SourceName);
         }
 
-        return
-            $"Выбранный путь не найден: {requestedRelativePath}. " +
-            $"Будет использован: {source.FullPath}. " +
-            $"Причина: {source.Reason}. Источник: {source.SourceName}.";
+        return LocalizedText.Format(
+            Strings.Check_FinalFallbackFormat,
+            requestedRelativePath,
+            " ",
+            source.FullPath,
+            source.Reason,
+            source.SourceName);
     }
 
     private static ProfileHealthCheck Error(string title, string details) =>

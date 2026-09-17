@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -14,7 +15,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     private readonly WorkspaceManagementService _workspaceManagementService;
     private readonly Action<string, LauncherLogLevel>? _log;
     private ProfileHealthReport? _report;
-    private string _summary = "Проверка состояния профиля...";
+    private string _summary = Strings.Health_Checking;
     private bool _isChecking;
     private WorkspaceStatus? _workspace;
     private CancellationTokenSource? _refreshCancellation;
@@ -49,8 +50,8 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     public ObservableCollection<ProfileHealthCheck> Checks { get; } = new();
 
     public string ProfileKind => _profile.IsStandalone
-        ? "Автономная сборка"
-        : "Мод поверх базовой игры";
+        ? Strings.Profile_Standalone
+        : Strings.Health_RegularProfile;
 
     public WorkspaceStatus? Workspace
     {
@@ -71,33 +72,33 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     public bool UsesVirtualFileSystem => !_profile.IsStandalone && _profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem;
     public string StoragePanelTitle => UsesVirtualFileSystem ? "USVFS" : "Workspace";
     public string? StoragePanelToolTip => UsesVirtualFileSystem
-        ? "Файлы игры и модов подключаются виртуально. Папка current не используется."
+        ? Strings.Health_UsvfsTooltip
         : null;
-    public string StorageStateDisplay => Workspace?.StateDisplay ?? "Состояние рабочей папки ещё не получено.";
-    public string FirstMetricTitle => UsesVirtualFileSystem ? "Слои" : "Видимый размер";
+    public string StorageStateDisplay => Workspace?.StateDisplay ?? Strings.Health_StatePending;
+    public string FirstMetricTitle => UsesVirtualFileSystem ? Strings.Health_Layers : Strings.Health_VisibleSize;
     public string FirstMetricValue => UsesVirtualFileSystem
         ? $"{1 + _profile.Mods.Count(mod => mod.IsEnabled):N0}"
         : Workspace?.LogicalSizeDisplay ?? "—";
     public string FirstMetricToolTip => UsesVirtualFileSystem
-        ? "Базовая игра и включённые моды, которые USVFS объединит при запуске."
-        : "Сколько данных видит игра внутри рабочей папки. Из-за ссылок это не равно расходу места на диске.";
-    public string SecondMetricTitle => UsesVirtualFileSystem ? "Данные игры" : "Реально занято";
+        ? Strings.Health_LayersTooltip
+        : Strings.Health_VisibleSizeTooltip;
+    public string SecondMetricTitle => UsesVirtualFileSystem ? Strings.Health_GameData : Strings.Health_Occupied;
     public string SecondMetricValue => UsesVirtualFileSystem
         ? ProfileDataStateDisplay
         : Workspace?.PhysicalSizeDisplay ?? "—";
     public string SecondMetricToolTip => UsesVirtualFileSystem
-        ? _profile.UseBaseGameData ? "Используется общий каталог данных базовой игры." : "Сохранения, настройки и логи хранятся отдельно в userdata профиля."
-        : "Сколько места примерно занимает workspace с учетом hardlink и symlink.";
-    public string ThirdMetricTitle => UsesVirtualFileSystem ? "Папка current" : "Файлы";
-    public string ThirdMetricValue => UsesVirtualFileSystem ? "не используется" : Workspace?.FileCountDisplay ?? "—";
+        ? _profile.UseBaseGameData ? Strings.Health_SharedData : Strings.Health_SeparateData
+        : Strings.Health_OccupiedTooltip;
+    public string ThirdMetricTitle => UsesVirtualFileSystem ? Strings.Health_CurrentFolder : Strings.Health_Files;
+    public string ThirdMetricValue => UsesVirtualFileSystem ? Strings.Health_NotUsed : Workspace?.FileCountDisplay ?? "—";
     public string ThirdMetricToolTip => UsesVirtualFileSystem
-        ? "USVFS формирует представление игры в памяти процесса и не собирает папку current."
+        ? Strings.Health_CurrentTooltip
         : Workspace?.LinkSummaryDisplay ?? string.Empty;
 
     private string ProfileDataStateDisplay => ProfileDataPathResolver.GetSavedGameDirectories(_profile)
                                               .Any(path => Directory.Exists(Path.GetDirectoryName(path)))
-        ? "созданы"
-        : "при запуске";
+        ? Strings.Health_DataCreated
+        : Strings.Health_DataOnLaunch;
 
     public string Summary
     {
@@ -142,7 +143,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         try
         {
             IsChecking = true;
-            Summary = "Проверка состояния профиля...";
+            Summary = Strings.Health_Checking;
             var report = await _healthService.AnalyzeAsync(_profile, _refreshCancellation.Token);
             _report = report;
             Workspace = report.Workspace;
@@ -161,7 +162,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            Summary = $"Проверка не выполнена: {ex.Message}";
+            Summary = LocalizedText.Format(Strings.Health_CheckFailedFormat, ex.Message);
             Log(Summary, LauncherLogLevel.ErrorsOnly);
         }
         finally
@@ -205,8 +206,8 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     private void ClearWorkspace()
     {
         if (!DialogService.Confirm(
-                "Очистить кэш workspace",
-                "Удалить только подготовленную папку current? Сохранения, настройки и логи в userdata останутся на месте."))
+                Strings.Health_ClearTitle,
+                Strings.Health_ClearConfirm))
         {
             return;
         }
@@ -214,12 +215,12 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         try
         {
             _workspaceManagementService.ClearCache(_profile, new Progress<string>(ReportWorkspaceProgress));
-            Log($"Кэш workspace очищен из окна «Состояние»: {_profile.Name}");
+            Log(LocalizedText.Format(Strings.Log_HealthCacheClearedFormat, _profile.Name));
         }
         catch (Exception ex)
         {
-            Log($"Очистка кэша workspace не выполнена: {ex.Message}", LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError("Не удалось очистить кэш workspace", ex.Message);
+            Log(LocalizedText.Format(Strings.Log_HealthCacheClearFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Health_ClearFailed, ex.Message);
             return;
         }
 
@@ -231,17 +232,17 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         try
         {
             IsChecking = true;
-            Summary = "Пересборка workspace...";
-            Log($"Пересборка workspace запущена из окна «Состояние»: {_profile.Name}");
+            Summary = Strings.Health_Rebuilding;
+            Log(LocalizedText.Format(Strings.Log_HealthRebuildStartedFormat, _profile.Name));
             var progress = new Progress<string>(ReportWorkspaceProgress);
             await _workspaceManagementService.RebuildAsync(_profile, progress);
-            Log($"Пересборка workspace завершена из окна «Состояние»: {_profile.Name}");
+            Log(LocalizedText.Format(Strings.Log_HealthRebuildFinishedFormat, _profile.Name));
             await RefreshAsync();
         }
         catch (Exception ex)
         {
-            Log($"Пересборка workspace не выполнена: {ex.Message}", LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError("Не удалось пересобрать workspace", ex.Message);
+            Log(LocalizedText.Format(Strings.Log_HealthRebuildFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Health_RebuildFailed, ex.Message);
         }
         finally
         {
@@ -251,17 +252,17 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
 
     private async Task MoveWorkspaceAsync()
     {
-        var destination = DialogService.PickFolder("Выберите папку, в которой будет храниться workspace");
+        var destination = DialogService.PickFolder(Strings.Health_PickWorkspace);
         if (destination is null)
         {
             return;
         }
 
         if (!DialogService.Confirm(
-                UsesVirtualFileSystem ? "Перенести данные профиля" : "Перенести workspace",
+                UsesVirtualFileSystem ? Strings.Health_MoveDataTitle : Strings.Health_MoveWorkspaceTitle,
                 UsesVirtualFileSystem
-                    ? $"Перенести сохранения, настройки и логи в выбранную папку?{Environment.NewLine}{Environment.NewLine}Временный USVFS-bootstrap не копируется и будет создан заново."
-                    : $"Перенести userdata профиля в выбранную папку?{Environment.NewLine}{Environment.NewLine}Папка current не копируется и будет пересобрана при следующем запуске."))
+                    ? LocalizedText.Format(Strings.Health_MoveUsvfsConfirmFormat, Environment.NewLine)
+                    : LocalizedText.Format(Strings.Health_MoveWorkspaceConfirmFormat, Environment.NewLine)))
         {
             return;
         }
@@ -269,17 +270,17 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         try
         {
             IsChecking = true;
-            Log($"Перенос workspace запущен из окна «Состояние»: {_profile.Name}");
+            Log(LocalizedText.Format(Strings.Log_HealthMoveStartedFormat, _profile.Name));
             var progress = new Progress<string>(ReportWorkspaceProgress);
             var result = await _workspaceManagementService.MoveAsync(_profile, destination, progress);
             if (!result.WasMoved)
             {
-                Log($"Workspace уже находится в выбранной папке: {result.DestinationPath}");
+                Log(LocalizedText.Format(Strings.Log_HealthAlreadyThereFormat, result.DestinationPath));
                 await RefreshAsync();
                 return;
             }
 
-            Log($"Workspace перенесён из окна «Состояние»: {_profile.Name}");
+            Log(LocalizedText.Format(Strings.Log_HealthMoveFinishedFormat, _profile.Name));
             if (result.CleanupFailure is not null && result.PreviousWorkspacePath is not null)
             {
                 await HandleOldWorkspaceCleanupFailureAsync(result, progress);
@@ -289,8 +290,8 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            Log($"Перенос workspace не выполнен:{Environment.NewLine}{ex}", LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError("Не удалось перенести workspace", ex.Message);
+            Log(LocalizedText.Format(Strings.Log_HealthMoveFailedFormat, Environment.NewLine, ex), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Health_MoveFailed, ex.Message);
         }
         finally
         {
@@ -304,43 +305,44 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     {
         var oldWorkspace = result.PreviousWorkspacePath!;
         Log(
-            $"Workspace перенесён в {result.DestinationPath}, но старая папка не удалена: {oldWorkspace}" +
-            $"{Environment.NewLine}{result.CleanupFailure}",
+            LocalizedText.Format(Strings.Log_HealthOldFolderRemainsFormat, result.DestinationPath, oldWorkspace, Environment.NewLine, result.CleanupFailure),
             LauncherLogLevel.ErrorsOnly);
 
         if (!DialogService.Confirm(
-                "Workspace перенесён",
-                $"Данные профиля перенесены в:{Environment.NewLine}{result.DestinationPath}" +
-                $"{Environment.NewLine}{Environment.NewLine}Не удалось удалить старую папку:" +
-                $"{Environment.NewLine}{oldWorkspace}" +
-                $"{Environment.NewLine}{Environment.NewLine}Повторить только очистку старой папки?"))
+                Strings.Health_MovePartialTitle,
+                LocalizedText.Format(
+                    Strings.Health_MovePartialFormat,
+                    Environment.NewLine,
+                    result.DestinationPath,
+                    oldWorkspace)))
         {
             return;
         }
 
-        progress.Report($"Повторная очистка старого workspace: {oldWorkspace}");
+        progress.Report(LocalizedText.Format(Strings.Log_HealthOldFolderRetryFormat, oldWorkspace));
         var retryFailure = await _workspaceManagementService.RetryOldWorkspaceCleanupAsync(
             _profile,
             oldWorkspace);
         if (retryFailure is null)
         {
-            Log($"Старый workspace удалён после повторной попытки: {oldWorkspace}");
+            Log(LocalizedText.Format(Strings.Log_HealthOldFolderDeletedFormat, oldWorkspace));
             DialogService.ShowInfo(
-                "Перенос завершён",
-                $"Старая папка workspace удалена:{Environment.NewLine}{oldWorkspace}");
+                Strings.Health_MoveCompleteTitle,
+                LocalizedText.Format(Strings.Health_OldDeletedFormat, Environment.NewLine, oldWorkspace));
             return;
         }
 
         Log(
-            $"Повторная очистка старого workspace не выполнена: {oldWorkspace}" +
-            $"{Environment.NewLine}{retryFailure}",
+            LocalizedText.Format(Strings.Log_HealthOldFolderRetryFailedFormat, oldWorkspace, Environment.NewLine, retryFailure),
             LauncherLogLevel.ErrorsOnly);
         _dialogService.ShowError(
-            "Workspace перенесён, старая папка осталась",
-            $"Профиль уже использует новую папку:{Environment.NewLine}{result.DestinationPath}" +
-            $"{Environment.NewLine}{Environment.NewLine}Не удалось удалить старую папку:" +
-            $"{Environment.NewLine}{oldWorkspace}" +
-            $"{Environment.NewLine}{Environment.NewLine}{retryFailure.Message}");
+            Strings.Health_OldRemainsTitle,
+            LocalizedText.Format(
+                Strings.Health_OldRemainsFormat,
+                Environment.NewLine,
+                result.DestinationPath,
+                oldWorkspace,
+                retryFailure.Message));
     }
 
     private void RunAction(Action action)
@@ -351,8 +353,8 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            Log($"Действие из окна «Состояние» не выполнено: {ex.Message}", LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError("Состояние профиля", ex.Message);
+            Log(LocalizedText.Format(Strings.Log_HealthActionFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Health_Title, ex.Message);
         }
     }
 

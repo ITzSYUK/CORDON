@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -33,7 +34,7 @@ internal static class ProfileShaderCacheSeeder
             var destination = FileSystemSafety.ResolvePathInside(
                 destinationRoot,
                 source.RelativePath,
-                "Profile shader cache file");
+                Strings.Safety_ProfileShaderCacheFile);
 
             try
             {
@@ -73,14 +74,12 @@ internal static class ProfileShaderCacheSeeder
 
         if (copied > 0)
         {
-            progress?.Report(
-                $"Profile shader cache prepared: {copied:N0} file(s) copied from game/mod sources.");
+            progress?.Report(LocalizedText.Format(Strings.Progress_ShaderCachePreparedFormat, copied));
         }
 
         if (failed > 0)
         {
-            progress?.Report(
-                $"Warning: {failed:N0} shader cache file(s) could not be copied to the profile.");
+            progress?.Report(LocalizedText.Format(Strings.Progress_ShaderCacheFailedFormat, failed));
         }
     }
 

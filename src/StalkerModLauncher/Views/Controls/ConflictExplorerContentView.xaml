@@ -2,7 +2,8 @@
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:infrastructure="clr-namespace:StalkerModLauncher.Infrastructure">
+             xmlns:infrastructure="clr-namespace:StalkerModLauncher.Infrastructure"
+             xmlns:res="clr-namespace:StalkerModLauncher.Resources">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -56,32 +57,32 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="КОНФЛИКТЫ И ИТОГОВЫЕ ФАЙЛЫ" FontWeight="SemiBold" FontSize="15"/>
+                    <TextBlock Text="{x:Static res:Strings.Conflict_Heading}" FontWeight="SemiBold" FontSize="15"/>
                     <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,2,0,0"/>
                 </StackPanel>
-                <Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Content="{x:Static res:Strings.Common_Refresh}" Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
             </Grid>
         </Border>
 
         <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}">
-            <TabItem Header="Конфликты мода">
+            <TabItem Header="{x:Static res:Strings.Conflict_ModConflicts}">
                 <Grid Margin="9">
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                        <TextBlock Text="Мод" VerticalAlignment="Center" Margin="0,0,9,0"/>
+                        <TextBlock Text="{x:Static res:Strings.Common_Mod}" VerticalAlignment="Center" Margin="0,0,9,0"/>
                         <ComboBox Grid.Column="1" ItemsSource="{Binding Mods}" SelectedItem="{Binding SelectedMod}"
                                   Style="{StaticResource Mo2ComboBoxStyle}" DisplayMemberPath="Name"/>
                     </Grid>
                     <TabControl Grid.Row="1">
-                        <TabItem Header="Побеждает">
+                        <TabItem Header="{x:Static res:Strings.Conflict_Wins}">
                             <DataGrid ItemsSource="{Binding WinningFiles}" Style="{StaticResource Mo2DataGridStyle}"
                                       AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
                                       RowHeight="30"
                                       CanUserResizeColumns="True" CanUserResizeRows="False"
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto">
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="Действие" Width="110" MinWidth="110" MaxWidth="110"
+                                    <DataGridTemplateColumn Header="{x:Static res:Strings.Common_Action}" Width="110" MinWidth="110" MaxWidth="110"
                                                             CanUserResize="False">
                                         <DataGridTemplateColumn.CellTemplate><DataTemplate>
                                             <Button Content="{Binding ActionText}"
@@ -91,23 +92,23 @@
                                                     CommandParameter="{Binding}"/>
                                         </DataTemplate></DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Файл" Binding="{Binding RelativePath}"
+                                    <DataGridTextColumn Header="{x:Static res:Strings.Common_File}" Binding="{Binding RelativePath}"
                                                         Width="300" MinWidth="180"
                                                         ElementStyle="{StaticResource ConflictGridTextStyle}"/>
-                                    <DataGridTextColumn Header="Заменяет моды" Binding="{Binding OtherMods}"
+                                    <DataGridTextColumn Header="{x:Static res:Strings.Conflict_OtherReplacedMods}" Binding="{Binding OtherMods}"
                                                         Width="800" MinWidth="360"
                                                         ElementStyle="{StaticResource ConflictGridTextStyle}"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </TabItem>
-                        <TabItem Header="Проигрывает">
+                        <TabItem Header="{x:Static res:Strings.Conflict_Loses}">
                             <DataGrid ItemsSource="{Binding LosingFiles}" Style="{StaticResource Mo2DataGridStyle}"
                                       AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
                                       RowHeight="30"
                                       CanUserResizeColumns="True" CanUserResizeRows="False"
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto">
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="Действие" Width="110" MinWidth="110" MaxWidth="110"
+                                    <DataGridTemplateColumn Header="{x:Static res:Strings.Common_Action}" Width="110" MinWidth="110" MaxWidth="110"
                                                             CanUserResize="False">
                                         <DataGridTemplateColumn.CellTemplate><DataTemplate>
                                             <Button Content="{Binding ActionText}"
@@ -117,21 +118,21 @@
                                                     CommandParameter="{Binding}"/>
                                         </DataTemplate></DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Файл" Binding="{Binding RelativePath}"
+                                    <DataGridTextColumn Header="{x:Static res:Strings.Common_File}" Binding="{Binding RelativePath}"
                                                         Width="300" MinWidth="180"
                                                         ElementStyle="{StaticResource ConflictGridTextStyle}"/>
-                                    <DataGridTextColumn Header="Побеждающие моды" Binding="{Binding OtherMods}"
+                                    <DataGridTextColumn Header="{x:Static res:Strings.Conflict_OtherWinningMods}" Binding="{Binding OtherMods}"
                                                         Width="800" MinWidth="360"
                                                         ElementStyle="{StaticResource ConflictGridTextStyle}"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </TabItem>
-                        <TabItem Header="Уникальные">
+                        <TabItem Header="{x:Static res:Strings.Conflict_Unique}">
                             <DataGrid ItemsSource="{Binding UniqueFiles}" Style="{StaticResource Mo2DataGridStyle}"
                                       AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Файл" Binding="{Binding RelativePath}" Width="*"/>
-                                    <DataGridTextColumn Header="Состояние" Binding="{Binding Status}" Width="180"/>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.Common_File}" Binding="{Binding RelativePath}" Width="*"/>
+                                    <DataGridTextColumn Header="{x:Static res:Strings.Common_Status}" Binding="{Binding Status}" Width="180"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </TabItem>
@@ -139,12 +140,12 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Итоговое дерево">
+            <TabItem Header="{x:Static res:Strings.Conflict_FinalTree}">
                 <Grid Margin="9">
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Поиск по пути или источнику файла"/>
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="{x:Static res:Strings.Conflict_SearchTooltip}"/>
                         <ComboBox Grid.Column="1" Margin="8,0,0,0" ItemsSource="{Binding FinalFileFilters}"
                                   SelectedValue="{Binding SelectedFinalFileFilter}" SelectedValuePath="Value"
                                   DisplayMemberPath="Name"
@@ -154,11 +155,11 @@
                               AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
                               EnableRowVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Относительный путь" Binding="{Binding RelativePath}" Width="*"/>
+                            <DataGridTextColumn Header="{x:Static res:Strings.Conflict_RelativePath}" Binding="{Binding RelativePath}" Width="*"/>
                             <DataGridTextColumn Binding="{Binding ProvidersDisplay}" Width="*">
                                 <DataGridTextColumn.Header>
-                                    <TextBlock Text="Цепочка замены"
-                                               ToolTip="Источники указаны слева направо. Последний имеет наивысший приоритет, и его файл используется при запуске."
+                                    <TextBlock Text="{x:Static res:Strings.Conflict_ProviderChain}"
+                                               ToolTip="{x:Static res:Strings.Conflict_ProviderChainTooltip}"
                                                ToolTipService.InitialShowDelay="600"
                                                ToolTipService.BetweenShowDelay="0"/>
                                 </DataGridTextColumn.Header>

@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:infrastructure="clr-namespace:StalkerModLauncher.Infrastructure"
-        Title="Состояние профиля"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="{x:Static res:Strings.Health_Title}"
         Width="900"
         Height="650"
         MinWidth="720"
@@ -109,14 +110,14 @@
                 <StackPanel Grid.Column="2"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <Button Content="Пересобрать"
+                    <Button Content="{x:Static res:Strings.Health_RebuildWorkspace}"
                             Command="{Binding RebuildWorkspaceCommand}"
                             Visibility="{Binding UsesLinkedWorkspace, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Margin="0,0,8,0"/>
-                    <Button Content="Перенести..."
+                    <Button Content="{x:Static res:Strings.Health_MoveWorkspace}"
                             Command="{Binding MoveWorkspaceCommand}"
                             Margin="0,0,8,0"/>
-                    <Button Content="Очистить кэш"
+                    <Button Content="{x:Static res:Strings.Health_ClearCache}"
                             Command="{Binding ClearWorkspaceCommand}"
                             Visibility="{Binding UsesLinkedWorkspace, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </StackPanel>
@@ -138,7 +139,7 @@
                     <TextBlock Text="{Binding Summary}"
                                FontSize="15"
                                FontWeight="SemiBold"/>
-                    <TextBlock Text="Ошибки остановят запуск. Предупреждения подскажут, что стоит проверить."
+                    <TextBlock Text="{x:Static res:Strings.Health_WarningHint}"
                                Foreground="{StaticResource MutedTextBrush}"
                                FontSize="12"
                                Margin="0,2,0,0"/>
@@ -197,22 +198,22 @@
         </Border>
 
         <WrapPanel Grid.Row="3" HorizontalAlignment="Right" Margin="0,14,0,0">
-                <Button Content="Обновить"
+                <Button Content="{x:Static res:Strings.Common_Refresh}"
                         Command="{Binding RefreshCommand}"
                         Margin="0,0,8,0"/>
-                <Button Content="Профиль"
+                <Button Content="{x:Static res:Strings.Common_Profile}"
                         Command="{Binding OpenProfileCommand}"
                         Margin="0,0,8,0"/>
-                <Button Content="Сохранения"
+                <Button Content="{x:Static res:Strings.Health_Saves}"
                         Command="{Binding OpenSavesCommand}"
                         Margin="0,0,8,0"/>
-                <Button Content="Последний лог"
+                <Button Content="{x:Static res:Strings.Health_LatestLog}"
                         Command="{Binding OpenLatestLogCommand}"
                         Margin="0,0,8,0"/>
-                <Button Content="Crash dump"
+                <Button Content="{x:Static res:Strings.Check_CrashDump}"
                         Command="{Binding OpenCrashDumpCommand}"
                         Margin="0,0,8,0"/>
-                <Button Content="Копировать отчет"
+                <Button Content="{x:Static res:Strings.Health_CopyReport}"
                         Command="{Binding CopyReportCommand}"/>
         </WrapPanel>
     </Grid>

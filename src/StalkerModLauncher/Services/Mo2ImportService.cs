@@ -1,5 +1,6 @@
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Infrastructure;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -71,16 +72,16 @@ public sealed class Mo2ImportPreviewEntry : ObservableObject
         }
     }
 
-    public string PathDisplay => IsAmbiguous ? "Выберите папку" : SourcePath;
+    public string PathDisplay => IsAmbiguous ? Strings.Mo2Service_SelectFolder : SourcePath;
     public string Status => IsOverwrite
         ? "overwrite"
         : IsAmbiguous
-            ? $"Выберите одну из {CandidatePaths.Count} папок"
+            ? LocalizedText.Format(Strings.Mo2Service_SelectOneOfFormat, CandidatePaths.Count)
             : HasMultipleCandidates
-                ? "Выбрано вручную"
+                ? Strings.Mo2Service_SelectedManually
             : IsAvailable
-                ? "Найден"
-                : "Папка отсутствует";
+                ? Strings.Mo2Service_Found
+                : Strings.Mo2Service_FolderMissing;
 }
 
 public sealed record Mo2FolderCandidate(string Path)
@@ -104,9 +105,12 @@ public sealed record Mo2ImportPreview(
     public int MissingModCount => Entries.Count(entry => !entry.IsAvailable && !entry.IsAmbiguous);
     public int AmbiguousModCount => Entries.Count(entry => entry.IsAmbiguous);
     public string OverwriteSummary => HasOverwriteContent
-        ? $"overwrite: {OverwriteFileCount} файлов. " + string.Join(", ", OverwriteFileSamples) +
-          (OverwriteFileCount > OverwriteFileSamples.Count ? "…" : string.Empty)
-        : "overwrite пуст или не найден.";
+        ? LocalizedText.Format(
+            Strings.Mo2Service_OverwriteFormat,
+            OverwriteFileCount,
+            string.Join(", ", OverwriteFileSamples),
+            OverwriteFileCount > OverwriteFileSamples.Count ? "…" : string.Empty)
+        : Strings.Mo2Service_OverwriteEmpty;
 }
 
 public static class Mo2ImportService
@@ -115,7 +119,7 @@ public static class Mo2ImportService
     {
         if (string.IsNullOrWhiteSpace(selectedPath))
         {
-            throw new ArgumentException("Выберите папку Mod Organizer 2, профиль MO2 или modlist.txt.", nameof(selectedPath));
+            throw new ArgumentException(Strings.Mo2Service_SelectSource, nameof(selectedPath));
         }
 
         var fullPath = Path.GetFullPath(selectedPath);
@@ -123,13 +127,13 @@ public static class Mo2ImportService
         var selectedDirectory = selectedModList is null ? fullPath : Path.GetDirectoryName(fullPath)!;
         if (!Directory.Exists(selectedDirectory))
         {
-            throw new DirectoryNotFoundException($"Папка MO2 не найдена: {selectedDirectory}");
+            throw new DirectoryNotFoundException(LocalizedText.Format(Strings.Mo2Service_FolderNotFoundFormat, selectedDirectory));
         }
 
         if (selectedModList is not null &&
             !Path.GetFileName(selectedModList).Equals("modlist.txt", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidDataException("Нужно выбрать файл modlist.txt из профиля MO2.");
+            throw new InvalidDataException(Strings.Mo2Service_ModListRequired);
         }
 
         var selectedProfileDirectory = FindSelectedProfileDirectory(selectedDirectory, selectedModList);
@@ -159,7 +163,7 @@ public static class Mo2ImportService
         var profiles = FindProfiles(profilesPath, selectedProfileDirectory, selectedModList);
         if (profiles.Count == 0)
         {
-            throw new InvalidDataException("В выбранной папке не найден ни один профиль MO2 с modlist.txt.");
+            throw new InvalidDataException(Strings.Mo2Service_NoProfiles);
         }
 
         var selectedProfileName = DecodeIniValue(GetValue(ini, "selected_profile"));
@@ -189,7 +193,7 @@ public static class Mo2ImportService
     {
         if (!File.Exists(profile.ModListPath))
         {
-            throw new FileNotFoundException("Файл modlist.txt выбранного профиля не найден.", profile.ModListPath);
+            throw new FileNotFoundException(Strings.Mo2Service_ModListMissing, profile.ModListPath);
         }
 
         var modDirectories = ReadModDirectories(modsPath);
@@ -217,7 +221,7 @@ public static class Mo2ImportService
 
         if (entriesInMo2Order.Count == 0)
         {
-            throw new InvalidDataException("В modlist.txt не найдено ни одного мода.");
+            throw new InvalidDataException(Strings.Mo2Service_NoMods);
         }
 
         var launcherEntries = entriesInMo2Order
@@ -257,18 +261,18 @@ public static class Mo2ImportService
     {
         if (!Directory.Exists(preview.Discovery.GamePath))
         {
-            throw new DirectoryNotFoundException("Папка базовой игры не найдена. Выберите её перед импортом.");
+            throw new DirectoryNotFoundException(Strings.Mo2Service_GameFolderMissing);
         }
 
         if (preview.AmbiguousModCount > 0)
         {
-            throw new InvalidOperationException("Для неоднозначных модов выберите исходные папки перед импортом.");
+            throw new InvalidOperationException(Strings.Mo2Service_AmbiguousFolders);
         }
 
         var profile = new ModProfile
         {
             Name = string.IsNullOrWhiteSpace(requestedName) ? preview.Profile.Name : requestedName.Trim(),
-            Description = $"Импортировано из Mod Organizer 2: {preview.Profile.Name}",
+            Description = LocalizedText.Format(Strings.Mo2Service_ImportedDescriptionFormat, preview.Profile.Name),
             GameInstallPath = Path.GetFullPath(preview.Discovery.GamePath),
             IsStandalone = false,
             LaunchBackendKind = LaunchBackendKind.LinkedWorkspace,
@@ -594,8 +598,7 @@ public static class Mo2ImportService
                 Order = index + 1
             })
             .ToArray();
-        return DetectReliableExecutable(gamePath, mods)?.Summary ??
-               "EXE надёжно не определён; после импорта выберите его в настройках профиля.";
+        return DetectReliableExecutable(gamePath, mods)?.Summary ?? Strings.Mo2Service_ExecutableUncertain;
     }
 
     private static LaunchExecutableDetection? DetectReliableExecutable(string gamePath, IEnumerable<ModEntry> mods)
@@ -609,13 +612,13 @@ public static class Mo2ImportService
         var roots = new List<LaunchExecutableSearchRoot>();
         if (Directory.Exists(gamePath))
         {
-            roots.Add(new LaunchExecutableSearchRoot(gamePath, "базовая игра", 0, IsBaseGameRoot: true));
+            roots.Add(new LaunchExecutableSearchRoot(gamePath, Strings.Layer_BaseGame, 0, IsBaseGameRoot: true));
         }
 
         roots.AddRange(mods
             .Where(mod => mod.IsEnabled && Directory.Exists(mod.SourcePath))
             .OrderBy(mod => mod.Order)
-            .Select(mod => new LaunchExecutableSearchRoot(mod.SourcePath, $"мод: {mod.Name}", mod.Order)));
+            .Select(mod => new LaunchExecutableSearchRoot(mod.SourcePath, LocalizedText.Format(Strings.Layer_ModFormat, mod.Name), mod.Order)));
         return LaunchExecutableDetector.DetectBest(roots, requestedRelativePath: null);
     }
 

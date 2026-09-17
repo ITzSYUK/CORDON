@@ -1,6 +1,7 @@
 <UserControl x:Class="StalkerModLauncher.Views.Controls.AboutContentView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:res="clr-namespace:StalkerModLauncher.Resources"
              Foreground="{DynamicResource TextBrush}">
     <UserControl.Resources>
         <Style x:Key="AboutSectionHeadingStyle" TargetType="TextBlock">
@@ -30,75 +31,47 @@
         </Style>
     </UserControl.Resources>
     <StackPanel>
-        <TextBlock Text="Что такое профиль" Style="{DynamicResource AboutSectionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutParagraphStyle}">
-            Профиль — это сохранённая конфигурация одной игровой сборки: базовая игра, подключённые моды, их порядок, параметры запуска и выбранный EXE. Можно создать несколько профилей для одной игры и переключаться между ними, не меняя исходные папки игры и модов.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_ProfileHeading}" Style="{DynamicResource AboutSectionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_ProfileBody}" Style="{DynamicResource AboutParagraphStyle}"/>
 
-        <TextBlock Text="Создание профиля" Style="{DynamicResource AboutSectionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutParagraphStyle}">
-            Нажмите «Создать», задайте имя и выберите тип профиля. Для профиля поверх базовой игры укажите её папку и добавьте моды в нужном порядке. Для готовой отдельной сборки выберите «Автономная сборка» и укажите её корневую папку. Мастер попробует найти подходящий EXE; при необходимости его можно выбрать вручную в «Настройках».
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_CreateHeading}" Style="{DynamicResource AboutSectionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_CreateBody}" Style="{DynamicResource AboutParagraphStyle}"/>
 
-        <TextBlock Text="Обычный и автономный профиль" Style="{DynamicResource AboutSectionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutParagraphStyle}">
-            Обычный профиль подключает моды поверх базовой игры и создаёт для запуска отдельную рабочую среду. Автономный профиль предназначен для готовой сборки со своим движком и запускается из её собственной папки — базовая игра для него не нужна.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_RegularStandaloneHeading}" Style="{DynamicResource AboutSectionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_RegularStandaloneBody}" Style="{DynamicResource AboutParagraphStyle}"/>
 
-        <TextBlock Text="Рабочая среда (workspace)" Style="{DynamicResource AboutSectionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutParagraphStyle}">
-            Workspace — отдельная папка, в которой лаунчер объединяет игру и включённые моды для обычного профиля. Большие исходные файлы подключаются ссылками, поэтому игра не копируется целиком на каждый профиль. Все изменения, профильные настройки, логи и сохранения остаются внутри этой рабочей среды; оригинальная игра не редактируется.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_WorkspaceHeading}" Style="{DynamicResource AboutSectionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_WorkspaceBody}" Style="{DynamicResource AboutParagraphStyle}"/>
 
-        <TextBlock Text="Режимы запуска" Style="{DynamicResource AboutSectionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutParagraphStyle}">
-            Workspace заранее собирает рабочую среду ссылками. USVFS накладывает те же слои виртуально через технологию Mod Organizer 2 и почти не использует место для файлов игры. Совместимость USVFS зависит от конкретной игры и способа запуска; при проблемах выберите Workspace в настройках профиля.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_LaunchModesHeading}" Style="{DynamicResource AboutSectionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_LaunchModesBody}" Style="{DynamicResource AboutParagraphStyle}"/>
 
-        <TextBlock Text="Импорт из Mod Organizer 2" Style="{DynamicResource AboutSectionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutParagraphStyle}">
-            Кнопка MO2 переносит готовый игровой профиль: порядок и включённое состояние модов, а также найденные папки базовой игры и overwrite. Исходные каталоги Mod Organizer 2, игры и модов при этом не изменяются.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_Mo2Heading}" Style="{DynamicResource AboutSectionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_Mo2Body}" Style="{DynamicResource AboutParagraphStyle}"/>
 
-        <TextBlock Text="Браузер модификаций" Style="{DynamicResource AboutSectionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutParagraphStyle}">
-            Кнопка «Браузер модификаций» открывает каталог AP-PRO для Тени Чернобыля, Чистого Неба и Зова Припяти. Нажатие на карточку открывает исходную страницу мода в браузере. Лаунчер не скачивает и не устанавливает моды через этот каталог.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_BrowserHeading}" Style="{DynamicResource AboutSectionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_BrowserBody}" Style="{DynamicResource AboutParagraphStyle}"/>
 
-        <TextBlock Text="Частые вопросы" Style="{DynamicResource AboutSectionHeadingStyle}"/>
-        <TextBlock Text="Как работает порядок модов" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutAnswerStyle}">
-            Моды ниже в списке имеют больший приоритет и могут заменить файлы модов выше. Это нормальный способ установить патч поверх основной версии мода. Порядок можно менять перетаскиванием или кнопками в строке мода. При следующем запуске Workspace пересоберёт рабочую среду, а USVFS сформирует виртуальное наложение с новым порядком.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_FaqHeading}" Style="{DynamicResource AboutSectionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_QuestionModOrder}" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_AnswerModOrder}" Style="{DynamicResource AboutAnswerStyle}"/>
 
-        <TextBlock Text="Почему workspace может казаться большим" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutAnswerStyle}">
-            Проводник учитывает размер файлов, связанных с workspace, как будто каждый из них лежит там отдельной копией. На деле hard link не дублирует данные на диске. В окне «Состояние» показаны и размер, который видит игра, и приблизительно занятое место.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_QuestionWorkspaceSize}" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_AnswerWorkspaceSize}" Style="{DynamicResource AboutAnswerStyle}"/>
 
-        <TextBlock Text="Где искать сохранения и логи" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutAnswerStyle}">
-            У обычного профиля они находятся в workspace\userdata, поэтому сохранения разных профилей не смешиваются. У автономной сборки место определяет её fsgame.ltx: лаунчер находит типичные папки, но не может гарантировать отдельные сохранения для каждой такой сборки. Кнопка «Состояние» покажет найденные сохранения и последний лог.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_QuestionSavesAndLogs}" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_AnswerSavesAndLogs}" Style="{DynamicResource AboutAnswerStyle}"/>
 
-        <TextBlock Text="Что делает «Удалить профиль»" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutAnswerStyle}">
-            Для обычного профиля удаляются только запись профиля и его workspace с профильными настройками, логами и сохранениями. Папки игры и модов не затрагиваются. Для автономного профиля папка автономной сборки тоже остаётся на месте.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_QuestionDeleteProfile}" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_AnswerDeleteProfile}" Style="{DynamicResource AboutAnswerStyle}"/>
 
-        <TextBlock Text="Если игра не запускается" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutAnswerStyle}">
-            Откройте «Состояние»: там собраны проверка путей, выбранный EXE, последний лог и crash dump. Сначала убедитесь, что все папки существуют, а EXE принадлежит игре или включённому моду. Для оригинальной Shadow of Chernobyl это обычно bin\XR_3DA.exe, для OGSR-сборок часто bin_x64\xrEngine.exe.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_QuestionStartFailure}" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_AnswerStartFailure}" Style="{DynamicResource AboutAnswerStyle}"/>
 
-        <TextBlock Text="Можно ли убрать мод без удаления его файлов" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
-        <TextBlock Style="{DynamicResource AboutFinalAnswerStyle}">
-            Да. «Убрать» исключает мод только из этого профиля. Исходная папка мода на диске остаётся нетронутой.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_QuestionRemoveMod}" Style="{DynamicResource AboutQuestionHeadingStyle}"/>
+        <TextBlock Text="{x:Static res:Strings.About_AnswerRemoveMod}" Style="{DynamicResource AboutFinalAnswerStyle}"/>
 
-        <TextBlock Text="Неофициальный проект" Style="{DynamicResource AboutSectionHeadingStyle}" Margin="0,12,0,6"/>
-        <TextBlock Style="{DynamicResource AboutFinalAnswerStyle}">
-            Это неофициальный фанатский инструмент, не связанный с GSC Game World и не одобренный компанией. S.T.A.L.K.E.R. и связанные товарные знаки принадлежат их правообладателям.
-        </TextBlock>
+        <TextBlock Text="{x:Static res:Strings.About_DisclaimerHeading}" Style="{DynamicResource AboutSectionHeadingStyle}" Margin="0,12,0,6"/>
+        <TextBlock Text="{x:Static res:Strings.About_DisclaimerBody}" Style="{DynamicResource AboutFinalAnswerStyle}"/>
     </StackPanel>
 </UserControl>

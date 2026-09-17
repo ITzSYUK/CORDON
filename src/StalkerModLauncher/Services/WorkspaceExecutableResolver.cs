@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 internal static class WorkspaceExecutableResolver
@@ -14,14 +16,14 @@ internal static class WorkspaceExecutableResolver
             return null;
         }
 
-        progress.Report($"Бинарник '{requestedRelativePath}' не найден. Использую '{best.RelativePath}': {best.Reason}.");
+        progress.Report(LocalizedText.Format(Strings.Workspace_ExecutableFallbackFormat, requestedRelativePath, best.RelativePath, best.Reason));
         return best;
     }
 
     public static LaunchExecutableDetection? ResolveStandalone(string modRoot, string requestedRelativePath, CancellationToken cancellationToken)
     {
         return LaunchExecutableDetector.DetectBest(
-            [new LaunchExecutableSearchRoot(modRoot, "автономная сборка", 1)],
+            [new LaunchExecutableSearchRoot(modRoot, Strings.Profile_Standalone, 1)],
             requestedRelativePath,
             allowDedicated: false,
             cancellationToken);

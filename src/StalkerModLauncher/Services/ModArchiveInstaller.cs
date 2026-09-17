@@ -1,5 +1,6 @@
 using SharpCompress.Archives;
 using SharpCompress.Common;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -86,12 +87,12 @@ public static class ModArchiveInstaller
         var fullArchivePath = Path.GetFullPath(archivePath);
         if (!File.Exists(fullArchivePath))
         {
-            throw new FileNotFoundException("Archive was not found.", fullArchivePath);
+            throw new FileNotFoundException(Strings.Archive_NotFound, fullArchivePath);
         }
 
         if (!SupportedExtensions.Contains(Path.GetExtension(fullArchivePath)))
         {
-            throw new InvalidDataException("Supported mod archive formats: ZIP, 7Z and RAR.");
+            throw new InvalidDataException(Strings.Archive_SupportedFormats);
         }
 
         var fullInstallRoot = Path.GetFullPath(installRoot);
@@ -143,12 +144,12 @@ public static class ModArchiveInstaller
         var fullArchivePath = Path.GetFullPath(archivePath);
         if (!File.Exists(fullArchivePath))
         {
-            throw new FileNotFoundException("Archive was not found.", fullArchivePath);
+            throw new FileNotFoundException(Strings.Archive_NotFound, fullArchivePath);
         }
 
         if (!SupportedExtensions.Contains(Path.GetExtension(fullArchivePath)))
         {
-            throw new InvalidDataException("Supported mod archive formats: ZIP, 7Z and RAR.");
+            throw new InvalidDataException(Strings.Archive_SupportedFormats);
         }
 
         var fullInstallRoot = Path.GetFullPath(installRoot);
@@ -255,7 +256,7 @@ public static class ModArchiveInstaller
 
         if (state.FileCount == 0)
         {
-            throw new InvalidDataException("Archive does not contain files.");
+            throw new InvalidDataException(Strings.Archive_Empty);
         }
 
         state.Report(ModArchiveInstallStage.Extracting, force: true);
@@ -273,19 +274,19 @@ public static class ModArchiveInstaller
     {
         if (isEncrypted)
         {
-            throw new InvalidDataException("Password-protected archives are not supported.");
+            throw new InvalidDataException(Strings.Archive_PasswordProtected);
         }
 
         state.FileCount++;
         if (state.FileCount > MaximumEntryCount)
         {
-            throw new InvalidDataException($"Archive contains more than {MaximumEntryCount:N0} files.");
+            throw new InvalidDataException(LocalizedText.Format(Strings.Archive_TooManyFilesFormat, MaximumEntryCount));
         }
 
         var entryKey = key ?? string.Empty;
         var destinationPath = ResolveEntryPath(stagingPath, entryKey);
         var destinationDirectory = Path.GetDirectoryName(destinationPath)
-            ?? throw new InvalidDataException($"Invalid archive entry path: {entryKey}");
+            ?? throw new InvalidDataException(LocalizedText.Format(Strings.Archive_InvalidEntryPathFormat, entryKey));
         Directory.CreateDirectory(destinationDirectory);
 
         using var output = new FileStream(destinationPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
@@ -315,7 +316,7 @@ public static class ModArchiveInstaller
     {
         if (string.IsNullOrWhiteSpace(entryKey))
         {
-            throw new InvalidDataException("Archive contains an entry without a path.");
+            throw new InvalidDataException(Strings.Archive_EntryPathMissing);
         }
 
         var normalized = entryKey.Replace('\\', '/').TrimEnd('/');
@@ -324,19 +325,19 @@ public static class ModArchiveInstaller
             segments.Length == 0 ||
             segments.Any(IsUnsafePathSegment))
         {
-            throw new InvalidDataException($"Unsafe archive entry path: {entryKey}");
+            throw new InvalidDataException(LocalizedText.Format(Strings.Archive_UnsafeEntryPathFormat, entryKey));
         }
 
         var relativePath = Path.Combine(segments);
         if (Path.IsPathRooted(relativePath))
         {
-            throw new InvalidDataException($"Unsafe archive entry path: {entryKey}");
+            throw new InvalidDataException(LocalizedText.Format(Strings.Archive_UnsafeEntryPathFormat, entryKey));
         }
 
         var destinationPath = Path.GetFullPath(Path.Combine(stagingPath, relativePath));
         if (!FileSystemSafety.IsDirectoryInside(destinationPath, stagingPath))
         {
-            throw new InvalidDataException($"Archive entry leaves the destination directory: {entryKey}");
+            throw new InvalidDataException(LocalizedText.Format(Strings.Archive_EntryOutsideDestinationFormat, entryKey));
         }
 
         return destinationPath;
@@ -378,16 +379,14 @@ public static class ModArchiveInstaller
 
         if (candidates.Count == 0)
         {
-            throw new InvalidDataException(
-                "Archive does not contain a recognizable X-Ray mod root (gamedata, bin, db, patches or gamedata.db*).");
+            throw new InvalidDataException(Strings.Archive_XrayRootMissing);
         }
 
         var shallowestDepth = candidates.Min(candidate => candidate.Depth);
         var shallowest = candidates.Where(candidate => candidate.Depth == shallowestDepth).ToArray();
         if (shallowest.Length != 1)
         {
-            throw new InvalidDataException(
-                "Archive contains several possible mod roots. Repack it or add the extracted folder manually.");
+            throw new InvalidDataException(Strings.Archive_MultipleRoots);
         }
 
         return shallowest[0].Path;
@@ -441,7 +440,7 @@ public static class ModArchiveInstaller
         var sanitized = FileSystemSafety.SanitizeName(packageDirectoryName);
         if (!packageDirectoryName.Equals(sanitized, StringComparison.Ordinal))
         {
-            throw new InvalidDataException("Invalid archive installation folder name.");
+            throw new InvalidDataException(Strings.Archive_InvalidInstallFolder);
         }
 
         var packagePath = Path.GetFullPath(Path.Combine(installRoot, packageDirectoryName));
@@ -449,7 +448,7 @@ public static class ModArchiveInstaller
             Directory.Exists(packagePath) ||
             File.Exists(packagePath))
         {
-            throw new IOException($"Archive installation folder is unavailable: {packagePath}");
+            throw new IOException(LocalizedText.Format(Strings.Archive_InstallFolderUnavailableFormat, packagePath));
         }
 
         return packagePath;
@@ -467,7 +466,7 @@ public static class ModArchiveInstaller
             }
         }
 
-        throw new IOException($"Could not allocate an installation folder for '{modName}'.");
+        throw new IOException(LocalizedText.Format(Strings.Archive_AllocateFolderFailedFormat, modName));
     }
 
     private static long GetMaximumExtractedBytes(string destinationPath)
@@ -480,7 +479,7 @@ public static class ModArchiveInstaller
                 var available = new DriveInfo(root).AvailableFreeSpace - FreeSpaceReserve;
                 if (available <= 0)
                 {
-                    throw new IOException("Not enough free space to extract the archive.");
+                    throw new IOException(Strings.Archive_NotEnoughSpace);
                 }
 
                 return available;
@@ -531,7 +530,7 @@ public static class ModArchiveInstaller
             ExtractedBytes = checked(ExtractedBytes + byteCount);
             if (ExtractedBytes > MaximumBytes)
             {
-                throw new IOException("Not enough free space to extract this archive safely.");
+                throw new IOException(Strings.Archive_NotEnoughSafeSpace);
             }
         }
 

@@ -37,6 +37,6 @@ public sealed class ProfileSettingsValidatorTests
         var result = ProfileSettingsValidator.Validate("Zona", @"..\outside.exe", _ => false);
 
         Assert.False(result.IsValid);
-        Assert.Contains(result.Messages, message => message.Contains("must not leave", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Messages, message => message.Contains("не должен выходить", StringComparison.OrdinalIgnoreCase));
     }
 }

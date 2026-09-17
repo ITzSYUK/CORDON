@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Input;
 using StalkerModLauncher.Services;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Themes;
 using StalkerModLauncher.ViewModels;
 using StalkerModLauncher.Views.Controls;
@@ -53,12 +54,12 @@ public partial class PdaWindow : Window
         {
             DataContext = viewModel,
             UsePdaTheme = true,
-            CloseButtonText = "Назад"
+            CloseButtonText = Strings.Common_Back
         };
         page.CloseRequested += (_, _) => PdaView.ShowProfilePage();
         PdaView.ShowPage(
             page,
-            "Конфликты и файлы",
+            Strings.Pda_ConflictTitle,
             ViewModel.SelectedProfile?.Name ?? string.Empty,
             viewModel,
             showProfileTypeIcon: true);
@@ -75,7 +76,7 @@ public partial class PdaWindow : Window
         var page = new PdaMo2ImportView { DataContext = importViewModel };
         importViewModel.Completed += (_, _) => PdaView.ShowProfilePage();
         page.Cancelled += (_, _) => PdaView.ShowProfilePage();
-        PdaView.ShowPage(page, "Перенести сборку из Mod Organizer 2", "Mod Organizer 2");
+        PdaView.ShowPage(page, Strings.Mo2_Title, "Mod Organizer 2");
     }
 
     private MainViewModel? ViewModel => DataContext as MainViewModel;
@@ -95,7 +96,7 @@ public partial class PdaWindow : Window
             PdaView.ShowProfilePage();
         };
         page.Cancelled += (_, _) => PdaView.ShowProfilePage();
-        PdaView.ShowPage(page, "Создание профиля");
+        PdaView.ShowPage(page, Strings.Creation_Title);
     }
 
     private void EditProfileButton_OnClick(object sender, RoutedEventArgs e)
@@ -105,7 +106,7 @@ public partial class PdaWindow : Window
         {
             var page = new PdaProfileSettingsView { DataContext = settingsVm };
             page.Saved += (_, _) => PdaView.ShowProfilePage();
-            PdaView.ShowPage(page, $"Настройки: {settingsVm.ProfileName}", showProfileTypeIcon: true);
+            PdaView.ShowPage(page, LocalizedText.Format(Strings.Pda_ProfileSettingsFormat, settingsVm.ProfileName), showProfileTypeIcon: true);
         }
     }
 
@@ -122,7 +123,7 @@ public partial class PdaWindow : Window
             request.Cancel();
             PdaView.ShowProfilePage();
         };
-        PdaView.ShowPage(page, "Найденные моды", lifetime: page, showProfileTypeIcon: true);
+        PdaView.ShowPage(page, Strings.Scan_Title, lifetime: page, showProfileTypeIcon: true);
     }
 
     private void ScreenshotsButton_OnClick(object sender, RoutedEventArgs e)
@@ -132,7 +133,7 @@ public partial class PdaWindow : Window
             var screenshotsVm = _navigation.CreateScreenshotsViewModel(profile);
             PdaView.ShowPage(
                 new PdaScreenshotsView { DataContext = screenshotsVm },
-                $"Скриншоты: {profile.Name}",
+                LocalizedText.Format(Strings.Pda_ScreenshotsFormat, profile.Name),
                 lifetime: screenshotsVm,
                 showProfileTypeIcon: true);
         }
@@ -143,7 +144,7 @@ public partial class PdaWindow : Window
         var catalogVm = _navigation.CreateModCatalogViewModel();
         PdaView.ShowPage(
             new PdaModCatalogView { DataContext = catalogVm },
-            "Каталог модификаций",
+            Strings.Catalog_Title,
             "AP-PRO.RU",
             catalogVm);
     }
@@ -155,7 +156,7 @@ public partial class PdaWindow : Window
             var healthVm = _navigation.CreateProfileHealthViewModel(profile, ViewModel.AppendLog);
             PdaView.ShowPage(
                 new PdaHealthView { DataContext = healthVm },
-                $"Состояние: {profile.Name}",
+                LocalizedText.Format(Strings.Pda_StatusFormat, profile.Name),
                 healthVm.ProfileKind,
                 healthVm,
                 showProfileTypeIcon: true);
@@ -164,12 +165,12 @@ public partial class PdaWindow : Window
 
     private void AboutButton_OnClick(object sender, RoutedEventArgs e)
     {
-        PdaView.ShowPage(new PdaAboutView(), "О программе");
+        PdaView.ShowPage(new PdaAboutView(), Strings.Main_About);
     }
 
     private void LogButton_OnClick(object sender, RoutedEventArgs e)
     {
-        PdaView.ShowPage(new PdaLogView { DataContext = ViewModel }, "Журнал лаунчера");
+        PdaView.ShowPage(new PdaLogView { DataContext = ViewModel }, Strings.Log_Title);
     }
 
     private void LauncherSettingsButton_OnClick(object sender, RoutedEventArgs e)
@@ -186,7 +187,7 @@ public partial class PdaWindow : Window
         };
         page.Saved += (_, _) => PdaView.ShowProfilePage();
         page.Cancelled += (_, _) => PdaView.ShowProfilePage();
-        PdaView.ShowPage(page, "Настройки лаунчера");
+        PdaView.ShowPage(page, Strings.Settings_Title);
     }
 
     private void Window_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

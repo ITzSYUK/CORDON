@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -56,7 +57,7 @@ public sealed class StartupRegistrationService : IStartupRegistrationService
         }
 
         return processPath
-            ?? throw new InvalidOperationException("Не удалось определить путь к лаунчеру.");
+            ?? throw new InvalidOperationException(Strings.Startup_ExecutablePathMissing);
     }
 }
 
@@ -78,5 +79,5 @@ public sealed class WindowsRunStartupRegistrationStore : IStartupRegistrationSto
 
     private static RegistryKey OpenWritableKey() =>
         Registry.CurrentUser.CreateSubKey(RegistryPath, writable: true)
-        ?? throw new InvalidOperationException("Не удалось открыть раздел автозапуска Windows.");
+        ?? throw new InvalidOperationException(Strings.Startup_RegistryUnavailable);
 }

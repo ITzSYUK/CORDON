@@ -1,4 +1,5 @@
 using System.Text;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -19,7 +20,7 @@ internal sealed class UsvfsLogCollector : IDisposable
         _thread = new Thread(Collect)
         {
             IsBackground = true,
-            Name = "USVFS log collector"
+            Name = Strings.Layer_UsvfsLogCollector
         };
         _thread.Start();
     }

@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -79,7 +80,7 @@ public static class ProfileExecutableSourceResolver
 
         try
         {
-            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, "Automatic launch executable");
+            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Safety_AutomaticExecutable);
         }
         catch (InvalidOperationException)
         {
@@ -108,7 +109,7 @@ public static class ProfileExecutableSourceResolver
             var candidate = FileSystemSafety.ResolvePathInside(
                 root.RootPath,
                 profile.ExecutableRelativePath,
-                "Automatic launch executable");
+                Strings.Safety_AutomaticExecutable);
             if (File.Exists(candidate))
             {
                 return new ProfileExecutableSelection(
@@ -139,8 +140,8 @@ public static class ProfileExecutableSourceResolver
     {
         var root = FindPinnedSourceRoot(profile);
         return root is null
-            ? "Автоматический выбор по приоритету модов."
-            : $"Вручную выбран источник: {root.DisplayName}.";
+            ? Strings.Executable_AutomaticPriority
+            : LocalizedText.Format(Strings.Executable_ManualSourceFormat, root.DisplayName);
     }
 
     public static IReadOnlyList<ProfileFileSourceRoot> GetSourceRoots(ModProfile profile, bool includeWorkspace)
@@ -150,7 +151,7 @@ public static class ProfileExecutableSourceResolver
         {
             roots.Add(new ProfileFileSourceRoot(
                 Path.GetFullPath(profile.GameInstallPath),
-                "базовая игра",
+                Strings.Layer_BaseGame,
                 0,
                 true,
                 IsBaseGameRoot: true));
@@ -161,7 +162,7 @@ public static class ProfileExecutableSourceResolver
             .OrderBy(mod => mod.Order)
             .Select(mod => new ProfileFileSourceRoot(
                 Path.GetFullPath(mod.SourcePath),
-                $"мод: {mod.Name}",
+                LocalizedText.Format(Strings.Layer_ModFormat, mod.Name),
                 mod.Order,
                 true,
                 IsBaseGameRoot: profile.IsStandalone)));

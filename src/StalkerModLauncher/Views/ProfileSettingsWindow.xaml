@@ -1,7 +1,8 @@
 <Window x:Class="StalkerModLauncher.Views.ProfileSettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Настройки профиля"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="{x:Static res:Strings.SettingsProfile_Title}"
         Width="820"
         Height="680"
         MinWidth="620"
@@ -126,7 +127,7 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0">
-                        <TextBlock Text="Название профиля"
+                        <TextBlock Text="{x:Static res:Strings.Creation_ProfileName}"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="12"/>
                         <Border Style="{StaticResource ProfileFieldBorderStyle}"
@@ -139,7 +140,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Margin="0,12,0,0">
-                        <TextBlock Text="Описание"
+                        <TextBlock Text="{x:Static res:Strings.Common_Description}"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="12"/>
                         <Border Style="{StaticResource ProfileFieldBorderStyle}"
@@ -161,14 +162,14 @@
                               IsChecked="{Binding IsStandalone}"
                               Margin="0,0,0,8">
                         <TextBlock TextWrapping="Wrap">
-                            <Run Text="Автономная сборка"/>
+                            <Run Text="{x:Static res:Strings.Profile_Standalone}"/>
                             <Run Foreground="{StaticResource MutedTextBrush}" FontSize="11"
-                                 Text=" - мод имеет свой движок и все файлы игры, запускается из своей папки"/>
+                                 Text="{x:Static res:Strings.SettingsProfile_StandaloneHint}"/>
                         </TextBlock>
                     </CheckBox>
 
                     <StackPanel Grid.Row="4" Margin="0,4,0,12">
-                        <TextBlock Text="Система запуска"
+                        <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="12"
                                    Margin="0,0,0,6"/>
@@ -190,12 +191,12 @@
 
                         <StackPanel Margin="0,18,0,0"
                                     Visibility="{Binding IsAnomalyUsvfsOptionsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <TextBlock Text="Движок Anomaly"
+                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_AnomalyEngine}"
                                        Foreground="{StaticResource MutedTextBrush}"
                                        FontSize="12"
                                        Margin="0,0,0,5"/>
                             <WrapPanel>
-                                <RadioButton Content="Лаунчер"
+                                <RadioButton Content="{x:Static res:Strings.SettingsProfile_Launcher}"
                                              Style="{StaticResource ProfileLaunchRadioButtonStyle}"
                                              IsChecked="{Binding UseAutomaticAnomalyRenderer, Mode=TwoWay}"
                                              VerticalAlignment="Center"
@@ -225,7 +226,7 @@
                                           IsEnabled="{Binding HasManualAnomalyRenderer}"
                                           VerticalAlignment="Center"/>
                             </WrapPanel>
-                            <TextBlock Text="Лаунчер запускает AnomalyLauncher.exe. Ручной выбор запускает выбранный движок напрямую и сохраняет приоритет модов."
+                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_LauncherHint}"
                                        Foreground="{StaticResource DisabledTextBrush}"
                                        FontSize="11"
                                        TextWrapping="Wrap"
@@ -235,26 +236,26 @@
                         <Border Style="{StaticResource ProfileSectionDividerStyle}" Margin="0,14,0,14"/>
 
                         <StackPanel>
-                            <TextBlock Text="Пользовательские данные" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,6"/>
+                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_UserData}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,6"/>
                             <StackPanel IsEnabled="{Binding CanChooseGameData}">
-                                <RadioButton Content="В папке профиля" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                <RadioButton Content="{x:Static res:Strings.SettingsProfile_UserDataProfile}" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
                                              IsChecked="{Binding UseProfileGameData}" Margin="0,0,0,5"/>
-                                <RadioButton Content="В папке данных базовой игры" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                <RadioButton Content="{x:Static res:Strings.SettingsProfile_UserDataGame}" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
                                              IsChecked="{Binding UseBaseGameData}"/>
                             </StackPanel>
                             <TextBlock Text="{Binding GameDataDescription}" Foreground="{StaticResource MutedTextBrush}"
                                        FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
-                            <Button Content="Скопировать недостающие данные в выбранную папку"
+                            <Button Content="{x:Static res:Strings.SettingsProfile_CopyMissingData}"
                                     Command="{Binding CopyGameDataCommand}" IsEnabled="{Binding CanChooseGameData}"
                                     HorizontalAlignment="Left" Margin="0,6,0,0"/>
-                            <TextBlock Text="Источник fsgame.ltx" Foreground="{StaticResource MutedTextBrush}"
+                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_FsgameSource}" Foreground="{StaticResource MutedTextBrush}"
                                        FontSize="12" Margin="0,12,0,4"/>
                             <TextBlock Text="{Binding FsgameSourceDisplay}" Foreground="{StaticResource MutedTextBrush}"
                                        FontSize="11" TextWrapping="Wrap"/>
                             <WrapPanel Margin="0,6,0,0" IsEnabled="{Binding CanChooseFsgame}">
-                                <Button Content="Выбрать файл..." Command="{Binding BrowseFsgameCommand}"
+                                <Button Content="{x:Static res:Strings.SettingsProfile_SelectFile}" Command="{Binding BrowseFsgameCommand}"
                                         Margin="0,0,8,0"/>
-                                <Button Content="Выбирать автоматически" Command="{Binding ClearFsgameSourceCommand}"/>
+                                <Button Content="{x:Static res:Strings.SettingsProfile_AutoSelect}" Command="{Binding ClearFsgameSourceCommand}"/>
                             </WrapPanel>
                         </StackPanel>
                     </StackPanel>
@@ -264,7 +265,7 @@
                             Margin="0,2,0,14"/>
 
                     <TextBlock Grid.Row="6"
-                               Text="Файл запуска (.exe)"
+                               Text="{x:Static res:Strings.SettingsProfile_Executable}"
                                Foreground="{StaticResource MutedTextBrush}"
                                FontSize="12"/>
 
@@ -280,7 +281,7 @@
                                      Text="{Binding ExecutableRelativePath, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource ProfileEmbeddedTextBoxStyle}"/>
                             <Button Grid.Column="1"
-                                    Content="Обзор..."
+                                    Content="{x:Static res:Strings.Common_Browse}"
                                     Command="{Binding BrowseExecutableCommand}"
                                     Margin="8,0,0,0"
                                     Width="92"
@@ -294,7 +295,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Путь до .exe относительно папки игры или мода"
+                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_ExePathHint}"
                                        Foreground="{StaticResource DisabledTextBrush}"
                                        FontSize="11"/>
                             <TextBlock Text="{Binding ExecutableSourceDisplay}"
@@ -303,9 +304,9 @@
                                        Margin="0,2,0,0"/>
                         </StackPanel>
                         <Button Grid.Column="1"
-                                Content="Выбирать автоматически"
+                                Content="{x:Static res:Strings.SettingsProfile_AutoSelect}"
                                 Command="{Binding ClearExecutableSourceCommand}"
-                                ToolTip="Снять ручной выбор источника EXE. Лаунчер будет брать файл запуска из включенного мода с самым высоким приоритетом."
+                                ToolTip="{x:Static res:Strings.SettingsProfile_AutoSelectExeTooltip}"
                                 ToolTipService.ShowOnDisabled="True"
                                 Margin="8,0,0,0"
                                 Padding="10,4"
@@ -325,7 +326,7 @@
                     </Grid>
 
                     <StackPanel Grid.Row="9" Margin="0,12,0,0">
-                        <TextBlock Text="Параметры запуска"
+                        <TextBlock Text="{x:Static res:Strings.Creation_LaunchArguments}"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="12"/>
                         <Border Style="{StaticResource ProfileFieldBorderStyle}"
@@ -335,7 +336,7 @@
                                 <TextBox Text="{Binding LaunchArguments, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource ProfileEmbeddedTextBoxStyle}"
                                          Padding="0"/>
-                                <TextBox Text="Например: -nointro -nosound"
+                                <TextBox Text="{x:Static res:Strings.SettingsProfile_ArgumentsExample}"
                                          Style="{StaticResource ProfilePlaceholderTextBoxStyle}"
                                          Padding="0"/>
                             </Grid>
@@ -343,7 +344,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="10" Margin="0,14,0,0">
-                        <TextBlock Text="Папка установленных модов"
+                        <TextBlock Text="{x:Static res:Strings.SettingsProfile_InstalledModsFolder}"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="12"/>
                         <Border Style="{StaticResource ProfileFieldBorderStyle}"
@@ -357,15 +358,15 @@
                                 <TextBox Grid.Column="0"
                                          Text="{Binding ModInstallPath, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource ProfileEmbeddedTextBoxStyle}"
-                                         ToolTip="Архивы распаковываются сюда. Workspace для хранения исходников не используется."/>
+                                         ToolTip="{x:Static res:Strings.SettingsProfile_ModFolderTooltip}"/>
                                 <Button Grid.Column="1"
-                                        Content="Обзор..."
+                                        Content="{x:Static res:Strings.Common_Browse}"
                                         Command="{Binding BrowseModInstallPathCommand}"
                                         Margin="8,0,0,0"
                                         Width="92"
                                         VerticalAlignment="Center"/>
                                 <Button Grid.Column="2"
-                                        Content="По умолчанию"
+                                        Content="{x:Static res:Strings.Common_Default}"
                                         Command="{Binding ResetModInstallPathCommand}"
                                         Margin="8,0,0,0"
                                         Width="110"
@@ -384,23 +385,23 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="Дополнительный слой MO2 overwrite" FontWeight="SemiBold"/>
+                                <TextBlock Text="{x:Static res:Strings.SettingsProfile_Mo2Overwrite}" FontWeight="SemiBold"/>
                                 <TextBlock Text="{Binding Mo2OverwritePath}" Foreground="{StaticResource MutedTextBrush}"
                                            FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding Mo2OverwritePath}"/>
                             </StackPanel>
-                            <Button Grid.Column="1" Content="Отключить" Command="{Binding RemoveMo2OverwriteCommand}"
+                            <Button Grid.Column="1" Content="{x:Static res:Strings.Common_Disable}" Command="{Binding RemoveMo2OverwriteCommand}"
                                     Margin="10,0,0,0" VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
 
                     <StackPanel Grid.Row="12" Margin="0,16,0,0">
-                        <TextBlock Text="Порядок модов MO2"
+                        <TextBlock Text="{x:Static res:Strings.SettingsProfile_Mo2Order}"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="12"
                                    Margin="0,0,0,4"/>
-                        <Button Content="Применить порядок модов из профиля MO2..."
+                        <Button Content="{x:Static res:Strings.SettingsProfile_Mo2Apply}"
                                 Command="{Binding ImportMo2ModListCommand}"
-                                ToolTip="Выберите файл modlist.txt из профиля MO2. Лаунчер применит порядок и включённое состояние только к уже добавленным модам; новые моды и папки импортированы не будут."
+                                ToolTip="{x:Static res:Strings.SettingsProfile_Mo2ApplyTooltip}"
                                 HorizontalAlignment="Left"/>
                     </StackPanel>
                 </Grid>
@@ -414,16 +415,16 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <ToggleButton Grid.Column="0"
-                          Content="Показывать статус профиля в Discord"
+                          Content="{x:Static res:Strings.SettingsProfile_Discord}"
                           IsChecked="{Binding IsDiscordStatusEnabled}"
                           Style="{StaticResource ProfileToggleButtonStyle}"
-                          ToolTip="Статус отображается только во время запуска этого профиля. Отключите его, если мод уже публикует собственный Discord Rich Presence."
+                          ToolTip="{x:Static res:Strings.SettingsProfile_DiscordTooltip}"
                           Margin="0,0,8,0"/>
             <WrapPanel Grid.Column="2" HorizontalAlignment="Right">
-                <Button Content="Сохранить"
+                <Button Content="{x:Static res:Strings.Common_Save}"
                         Command="{Binding SaveCommand}"
                         Margin="0,0,8,0"/>
-                <Button Content="Готово"
+                <Button Content="{x:Static res:Strings.Common_Done}"
                         Click="CloseButton_OnClick"
                         Style="{StaticResource PrimaryButtonStyle}"
                         MinWidth="96"/>

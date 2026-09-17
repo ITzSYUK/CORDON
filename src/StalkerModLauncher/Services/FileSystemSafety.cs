@@ -1,3 +1,5 @@
+using StalkerModLauncher.Resources;
+
 namespace StalkerModLauncher.Services;
 
 public static class FileSystemSafety
@@ -6,12 +8,12 @@ public static class FileSystemSafety
     {
         if (string.IsNullOrWhiteSpace(relativePath))
         {
-            throw new InvalidOperationException($"{displayName} is empty.");
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Safety_PathEmptyFormat, displayName));
         }
 
         if (Path.IsPathRooted(relativePath))
         {
-            throw new InvalidOperationException($"{displayName} must be a relative path inside the profile workspace.");
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Safety_PathRelativeFormat, displayName));
         }
 
         var segments = relativePath.Split(
@@ -19,13 +21,13 @@ public static class FileSystemSafety
             StringSplitOptions.RemoveEmptyEntries);
         if (segments.Any(segment => segment == ".."))
         {
-            throw new InvalidOperationException($"{displayName} must not leave the profile workspace.");
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Safety_PathEscapesFormat, displayName));
         }
 
         var invalidChars = Path.GetInvalidPathChars();
         if (relativePath.Any(invalidChars.Contains))
         {
-            throw new InvalidOperationException($"{displayName} contains invalid path characters.");
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Safety_PathInvalidCharsFormat, displayName));
         }
     }
 
@@ -37,7 +39,7 @@ public static class FileSystemSafety
         var fullPath = Path.GetFullPath(Path.Combine(fullRoot, relativePath));
         if (!IsDirectoryInside(fullPath, fullRoot))
         {
-            throw new InvalidOperationException($"{displayName} must stay inside: {fullRoot}");
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Safety_PathInsideFormat, displayName, fullRoot));
         }
 
         return fullPath;
@@ -47,7 +49,9 @@ public static class FileSystemSafety
     {
         if (!IsDirectoryInside(childPath, rootPath))
         {
-            throw new InvalidOperationException($"Refusing to operate outside the managed workspace: {Path.GetFullPath(childPath)}");
+            throw new InvalidOperationException(LocalizedText.Format(
+                Strings.Error_OutsideManagedWorkspaceFormat,
+                Path.GetFullPath(childPath)));
         }
     }
 

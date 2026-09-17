@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -11,16 +12,16 @@ public static class ProfileSettingsValidator
 
         if (string.IsNullOrWhiteSpace(normalizedName))
         {
-            messages.Add("Укажите название профиля.");
+            messages.Add(Strings.Validation_NameRequired);
         }
         else if (isNameTaken(normalizedName))
         {
-            messages.Add("Профиль с таким именем уже существует.");
+            messages.Add(Strings.Validation_NameExists);
         }
 
         try
         {
-            FileSystemSafety.EnsureRelativePath(executableRelativePath, "Файл запуска");
+            FileSystemSafety.EnsureRelativePath(executableRelativePath, Strings.SettingsProfile_Executable);
         }
         catch (Exception ex)
         {
@@ -30,7 +31,7 @@ public static class ProfileSettingsValidator
         return new ValidationResult
         {
             IsValid = messages.Count == 0,
-            Summary = messages.Count == 0 ? "Настройки профиля корректны." : messages[0],
+            Summary = messages.Count == 0 ? Strings.Validation_Valid : messages[0],
             Messages = messages
         };
     }

@@ -1,7 +1,8 @@
 <Window x:Class="StalkerModLauncher.Views.ScreenshotFullscreenWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Просмотр скриншота"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="{x:Static res:Strings.Screenshots_ViewTitle}"
         WindowStyle="None"
         ResizeMode="NoResize"
         WindowState="Maximized"
@@ -38,7 +39,7 @@
                MouseLeftButtonDown="Image_OnMouseLeftButtonDown">
             <Image.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Скопировать в буфер обмена"
+                    <MenuItem Header="{x:Static res:Strings.Screenshots_Copy}"
                               Click="CopyScreenshotMenuItem_OnClick"/>
                 </ContextMenu>
             </Image.ContextMenu>
@@ -75,7 +76,7 @@
         </Grid>
 
         <TextBlock Grid.Column="1"
-                   Text="Esc — закрыть   •   Колесо мыши или стрелки — следующий скриншот"
+                   Text="{x:Static res:Strings.Screenshots_FullscreenHint}"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Bottom"
                    Margin="0,0,0,12"

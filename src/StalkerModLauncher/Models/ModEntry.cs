@@ -1,4 +1,5 @@
 using StalkerModLauncher.Infrastructure;
+using StalkerModLauncher.Resources;
 using System.Text.Json.Serialization;
 
 namespace StalkerModLauncher.Models;
@@ -6,7 +7,7 @@ namespace StalkerModLauncher.Models;
 public sealed class ModEntry : ObservableObject
 {
     private string _id = Guid.NewGuid().ToString("N");
-    private string _name = "New mod";
+    private string _name = Strings.Mod_DefaultName;
     private string _sourcePath = string.Empty;
     private string _groupName = string.Empty;
     private bool _isEnabled = true;
@@ -212,12 +213,12 @@ public sealed class ModEntry : ObservableObject
     [JsonIgnore]
     public string ConflictDisplay => ConflictKind switch
     {
-        ModConflictKind.Overwrite => "Перезаписывает",
-        ModConflictKind.Overwritten => "Перезаписан",
-        ModConflictKind.Mixed => "Смешанный конфликт",
-        ModConflictKind.Redundant => "Полностью перекрыт",
-        ModConflictKind.Disabled => "Выключен",
-        _ => "Без конфликтов"
+        ModConflictKind.Overwrite => Strings.ModConflict_Overwrite,
+        ModConflictKind.Overwritten => Strings.ModConflict_Overwritten,
+        ModConflictKind.Mixed => Strings.ModConflict_Mixed,
+        ModConflictKind.Redundant => Strings.ModConflict_Redundant,
+        ModConflictKind.Disabled => Strings.ModConflict_Disabled,
+        _ => Strings.ModConflict_None
     };
 
     [JsonIgnore]
@@ -228,23 +229,23 @@ public sealed class ModEntry : ObservableObject
             var parts = new List<string>();
             if (OverwrittenFileCount > 0)
             {
-                parts.Add($"Заменяет {OverwrittenFileCount:N0} {Pluralize(OverwrittenFileCount, "файл", "файла", "файлов")} из {OverwrittenModCount:N0} {Pluralize(OverwrittenModCount, "мода", "модов", "модов")}");
+                parts.Add(LocalizedText.Format(Strings.ModConflict_OverwritesSummaryFormat, OverwrittenFileCount, OverwrittenModCount));
             }
 
             if (OverwrittenByFileCount > 0)
             {
-                parts.Add($"проигрывает {OverwrittenByFileCount:N0} {Pluralize(OverwrittenByFileCount, "файлом", "файлами", "файлами")} {OverwrittenByModCount:N0} {Pluralize(OverwrittenByModCount, "моду", "модам", "модам")}");
+                parts.Add(LocalizedText.Format(Strings.ModConflict_LosesSummaryFormat, OverwrittenByFileCount, OverwrittenByModCount));
             }
 
             if (ConflictKind == ModConflictKind.Redundant)
             {
                 parts.Clear();
-                parts.Add("полностью перекрыт последующими модами");
+                parts.Add(Strings.ModConflict_FullyOverridden);
             }
 
             if (ProvidesLaunchExecutable)
             {
-                parts.Add("предоставляет запускаемый бинарник");
+                parts.Add(Strings.ModConflict_Executable);
             }
 
             return string.Join(" · ", parts);
@@ -257,19 +258,4 @@ public sealed class ModEntry : ObservableObject
         set => SetProperty(ref _order, value);
     }
 
-    private static string Pluralize(int value, string one, string few, string many)
-    {
-        var absolute = Math.Abs(value) % 100;
-        if (absolute is >= 11 and <= 19)
-        {
-            return many;
-        }
-
-        return (absolute % 10) switch
-        {
-            1 => one,
-            >= 2 and <= 4 => few,
-            _ => many
-        };
-    }
 }

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
              xmlns:controls="clr-namespace:StalkerModLauncher.Views.Controls"
+             xmlns:res="clr-namespace:StalkerModLauncher.Resources"
              Loaded="PdaMainView_OnLoaded"
              Unloaded="PdaMainView_OnUnloaded"
              Background="Transparent">
@@ -370,11 +371,11 @@
                     <Run Text="CORDON" FontSize="14" FontWeight="SemiBold" Foreground="#AAB1A4"/><Run Text="&#x00A0;&#x00A0;" FontSize="11"/><Run Text="S.T.A.L.K.E.R. Mod Launcher" FontSize="11" Foreground="#7E887B"/>
                 </TextBlock>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="Запустить" Command="{Binding LaunchCommand}" Style="{StaticResource PdaLaunchTabStyle}"/>
-                    <Button Content="Профиль" Style="{StaticResource PdaTopTabStyle}" Click="ProfileTab_OnClick"/>
-                    <Button Content="Каталог" Style="{StaticResource PdaTopTabStyle}" Click="CatalogTab_OnClick"/>
-                    <Button Content="Журнал" Style="{StaticResource PdaTopTabStyle}" Click="LogButton_OnClick"/>
-                    <Button Content="О программе" Style="{StaticResource PdaTopTabStyle}" Click="AboutButton_OnClick"/>
+                    <Button Content="{x:Static res:Strings.Common_Launch}" Command="{Binding LaunchCommand}" Style="{StaticResource PdaLaunchTabStyle}"/>
+                    <Button Content="{x:Static res:Strings.Common_Profile}" Style="{StaticResource PdaTopTabStyle}" Click="ProfileTab_OnClick"/>
+                    <Button Content="{x:Static res:Strings.Main_Catalog}" Style="{StaticResource PdaTopTabStyle}" Click="CatalogTab_OnClick"/>
+                    <Button Content="{x:Static res:Strings.Main_Log}" Style="{StaticResource PdaTopTabStyle}" Click="LogButton_OnClick"/>
+                    <Button Content="{x:Static res:Strings.Main_About}" Style="{StaticResource PdaTopTabStyle}" Click="AboutButton_OnClick"/>
                     <Button Style="{StaticResource PdaCompactTopTabStyle}"
                             Click="LauncherSettingsButton_OnClick">
                         <TextBlock FontFamily="Segoe MDL2 Assets"
@@ -391,10 +392,10 @@
                 <Button Grid.Column="3" Click="PowerButton_OnClick">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource PdaPowerButtonStyle}">
-                            <Setter Property="ToolTip" Value="Выключить лаунчер"/>
+                            <Setter Property="ToolTip" Value="{x:Static res:Strings.Main_ExitTooltip}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding MinimizeToTrayOnClose}" Value="True">
-                                    <Setter Property="ToolTip" Value="Свернуть лаунчер в трей"/>
+                                    <Setter Property="ToolTip" Value="{x:Static res:Strings.Main_MinimizeToTrayTooltip}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -436,7 +437,7 @@
                     </Grid>
                     <TextBlock x:Name="PageSectionIcon" Text="◇" Foreground="#D09A2E" FontSize="18"
                                VerticalAlignment="Center" Visibility="Collapsed"/>
-                    <TextBlock x:Name="PageTitleText" Grid.Column="1" Text="{Binding SelectedProfile.Name, FallbackValue=Профиль не выбран}"
+                    <TextBlock x:Name="PageTitleText" Grid.Column="1" Text="{Binding SelectedProfile.Name, FallbackValue={x:Static res:Strings.Profile_NoneSelected}}"
                                Margin="8,0" VerticalAlignment="Center" FontFamily="Bahnschrift SemiCondensed" FontSize="17"
                                Foreground="#E6E2D1" TextTrimming="CharacterEllipsis"/>
                     <TextBlock x:Name="PageStatusText" Grid.Column="2" Text="{Binding ValidationSummary}" MaxWidth="420"
@@ -455,18 +456,18 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Button Content="Список профилей" Width="190"
+                    <Button Content="{x:Static res:Strings.Main_ProfileList}" Width="190"
                             Style="{StaticResource PdaNavButtonStyle}"
                             Click="ProfilesButton_OnClick"/>
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <Button x:Name="ScreenshotsNavButton" Content="Скриншоты" Width="140" Margin="0,0,4,0"
+                        <Button x:Name="ScreenshotsNavButton" Content="{x:Static res:Strings.Screenshots_Title}" Width="140" Margin="0,0,4,0"
                                 Style="{StaticResource PdaNavButtonStyle}" Click="ScreenshotsButton_OnClick"/>
-                        <Button Content="Папка профиля" Width="140" Margin="0,0,4,0"
+                        <Button Content="{x:Static res:Strings.Common_ProfileFolder}" Width="140" Margin="0,0,4,0"
                                 Style="{StaticResource PdaNavButtonStyle}"
                                 Command="{Binding OpenProfileFolderCommand}"/>
-                        <Button x:Name="StatusNavButton" Content="Состояние" Width="140" Margin="0,0,4,0"
+                        <Button x:Name="StatusNavButton" Content="{x:Static res:Strings.Common_Status}" Width="140" Margin="0,0,4,0"
                                 Style="{StaticResource PdaNavButtonStyle}" Click="StatusButton_OnClick"/>
-                        <Button x:Name="SettingsNavButton" Content="Настройки" Width="140"
+                        <Button x:Name="SettingsNavButton" Content="{x:Static res:Strings.Common_Settings}" Width="140"
                                 Style="{StaticResource PdaNavButtonStyle}" Click="SettingsTab_OnClick"/>
                     </StackPanel>
                 </Grid>
@@ -512,7 +513,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
-                                    <TextBlock Text="Базовая игра" Foreground="{StaticResource MutedTextBrush}" FontSize="10"/>
+                                    <TextBlock Text="{x:Static res:Strings.Common_BaseGame}" Foreground="{StaticResource MutedTextBrush}" FontSize="10"/>
                                     <TextBox Grid.Row="1"
                                              Text="{Binding SelectedProfile.GameInstallPath, UpdateSourceTrigger=PropertyChanged}"
                                              BorderThickness="0"
@@ -523,7 +524,7 @@
                                 </Grid>
                                 <Button Grid.Column="1"
                                         Command="{Binding ChooseGameFolderCommand}"
-                                        ToolTip="Выбрать базовую игру"
+                                        ToolTip="{x:Static res:Strings.Common_ChooseBaseGame}"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center">
                                     <Button.Style>
@@ -551,7 +552,7 @@
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                         Background="{DynamicResource PdaDividerBrush}"/>
                                 <Button Grid.Column="3" Command="{Binding ScanForModsCommand}" Style="{StaticResource PdaProfileToolButtonStyle}"
-                                        ToolTip="Найти моды в выбранной папке" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        ToolTip="{x:Static res:Strings.Mod_ScanFolderTooltip}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <Viewbox Width="23" Height="23">
                                         <Canvas Width="24" Height="24">
                                             <Path Data="M4,5.5 C4,4.672 4.672,4 5.5,4 H10 L12,6 H18.5 C19.328,6 20,6.672 20,7.5 V10 M11.4,19.5 H5.5 C4.672,19.5 4,18.828 4,18 V8"
@@ -562,7 +563,7 @@
                                     </Viewbox>
                                 </Button>
                                 <Button Grid.Column="4" Command="{Binding InstallModArchiveCommand}" Style="{StaticResource PdaProfileToolButtonStyle}"
-                                        ToolTip="Установить мод из ZIP, 7Z или RAR" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        ToolTip="{x:Static res:Strings.Mod_InstallArchiveTooltip}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <Grid Width="23" Height="23">
                                         <Path Data="M5,3.5 H14 L19,8.5 V20.5 H5 Z M14,3.5 V8.5 H19"
                                               Stroke="{StaticResource TextBrush}" StrokeThickness="1.6" StrokeLineJoin="Round"/>
@@ -571,7 +572,7 @@
                                     </Grid>
                                 </Button>
                                 <Button Grid.Column="5" Command="{Binding AddModCommand}" Style="{StaticResource PdaProfileToolButtonStyle}"
-                                        ToolTip="Добавить папку мода" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        ToolTip="{x:Static res:Strings.Mod_AddFolderTooltip}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <Viewbox Width="23" Height="23">
                                         <Canvas Width="24" Height="24">
                                             <Path Data="M4,18 V6.5 C4,5.672 4.672,5 5.5,5 H10 L12,7 H18.5 C19.328,7 20,7.672 20,8.5 V18 C20,18.828 19.328,19.5 18.5,19.5 H5.5 C4.672,19.5 4,18.828 4,18 Z"
@@ -605,23 +606,23 @@
                                     <ColumnDefinition Width="100"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,9,0">
-                                    <TextBlock Text="Бинарник" Style="{StaticResource InlineSummaryLabelStyle}"/>
+                                    <TextBlock Text="{x:Static res:Strings.Common_Binary}" Style="{StaticResource InlineSummaryLabelStyle}"/>
                                     <TextBlock Text="{Binding SelectedProfile.ExecutableRelativePath}"
                                                ToolTip="{Binding SelectedProfile.ExecutableRelativePath}"
                                                Style="{StaticResource InlineSummaryValueStyle}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="0,0,9,0">
-                                    <TextBlock Text="Аргументы" Style="{StaticResource InlineSummaryLabelStyle}"/>
+                                    <TextBlock Text="{x:Static res:Strings.Common_Arguments}" Style="{StaticResource InlineSummaryLabelStyle}"/>
                                     <TextBlock Text="{Binding SelectedProfile.LaunchArguments}"
                                                ToolTip="{Binding SelectedProfile.LaunchArguments}"
                                                Style="{StaticResource InlineSummaryValueStyle}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Margin="0,0,9,0">
-                                    <TextBlock Text="Модов" Style="{StaticResource InlineSummaryLabelStyle}"/>
+                                    <TextBlock Text="{x:Static res:Strings.Common_ModCount}" Style="{StaticResource InlineSummaryLabelStyle}"/>
                                     <TextBlock Text="{Binding SelectedProfile.Mods.Count}" Style="{StaticResource InlineSummaryValueStyle}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="3">
-                                    <TextBlock Text="Наиграно" Style="{StaticResource InlineSummaryLabelStyle}"/>
+                                    <TextBlock Text="{x:Static res:Strings.Common_PlayTime}" Style="{StaticResource InlineSummaryLabelStyle}"/>
                                     <TextBlock Text="{Binding SelectedProfile.PlaytimeDisplay}"
                                                Margin="0,2,0,0"
                                                Foreground="{StaticResource TextBrush}"
@@ -644,9 +645,9 @@
                     <StackPanel.Style>
                         <Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding HasProfiles}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style>
                     </StackPanel.Style>
-                    <TextBlock Text="ПРОФИЛЕЙ ПОКА НЕТ" FontFamily="Bahnschrift SemiCondensed" FontSize="22" Foreground="#E4E0CF" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Создайте профиль, добавьте игру и подключите нужные моды." Margin="0,7,0,14" TextAlignment="Center" TextWrapping="Wrap" Foreground="#929B88"/>
-                    <Button Content="Создать первый профиль" Command="{Binding NewProfileCommand}" HorizontalAlignment="Center" Padding="18,7"/>
+                    <TextBlock Text="{x:Static res:Strings.Main_NoProfiles}" FontFamily="Bahnschrift SemiCondensed" FontSize="22" Foreground="#E4E0CF" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{x:Static res:Strings.Main_EmptyProfileHint}" Margin="0,7,0,14" TextAlignment="Center" TextWrapping="Wrap" Foreground="#929B88"/>
+                    <Button Content="{x:Static res:Strings.Main_CreateFirstProfile}" Command="{Binding NewProfileCommand}" HorizontalAlignment="Center" Padding="18,7"/>
                     <StackPanel Margin="0,10,0,0">
                         <StackPanel.Style>
                             <Style TargetType="StackPanel">
@@ -658,11 +659,11 @@
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <Button Content="Импортировать существующие настройки"
+                        <Button Content="{x:Static res:Strings.Main_ImportExistingSettings}"
                                 Command="{Binding ImportSettingsCommand}"
                                 HorizontalAlignment="Center"
                                 Padding="18,7"/>
-                        <TextBlock Text="Загрузить существующий файл настроек settings.json"
+                        <TextBlock Text="{x:Static res:Strings.Main_ImportSettingsHint}"
                                    Margin="0,6,0,0"
                                    FontSize="11"
                                    TextAlignment="Center"
@@ -701,7 +702,7 @@
                             </ScrollViewer>
                         </StackPanel>
                         <Button Grid.Column="1"
-                                Content="Закрыть"
+                                Content="{x:Static res:Strings.Common_Close}"
                                 VerticalAlignment="Top"
                                 Click="DismissErrorButton_OnClick"/>
                     </Grid>

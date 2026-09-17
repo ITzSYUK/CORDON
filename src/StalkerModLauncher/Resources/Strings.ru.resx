@@ -1,0 +1,1074 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Common_Cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="Common_Open" xml:space="preserve"><value>Открыть</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Сохранить</value></data>
+  <data name="Settings_AutoCheckUpdates" xml:space="preserve"><value>Автоматически проверять обновления при запуске</value></data>
+  <data name="Settings_CheckUpdates" xml:space="preserve"><value>Проверить обновления</value></data>
+  <data name="Settings_ClassicUi" xml:space="preserve"><value>Classic UI</value></data>
+  <data name="Settings_DownloadAndInstall" xml:space="preserve"><value>Скачать и установить</value></data>
+  <data name="Settings_InterfaceHeading" xml:space="preserve"><value>ИНТЕРФЕЙС</value></data>
+  <data name="Settings_LanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="Settings_LanguageLabel" xml:space="preserve"><value>Язык интерфейса</value></data>
+  <data name="Settings_LanguageRestartMessage" xml:space="preserve"><value>Настройка языка сохранена. Перезапустите лаунчер, чтобы применить её.</value></data>
+  <data name="Settings_LanguageRestartTitle" xml:space="preserve"><value>Требуется перезапуск</value></data>
+  <data name="Settings_LanguageRussian" xml:space="preserve"><value>Русский</value></data>
+  <data name="Settings_LanguageSystem" xml:space="preserve"><value>Системный</value></data>
+  <data name="Settings_LogDescriptionDetailed" xml:space="preserve"><value>Обычные записи и техническая диагностика запуска, Workspace и USVFS.</value></data>
+  <data name="Settings_LogDescriptionErrors" xml:space="preserve"><value>Ошибки запуска и сбои лаунчера.</value></data>
+  <data name="Settings_LogDescriptionStandard" xml:space="preserve"><value>Ошибки и основные действия лаунчера.</value></data>
+  <data name="Settings_LoggingHeading" xml:space="preserve"><value>ЖУРНАЛИРОВАНИЕ</value></data>
+  <data name="Settings_LogLevelDetailed" xml:space="preserve"><value>Подробный</value></data>
+  <data name="Settings_LogLevelErrors" xml:space="preserve"><value>Только ошибки</value></data>
+  <data name="Settings_LogLevelLabel" xml:space="preserve"><value>Уровень записи launcher.log</value></data>
+  <data name="Settings_LogLevelStandard" xml:space="preserve"><value>Обычный</value></data>
+  <data name="Settings_MinimizeToTray" xml:space="preserve"><value>Сворачивать в трей вместо закрытия</value></data>
+  <data name="Settings_MinimalVersion" xml:space="preserve"><value>Обычная версия</value></data>
+  <data name="Settings_OpenLauncherFolder" xml:space="preserve"><value>Открыть папку лаунчера</value></data>
+  <data name="Settings_OpenRelease" xml:space="preserve"><value>Открыть релиз</value></data>
+  <data name="Settings_PdaUi" xml:space="preserve"><value>PDA UI</value></data>
+  <data name="Settings_PdaUi2" xml:space="preserve"><value>PDA UI 2</value></data>
+  <data name="Settings_Reset" xml:space="preserve"><value>Сбросить настройки</value></data>
+  <data name="Settings_ShowTrayIcon" xml:space="preserve"><value>Показывать значок в трее</value></data>
+  <data name="Settings_ShowUpdateNotifications" xml:space="preserve"><value>Показывать системное уведомление о доступном обновлении</value></data>
+  <data name="Settings_StandaloneVersion" xml:space="preserve"><value>Standalone-версия</value></data>
+  <data name="Settings_StartMinimized" xml:space="preserve"><value>При запуске вместе с Windows открывать в трее</value></data>
+  <data name="Settings_StartWithWindows" xml:space="preserve"><value>Запускать вместе с Windows</value></data>
+  <data name="Settings_StorageLabel" xml:space="preserve"><value>Настройки</value></data>
+  <data name="Settings_UpdateHeading" xml:space="preserve"><value>ОБНОВЛЕНИЕ</value></data>
+  <data name="About_AnswerDeleteProfile" xml:space="preserve"><value>Для обычного профиля удаляются только запись профиля и его workspace с профильными настройками, логами и сохранениями. Папки игры и модов не затрагиваются. Для автономного профиля папка автономной сборки тоже остаётся на месте.</value></data>
+  <data name="About_AnswerModOrder" xml:space="preserve"><value>Моды ниже в списке имеют больший приоритет и могут заменить файлы модов выше. Это нормальный способ установить патч поверх основной версии мода. Порядок можно менять перетаскиванием или кнопками в строке мода. При следующем запуске Workspace пересоберёт рабочую среду, а USVFS сформирует виртуальное наложение с новым порядком.</value></data>
+  <data name="About_AnswerRemoveMod" xml:space="preserve"><value>Да. «Убрать» исключает мод только из этого профиля. Исходная папка мода на диске остаётся нетронутой.</value></data>
+  <data name="About_AnswerSavesAndLogs" xml:space="preserve"><value>У обычного профиля они находятся в workspace\userdata, поэтому сохранения разных профилей не смешиваются. У автономной сборки место определяет её fsgame.ltx: лаунчер находит типичные папки, но не может гарантировать отдельные сохранения для каждой такой сборки. Кнопка «Состояние» покажет найденные сохранения и последний лог.</value></data>
+  <data name="About_AnswerStartFailure" xml:space="preserve"><value>Откройте «Состояние»: там собраны проверка путей, выбранный EXE, последний лог и crash dump. Сначала убедитесь, что все папки существуют, а EXE принадлежит игре или включённому моду. Для оригинальной Shadow of Chernobyl это обычно bin\XR_3DA.exe, для OGSR-сборок часто bin_x64\xrEngine.exe.</value></data>
+  <data name="About_AnswerWorkspaceSize" xml:space="preserve"><value>Проводник учитывает размер файлов, связанных с рабочей папкой, как будто каждый из них лежит там отдельной копией. На деле жёсткая ссылка не дублирует данные на диске. В окне «Состояние» показаны и размер, который видит игра, и приблизительно занятое место.</value></data>
+  <data name="About_BrowserBody" xml:space="preserve"><value>Кнопка «Браузер модификаций» открывает каталог AP-PRO для Тени Чернобыля, Чистого Неба и Зова Припяти. Нажатие на карточку открывает исходную страницу мода в браузере. Лаунчер не скачивает и не устанавливает моды через этот каталог.</value></data>
+  <data name="About_BrowserHeading" xml:space="preserve"><value>Браузер модификаций</value></data>
+  <data name="About_CreateBody" xml:space="preserve"><value>Нажмите «Создать», задайте имя и выберите тип профиля. Для профиля поверх базовой игры укажите её папку и добавьте моды в нужном порядке. Для готовой отдельной сборки выберите «Автономная сборка» и укажите её корневую папку. Мастер попробует найти подходящий EXE; при необходимости его можно выбрать вручную в «Настройках».</value></data>
+  <data name="About_CreateHeading" xml:space="preserve"><value>Создание профиля</value></data>
+  <data name="About_DisclaimerBody" xml:space="preserve"><value>Это неофициальный фанатский инструмент, не связанный с GSC Game World и не одобренный компанией. S.T.A.L.K.E.R. и связанные товарные знаки принадлежат их правообладателям.</value></data>
+  <data name="About_DisclaimerHeading" xml:space="preserve"><value>Неофициальный проект</value></data>
+  <data name="About_DontShowAtStartup" xml:space="preserve"><value>Не показывать при запуске</value></data>
+  <data name="About_FaqHeading" xml:space="preserve"><value>Частые вопросы</value></data>
+  <data name="About_LaunchModesBody" xml:space="preserve"><value>Workspace заранее собирает рабочую среду ссылками. USVFS накладывает те же слои виртуально через технологию Mod Organizer 2 и почти не использует место для файлов игры. Совместимость USVFS зависит от конкретной игры и способа запуска; при проблемах выберите Workspace в настройках профиля.</value></data>
+  <data name="About_LaunchModesHeading" xml:space="preserve"><value>Режимы запуска</value></data>
+  <data name="About_Mo2Body" xml:space="preserve"><value>Кнопка MO2 переносит готовый игровой профиль: порядок и включённое состояние модов, а также найденные папки базовой игры и overwrite. Исходные каталоги Mod Organizer 2, игры и модов при этом не изменяются.</value></data>
+  <data name="About_Mo2Heading" xml:space="preserve"><value>Импорт из Mod Organizer 2</value></data>
+  <data name="About_ProfileBody" xml:space="preserve"><value>Профиль — это сохранённая конфигурация одной игровой сборки: базовая игра, подключённые моды, их порядок, параметры запуска и выбранный EXE. Можно создать несколько профилей для одной игры и переключаться между ними, не меняя исходные папки игры и модов.</value></data>
+  <data name="About_ProfileHeading" xml:space="preserve"><value>Что такое профиль</value></data>
+  <data name="About_QuestionDeleteProfile" xml:space="preserve"><value>Что делает «Удалить профиль»</value></data>
+  <data name="About_QuestionModOrder" xml:space="preserve"><value>Как работает порядок модов</value></data>
+  <data name="About_QuestionRemoveMod" xml:space="preserve"><value>Можно ли убрать мод без удаления его файлов</value></data>
+  <data name="About_QuestionSavesAndLogs" xml:space="preserve"><value>Где искать сохранения и логи</value></data>
+  <data name="About_QuestionStartFailure" xml:space="preserve"><value>Если игра не запускается</value></data>
+  <data name="About_QuestionWorkspaceSize" xml:space="preserve"><value>Почему workspace может казаться большим</value></data>
+  <data name="About_RegularStandaloneBody" xml:space="preserve"><value>Обычный профиль подключает моды поверх базовой игры и создаёт для запуска отдельную рабочую среду. Автономный профиль предназначен для готовой сборки со своим движком и запускается из её собственной папки — базовая игра для него не нужна.</value></data>
+  <data name="About_RegularStandaloneHeading" xml:space="preserve"><value>Обычный и автономный профиль</value></data>
+  <data name="About_Title" xml:space="preserve"><value>О программе</value></data>
+  <data name="About_WorkspaceBody" xml:space="preserve"><value>Workspace — отдельная папка, в которой лаунчер объединяет игру и включённые моды для обычного профиля. Большие исходные файлы подключаются ссылками, поэтому игра не копируется целиком на каждый профиль. Все изменения, профильные настройки, логи и сохранения остаются внутри этой рабочей среды; оригинальная игра не редактируется.</value></data>
+  <data name="About_WorkspaceHeading" xml:space="preserve"><value>Рабочая среда (workspace)</value></data>
+  <data name="Common_Arguments" xml:space="preserve"><value>Аргументы</value></data>
+  <data name="Common_BaseGame" xml:space="preserve"><value>Базовая игра</value></data>
+  <data name="Common_Binary" xml:space="preserve"><value>Бинарник</value></data>
+  <data name="Common_ChooseBaseGame" xml:space="preserve"><value>Выбрать базовую игру</value></data>
+  <data name="Common_ModCount" xml:space="preserve"><value>Модов</value></data>
+  <data name="Common_PlayTime" xml:space="preserve"><value>Наиграно</value></data>
+  <data name="Common_Remove" xml:space="preserve"><value>Убрать</value></data>
+  <data name="Common_MoveUp" xml:space="preserve"><value>Выше</value></data>
+  <data name="Common_MoveDown" xml:space="preserve"><value>Ниже</value></data>
+  <data name="Mod_AddFolderTooltip" xml:space="preserve"><value>Добавить папку мода</value></data>
+  <data name="Mod_InstallArchiveTooltip" xml:space="preserve"><value>Установить мод из ZIP, 7Z или RAR</value></data>
+  <data name="Mod_OverwriteWarning" xml:space="preserve"><value>Перезаписывает файлы вышестоящих модификаций: могут возникать конфликты.</value></data>
+  <data name="Mod_ScanFolderTooltip" xml:space="preserve"><value>Найти моды в выбранной папке</value></data>
+  <data name="Profile_CloneTooltip" xml:space="preserve"><value>Создать копию профиля</value></data>
+  <data name="Profile_DeleteTooltip" xml:space="preserve"><value>Удалить профиль</value></data>
+  <data name="Profile_ExportTooltip" xml:space="preserve"><value>Экспортировать профиль</value></data>
+  <data name="Profile_ModCount" xml:space="preserve"><value>Модов в профиле</value></data>
+  <data name="Common_Action" xml:space="preserve"><value>Действие</value></data>
+  <data name="Common_File" xml:space="preserve"><value>Файл</value></data>
+  <data name="Common_Mod" xml:space="preserve"><value>Мод</value></data>
+  <data name="Common_Refresh" xml:space="preserve"><value>Обновить</value></data>
+  <data name="Common_Status" xml:space="preserve"><value>Состояние</value></data>
+  <data name="Conflict_FinalTree" xml:space="preserve"><value>Итоговое дерево</value></data>
+  <data name="Conflict_Heading" xml:space="preserve"><value>КОНФЛИКТЫ И ИТОГОВЫЕ ФАЙЛЫ</value></data>
+  <data name="Conflict_Loses" xml:space="preserve"><value>Проигрывает</value></data>
+  <data name="Conflict_ModConflicts" xml:space="preserve"><value>Конфликты мода</value></data>
+  <data name="Conflict_OtherWinningMods" xml:space="preserve"><value>Побеждающие моды</value></data>
+  <data name="Conflict_OtherReplacedMods" xml:space="preserve"><value>Заменяет моды</value></data>
+  <data name="Conflict_ProviderChain" xml:space="preserve"><value>Цепочка замены</value></data>
+  <data name="Conflict_ProviderChainTooltip" xml:space="preserve"><value>Источники указаны слева направо. Последний имеет наивысший приоритет, и его файл используется при запуске.</value></data>
+  <data name="Conflict_RelativePath" xml:space="preserve"><value>Относительный путь</value></data>
+  <data name="Conflict_SearchTooltip" xml:space="preserve"><value>Поиск по пути или источнику файла</value></data>
+  <data name="Conflict_Title" xml:space="preserve"><value>Конфликты и итоговые файлы</value></data>
+  <data name="Conflict_Unique" xml:space="preserve"><value>Уникальные</value></data>
+  <data name="Conflict_Wins" xml:space="preserve"><value>Побеждает</value></data>
+  <data name="Common_Folder" xml:space="preserve"><value>Папка</value></data>
+  <data name="Mod_ArchiveConflictHeading" xml:space="preserve"><value>ПАПКА МОДА УЖЕ ЕСТЬ</value></data>
+  <data name="Mod_Conflicts" xml:space="preserve"><value>Конфликты</value></data>
+  <data name="Mod_DragTooltip" xml:space="preserve"><value>Моды можно перетаскивать между строками; нижние имеют больший приоритет</value></data>
+  <data name="Mod_Enabled" xml:space="preserve"><value>Вкл.</value></data>
+  <data name="Mod_GroupFormat" xml:space="preserve"><value>Группа: {0}</value></data>
+  <data name="Mod_Heading" xml:space="preserve"><value>Моды</value></data>
+  <data name="Mod_InstallInNewFolder" xml:space="preserve"><value>Установить в новую папку</value></data>
+  <data name="Mod_InstalledHeading" xml:space="preserve"><value>МОД УСТАНОВЛЕН</value></data>
+  <data name="Mod_PriorityHint" xml:space="preserve"><value>Моды ниже в списке перезаписывают моды выше</value></data>
+  <data name="Mod_SearchWatermark" xml:space="preserve"><value>Поиск по названию, группе или папке</value></data>
+  <data name="Mod_SelectedDetailsTooltip" xml:space="preserve"><value>Подробности выбранного мода</value></data>
+  <data name="Profile_Standalone" xml:space="preserve"><value>Автономная сборка</value></data>
+  <data name="Profile_StandaloneTooltip" xml:space="preserve"><value>Автономная сборка имеет свой движок и все файлы игры, запускается из своей папки</value></data>
+  <data name="Common_Profile" xml:space="preserve"><value>Профиль</value></data>
+  <data name="Health_ClearCache" xml:space="preserve"><value>Очистить кэш</value></data>
+  <data name="Health_CopyReport" xml:space="preserve"><value>Копировать отчёт</value></data>
+  <data name="Health_LatestLog" xml:space="preserve"><value>Последний лог</value></data>
+  <data name="Health_MoveWorkspace" xml:space="preserve"><value>Перенести...</value></data>
+  <data name="Health_RebuildWorkspace" xml:space="preserve"><value>Пересобрать</value></data>
+  <data name="Health_Saves" xml:space="preserve"><value>Сохранения</value></data>
+  <data name="Health_Title" xml:space="preserve"><value>Состояние профиля</value></data>
+  <data name="Health_WarningHint" xml:space="preserve"><value>Ошибки остановят запуск. Предупреждения подскажут, что стоит проверить.</value></data>
+  <data name="Scan_AddSelected" xml:space="preserve"><value>Добавить выбранные</value></data>
+  <data name="Scan_Detected" xml:space="preserve"><value>Обнаружено по</value></data>
+  <data name="Scan_Heading" xml:space="preserve"><value>ВЫБЕРИТЕ МОДЫ ДЛЯ ДОБАВЛЕНИЯ</value></data>
+  <data name="Scan_Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Scan_Path" xml:space="preserve"><value>Путь</value></data>
+  <data name="Scan_Prompt" xml:space="preserve"><value>Выберите моды для добавления:</value></data>
+  <data name="Scan_Title" xml:space="preserve"><value>Найденные моды</value></data>
+  <data name="Screenshots_Copy" xml:space="preserve"><value>Скопировать в буфер обмена</value></data>
+  <data name="Screenshots_CopyTooltip" xml:space="preserve"><value>Двойной щелчок копирует скриншот в буфер обмена</value></data>
+  <data name="Screenshots_FullscreenHint" xml:space="preserve"><value>Esc — закрыть   •   Колесо мыши или стрелки — следующий скриншот</value></data>
+  <data name="Screenshots_Loading" xml:space="preserve"><value>Поиск скриншотов...</value></data>
+  <data name="Screenshots_None" xml:space="preserve"><value>Скриншоты не найдены.</value></data>
+  <data name="Screenshots_OpenFullscreen" xml:space="preserve"><value>Открыть в полный экран</value></data>
+  <data name="Screenshots_Title" xml:space="preserve"><value>Скриншоты</value></data>
+  <data name="Screenshots_ViewTitle" xml:space="preserve"><value>Просмотр скриншота</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>Назад</value></data>
+  <data name="Common_Browse" xml:space="preserve"><value>Обзор...</value></data>
+  <data name="Common_Change" xml:space="preserve"><value>Изменить</value></data>
+  <data name="Common_Create" xml:space="preserve"><value>Создать</value></data>
+  <data name="Common_Default" xml:space="preserve"><value>По умолчанию</value></data>
+  <data name="Common_Description" xml:space="preserve"><value>Описание</value></data>
+  <data name="Common_Done" xml:space="preserve"><value>Готово</value></data>
+  <data name="Common_Launch" xml:space="preserve"><value>Запустить</value></data>
+  <data name="Common_Next" xml:space="preserve"><value>Далее</value></data>
+  <data name="Common_ProfileFolder" xml:space="preserve"><value>Папка профиля</value></data>
+  <data name="Common_Settings" xml:space="preserve"><value>Настройки</value></data>
+  <data name="Main_About" xml:space="preserve"><value>О программе</value></data>
+  <data name="Main_Catalog" xml:space="preserve"><value>Каталог</value></data>
+  <data name="Main_CreateFirstProfile" xml:space="preserve"><value>Создать первый профиль</value></data>
+  <data name="Main_EmptyProfileHint" xml:space="preserve"><value>Создайте профиль, добавьте игру и подключите нужные моды.</value></data>
+  <data name="Main_ImportExistingSettings" xml:space="preserve"><value>Импортировать существующие настройки</value></data>
+  <data name="Main_ImportSettingsHint" xml:space="preserve"><value>Загрузить существующий файл настроек settings.json</value></data>
+  <data name="Main_Log" xml:space="preserve"><value>Журнал</value></data>
+  <data name="Main_NoProfiles" xml:space="preserve"><value>Профилей пока нет</value></data>
+  <data name="Profile_ActionsTooltip" xml:space="preserve"><value>Показать или скрыть действия профиля</value></data>
+  <data name="Profile_CreateTooltip" xml:space="preserve"><value>Создать профиль</value></data>
+  <data name="Profile_ImportTooltip" xml:space="preserve"><value>Импортировать профиль</value></data>
+  <data name="Profile_Mo2ImportTooltip" xml:space="preserve"><value>Перенести сборку из Mod Organizer 2</value></data>
+  <data name="Profile_Running" xml:space="preserve"><value>Запущен</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Закрыть</value></data>
+  <data name="Main_ExitTooltip" xml:space="preserve"><value>Выключить лаунчер</value></data>
+  <data name="Main_MinimizeToTrayTooltip" xml:space="preserve"><value>Свернуть лаунчер в трей</value></data>
+  <data name="Main_OpenLauncher" xml:space="preserve"><value>Открыть лаунчер</value></data>
+  <data name="Main_ProfileList" xml:space="preserve"><value>Список профилей</value></data>
+  <data name="Profile_EmptyFirstHint" xml:space="preserve"><value>Создайте первый профиль, чтобы добавить игру и моды.</value></data>
+  <data name="Profile_ModBrowser" xml:space="preserve"><value>Браузер модификаций</value></data>
+  <data name="Profile_NoneSelected" xml:space="preserve"><value>Профиль не выбран</value></data>
+  <data name="Profile_Profiles" xml:space="preserve"><value>Профили</value></data>
+  <data name="Profile_RegularTooltip" xml:space="preserve"><value>Базовая игра + моды</value></data>
+  <data name="Profile_ReorderTooltip" xml:space="preserve"><value>Профили можно перетаскивать для изменения порядка</value></data>
+  <data name="Creation_AddMod" xml:space="preserve"><value>Добавить мод</value></data>
+  <data name="Creation_BaseGameFolder" xml:space="preserve"><value>Папка базовой игры</value></data>
+  <data name="Creation_EmptyModsHint" xml:space="preserve"><value>Перетащите сюда папки модов или нажмите «Добавить мод».</value></data>
+  <data name="Creation_Executable" xml:space="preserve"><value>Файл запуска</value></data>
+  <data name="Creation_LaunchArguments" xml:space="preserve"><value>Параметры запуска</value></data>
+  <data name="Creation_LaunchValidationHint" xml:space="preserve"><value>Перед запуском лаунчер ещё раз проверит итоговый бинарник, источники файлов и workspace.</value></data>
+  <data name="Creation_ModdedGame" xml:space="preserve"><value>Игра с модами</value></data>
+  <data name="Creation_PriorityHint" xml:space="preserve"><value>Ниже — больший приоритет</value></data>
+  <data name="Creation_ProfileName" xml:space="preserve"><value>Название профиля</value></data>
+  <data name="Creation_SelectFolder" xml:space="preserve"><value>Выбрать папку</value></data>
+  <data name="Creation_StandalonePrompt" xml:space="preserve"><value>Выберите или переместите мышкой корневую директорию мода или игры</value></data>
+  <data name="Creation_Title" xml:space="preserve"><value>Создание профиля</value></data>
+  <data name="SettingsProfile_AnomalyEngine" xml:space="preserve"><value>Движок Anomaly</value></data>
+  <data name="SettingsProfile_AutoSelect" xml:space="preserve"><value>Выбирать автоматически</value></data>
+  <data name="SettingsProfile_AutoSelectExeTooltip" xml:space="preserve"><value>Снять ручной выбор источника EXE. Лаунчер будет брать файл запуска из включенного мода с самым высоким приоритетом.</value></data>
+  <data name="SettingsProfile_CopyMissingData" xml:space="preserve"><value>Скопировать недостающие данные в выбранную папку</value></data>
+  <data name="SettingsProfile_Discord" xml:space="preserve"><value>Показывать статус профиля в Discord</value></data>
+  <data name="SettingsProfile_DiscordTooltip" xml:space="preserve"><value>Статус отображается только во время запуска этого профиля. Отключите его, если мод уже публикует собственный Discord Rich Presence.</value></data>
+  <data name="SettingsProfile_ExePathHint" xml:space="preserve"><value>Путь до .exe относительно папки игры или мода</value></data>
+  <data name="SettingsProfile_Executable" xml:space="preserve"><value>Файл запуска (.exe)</value></data>
+  <data name="SettingsProfile_FsgameSource" xml:space="preserve"><value>Источник fsgame.ltx</value></data>
+  <data name="SettingsProfile_InstalledModsFolder" xml:space="preserve"><value>Папка установленных модов</value></data>
+  <data name="SettingsProfile_Launcher" xml:space="preserve"><value>Лаунчер</value></data>
+  <data name="SettingsProfile_LaunchMode" xml:space="preserve"><value>Система запуска</value></data>
+  <data name="SettingsProfile_LauncherHint" xml:space="preserve"><value>Лаунчер запускает AnomalyLauncher.exe. Ручной выбор запускает выбранный движок напрямую и сохраняет приоритет модов.</value></data>
+  <data name="SettingsProfile_ModFolderTooltip" xml:space="preserve"><value>Архивы распаковываются сюда, отдельно от workspace.</value></data>
+  <data name="SettingsProfile_Mo2Apply" xml:space="preserve"><value>Применить порядок модов из профиля MO2...</value></data>
+  <data name="SettingsProfile_Mo2ApplyTooltip" xml:space="preserve"><value>Выберите файл modlist.txt из профиля MO2. Лаунчер применит порядок и включённое состояние только к уже добавленным модам; новые моды и папки импортированы не будут.</value></data>
+  <data name="SettingsProfile_Mo2Order" xml:space="preserve"><value>Порядок модов MO2</value></data>
+  <data name="SettingsProfile_Mo2Overwrite" xml:space="preserve"><value>Дополнительный слой MO2 overwrite</value></data>
+  <data name="SettingsProfile_SelectFile" xml:space="preserve"><value>Выбрать файл...</value></data>
+  <data name="SettingsProfile_StandaloneHint" xml:space="preserve"><value> — мод имеет свой движок и все файлы игры, запускается из своей папки</value></data>
+  <data name="SettingsProfile_Title" xml:space="preserve"><value>Настройки профиля</value></data>
+  <data name="SettingsProfile_UserData" xml:space="preserve"><value>Пользовательские данные</value></data>
+  <data name="SettingsProfile_UserDataGame" xml:space="preserve"><value>В папке данных базовой игры</value></data>
+  <data name="SettingsProfile_UserDataProfile" xml:space="preserve"><value>В папке профиля</value></data>
+  <data name="Common_Disable" xml:space="preserve"><value>Отключить</value></data>
+  <data name="Mo2_CreateProfile" xml:space="preserve"><value>Создать профиль</value></data>
+  <data name="Mo2_DetectedPaths" xml:space="preserve"><value>Обнаруженные пути</value></data>
+  <data name="Mo2_EnableOverwrite" xml:space="preserve"><value>Подключить файлы из MO2 overwrite отдельным слоем с максимальным приоритетом</value></data>
+  <data name="Mo2_Enabled" xml:space="preserve"><value>Вкл.</value></data>
+  <data name="Mo2_Group" xml:space="preserve"><value>Группа MO2</value></data>
+  <data name="Mo2_ModListFile" xml:space="preserve"><value>Файл modlist.txt</value></data>
+  <data name="Mo2_ModsFolder" xml:space="preserve"><value>Папка mods</value></data>
+  <data name="Mo2_NewProfile" xml:space="preserve"><value>Новый профиль</value></data>
+  <data name="Mo2_Or" xml:space="preserve"><value>или</value></data>
+  <data name="Mo2_OverwriteFolder" xml:space="preserve"><value>Папка overwrite</value></data>
+  <data name="Mo2_Preview" xml:space="preserve"><value>Предпросмотр</value></data>
+  <data name="Mo2_Profile" xml:space="preserve"><value>Профиль MO2</value></data>
+  <data name="Mo2_ReadOnlyHint" xml:space="preserve"><value>Исходные папки игры, mods и overwrite лаунчер не изменяет.</value></data>
+  <data name="Mo2_SelectMatchingFolder" xml:space="preserve"><value>Выберите папку, которая соответствует этому моду</value></data>
+  <data name="Mo2_Source" xml:space="preserve"><value>Источник MO2</value></data>
+  <data name="Mo2_SourceFolder" xml:space="preserve"><value>Папка MO2</value></data>
+  <data name="Mo2_Title" xml:space="preserve"><value>Перенести сборку из Mod Organizer 2</value></data>
+  <data name="Catalog_CallOfPripyat" xml:space="preserve"><value>Зов Припяти</value></data>
+  <data name="Catalog_ClearSky" xml:space="preserve"><value>Чистое Небо</value></data>
+  <data name="Catalog_Credits" xml:space="preserve"><value>Модификации, отображаемые на странице, принадлежат их авторам. Информация предоставляется с использованием материалов сайта </value></data>
+  <data name="Catalog_Loading" xml:space="preserve"><value>Загрузка каталога...</value></data>
+  <data name="Catalog_LoadingMore" xml:space="preserve"><value>Загружаем ещё модификации...</value></data>
+  <data name="Catalog_OpenSite" xml:space="preserve"><value>Открыть AP-PRO.RU</value></data>
+  <data name="Catalog_RefreshTooltip" xml:space="preserve"><value>Обновить список модификаций</value></data>
+  <data name="Catalog_Search" xml:space="preserve"><value>Поиск по названию</value></data>
+  <data name="Catalog_ShadowOfChernobyl" xml:space="preserve"><value>Тень Чернобыля</value></data>
+  <data name="Catalog_Title" xml:space="preserve"><value>Браузер модификаций</value></data>
+  <data name="Catalog_ThumbnailDescription" xml:space="preserve"><value>миниатюра AP-PRO</value></data>
+  <data name="Catalog_PageDescription" xml:space="preserve"><value>страница каталога AP-PRO</value></data>
+  <data name="Catalog_ContentTooLargeFormat" xml:space="preserve"><value>Размер элемента «{0}» превышает допустимые {1:N0} байт.</value></data>
+  <data name="Settings_Title" xml:space="preserve"><value>Настройки лаунчера</value></data>
+  <data name="SettingsProfile_ArgumentsExample" xml:space="preserve"><value>Например: -nointro -nosound</value></data>
+  <data name="Common_Unknown" xml:space="preserve"><value>неизвестна</value></data>
+  <data name="About_VersionFormat" xml:space="preserve"><value>Версия {0}</value></data>
+  <data name="Log_Hide" xml:space="preserve"><value>Скрыть журнал</value></data>
+  <data name="Log_Show" xml:space="preserve"><value>Показать журнал</value></data>
+  <data name="Log_Title" xml:space="preserve"><value>Журнал лаунчера</value></data>
+  <data name="Conflict_Details" xml:space="preserve"><value>Подробности конфликтов</value></data>
+  <data name="Common_MoveFirst" xml:space="preserve"><value>В начало</value></data>
+  <data name="Common_MoveLast" xml:space="preserve"><value>В конец</value></data>
+  <data name="Pda_ConflictTitle" xml:space="preserve"><value>Конфликты и файлы</value></data>
+  <data name="Pda_ProfileSettingsFormat" xml:space="preserve"><value>Настройки: {0}</value></data>
+  <data name="Pda_ScreenshotsFormat" xml:space="preserve"><value>Скриншоты: {0}</value></data>
+  <data name="Pda_StatusFormat" xml:space="preserve"><value>Состояние: {0}</value></data>
+  <data name="Scan_NoneSelected" xml:space="preserve"><value>Не выбран ни один мод.</value></data>
+  <data name="Scan_SelectOne" xml:space="preserve"><value>Выберите хотя бы один мод.</value></data>
+  <data name="Scan_SelectionFormat" xml:space="preserve"><value>Найдено: {0}. Выбрано: {1}.</value></data>
+  <data name="Scan_AddingTitle" xml:space="preserve"><value>Добавление модов</value></data>
+  <data name="Settings_StoragePortable" xml:space="preserve"><value>Портативный режим: настройки, журналы, кэш и временные файлы хранятся в .\Data\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой. Если локального settings.json ещё нет, настройки автоматически импортируются из AppData.</value></data>
+  <data name="Settings_StorageRegular" xml:space="preserve"><value>Обычный режим: настройки лаунчера хранятся в %AppData%\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой.</value></data>
+  <data name="Update_InstallTitle" xml:space="preserve"><value>Установить обновление?</value></data>
+  <data name="Settings_ResetTitle" xml:space="preserve"><value>Сбросить настройки лаунчера?</value></data>
+  <data name="Settings_ResetMessage" xml:space="preserve"><value>Будут восстановлены настройки интерфейса, поведения, журналирования и обновлений.&#xA;&#xA;Профили, моды и игровые файлы останутся без изменений.</value></data>
+  <data name="Update_Checking" xml:space="preserve"><value>Проверяем GitHub...</value></data>
+  <data name="Update_AvailableFormat" xml:space="preserve"><value>Доступна версия {0}. Установлена {1}.</value></data>
+  <data name="Update_CurrentFormat" xml:space="preserve"><value>Установлена актуальная версия лаунчера: {0}.</value></data>
+  <data name="Update_Timeout" xml:space="preserve"><value>GitHub не ответил вовремя. Проверьте подключение к интернету.</value></data>
+  <data name="Update_ConnectionFailed" xml:space="preserve"><value>Не удалось подключиться к GitHub. Проверьте подключение к интернету.</value></data>
+  <data name="Update_CheckFailedFormat" xml:space="preserve"><value>Не удалось проверить обновления: {0}</value></data>
+  <data name="Settings_SaveFailed" xml:space="preserve"><value>Не удалось сохранить настройки лаунчера</value></data>
+  <data name="Settings_OpenFolderFailed" xml:space="preserve"><value>Не удалось открыть папку настроек</value></data>
+  <data name="Update_OpenReleaseFailed" xml:space="preserve"><value>Не удалось открыть страницу релиза</value></data>
+  <data name="Update_Busy" xml:space="preserve"><value>Перед обновлением завершите запущенную игру и текущие операции лаунчера.</value></data>
+  <data name="Update_MinimalPackage" xml:space="preserve"><value>обычной версии</value></data>
+  <data name="Update_StandalonePackage" xml:space="preserve"><value>Standalone-версии</value></data>
+  <data name="Update_DownloadingFormat" xml:space="preserve"><value>Скачивается пакет {0}...</value></data>
+  <data name="Update_ReadyFormat" xml:space="preserve"><value>Пакет {0} проверен и готов к установке: {1}.</value></data>
+  <data name="Update_HttpErrorFormat" xml:space="preserve"><value>GitHub вернул HTTP {0}. Проверьте файлы выбранного релиза.</value></data>
+  <data name="Update_DownloadConnectionFormat" xml:space="preserve"><value>Не удалось скачать пакет {0}. Проверьте подключение к интернету.</value></data>
+  <data name="Update_DownloadFailedFormat" xml:space="preserve"><value>Не удалось скачать пакет {0}: {1}</value></data>
+  <data name="Update_MismatchFromStandalone" xml:space="preserve"><value>&#xA;&#xA;ВНИМАНИЕ: сейчас запущена Standalone-версия, а выбрана обычная. Она требует установленный .NET 8 Desktop Runtime и будет использовать настройки из AppData. Папка Data останется без изменений.</value></data>
+  <data name="Update_MismatchToStandalone" xml:space="preserve"><value>&#xA;&#xA;ВНИМАНИЕ: сейчас запущена обычная версия, а выбрана Standalone. После обновления настройки будут храниться в папке Data рядом с лаунчером.</value></data>
+  <data name="Update_InstallMessageFormat" xml:space="preserve"><value>Архив будет скачан в папку лаунчера. После проверки лаунчер закроется, заменит свои файлы и запустится снова. Папка Data не изменяется.{0}</value></data>
+  <data name="Update_OpenDownloadsFailed" xml:space="preserve"><value>Не удалось открыть Загрузки</value></data>
+  <data name="Creation_DefaultName" xml:space="preserve"><value>Новый профиль</value></data>
+  <data name="Creation_Intro" xml:space="preserve"><value>Выберите тип профиля и задайте понятное название.</value></data>
+  <data name="Creation_StepType" xml:space="preserve"><value>Тип профиля</value></data>
+  <data name="Creation_StepSources" xml:space="preserve"><value>Игра и моды</value></data>
+  <data name="Creation_StepLaunch" xml:space="preserve"><value>Запуск профиля</value></data>
+  <data name="Creation_StandaloneRootHint" xml:space="preserve"><value>Выберите корневую директорию с модом или игрой.</value></data>
+  <data name="Creation_ModListHint" xml:space="preserve"><value>Добавьте папки модов. Моды ниже в списке имеют больший приоритет.</value></data>
+  <data name="Creation_StandaloneDescription" xml:space="preserve"><value>Запуск автономной сборки как есть, без добавления модов.</value></data>
+  <data name="Creation_RegularDescription" xml:space="preserve"><value>Выберите игру или готовую сборку, добавляйте и отключайте моды — исходные папки не изменятся.</value></data>
+  <data name="Creation_RegularSourceHint" xml:space="preserve"><value>Выберите папку базовой игры и добавьте моды в нужном порядке.</value></data>
+  <data name="Creation_StandaloneNotSelected" xml:space="preserve"><value>Автономная папка ещё не выбрана.</value></data>
+  <data name="Creation_StandaloneSummaryFormat" xml:space="preserve"><value>Автономная папка: {0}</value></data>
+  <data name="Creation_NotSelected" xml:space="preserve"><value>не выбрана</value></data>
+  <data name="Creation_RegularSummaryFormat" xml:space="preserve"><value>Базовая игра: {0}. Модов в профиле: {1}.</value></data>
+  <data name="Creation_ReviewExe" xml:space="preserve"><value>Проверьте, какой EXE будет запускаться. При необходимости выберите другой файл вручную.</value></data>
+  <data name="Creation_RegularProfileDescription" xml:space="preserve"><value>Мод поверх базовой игры</value></data>
+  <data name="Creation_NameRequired" xml:space="preserve"><value>Введите название профиля.</value></data>
+  <data name="Creation_GameRequired" xml:space="preserve"><value>Выберите существующую папку базовой игры.</value></data>
+  <data name="Creation_StandaloneRequired" xml:space="preserve"><value>Для автономного профиля выберите одну папку мода.</value></data>
+  <data name="Creation_ExecutableField" xml:space="preserve"><value>Бинарник запуска</value></data>
+  <data name="Creation_ExecutableMissing" xml:space="preserve"><value>Файл запуска не найден в выбранных папках. Выберите EXE вручную или вернитесь к источникам файлов.</value></data>
+  <data name="Creation_PickStandalone" xml:space="preserve"><value>Выберите папку автономной игры или мода</value></data>
+  <data name="Creation_PickMod" xml:space="preserve"><value>Выберите папку мода</value></data>
+  <data name="Creation_PickExecutable" xml:space="preserve"><value>Выберите запускаемый файл</value></data>
+  <data name="Creation_ExecutableOutside" xml:space="preserve"><value>Выбранный бинарник должен находиться внутри папки игры или одного из модов.</value></data>
+  <data name="Creation_UsingPathFormat" xml:space="preserve"><value>Используется выбранный путь: {0}. Источник: {1}.</value></data>
+  <data name="Creation_ExecutableNotDetected" xml:space="preserve"><value>EXE не найден автоматически. Выберите запускаемый файл вручную.</value></data>
+  <data name="Creation_AutoSelectedFormat" xml:space="preserve"><value>Автоматически выбран: {0}</value></data>
+  <data name="Creation_ManualSelectedFormat" xml:space="preserve"><value>Выбран вручную: {0}.</value></data>
+  <data name="Creation_ManualSelectedSourceFormat" xml:space="preserve"><value>Выбран вручную: {0}. Источник: {1}.</value></data>
+  <data name="Creation_BaseGameSource" xml:space="preserve"><value>базовая игра</value></data>
+  <data name="Creation_ModSourceFormat" xml:space="preserve"><value>мод: {0}</value></data>
+  <data name="Screenshots_CopiedFormat" xml:space="preserve"><value>Скопировано: {0}</value></data>
+  <data name="Screenshots_CopyFailedFormat" xml:space="preserve"><value>Не удалось скопировать скриншот: {0}</value></data>
+  <data name="Main_SelectGame" xml:space="preserve"><value>Выберите папку с установленной игрой.</value></data>
+  <data name="Main_RegularProfileRequired" xml:space="preserve"><value>Выберите обычный профиль.</value></data>
+  <data name="ModFilter_All" xml:space="preserve"><value>Все моды</value></data>
+  <data name="ModFilter_Conflicts" xml:space="preserve"><value>Конфликтующие</value></data>
+  <data name="ModFilter_Overwrite" xml:space="preserve"><value>Перезаписывающие</value></data>
+  <data name="ModFilter_Overwritten" xml:space="preserve"><value>Перезаписанные</value></data>
+  <data name="ModFilter_Mixed" xml:space="preserve"><value>Смешанные</value></data>
+  <data name="ModFilter_Redundant" xml:space="preserve"><value>Полностью перекрытые</value></data>
+  <data name="ModFilter_Binaries" xml:space="preserve"><value>EXE и DLL</value></data>
+  <data name="Catalog_PagesFormat" xml:space="preserve"><value> · страниц: {0}/{1}</value></data>
+  <data name="Catalog_LoadedFormat" xml:space="preserve"><value>Загружено: {0:N0}{1}</value></data>
+  <data name="Catalog_ShownFormat" xml:space="preserve"><value>Показано: {0:N0} из {1:N0}{2}</value></data>
+  <data name="Catalog_LoadingService" xml:space="preserve"><value>Загружаем каталог AP-PRO...</value></data>
+  <data name="Catalog_Unavailable" xml:space="preserve"><value>AP-PRO недоступен или не отвечает. Проверьте интернет и попробуйте обновить каталог.</value></data>
+  <data name="Catalog_PageFailed" xml:space="preserve"><value>Не удалось загрузить страницу AP-PRO. Попробуйте обновить каталог.</value></data>
+  <data name="Catalog_Empty" xml:space="preserve"><value>В этом разделе пока не найдено модификаций.</value></data>
+  <data name="Catalog_Searching" xml:space="preserve"><value>Ищем модификации...</value></data>
+  <data name="Catalog_NoResults" xml:space="preserve"><value>По этому запросу ничего не найдено.</value></data>
+  <data name="Catalog_RatingFormat" xml:space="preserve"><value>Оценка: {0:0.#} / 10</value></data>
+  <data name="Conflict_Analyzing" xml:space="preserve"><value>Анализ файлов...</value></data>
+  <data name="Conflict_FilterAll" xml:space="preserve"><value>Все файлы</value></data>
+  <data name="Conflict_FilterConflicts" xml:space="preserve"><value>Только конфликты</value></data>
+  <data name="Conflict_FilterConfiguration" xml:space="preserve"><value>Настройки и скрипты</value></data>
+  <data name="Conflict_SummaryFormat" xml:space="preserve"><value>Итоговых файлов: {0:N0}; конфликтов путей: {1:N0}.</value></data>
+  <data name="Conflict_AnalysisFailedFormat" xml:space="preserve"><value>Анализ не выполнен: {0}</value></data>
+  <data name="Conflict_UniqueFile" xml:space="preserve"><value>Уникальный файл</value></data>
+  <data name="Conflict_Losing" xml:space="preserve"><value>Проигрывает</value></data>
+  <data name="Conflict_Winning" xml:space="preserve"><value>Побеждает</value></data>
+  <data name="Conflict_ChangeFailed" xml:space="preserve"><value>Не удалось изменить файл мода</value></data>
+  <data name="Conflict_Restore" xml:space="preserve"><value>Вернуть</value></data>
+  <data name="Conflict_Exclude" xml:space="preserve"><value>Исключить</value></data>
+  <data name="Profile_ExportTitle" xml:space="preserve"><value>Экспорт профиля</value></data>
+  <data name="Profile_ExportError" xml:space="preserve"><value>Ошибка экспорта</value></data>
+  <data name="Profile_ImportTitle" xml:space="preserve"><value>Импорт профиля</value></data>
+  <data name="Profile_ImportError" xml:space="preserve"><value>Ошибка импорта</value></data>
+  <data name="Settings_ImportTitle" xml:space="preserve"><value>Импорт настроек CORDON</value></data>
+  <data name="Common_JsonFilter" xml:space="preserve"><value>Файлы JSON (*.json)|*.json</value></data>
+  <data name="Settings_ImportFailed" xml:space="preserve"><value>Не удалось импортировать настройки</value></data>
+  <data name="Mo2_TransferFailed" xml:space="preserve"><value>Не удалось перенести сборку MO2</value></data>
+  <data name="Mo2_TransferCancelledFormat" xml:space="preserve"><value>Профиль не создан, изменения отменены.{0}{0}{1}</value></data>
+  <data name="Profile_DeleteStandaloneFormat" xml:space="preserve"><value>Удалить профиль '{0}'? Файлы мода останутся нетронутыми.</value></data>
+  <data name="Profile_DeleteRegularFormat" xml:space="preserve"><value>Удалить профиль '{0}' вместе с его рабочей папкой, сохранениями и логами?</value></data>
+  <data name="Profile_DeleteTitle" xml:space="preserve"><value>Удалить профиль</value></data>
+  <data name="Profile_DeleteFailed" xml:space="preserve"><value>Не удалось удалить профиль</value></data>
+  <data name="Profile_StandaloneFolderMissing" xml:space="preserve"><value>Папка включённой автономной сборки не найдена.</value></data>
+  <data name="Mod_ScanPickFolder" xml:space="preserve"><value>Выберите папку для поиска модов</value></data>
+  <data name="Mod_Scanning" xml:space="preserve"><value>Сканирование модов...</value></data>
+  <data name="Mod_NotFoundTitle" xml:space="preserve"><value>Не найдено</value></data>
+  <data name="Mod_NotFound" xml:space="preserve"><value>В выбранной папке не обнаружено модов.</value></data>
+  <data name="Mod_ScanFailed" xml:space="preserve"><value>Ошибка сканирования</value></data>
+  <data name="Mod_PickArchive" xml:space="preserve"><value>Выберите архив мода</value></data>
+  <data name="Mod_ArchiveFilter" xml:space="preserve"><value>Архивы модов (*.zip;*.7z;*.rar)|*.zip;*.7z;*.rar|Все файлы (*.*)|*.*</value></data>
+  <data name="Mod_PreparingFormat" xml:space="preserve"><value>Подготовка {0}...</value></data>
+  <data name="Mod_DatabaseNote" xml:space="preserve"><value>Архивы .db* помещены в db\mods.</value></data>
+  <data name="Mod_FileCountFormat" xml:space="preserve"><value>Файлов: {0:N0}{1}</value></data>
+  <data name="Mod_InstallFailed" xml:space="preserve"><value>Не удалось установить архив мода</value></data>
+  <data name="Mod_AnalyzingFormat" xml:space="preserve"><value>Анализ {0}...</value></data>
+  <data name="Mod_ExtractingPercentFormat" xml:space="preserve"><value>Распаковка {0}: {1:0}% · {2} / {3} · {4}</value></data>
+  <data name="Mod_ExtractingSizeFormat" xml:space="preserve"><value>Распаковка {0}: {1}</value></data>
+  <data name="Mod_FinalizingFormat" xml:space="preserve"><value>Завершение установки {0}...</value></data>
+  <data name="Mod_FolderExistsFormat" xml:space="preserve"><value>Папка мода «{0}» уже существует. Новая распаковка будет помещена в:</value></data>
+  <data name="Common_EstimatingTime" xml:space="preserve"><value>оценка времени...</value></data>
+  <data name="Common_RemainingHoursFormat" xml:space="preserve"><value>осталось ~{0} ч {1} мин</value></data>
+  <data name="Common_RemainingMinutesFormat" xml:space="preserve"><value>осталось ~{0} мин {1} с</value></data>
+  <data name="Common_RemainingSecondsFormat" xml:space="preserve"><value>осталось ~{0} с</value></data>
+  <data name="Mod_FolderInsideGame" xml:space="preserve"><value>Папка установленных модов не должна находиться внутри папки игры.</value></data>
+  <data name="Mod_FolderOverlapsWorkspace" xml:space="preserve"><value>Папка установленных модов не должна пересекаться с workspace профиля.</value></data>
+  <data name="Mod_FolderInsideOtherMod" xml:space="preserve"><value>Папка установленных модов не должна находиться внутри исходной папки другого мода.</value></data>
+  <data name="ModAnalysis_OverwritesFormat" xml:space="preserve"><value>Заменяет файлы модов: {0}.</value></data>
+  <data name="ModAnalysis_OverwriteCountsFormat" xml:space="preserve"><value>Конфигурации и скрипты: {0:N0}; бинарные файлы: {1:N0}.</value></data>
+  <data name="ModAnalysis_OverwrittenByFormat" xml:space="preserve"><value>Его файлы заменяются модами: {0}.</value></data>
+  <data name="ModAnalysis_OverwrittenCountsFormat" xml:space="preserve"><value>Проигрывающие конфигурации и скрипты: {0:N0}; бинарные файлы: {1:N0}.</value></data>
+  <data name="ModAnalysis_FinalExecutableFormat" xml:space="preserve"><value>Итоговый запускаемый файл: {0}</value></data>
+  <data name="Launch_BlockedFormat" xml:space="preserve"><value>Запуск заблокирован: профиль «{0}» не готов.</value></data>
+  <data name="Launch_Checking" xml:space="preserve"><value>Проверка профиля перед запуском...</value></data>
+  <data name="Launch_WarningFormat" xml:space="preserve"><value>Предупреждение проверки: {0}: {1}</value></data>
+  <data name="Launch_Preparing" xml:space="preserve"><value>Подготовка запуска...</value></data>
+  <data name="Launch_ProcessCreatedFormat" xml:space="preserve"><value>Процесс игры создан. PID: {0}</value></data>
+  <data name="Launch_ErrorFormat" xml:space="preserve"><value>Ошибка запуска: {0}</value></data>
+  <data name="Launch_Failed" xml:space="preserve"><value>Не удалось запустить профиль</value></data>
+  <data name="Launch_ReadyFormat" xml:space="preserve"><value>Игра готова к работе: {0}.</value></data>
+  <data name="Launch_ExitedEarlyFormat" xml:space="preserve"><value>Игра завершилась до подтверждения готовности: {0}</value></data>
+  <data name="Launch_PossibleHangFormat" xml:space="preserve"><value>Возможное зависание запуска: {0}</value></data>
+  <data name="Launch_PossibleHangTitle" xml:space="preserve"><value>Возможное зависание запуска</value></data>
+  <data name="Launch_EndProcesses" xml:space="preserve"><value>Завершить связанные процессы? Нажмите «Нет», чтобы продолжить ожидание.</value></data>
+  <data name="Settings_ImportAppDataFailed" xml:space="preserve"><value>Не удалось импортировать настройки из AppData</value></data>
+  <data name="Settings_Unavailable" xml:space="preserve"><value>Настройки недоступны</value></data>
+  <data name="Settings_WriteBlocked" xml:space="preserve"><value>Файл не изменён. Закройте программу, которая может удерживать его, и перезапустите лаунчер.</value></data>
+  <data name="Settings_PrimaryRecoveredDamaged" xml:space="preserve"><value>Основной файл настроек повреждён. Настройки восстановлены из резервной копии.</value></data>
+  <data name="Settings_PrimaryRecoveredMissing" xml:space="preserve"><value>Основной файл настроек отсутствовал. Настройки восстановлены из резервной копии.</value></data>
+  <data name="Settings_RecoveryFailed" xml:space="preserve"><value>Файлы настроек повреждены и не читаются. Создана новая конфигурация; профили автоматически восстановить не удалось.</value></data>
+  <data name="Settings_DamagedFilesFormat" xml:space="preserve"><value>{0}{0}Повреждённые файлы сохранены:{0}{1}</value></data>
+  <data name="Settings_RecoveryTitle" xml:space="preserve"><value>Восстановление настроек</value></data>
+  <data name="Mo2_SelectSource" xml:space="preserve"><value>Выберите папку MO2, папку профиля или modlist.txt.</value></data>
+  <data name="Mo2_PreviewSummaryFormat" xml:space="preserve"><value>Найдено модов: {0}; включено: {1}; отсутствует: {2}; неоднозначно: {3}; разделителей: {4}.</value></data>
+  <data name="Mo2_ProfilesFoundFormat" xml:space="preserve"><value>Найдено профилей MO2: {0}. Проверьте обнаруженные пути.</value></data>
+  <data name="Mo2_PickSource" xml:space="preserve"><value>Выберите папку Mod Organizer 2 или профиль MO2</value></data>
+  <data name="Mo2_PickModList" xml:space="preserve"><value>Выберите modlist.txt из профиля Mod Organizer 2</value></data>
+  <data name="Mo2_PickModsFolder" xml:space="preserve"><value>Выберите папку mods Mod Organizer 2</value></data>
+  <data name="Mo2_PickOverwriteFolder" xml:space="preserve"><value>Выберите папку overwrite Mod Organizer 2</value></data>
+  <data name="Mo2_AmbiguousHint" xml:space="preserve"><value>Для неоднозначных модов выберите правильную папку в столбце «Папка». До этого профиль создать нельзя.</value></data>
+  <data name="Mo2_MissingHint" xml:space="preserve"><value>Некоторые папки модов отсутствуют. Такие моды показаны в предпросмотре и не будут добавлены.</value></data>
+  <data name="Mo2_ReviewHint" xml:space="preserve"><value>Проверьте порядок, состояние модов и найденный EXE перед импортом.</value></data>
+  <data name="Mo2_CheckSourceHint" xml:space="preserve"><value>Проверьте источник, профиль MO2 и обнаруженные пути.</value></data>
+  <data name="Mo2_AmbiguousResolved" xml:space="preserve"><value>Папки неоднозначных модов выбраны. Проверьте результат и создайте профиль.</value></data>
+  <data name="SettingsProfile_FsgameManualFormat" xml:space="preserve"><value>Закреплён вручную: {0}</value></data>
+  <data name="SettingsProfile_FsgameAuto" xml:space="preserve"><value>Автоматически по текущему приоритету слоёв профиля.</value></data>
+  <data name="SettingsProfile_ExeAuto" xml:space="preserve"><value>Источник EXE: автоматически по порядку модов. Нижний мод в списке имеет больший приоритет.</value></data>
+  <data name="SettingsProfile_ExeManualMissingFormat" xml:space="preserve"><value>Источник EXE: выбран вручную, но папка сейчас недоступна: {0}</value></data>
+  <data name="SettingsProfile_ExeManualFormat" xml:space="preserve"><value>Источник EXE: вручную закреплен за модом: {0}.</value></data>
+  <data name="SettingsProfile_StandaloneData" xml:space="preserve"><value>Автономная сборка использует свои данные без перенаправления.</value></data>
+  <data name="SettingsProfile_SharedData" xml:space="preserve"><value>Общие сохранения, настройки, логи и скриншоты</value></data>
+  <data name="SettingsProfile_SeparateData" xml:space="preserve"><value>Отдельные данные профиля</value></data>
+  <data name="SettingsProfile_DataPathFormat" xml:space="preserve"><value>{0}: {1}&#xA;Переключение не переносит и не заменяет существующие файлы.</value></data>
+  <data name="SettingsProfile_UsvfsAvailable" xml:space="preserve"><value>USVFS подключает моды без сборки полного workspace. Совместимость зависит от конкретной игры и модификаций.</value></data>
+  <data name="SettingsProfile_UsvfsMissing" xml:space="preserve"><value>Компоненты USVFS не найдены рядом с лаунчером. Доступен только Workspace.</value></data>
+  <data name="SettingsProfile_CreateWorkspaceFirst" xml:space="preserve"><value>Сначала создайте рабочую папку профиля запуском игры.</value></data>
+  <data name="SettingsProfile_CopyTitle" xml:space="preserve"><value>Копирование пользовательских данных</value></data>
+  <data name="SettingsProfile_CopyConfirmFormat" xml:space="preserve"><value>Откуда: {0}&#xA;Куда: {1}&#xA;&#xA;Дубликаты файлов будут пропущены. Служебные файлы профиля не копируются. Закройте другие экземпляры игры перед копированием.</value></data>
+  <data name="SettingsProfile_CopyComplete" xml:space="preserve"><value>Копирование завершено</value></data>
+  <data name="SettingsProfile_CopyResultFormat" xml:space="preserve"><value>Скопировано: {0}. Пропущено: {1}.&#xA;Для смены каталога запуска сохраните настройки профиля.</value></data>
+  <data name="SettingsProfile_CopyFailed" xml:space="preserve"><value>Не удалось скопировать все данные</value></data>
+  <data name="SettingsProfile_CopyFailedDetailsFormat" xml:space="preserve"><value>{0}&#xA;Уже скопированные файлы сохранены. Существующие файлы не заменены.</value></data>
+  <data name="SettingsProfile_Invalid" xml:space="preserve"><value>Некорректные настройки профиля</value></data>
+  <data name="SettingsProfile_SaveFailed" xml:space="preserve"><value>Не удалось сохранить настройки профиля</value></data>
+  <data name="SettingsProfile_StopGame" xml:space="preserve"><value>Завершите игру перед изменением каталога данных.</value></data>
+  <data name="SettingsProfile_SaveFailedDetailsFormat" xml:space="preserve"><value>Изменения не сохранены. Окно останется открытым.{0}{0}{1}</value></data>
+  <data name="SettingsProfile_PickFsgame" xml:space="preserve"><value>Выберите конфигурацию fsgame</value></data>
+  <data name="SettingsProfile_InvalidFsgame" xml:space="preserve"><value>Некорректный fsgame.ltx</value></data>
+  <data name="SettingsProfile_FsgameLocation" xml:space="preserve"><value>Выберите файл .ltx из папки базовой игры или включённого мода.</value></data>
+  <data name="SettingsProfile_AutoExeFailed" xml:space="preserve"><value>Не удалось выбрать EXE автоматически</value></data>
+  <data name="SettingsProfile_AutoExeMissing" xml:space="preserve"><value>Лаунчер не нашел подходящий .exe в папке базовой игры или во включенных модах. Выберите файл запуска вручную.</value></data>
+  <data name="SettingsProfile_PickModInstall" xml:space="preserve"><value>Выберите папку для распакованных модов</value></data>
+  <data name="SettingsProfile_ModListApplied" xml:space="preserve"><value>Файл modlist.txt применён к уже добавленным модам.</value></data>
+  <data name="SettingsProfile_ModListMatchedFormat" xml:space="preserve"><value>Сопоставлено модов: {0}</value></data>
+  <data name="SettingsProfile_ModListEnabledFormat" xml:space="preserve"><value>Изменено состояний включения: {0}</value></data>
+  <data name="SettingsProfile_ModListMissingFormat" xml:space="preserve"><value>Не найдены среди добавленных модов: {0}</value></data>
+  <data name="SettingsProfile_ModListUnlistedFormat" xml:space="preserve"><value>Отсутствуют в modlist.txt: {0}</value></data>
+  <data name="SettingsProfile_ModListUnmatched" xml:space="preserve"><value>Первые несопоставленные записи:</value></data>
+  <data name="SettingsProfile_ModListTitle" xml:space="preserve"><value>Применить только modlist.txt</value></data>
+  <data name="SettingsProfile_ModListFailed" xml:space="preserve"><value>Не удалось применить modlist.txt</value></data>
+  <data name="Health_Checking" xml:space="preserve"><value>Проверка состояния профиля...</value></data>
+  <data name="Health_RegularProfile" xml:space="preserve"><value>Мод поверх базовой игры</value></data>
+  <data name="Health_UsvfsTooltip" xml:space="preserve"><value>Файлы игры и модов подключаются виртуально. Папка current не используется.</value></data>
+  <data name="Health_StatePending" xml:space="preserve"><value>Состояние рабочей папки ещё не получено.</value></data>
+  <data name="Health_Layers" xml:space="preserve"><value>Слои</value></data>
+  <data name="Health_VisibleSize" xml:space="preserve"><value>Видимый размер</value></data>
+  <data name="Health_LayersTooltip" xml:space="preserve"><value>Базовая игра и включённые моды, которые USVFS объединит при запуске.</value></data>
+  <data name="Health_VisibleSizeTooltip" xml:space="preserve"><value>Сколько данных видит игра внутри рабочей папки. Из-за ссылок это не равно расходу места на диске.</value></data>
+  <data name="Health_GameData" xml:space="preserve"><value>Данные игры</value></data>
+  <data name="Health_Occupied" xml:space="preserve"><value>Реально занято</value></data>
+  <data name="Health_SharedData" xml:space="preserve"><value>Используется общий каталог данных базовой игры.</value></data>
+  <data name="Health_SeparateData" xml:space="preserve"><value>Сохранения, настройки и логи хранятся отдельно в userdata профиля.</value></data>
+  <data name="Health_OccupiedTooltip" xml:space="preserve"><value>Примерный объём места, занимаемый рабочей папкой с учётом жёстких и символических ссылок.</value></data>
+  <data name="Health_CurrentFolder" xml:space="preserve"><value>Папка current</value></data>
+  <data name="Health_Files" xml:space="preserve"><value>Файлы</value></data>
+  <data name="Health_NotUsed" xml:space="preserve"><value>не используется</value></data>
+  <data name="Health_CurrentTooltip" xml:space="preserve"><value>USVFS формирует представление игры в памяти процесса и не собирает папку current.</value></data>
+  <data name="Health_DataCreated" xml:space="preserve"><value>созданы</value></data>
+  <data name="Health_DataOnLaunch" xml:space="preserve"><value>при запуске</value></data>
+  <data name="Health_CheckFailedFormat" xml:space="preserve"><value>Проверка не выполнена: {0}</value></data>
+  <data name="Health_ClearTitle" xml:space="preserve"><value>Очистить кэш workspace</value></data>
+  <data name="Health_ClearConfirm" xml:space="preserve"><value>Удалить только подготовленную папку current? Сохранения, настройки и логи в userdata останутся на месте.</value></data>
+  <data name="Health_ClearFailed" xml:space="preserve"><value>Не удалось очистить кэш workspace</value></data>
+  <data name="Health_Rebuilding" xml:space="preserve"><value>Пересборка workspace...</value></data>
+  <data name="Health_RebuildFailed" xml:space="preserve"><value>Не удалось пересобрать workspace</value></data>
+  <data name="Health_PickWorkspace" xml:space="preserve"><value>Выберите папку, в которой будет храниться workspace</value></data>
+  <data name="Health_MoveDataTitle" xml:space="preserve"><value>Перенести данные профиля</value></data>
+  <data name="Health_MoveWorkspaceTitle" xml:space="preserve"><value>Перенести workspace</value></data>
+  <data name="Health_MoveUsvfsConfirmFormat" xml:space="preserve"><value>Перенести сохранения, настройки и логи в выбранную папку?{0}{0}Временный USVFS-bootstrap не копируется и будет создан заново.</value></data>
+  <data name="Health_MoveWorkspaceConfirmFormat" xml:space="preserve"><value>Перенести userdata профиля в выбранную папку?{0}{0}Папка current не копируется и будет пересобрана при следующем запуске.</value></data>
+  <data name="Health_MoveFailed" xml:space="preserve"><value>Не удалось перенести workspace</value></data>
+  <data name="Health_MovePartialTitle" xml:space="preserve"><value>Workspace перенесён</value></data>
+  <data name="Health_MovePartialFormat" xml:space="preserve"><value>Данные профиля перенесены в:{0}{1}{0}{0}Не удалось удалить старую папку:{0}{2}{0}{0}Повторить только очистку старой папки?</value></data>
+  <data name="Health_MoveCompleteTitle" xml:space="preserve"><value>Перенос завершён</value></data>
+  <data name="Health_OldDeletedFormat" xml:space="preserve"><value>Старая папка workspace удалена:{0}{1}</value></data>
+  <data name="Health_OldRemainsTitle" xml:space="preserve"><value>Workspace перенесён, старая папка осталась</value></data>
+  <data name="Health_OldRemainsFormat" xml:space="preserve"><value>Профиль уже использует новую папку:{0}{1}{0}{0}Не удалось удалить старую папку:{0}{2}{0}{0}{3}</value></data>
+  <data name="Preflight_Failed" xml:space="preserve"><value>Профиль не прошёл проверку перед запуском:</value></data>
+  <data name="ModConflict_Overwrite" xml:space="preserve"><value>Перезаписывает</value></data>
+  <data name="ModConflict_Overwritten" xml:space="preserve"><value>Перезаписан</value></data>
+  <data name="ModConflict_Mixed" xml:space="preserve"><value>Смешанный конфликт</value></data>
+  <data name="ModConflict_Redundant" xml:space="preserve"><value>Полностью перекрыт</value></data>
+  <data name="ModConflict_Disabled" xml:space="preserve"><value>Выключен</value></data>
+  <data name="ModConflict_None" xml:space="preserve"><value>Без конфликтов</value></data>
+  <data name="ModConflict_OverwritesSummaryFormat" xml:space="preserve"><value>Заменяет файлов: {0:N0}; затронуто модов: {1:N0}</value></data>
+  <data name="ModConflict_LosesSummaryFormat" xml:space="preserve"><value>проигрывает файлов: {0:N0}; побеждающих модов: {1:N0}</value></data>
+  <data name="ModConflict_FullyOverridden" xml:space="preserve"><value>полностью перекрыт последующими модами</value></data>
+  <data name="ModConflict_Executable" xml:space="preserve"><value>предоставляет запускаемый бинарник</value></data>
+  <data name="Common_DurationHoursFormat" xml:space="preserve"><value>{0} ч {1} мин</value></data>
+  <data name="Common_DurationMinutesFormat" xml:space="preserve"><value>{0} мин</value></data>
+  <data name="Common_DurationSecondsFormat" xml:space="preserve"><value>{0:N0} сек</value></data>
+  <data name="Health_Ready" xml:space="preserve"><value>Профиль готов к запуску.</value></data>
+  <data name="Health_ReadyWarningsFormat" xml:space="preserve"><value>Профиль готов, но есть предупреждения: {0}.</value></data>
+  <data name="Health_AttentionFormat" xml:space="preserve"><value>Профиль требует внимания. Ошибок: {0}, предупреждений: {1}.</value></data>
+  <data name="Health_ReportProfileFormat" xml:space="preserve"><value>Профиль: {0}</value></data>
+  <data name="Health_ReportWorkspaceFormat" xml:space="preserve"><value>Workspace: логический размер {0}, реально занимает около {1}.</value></data>
+  <data name="Health_ReportFilesFormat" xml:space="preserve"><value>Файлы: {0:N0}; hardlink: {1:N0}; symlink: {2:N0}; локальные: {3:N0}.</value></data>
+  <data name="Health_ReportUsvfsFormat" xml:space="preserve"><value>Последние сообщения USVFS ({0}):</value></data>
+  <data name="Health_ReportUsvfsFailedFormat" xml:space="preserve"><value>Не удалось прочитать USVFS-лог: {0}</value></data>
+  <data name="Workspace_PathPending" xml:space="preserve"><value>Путь будет назначен при первой сборке workspace.</value></data>
+  <data name="Workspace_CurrentPending" xml:space="preserve"><value>Папка current будет создана при запуске.</value></data>
+  <data name="Workspace_UserdataPending" xml:space="preserve"><value>Папка userdata появится рядом с workspace.</value></data>
+  <data name="Workspace_AfterRebuild" xml:space="preserve"><value>после пересборки</value></data>
+  <data name="Workspace_LinkSummaryFormat" xml:space="preserve"><value>Жёсткие ссылки: {0:N0}  ·  Символические ссылки: {1:N0}  ·  Локальные файлы: {2:N0}</value></data>
+  <data name="Workspace_StatsPending" xml:space="preserve"><value>Подробная статистика появится после следующей пересборки workspace.</value></data>
+  <data name="Workspace_NotPrepared" xml:space="preserve"><value>не подготовлен</value></data>
+  <data name="Workspace_PathMissing" xml:space="preserve"><value>Рабочая папка ещё не выбрана.</value></data>
+  <data name="Workspace_FolderMissing" xml:space="preserve"><value>Рабочая папка ещё не создана.</value></data>
+  <data name="Workspace_FilesMissing" xml:space="preserve"><value>Файлы для запуска ещё не подготовлены.</value></data>
+  <data name="Workspace_Ready" xml:space="preserve"><value>Рабочая папка готова.</value></data>
+  <data name="Workspace_RebuildRecommended" xml:space="preserve"><value>Рабочая папка есть, но её лучше пересобрать.</value></data>
+  <data name="Workspace_SizeTooltip" xml:space="preserve"><value>Логический размер показывает, сколько данных видит игра. Занято на диске — примерный фактический объём с учётом ссылок.</value></data>
+  <data name="Workspace_SizePending" xml:space="preserve"><value>Точная статистика появится после следующей сборки workspace.</value></data>
+  <data name="Size_Bytes" xml:space="preserve"><value>Б</value></data>
+  <data name="Size_Kilobytes" xml:space="preserve"><value>КБ</value></data>
+  <data name="Size_Megabytes" xml:space="preserve"><value>МБ</value></data>
+  <data name="Size_Gigabytes" xml:space="preserve"><value>ГБ</value></data>
+  <data name="Size_Terabytes" xml:space="preserve"><value>ТБ</value></data>
+  <data name="App_ServicesNotInitialized" xml:space="preserve"><value>Сервисы приложения не инициализированы.</value></data>
+  <data name="App_InstanceNotInitialized" xml:space="preserve"><value>Контроль экземпляра не инициализирован.</value></data>
+  <data name="App_AlreadyRunning" xml:space="preserve"><value>Лаунчер уже запущен. Используйте открытое окно программы.</value></data>
+  <data name="App_PortableStorageErrorFormat" xml:space="preserve"><value>Портативная папка недоступна для записи:{0}{1}{0}{0}{2}</value></data>
+  <data name="App_StorageErrorTitle" xml:space="preserve"><value>Ошибка хранения данных</value></data>
+  <data name="App_OpenWindowErrorFormat" xml:space="preserve"><value>Не удалось открыть окно лаунчера. Подробности записаны в журнал.{0}{0}{1}</value></data>
+  <data name="App_LauncherErrorTitle" xml:space="preserve"><value>Ошибка запуска лаунчера</value></data>
+  <data name="App_UpdateErrorFormat" xml:space="preserve"><value>Не удалось установить обновление.{0}{0}{1}</value></data>
+  <data name="App_UpdateErrorTitle" xml:space="preserve"><value>Ошибка обновления CORDON</value></data>
+  <data name="Check_ProfilePreparation" xml:space="preserve"><value>Подготовка профиля</value></data>
+  <data name="Check_ProfileMode" xml:space="preserve"><value>Режим профиля</value></data>
+  <data name="Check_StandaloneMode" xml:space="preserve"><value>Автономная сборка запускается непосредственно из своей папки.</value></data>
+  <data name="Check_GameData" xml:space="preserve"><value>Данные игры</value></data>
+  <data name="Check_SharedGameData" xml:space="preserve"><value>Общий каталог базовой игры</value></data>
+  <data name="Check_ProfileData" xml:space="preserve"><value>Данные профиля</value></data>
+  <data name="Check_BaseGame" xml:space="preserve"><value>Базовая игра</value></data>
+  <data name="Check_ModTitleFormat" xml:space="preserve"><value>Мод #{0}: {1}</value></data>
+  <data name="Check_EnabledPathFormat" xml:space="preserve"><value>Включен: {0}</value></data>
+  <data name="Check_DisabledPathFormat" xml:space="preserve"><value>Выключен: {0}</value></data>
+  <data name="Check_EnabledMissingFormat" xml:space="preserve"><value>Включенный мод, папка не найдена: {0}</value></data>
+  <data name="Check_DisabledMissingFormat" xml:space="preserve"><value>Выключенный мод, папка не найдена: {0}</value></data>
+  <data name="Check_ModList" xml:space="preserve"><value>Список модов</value></data>
+  <data name="Check_StandaloneNeedsMod" xml:space="preserve"><value>Для автономного профиля требуется папка мода.</value></data>
+  <data name="Check_NoMods" xml:space="preserve"><value>Профиль не содержит модов.</value></data>
+  <data name="Check_LaunchBinary" xml:space="preserve"><value>Бинарник запуска</value></data>
+  <data name="Check_NotFoundFormat" xml:space="preserve"><value>Не найден: {0}</value></data>
+  <data name="Check_Saves" xml:space="preserve"><value>Сохранения</value></data>
+  <data name="Check_SaveCountFormat" xml:space="preserve"><value>Файлов: {0}. Папка: {1}</value></data>
+  <data name="Check_SaveFolderMissing" xml:space="preserve"><value>Папка сохранений еще не создана.</value></data>
+  <data name="Check_LatestLog" xml:space="preserve"><value>Последний лог</value></data>
+  <data name="Check_LogsMissing" xml:space="preserve"><value>Логи пока не найдены.</value></data>
+  <data name="Check_CrashDumpFoundFormat" xml:space="preserve"><value>Найден файл аварийного дампа: {0}</value></data>
+  <data name="Check_CrashDumpMissing" xml:space="preserve"><value>Файлы аварийного дампа не найдены.</value></data>
+  <data name="Check_FsgameSource" xml:space="preserve"><value>Источник fsgame.ltx</value></data>
+  <data name="Check_FsgameMissing" xml:space="preserve"><value>Файл не найден автоматически во включённых слоях. Выберите его вручную в настройках профиля.</value></data>
+  <data name="Check_SelectedManually" xml:space="preserve"><value>Выбран вручную</value></data>
+  <data name="Check_FoundAutomatically" xml:space="preserve"><value>Найден автоматически</value></data>
+  <data name="Check_FoundByFsltx" xml:space="preserve"><value>Найден автоматически по параметру -fsltx</value></data>
+  <data name="Check_SourceDetailsFormat" xml:space="preserve"><value>{0}: {1}{2}Источник: {3}.</value></data>
+  <data name="Check_ProfilePathPendingUsvfs" xml:space="preserve"><value>Профильная папка будет назначена при первом запуске. Папка current для USVFS не требуется.</value></data>
+  <data name="Check_PathPending" xml:space="preserve"><value>Путь еще не назначен.</value></data>
+  <data name="Check_ProfileFolderCreatedFormat" xml:space="preserve"><value>Профильная папка будет создана при запуске: {0}</value></data>
+  <data name="Check_ProfileDataSeparateFormat" xml:space="preserve"><value>Профильные данные хранятся отдельно: {0}. Папка current не используется.</value></data>
+  <data name="Check_ManagedFolderFormat" xml:space="preserve"><value>Управляемая папка: {0}</value></data>
+  <data name="Check_MarkerMissingFormat" xml:space="preserve"><value>Отсутствует защитный маркер: {0}</value></data>
+  <data name="Check_WorkspaceCache" xml:space="preserve"><value>Кэш workspace</value></data>
+  <data name="Check_WorkspacePresent" xml:space="preserve"><value>Рабочая папка и манифест подготовлены.</value></data>
+  <data name="Check_WorkspacePending" xml:space="preserve"><value>Workspace будет подготовлен или пересобран при следующем запуске.</value></data>
+  <data name="Check_ManualSourceMissingFormat" xml:space="preserve"><value>Не найден ручной источник бинарника: {0}{1}{2}.</value></data>
+  <data name="Check_FinalManualFormat" xml:space="preserve"><value>Итоговый файл: {0}{1}Источник: {2}. Выбран вручную; приоритет модов не заменит этот EXE.</value></data>
+  <data name="Check_FinalAutomaticFormat" xml:space="preserve"><value>Итоговый файл: {0}{1}Источник: {2}. Нижние моды в списке имеют приоритет.</value></data>
+  <data name="Check_FinalFallbackFormat" xml:space="preserve"><value>Выбранный путь не найден: {0}{1}Лаунчер сможет использовать: {2}{1}Причина выбора: {3}. Источник: {4}.</value></data>
+  <data name="Ready_ProfileDisabled" xml:space="preserve"><value>Выбранный профиль отключён.</value></data>
+  <data name="Ready_StandaloneModCount" xml:space="preserve"><value>Автономный профиль должен содержать ровно один включённый мод.</value></data>
+  <data name="Ready_ModFolderMissingFormat" xml:space="preserve"><value>Папка мода не найдена: {0}</value></data>
+  <data name="Ready_Ready" xml:space="preserve"><value>Готов к запуску.</value></data>
+  <data name="Ready_OverwriteMissingFormat" xml:space="preserve"><value>Папка MO2 overwrite не найдена: {0}</value></data>
+  <data name="Ready_ExcludedProviderMissingFormat" xml:space="preserve"><value>Исключённый файл больше не имеет другого поставщика: {0} — {1}</value></data>
+  <data name="Ready_ExecutableMissingFormat" xml:space="preserve"><value>Файл запуска не найден: {0}</value></data>
+  <data name="Ready_FsgameMissing" xml:space="preserve"><value>Файл fsgame.ltx не найден во включённых слоях.</value></data>
+  <data name="Ready_FsltxMissingFormat" xml:space="preserve"><value>Файл из параметра -fsltx не найден во включённых слоях: {0}</value></data>
+  <data name="Validation_NameRequired" xml:space="preserve"><value>Укажите название профиля.</value></data>
+  <data name="Validation_NameExists" xml:space="preserve"><value>Профиль с таким именем уже существует.</value></data>
+  <data name="Validation_Valid" xml:space="preserve"><value>Настройки профиля корректны.</value></data>
+  <data name="Validation_GameNotSelected" xml:space="preserve"><value>Папка игры не выбрана.</value></data>
+  <data name="Validation_GameMissing" xml:space="preserve"><value>Папка игры не существует.</value></data>
+  <data name="Validation_GameAvailable" xml:space="preserve"><value>Папка базовой игры доступна.</value></data>
+  <data name="Tray_UpdateAvailable" xml:space="preserve"><value>Доступно обновление</value></data>
+  <data name="Tray_UpdateReadyFormat" xml:space="preserve"><value>Версия {0} готова к загрузке.</value></data>
+  <data name="Tray_Exit" xml:space="preserve"><value>Выход</value></data>
+  <data name="Tray_OpenFailed" xml:space="preserve"><value>Не удалось открыть панель быстрого запуска. Подробности записаны в журнал.</value></data>
+  <data name="Tray_ErrorTitle" xml:space="preserve"><value>Ошибка панели трея</value></data>
+  <data name="Tray_ReleaseOpenFailed" xml:space="preserve"><value>Не удалось открыть страницу релиза. Подробности записаны в журнал.</value></data>
+  <data name="Tray_LinkErrorTitle" xml:space="preserve"><value>Ошибка открытия ссылки</value></data>
+  <data name="LaunchReady_ExitedEarly" xml:space="preserve"><value>Процесс завершился до появления окна, игрового лога или нормальной загрузки памяти.</value></data>
+  <data name="LaunchReady_Timeout" xml:space="preserve"><value>За 1 минуту не появилось окно игры, свежий игровой лог или процесс с нормальной загрузкой памяти.</value></data>
+  <data name="LaunchReady_Window" xml:space="preserve"><value>обнаружено окно игры</value></data>
+  <data name="LaunchReady_Process" xml:space="preserve"><value>процесс движка начал нормальную загрузку</value></data>
+  <data name="LaunchReady_LogFormat" xml:space="preserve"><value>обновлён игровой лог: {0}</value></data>
+  <data name="Executable_SummaryFormat" xml:space="preserve"><value>{0} — {1}. Источник: {2}.</value></data>
+  <data name="Executable_AnomalyLauncher" xml:space="preserve"><value>найден Anomaly Launcher базовой игры</value></data>
+  <data name="Executable_SelectedPath" xml:space="preserve"><value>найден выбранный пользователем путь</value></data>
+  <data name="Executable_StandaloneLauncher" xml:space="preserve"><value>найден лаунчер автономной сборки</value></data>
+  <data name="Executable_MainX64Engine" xml:space="preserve"><value>найден основной 64-битный движок OGSR/X-Ray</value></data>
+  <data name="Executable_BinEngine" xml:space="preserve"><value>найден движок OGSR/X-Ray в каталоге bin_*</value></data>
+  <data name="Executable_XrayEngine" xml:space="preserve"><value>найден движок X-Ray/OGSR</value></data>
+  <data name="Executable_StalkerBinary" xml:space="preserve"><value>найден стандартный бинарник S.T.A.L.K.E.R.</value></data>
+  <data name="Executable_XrayBinary" xml:space="preserve"><value>найден бинарник X-Ray</value></data>
+  <data name="Executable_XrayLikeName" xml:space="preserve"><value>имя похоже на движок X-Ray/OGSR</value></data>
+  <data name="Executable_AnomalyLikeName" xml:space="preserve"><value>имя похоже на бинарник Anomaly</value></data>
+  <data name="Executable_XrayBinaryLikeName" xml:space="preserve"><value>имя похоже на X-Ray бинарник</value></data>
+  <data name="Executable_Fallback" xml:space="preserve"><value>единственный или запасной исполняемый файл</value></data>
+  <data name="Preflight_Profile" xml:space="preserve"><value>Профиль</value></data>
+  <data name="Preflight_ProfileDisabled" xml:space="preserve"><value>Профиль выключен.</value></data>
+  <data name="Preflight_SharedGameDataFormat" xml:space="preserve"><value>Общий каталог базовой игры: {0}</value></data>
+  <data name="Preflight_InProfileFolder" xml:space="preserve"><value>В папке профиля</value></data>
+  <data name="Preflight_SourceFormat" xml:space="preserve"><value>Источник: {0}</value></data>
+  <data name="Preflight_EmptyModTitleFormat" xml:space="preserve"><value>Мод пуст: {0}</value></data>
+  <data name="Preflight_EmptyMod" xml:space="preserve"><value>В папке не найдено файлов. Возможно, выбрана внешняя или неправильная папка мода.</value></data>
+  <data name="Preflight_FinalExecutable" xml:space="preserve"><value>Итоговый бинарник</value></data>
+  <data name="Preflight_FinalExecutableMissingFormat" xml:space="preserve"><value>Не найден файл {0} ни в игре, ни во включённых модах.</value></data>
+  <data name="Preflight_FsgameOptional" xml:space="preserve"><value>Файл не найден. Некоторые движки запускаются без него, но сохранения профиля могут не изолироваться.</value></data>
+  <data name="Preflight_WorkspacePathMissing" xml:space="preserve"><value>Не удалось определить путь рабочего пространства.</value></data>
+  <data name="Preflight_FreeSpace" xml:space="preserve"><value>Свободное место</value></data>
+  <data name="Preflight_WorkspaceDriveMissing" xml:space="preserve"><value>Не удалось определить диск workspace.</value></data>
+  <data name="Preflight_FreeSpaceFormat" xml:space="preserve"><value>{0} доступно на {1}</value></data>
+  <data name="Preflight_UsvfsLayeredOnly" xml:space="preserve"><value>USVFS доступен только для обычных многослойных профилей.</value></data>
+  <data name="Preflight_ArchitectureMissingFormat" xml:space="preserve"><value>Не удалось определить архитектуру итогового EXE: {0}</value></data>
+  <data name="Preflight_UsvfsReadyFormat" xml:space="preserve"><value>Полный комплект USVFS {0} готов. Цель: {1}, {2}</value></data>
+  <data name="Preflight_CrossDriveLinks" xml:space="preserve"><value>Ссылки между дисками</value></data>
+  <data name="Preflight_CrossDriveAllowedFormat" xml:space="preserve"><value>Windows разрешает подключать файлы с диска {0} без копирования.</value></data>
+  <data name="Preflight_CrossDriveDeniedFormat" xml:space="preserve"><value>Windows не разрешила создать символическую ссылку. Включите режим разработчика, запустите лаунчер от имени администратора или разместите мод на диске workspace. {0}</value></data>
+  <data name="Preflight_EngineFiles" xml:space="preserve"><value>Файлы движка</value></data>
+  <data name="Preflight_EngineDllFound" xml:space="preserve"><value>Рядом с бинарником найдены DLL движка.</value></data>
+  <data name="Preflight_EngineDllMissing" xml:space="preserve"><value>Рядом с выбранным бинарником не найдены типичные DLL движка. Это допустимо не для всех сборок.</value></data>
+  <data name="Layer_BaseGame" xml:space="preserve"><value>базовая игра</value></data>
+  <data name="Layer_ModFormat" xml:space="preserve"><value>мод: {0}</value></data>
+  <data name="Log_HealthCacheClearedFormat" xml:space="preserve"><value>Кэш workspace очищен из окна «Состояние»: {0}</value></data>
+  <data name="Log_HealthCacheClearFailedFormat" xml:space="preserve"><value>Очистка кэша workspace не выполнена: {0}</value></data>
+  <data name="Log_HealthRebuildStartedFormat" xml:space="preserve"><value>Пересборка workspace запущена из окна «Состояние»: {0}</value></data>
+  <data name="Log_HealthRebuildFinishedFormat" xml:space="preserve"><value>Пересборка workspace завершена из окна «Состояние»: {0}</value></data>
+  <data name="Log_HealthRebuildFailedFormat" xml:space="preserve"><value>Пересборка workspace не выполнена: {0}</value></data>
+  <data name="Log_HealthMoveStartedFormat" xml:space="preserve"><value>Перенос workspace запущен из окна «Состояние»: {0}</value></data>
+  <data name="Log_HealthAlreadyThereFormat" xml:space="preserve"><value>Workspace уже находится в выбранной папке: {0}</value></data>
+  <data name="Log_HealthMoveFinishedFormat" xml:space="preserve"><value>Workspace перенесён из окна «Состояние»: {0}</value></data>
+  <data name="Log_HealthMoveFailedFormat" xml:space="preserve"><value>Перенос workspace не выполнен:{0}{1}</value></data>
+  <data name="Log_HealthOldFolderRemainsFormat" xml:space="preserve"><value>Workspace перенесён в {0}, но старая папка не удалена: {1}{2}{3}</value></data>
+  <data name="Log_HealthOldFolderRetryFormat" xml:space="preserve"><value>Повторная очистка старого workspace: {0}</value></data>
+  <data name="Log_HealthOldFolderDeletedFormat" xml:space="preserve"><value>Старый workspace удалён после повторной попытки: {0}</value></data>
+  <data name="Log_HealthOldFolderRetryFailedFormat" xml:space="preserve"><value>Повторная очистка старого workspace не выполнена: {0}{1}{2}</value></data>
+  <data name="Log_HealthActionFailedFormat" xml:space="preserve"><value>Действие из окна «Состояние» не выполнено: {0}</value></data>
+  <data name="Log_ReasonProfileSelection" xml:space="preserve"><value>выбора профиля</value></data>
+  <data name="Log_ReasonModListChanged" xml:space="preserve"><value>изменения списка модов</value></data>
+  <data name="Log_ReasonModListReplaced" xml:space="preserve"><value>замены списка модов</value></data>
+  <data name="Log_ReasonModPriorityChanged" xml:space="preserve"><value>изменения приоритета модов</value></data>
+  <data name="Workspace_GameFolderRequired" xml:space="preserve"><value>Для неавтономного профиля выберите папку игры.</value></data>
+  <data name="Workspace_CheckingFiles" xml:space="preserve"><value>Проверка файлов игры и модов...</value></data>
+  <data name="Workspace_ScanCompleteFormat" xml:space="preserve"><value>Проверка источников: {0}. Пересборка не требуется.</value></data>
+  <data name="Workspace_Preparing" xml:space="preserve"><value>Подготовка чистой рабочей среды профиля...</value></data>
+  <data name="Workspace_ConnectingGame" xml:space="preserve"><value>Подключение базовой игры к рабочей среде...</value></data>
+  <data name="Workspace_ReadyFormat" xml:space="preserve"><value>Рабочая среда готова. Жёсткие ссылки: {0:N0}; символические ссылки: {1:N0}; локальные файлы: {2:N0}.</value></data>
+  <data name="Workspace_LocalFilesFormat" xml:space="preserve"><value>Локальные файлы рабочей папки: {0:N0}. Служебные файлы: {1:N0}; копии только для чтения: {2:N0}. Исходные файлы игры и модов не изменены.</value></data>
+  <data name="Workspace_ReadOnlyFilesFormat" xml:space="preserve"><value>Файлы «только чтение»: {0:N0}. Символические ссылки: {1:N0}; независимые копии: {2:N0}. Исходные файлы модов не изменены.</value></data>
+  <data name="Workspace_TimingFormat" xml:space="preserve"><value>Время подготовки: проверка {0}; очистка {1}; игра {2}; моды {3}; настройка {4}; всего {5}.</value></data>
+  <data name="Workspace_ManualSourceUnavailable" xml:space="preserve"><value>Ручной источник бинарника больше недоступен. Выберите файл запуска заново или сбросьте источник на автоматический.</value></data>
+  <data name="Workspace_ManualFileMissingFormat" xml:space="preserve"><value>Ручной источник бинарника найден, но файл отсутствует: {0}</value></data>
+  <data name="Workspace_ManualExecutableFormat" xml:space="preserve"><value>Используется вручную выбранный бинарник: {0}. Источник: {1}.</value></data>
+  <data name="Workspace_SafetyMarkerRequired" xml:space="preserve"><value>Лаунчер отказался очищать папку без защитного маркера workspace.</value></data>
+  <data name="Workspace_ProfileMarkerRestored" xml:space="preserve"><value>Восстановлен защитный маркер профиля. Рабочую папку снова можно безопасно очищать.</value></data>
+  <data name="Workspace_ExistingFolderFormat" xml:space="preserve"><value>Найдена существующая рабочая папка профиля: {0}</value></data>
+  <data name="Workspace_RootMarkerRestored" xml:space="preserve"><value>Восстановлен служебный маркер корня workspace.</value></data>
+  <data name="Workspace_ProfileMarkerRebuildRestored" xml:space="preserve"><value>Восстановлен защитный маркер профиля. Рабочую папку снова можно безопасно пересобирать.</value></data>
+  <data name="Workspace_MovedToAsciiFormat" xml:space="preserve"><value>Workspace перенесён в совместимый ASCII-путь: {0}</value></data>
+  <data name="Workspace_DriveRootForbidden" xml:space="preserve"><value>Корень диска нельзя использовать как корень workspace.</value></data>
+  <data name="Workspace_MillisecondsFormat" xml:space="preserve"><value>{0:0} мс</value></data>
+  <data name="Workspace_SecondsFormat" xml:space="preserve"><value>{0:0.0} с</value></data>
+  <data name="Workspace_ExecutableAutoSelectedFormat" xml:space="preserve"><value>Бинарник профиля не найден. Автоматически выбран '{0}': {1}.</value></data>
+  <data name="WorkspaceManifest_CurrentMissing" xml:space="preserve"><value>Workspace будет подготовлен: папка current ещё не создана.</value></data>
+  <data name="WorkspaceManifest_CacheMissing" xml:space="preserve"><value>Workspace будет подготовлен: кэш сборки отсутствует.</value></data>
+  <data name="WorkspaceManifest_ExecutableMissing" xml:space="preserve"><value>Workspace будет пересобран: выбранный EXE отсутствует в текущей сборке.</value></data>
+  <data name="WorkspaceManifest_Current" xml:space="preserve"><value>Workspace уже актуален: изменений в игре и модах не найдено.</value></data>
+  <data name="WorkspaceManifest_CacheUnreadable" xml:space="preserve"><value>Workspace будет пересобран: не удалось прочитать кэш сборки.</value></data>
+  <data name="WorkspaceManifest_RebuildReasonFormat" xml:space="preserve"><value>Workspace будет пересобран: {0}.</value></data>
+  <data name="WorkspaceManifest_AdditionalReasonFormat" xml:space="preserve"><value>Дополнительная причина пересборки: {0}.</value></data>
+  <data name="WorkspaceManifest_DiagnosticFormatChanged" xml:space="preserve"><value>обновлён формат диагностической подписи Workspace</value></data>
+  <data name="WorkspaceManifest_FormatChangedFormat" xml:space="preserve"><value>изменился формат Workspace: {0} → {1}</value></data>
+  <data name="WorkspaceManifest_ExecutableChangedFormat" xml:space="preserve"><value>сменился файл запуска: {0} → {1}</value></data>
+  <data name="WorkspaceManifest_SourceChangedFormat" xml:space="preserve"><value>сменился источник EXE: {0} → {1}</value></data>
+  <data name="WorkspaceManifest_Auto" xml:space="preserve"><value>авто</value></data>
+  <data name="WorkspaceManifest_ProfileModeChangedFormat" xml:space="preserve"><value>сменился тип профиля: {0} → {1}</value></data>
+  <data name="WorkspaceManifest_InputsChanged" xml:space="preserve"><value>изменились входные данные Workspace</value></data>
+  <data name="WorkspaceManifest_MoreChangesFormat" xml:space="preserve"><value>не показано дополнительных изменений: {0:N0}</value></data>
+  <data name="WorkspaceManifest_LayersChanged" xml:space="preserve"><value>изменился состав включённых слоёв</value></data>
+  <data name="WorkspaceManifest_ModOrderChanged" xml:space="preserve"><value>изменился порядок модов</value></data>
+  <data name="WorkspaceManifest_LayerPathChangedFormat" xml:space="preserve"><value>сменился путь слоя «{0}»: {1} → {2}</value></data>
+  <data name="WorkspaceManifest_LayerPriorityChangedFormat" xml:space="preserve"><value>сменился приоритет слоя «{0}»: {1} → {2}</value></data>
+  <data name="WorkspaceManifest_ExclusionsChangedFormat" xml:space="preserve"><value>изменились исключённые файлы слоя «{0}»</value></data>
+  <data name="WorkspaceManifest_FileAddedFormat" xml:space="preserve"><value>добавлен файл слоя «{0}»: {1}</value></data>
+  <data name="WorkspaceManifest_FileChangedFormat" xml:space="preserve"><value>изменён файл слоя «{0}»: {1}</value></data>
+  <data name="WorkspaceManifest_FileRemovedFormat" xml:space="preserve"><value>удалён файл слоя «{0}»: {1}</value></data>
+  <data name="WorkspaceManifest_NotSet" xml:space="preserve"><value>не задан</value></data>
+  <data name="Materializer_OldLinksFound" xml:space="preserve"><value>Обнаружены защищённые ссылки от старой сборки. Подготавливаю безопасную очистку workspace...</value></data>
+  <data name="Materializer_OldLinksReleasedFormat" xml:space="preserve"><value>Освобождено защищённых ссылок старого workspace: {0:N0}. Атрибуты исходных файлов будут восстановлены.</value></data>
+  <data name="Materializer_CheckingSymlinks" xml:space="preserve"><value>Проверка символических ссылок для файлов на других дисках...</value></data>
+  <data name="Materializer_GameFilesFormat" xml:space="preserve"><value>Подключено файлов базовой игры: {0:N0}...</value></data>
+  <data name="Materializer_ConnectingModFormat" xml:space="preserve"><value>Подключение мода: {0}</value></data>
+  <data name="Materializer_ModConnectedFormat" xml:space="preserve"><value>Мод подключён: {0}. Файлов: {1:N0}; папок: {2:N0}.</value></data>
+  <data name="Materializer_EmptyModFormat" xml:space="preserve"><value>Предупреждение: в моде «{0}» не найдено файлов. Проверьте, что выбрана корневая папка мода, а не пустая внешняя папка.</value></data>
+  <data name="Materializer_CrossDriveReasonFormat" xml:space="preserve"><value>Файлы мода находятся на диске {0}, а workspace создаётся на диске {1}. Windows не разрешила создать символическую ссылку между ними.</value></data>
+  <data name="Materializer_LinkReasonFormat" xml:space="preserve"><value>Windows не разрешила создать ссылку на диске {0}. Возможно, диск не использует NTFS или у лаунчера недостаточно прав.</value></data>
+  <data name="Materializer_LinkFailureFormat" xml:space="preserve"><value>Не удалось подключить файлы мода к профилю без копирования.{0}{0}{1}{0}{0}Чтобы исправить проблему:{0}1. Включите «Режим разработчика» в параметрах Windows: Система → Для разработчиков.{0}2. Или запустите лаунчер от имени администратора.{0}3. Или перенесите мод на диск {2}.{0}{0}Сборка остановлена. Файлы игры и мода не изменены.</value></data>
+  <data name="Materializer_UnknownVolume" xml:space="preserve"><value>неизвестный</value></data>
+  <data name="Mo2Service_SelectFolder" xml:space="preserve"><value>Выберите папку</value></data>
+  <data name="Mo2Service_SelectOneOfFormat" xml:space="preserve"><value>Выберите одну из {0} папок</value></data>
+  <data name="Mo2Service_SelectedManually" xml:space="preserve"><value>Выбрано вручную</value></data>
+  <data name="Mo2Service_Found" xml:space="preserve"><value>Найден</value></data>
+  <data name="Mo2Service_FolderMissing" xml:space="preserve"><value>Папка отсутствует</value></data>
+  <data name="Mo2Service_OverwriteFormat" xml:space="preserve"><value>overwrite: {0} файлов. {1}{2}</value></data>
+  <data name="Mo2Service_OverwriteEmpty" xml:space="preserve"><value>overwrite пуст или не найден.</value></data>
+  <data name="Mo2Service_SelectSource" xml:space="preserve"><value>Выберите папку Mod Organizer 2, профиль MO2 или modlist.txt.</value></data>
+  <data name="Mo2Service_FolderNotFoundFormat" xml:space="preserve"><value>Папка MO2 не найдена: {0}</value></data>
+  <data name="Mo2Service_ModListRequired" xml:space="preserve"><value>Нужно выбрать файл modlist.txt из профиля MO2.</value></data>
+  <data name="Mo2Service_NoProfiles" xml:space="preserve"><value>В выбранной папке не найден ни один профиль MO2 с modlist.txt.</value></data>
+  <data name="Mo2Service_ModListMissing" xml:space="preserve"><value>Файл modlist.txt выбранного профиля не найден.</value></data>
+  <data name="Mo2Service_NoMods" xml:space="preserve"><value>В modlist.txt не найдено ни одного мода.</value></data>
+  <data name="Mo2Service_GameFolderMissing" xml:space="preserve"><value>Папка базовой игры не найдена. Выберите её перед импортом.</value></data>
+  <data name="Mo2Service_AmbiguousFolders" xml:space="preserve"><value>Для неоднозначных модов выберите исходные папки перед импортом.</value></data>
+  <data name="Mo2Service_ImportedDescriptionFormat" xml:space="preserve"><value>Импортировано из Mod Organizer 2: {0}</value></data>
+  <data name="Mo2Service_ExecutableUncertain" xml:space="preserve"><value>EXE надёжно не определён; после импорта выберите его в настройках профиля.</value></data>
+  <data name="Catalog_BrowserCheck" xml:space="preserve"><value>AP-PRO временно запросил проверку браузера.</value></data>
+  <data name="Usvfs_InvalidAnomalyEngineFormat" xml:space="preserve"><value>Некорректный движок Anomaly для USVFS: {0}</value></data>
+  <data name="Usvfs_AnomalyEngineMissingFormat" xml:space="preserve"><value>Выбранный движок Anomaly не найден во включенных слоях: {0}</value></data>
+  <data name="Portable_SourceOverlap" xml:space="preserve"><value>Папка игры или мода пересекается со служебными данными портативного лаунчера. Разместите лаунчер вне исходной игры и модов.</value></data>
+  <data name="Portable_PathEscapes" xml:space="preserve"><value>Относительный путь выходит за пределы портативной папки.</value></data>
+  <data name="Discord_UnavailableFormat" xml:space="preserve"><value>Discord: статус недоступен ({0}). Игра продолжит работать без него.</value></data>
+  <data name="Dialog_InvalidUrl" xml:space="preserve"><value>Указан некорректный адрес сайта.</value></data>
+  <data name="Layer_ProfileWritableData" xml:space="preserve"><value>изменяемые данные профиля</value></data>
+  <data name="Layer_ProfileOverwrite" xml:space="preserve"><value>профильный overwrite</value></data>
+  <data name="Copy_SeparateFolders" xml:space="preserve"><value>Каталоги копирования должны быть отдельными и не вложенными друг в друга.</value></data>
+  <data name="Copy_SourceOutsideOverwriteFormat" xml:space="preserve"><value>Источник должен находиться в профильном overwrite: {0}</value></data>
+  <data name="Copy_NoDataFormat" xml:space="preserve"><value>Нет данных для копирования: {0}</value></data>
+  <data name="Copy_ThroughLinkForbiddenFormat" xml:space="preserve"><value>Копирование через ссылку запрещено: {0}</value></data>
+  <data name="Mo2Service_ModListFileMissing" xml:space="preserve"><value>Файл modlist.txt не найден.</value></data>
+  <data name="Mo2Service_ModListNoEntries" xml:space="preserve"><value>В modlist.txt не найдено ни одной записи о модах.</value></data>
+  <data name="Executable_AutomaticPriority" xml:space="preserve"><value>Автоматический выбор по приоритету модов.</value></data>
+  <data name="Executable_ManualSourceFormat" xml:space="preserve"><value>Вручную выбран источник: {0}.</value></data>
+  <data name="ProfileData_BaseFsgameMissingFormat" xml:space="preserve"><value>Не найден fsgame.ltx базовой игры: {0}</value></data>
+  <data name="ProfileData_AliasInvalidFormat" xml:space="preserve"><value>Не удалось определить каталог данных базовой игры: неизвестный или циклический псевдоним {0}.</value></data>
+  <data name="ProfileData_AliasEmptyFormat" xml:space="preserve"><value>Пустой путь {0} в fsgame.ltx.</value></data>
+  <data name="Profile_ImportInvalid" xml:space="preserve"><value>Файл профиля пуст или имеет неверный формат.</value></data>
+  <data name="Profile_CopyNameFormat" xml:space="preserve"><value>{0} — копия</value></data>
+  <data name="Profile_StandaloneNoWorkspace" xml:space="preserve"><value>Автономный профиль не использует workspace.</value></data>
+  <data name="Usvfs_LogCleanupFailedFormat" xml:space="preserve"><value>Не удалось убрать служебный USVFS-лог из игровой папки логов: {0}</value></data>
+  <data name="Startup_ExecutablePathMissing" xml:space="preserve"><value>Не удалось определить путь к лаунчеру.</value></data>
+  <data name="Startup_RegistryUnavailable" xml:space="preserve"><value>Не удалось открыть раздел автозапуска Windows.</value></data>
+  <data name="Usvfs_TargetArchitectureMissingFormat" xml:space="preserve"><value>Не удалось определить архитектуру USVFS-цели: {0}</value></data>
+  <data name="Usvfs_SharedDataFormat" xml:space="preserve"><value>USVFS: общие данные базовой игры: {0}. Существующие файлы сохранены.</value></data>
+  <data name="Usvfs_ProfileFsgameFormat" xml:space="preserve"><value>USVFS: профильный fsgame.ltx подготовлен из слоя «{0}»{1}.</value></data>
+  <data name="Usvfs_ManualSelectionSuffix" xml:space="preserve"><value> (ручной выбор)</value></data>
+  <data name="Usvfs_AlreadyRunning" xml:space="preserve"><value>Другой профиль уже запущен через USVFS. Завершите его перед запуском второго USVFS-профиля.</value></data>
+  <data name="Navigation_Mo2FailedTitle" xml:space="preserve"><value>Не удалось открыть импорт MO2</value></data>
+  <data name="Navigation_WizardFailedFormat" xml:space="preserve"><value>Мастер не был открыт. Лаунчер продолжит работу.{0}{0}{1}</value></data>
+  <data name="Workspace_ExecutableFallbackFormat" xml:space="preserve"><value>Бинарник '{0}' не найден. Использую '{1}': {2}.</value></data>
+  <data name="Layer_ProfileData" xml:space="preserve"><value>данные профиля</value></data>
+  <data name="Fsgame_ArgumentPathRequired" xml:space="preserve"><value>После параметра -fsltx укажите относительный путь к файлу .ltx.</value></data>
+  <data name="Fsgame_ArgumentFile" xml:space="preserve"><value>Файл из параметра -fsltx</value></data>
+  <data name="Fsgame_ArgumentExtensionFormat" xml:space="preserve"><value>Параметр -fsltx должен указывать на файл с расширением .ltx: {0}</value></data>
+  <data name="Fsgame_ManualExtension" xml:space="preserve"><value>Ручной файл конфигурации должен иметь расширение .ltx.</value></data>
+  <data name="Fsgame_ManualMissingFormat" xml:space="preserve"><value>Ручной файл .ltx не найден: {0}</value></data>
+  <data name="Fsgame_ManualOutsideLayers" xml:space="preserve"><value>Ручной файл .ltx должен находиться в папке базовой игры или включённого мода.</value></data>
+  <data name="Layer_Mo2OverwriteFiles" xml:space="preserve"><value>Файлы overwrite из MO2</value></data>
+  <data name="Usvfs_ArchitectureMismatchFormat" xml:space="preserve"><value>{0}: ожидалась архитектура {1}, обнаружена {2}.</value></data>
+  <data name="Usvfs_FileVersionMissingFormat" xml:space="preserve"><value>{0}: отсутствует версия файла.</value></data>
+  <data name="Usvfs_VersionMismatchFormat" xml:space="preserve"><value>Версии компонентов USVFS не совпадают: {0}.</value></data>
+  <data name="Usvfs_FileMissingFormat" xml:space="preserve"><value>не найден {0}</value></data>
+  <data name="Usvfs_TargetX86" xml:space="preserve"><value>32-битной игры</value></data>
+  <data name="Usvfs_TargetX64" xml:space="preserve"><value>64-битной игры</value></data>
+  <data name="Usvfs_TargetSelected" xml:space="preserve"><value>выбранной игры</value></data>
+  <data name="Usvfs_RuntimeInvalidFormat" xml:space="preserve"><value>Комплект USVFS для {0} не прошёл проверку. {1} Папка runtime: {2}</value></data>
+  <data name="Usvfs_ArchitectureUnknown" xml:space="preserve"><value>неизвестная</value></data>
+  <data name="Fsgame_NotFoundHelpFormat" xml:space="preserve"><value>Файл fsgame.ltx не найден во включённых слоях. Выберите его вручную в одном из включённых слоёв.{0}{0}Перейдите: «Настройки профиля» → «Источник fsgame.ltx» → «Выбрать файл...».{0}{0}Обратите внимание: в зависимости от модификации файл может называться по-разному: fsgame.ltx, fsgame_coc.ltx или fsolr.ltx.</value></data>
+  <data name="Fsgame_ManualUsingFormat" xml:space="preserve"><value>Используется выбранная вручную конфигурация fsgame: {0}</value></data>
+  <data name="ProfileData_SharedFormat" xml:space="preserve"><value>Используются общие данные базовой игры: {0}. Существующие файлы не копируются и не заменяются.</value></data>
+  <data name="ProfileData_MigratedFormat" xml:space="preserve"><value>Перенесены ранее перенаправленные данные профиля: {0:N0}; пропущено существующих: {1:N0}.</value></data>
+  <data name="Launch_UsvfsFailedFormat" xml:space="preserve"><value>Ошибка запуска USVFS: {0}</value></data>
+  <data name="Launch_UsvfsNoAutoFallback" xml:space="preserve"><value>Профиль не переключён на Workspace автоматически. Чтобы повторить запуск через Workspace, выберите этот режим в настройках профиля.</value></data>
+  <data name="Launch_BackendFormat" xml:space="preserve"><value>Режим запуска: {0}.</value></data>
+  <data name="Launch_ExecutableFormat" xml:space="preserve"><value>Запуск: {0}</value></data>
+  <data name="Launch_UsvfsUnavailable" xml:space="preserve"><value>Для профиля выбран USVFS, но его компоненты недоступны. Установите сборку лаунчера с файлами usvfs_x64.dll и usvfs_proxy_x64.exe либо выберите Workspace в настройках профиля.</value></data>
+  <data name="Launch_BackendUnavailableFormat" xml:space="preserve"><value>Система запуска профиля недоступна: {0}.</value></data>
+  <data name="Writable_CapturedFormat" xml:space="preserve"><value>Сохранены профильные игровые настройки из workspace: {0:N0}.</value></data>
+  <data name="Writable_StaleSkippedFormat" xml:space="preserve"><value>Сохранена более свежая профильная версия; устаревшие файлы current пропущены: {0:N0}.</value></data>
+  <data name="Writable_UsvfsPreparedFormat" xml:space="preserve"><value>Подготовлены профильные изменяемые файлы для USVFS: {0:N0}.</value></data>
+  <data name="Writable_UsvfsMigratedFormat" xml:space="preserve"><value>Перенесены изменяемые файлы из USVFS overwrite в профильное хранилище: {0:N0}.</value></data>
+  <data name="Writable_LaunchPreparedFormat" xml:space="preserve"><value>Профильные игровые настройки подготовлены к запуску: {0:N0}.</value></data>
+  <data name="Writable_WorkspaceRestoredFormat" xml:space="preserve"><value>Восстановлены профильные игровые настройки в workspace: {0:N0}.</value></data>
+  <data name="Writable_ObsoleteFsgameRemoved" xml:space="preserve"><value>Удалён устаревший профильный fsgame.ltx. Лаунчер пересоздаёт этот файл из текущих слоёв профиля.</value></data>
+  <data name="Workspace_ActiveCannotDeleteFormat" xml:space="preserve"><value>Нельзя удалить активный workspace профиля: {0}</value></data>
+  <data name="Workspace_NestedDestination" xml:space="preserve"><value>Новая папка workspace не должна находиться внутри старой папки или содержать её.</value></data>
+  <data name="Workspace_DestinationExistsFormat" xml:space="preserve"><value>Папка назначения уже существует: {0}</value></data>
+  <data name="Workspace_CopyingUserData" xml:space="preserve"><value>Копирование сохранений, настроек и логов...</value></data>
+  <data name="Workspace_MovedFormat" xml:space="preserve"><value>Workspace перенесён: {0}. Папка current будет пересобрана.</value></data>
+  <data name="ProfileData_ManagedRootFormat" xml:space="preserve"><value>Общий каталог данных {0} находится в управляемом хранилище профилей: {1}.</value></data>
+  <data name="ProfileData_OverlapsWorkspace" xml:space="preserve"><value>Общие данные игры не должны пересекаться с рабочей папкой профиля.</value></data>
+  <data name="ProfileData_OverlapsGameRoot" xml:space="preserve"><value>Каталог данных не должен совпадать с корнем игры либо содержать его.</value></data>
+  <data name="ProfileData_OverlapsMod" xml:space="preserve"><value>Каталог данных не должен пересекаться с исходной папкой мода.</value></data>
+  <data name="LaunchPlan_SelectedPathFound" xml:space="preserve"><value>найден выбранный путь</value></data>
+  <data name="LaunchPlan_ManualSource" xml:space="preserve"><value>ручной источник</value></data>
+  <data name="LaunchPlan_ManualSourceUnavailable" xml:space="preserve"><value>папка ручного источника недоступна или мод выключен</value></data>
+  <data name="LaunchPlan_SelectedManually" xml:space="preserve"><value>выбран пользователем вручную</value></data>
+  <data name="LaunchPlan_ManualFileMissing" xml:space="preserve"><value>ручной источник найден, но файл отсутствует</value></data>
+  <data name="Settings_JsonRequired" xml:space="preserve"><value>Выберите файл настроек с расширением .json.</value></data>
+  <data name="Settings_FileUnavailable" xml:space="preserve"><value>Файл настроек недоступен.</value></data>
+  <data name="Settings_FileInvalid" xml:space="preserve"><value>Выбранный файл не содержит настроек CORDON.</value></data>
+  <data name="Settings_EmptyJson" xml:space="preserve"><value>Файл содержит пустой JSON-документ.</value></data>
+  <data name="Settings_InvalidJsonFormat" xml:space="preserve"><value>Некорректный JSON: {0}</value></data>
+  <data name="Settings_ReadErrorFormat" xml:space="preserve"><value>Ошибка чтения: {0}</value></data>
+  <data name="Settings_AccessDeniedFormat" xml:space="preserve"><value>Нет доступа к файлу: {0}</value></data>
+  <data name="Settings_DamagedBackupFailed" xml:space="preserve"><value>Не удалось безопасно сохранить повреждённый файл настроек. Исходный файл не будет перезаписан.</value></data>
+  <data name="Settings_TemporarilyUnavailableFormat" xml:space="preserve"><value>Файл настроек временно недоступен и не будет изменён: {0}. {1}</value></data>
+  <data name="Settings_WriteBlockedFormat" xml:space="preserve"><value>Запись настроек заблокирована до успешной повторной загрузки. {0}</value></data>
+  <data name="Update_ArchiveSizeMissing" xml:space="preserve"><value>GitHub не указал размер архива обновления.</value></data>
+  <data name="Update_ChecksumInvalid" xml:space="preserve"><value>Релиз не содержит корректную контрольную сумму архива.</value></data>
+  <data name="Update_ChecksumMismatch" xml:space="preserve"><value>Контрольная сумма скачанного архива не совпадает.</value></data>
+  <data name="Update_ReleaseDataIncomplete" xml:space="preserve"><value>GitHub вернул неполные данные релиза.</value></data>
+  <data name="Update_ShaMissingFormat" xml:space="preserve"><value>Релиз не содержит SHA-256 для {0}.</value></data>
+  <data name="Update_ShaInvalidFormat" xml:space="preserve"><value>SHA-256 для {0} имеет недопустимый формат.</value></data>
+  <data name="Update_ArchiveTooLarge" xml:space="preserve"><value>Архив обновления слишком велик.</value></data>
+  <data name="Update_LauncherDirectoryMissing" xml:space="preserve"><value>Не удалось определить папку лаунчера.</value></data>
+  <data name="Update_SignalFailed" xml:space="preserve"><value>Не удалось создать одноразовый сигнал для программы обновления.</value></data>
+  <data name="Update_InstallerStartFailed" xml:space="preserve"><value>Не удалось запустить установщик обновления.</value></data>
+  <data name="Update_AcknowledgeTimeout" xml:space="preserve"><value>Программа обновления не подтвердила исходный лаунчер за отведённое время.</value></data>
+  <data name="Update_TempFolderInvalid" xml:space="preserve"><value>Временная папка обновления недопустима.</value></data>
+  <data name="Update_RestartFailed" xml:space="preserve"><value>Не удалось запустить обновлённый лаунчер.</value></data>
+  <data name="Update_LauncherExitedEarly" xml:space="preserve"><value>Исходный лаунчер завершился до подтверждения программы обновления.</value></data>
+  <data name="Update_ProcessCheckFailed" xml:space="preserve"><value>Не удалось проверить запущенный лаунчер.</value></data>
+  <data name="Update_WrongLauncher" xml:space="preserve"><value>Запрос обновления создан не текущим лаунчером.</value></data>
+  <data name="Update_ArchiveSizeInvalid" xml:space="preserve"><value>GitHub вернул недопустимый размер архива.</value></data>
+  <data name="Update_ArchiveInvalid" xml:space="preserve"><value>Архив обновления имеет недопустимый размер или состав.</value></data>
+  <data name="Update_DataFolderForbidden" xml:space="preserve"><value>Архив обновления не может содержать папку Data.</value></data>
+  <data name="Update_FoldersForbidden" xml:space="preserve"><value>Архив обновления не должен содержать папки.</value></data>
+  <data name="Update_EntryInvalidFormat" xml:space="preserve"><value>Недопустимая запись в архиве обновления: {0}</value></data>
+  <data name="Update_NoSpaceFormat" xml:space="preserve"><value>Недостаточно свободного места на диске {0}: требуется {1} МБ, доступно {2} МБ.</value></data>
+  <data name="Update_VolumeMissing" xml:space="preserve"><value>Не удалось определить том для обновления.</value></data>
+  <data name="Update_RequiredFileMissingFormat" xml:space="preserve"><value>В архиве обновления отсутствует {0}.</value></data>
+  <data name="Update_WrongBuildType" xml:space="preserve"><value>Архив содержит исполняемый файл другого типа сборки.</value></data>
+  <data name="Update_ChecksumsIncomplete" xml:space="preserve"><value>Контрольные суммы не покрывают все файлы обновления.</value></data>
+  <data name="Update_FileChecksumMismatchFormat" xml:space="preserve"><value>Контрольная сумма файла {0} не совпадает.</value></data>
+  <data name="Update_DataChangeForbidden" xml:space="preserve"><value>Обновление не может изменять Data.</value></data>
+  <data name="Update_RollbackIncompleteFormat" xml:space="preserve"><value>Не удалось полностью откатить обновление. Резервные копии сохранены в {0}</value></data>
+  <data name="Update_ChecksumFileInvalid" xml:space="preserve"><value>Файл контрольных сумм имеет недопустимый формат.</value></data>
+  <data name="Check_CrashDump" xml:space="preserve"><value>Аварийный дамп</value></data>
+  <data name="Dialog_ProfileFilter" xml:space="preserve"><value>Файлы профилей (*.stalkerprofile)|*.stalkerprofile|Файлы JSON (*.json)|*.json|Все файлы (*.*)|*.*</value></data>
+  <data name="Dialog_LtxFilter" xml:space="preserve"><value>Файлы LTX (*.ltx)|*.ltx</value></data>
+  <data name="Dialog_ModListFilter" xml:space="preserve"><value>Список модов Mod Organizer (modlist.txt)|modlist.txt|Текстовые файлы (*.txt)|*.txt</value></data>
+  <data name="Dialog_SelectLaunchExecutable" xml:space="preserve"><value>Выберите файл запуска</value></data>
+  <data name="Dialog_SelectGameExecutable" xml:space="preserve"><value>Выберите файл запуска игры</value></data>
+  <data name="Dialog_InvalidExecutable" xml:space="preserve"><value>Некорректный файл запуска</value></data>
+  <data name="Dialog_ExecutableOutsideSources" xml:space="preserve"><value>Выберите файл запуска из папки игры, включённого мода или созданной рабочей папки профиля.</value></data>
+  <data name="Dialog_NoModFolder" xml:space="preserve"><value>Нет папки мода</value></data>
+  <data name="Dialog_AddModBeforeExecutable" xml:space="preserve"><value>Сначала добавьте мод в профиль, затем выберите файл запуска из его папки.</value></data>
+  <data name="Dialog_ExecutableOutsideModTitle" xml:space="preserve"><value>Файл вне папки мода</value></data>
+  <data name="Dialog_ExecutableOutsideMod" xml:space="preserve"><value>Файл запуска должен находиться внутри папки автономного мода.</value></data>
+  <data name="Dialog_SelectGogFolder" xml:space="preserve"><value>Выберите папку S.T.A.L.K.E.R. GOG</value></data>
+  <data name="Log_HungProcessesTerminated" xml:space="preserve"><value>Зависшие процессы запуска завершены пользователем.</value></data>
+  <data name="Log_NoLaunchProcesses" xml:space="preserve"><value>Активные процессы запуска для завершения не найдены.</value></data>
+  <data name="Log_LaunchReadinessFailedFormat" xml:space="preserve"><value>Не удалось проверить готовность запуска: {0}</value></data>
+  <data name="Log_PlaytimeRecordedFormat" xml:space="preserve"><value>Время игры записано: {0} (всего: {1})</value></data>
+  <data name="Log_PlaytimeFailedFormat" xml:space="preserve"><value>Не удалось учесть время игры: {0}</value></data>
+  <data name="Log_ExitCodeFormat" xml:space="preserve"><value> Код выхода: {0}.</value></data>
+  <data name="Log_GameExitedEarlyFormat" xml:space="preserve"><value>Игра завершилась вскоре после запуска ({0}).{1}</value></data>
+  <data name="Log_GameExitedCodeFormat" xml:space="preserve"><value>Процесс игры завершился с кодом {0}.</value></data>
+  <data name="Log_LatestGameLogFormat" xml:space="preserve"><value>Последний журнал игры: {0}</value></data>
+  <data name="Log_CrashDumpDetectedFormat" xml:space="preserve"><value>Обнаружен аварийный дамп: {0}</value></data>
+  <data name="Log_NoModsFound" xml:space="preserve"><value>В выбранной папке моды не найдены.</value></data>
+  <data name="Log_ScanResultsFormat" xml:space="preserve"><value>Результаты поиска: всего {0}, выбрано {1}.</value></data>
+  <data name="Log_NoModsSelected" xml:space="preserve"><value>Моды не выбраны.</value></data>
+  <data name="Log_ModsAddedFromScanFormat" xml:space="preserve"><value>Добавлено модов из результатов поиска: {0}.</value></data>
+  <data name="Log_ScanFailedFormat" xml:space="preserve"><value>Не удалось выполнить поиск модов: {0}</value></data>
+  <data name="Log_ModAddedFormat" xml:space="preserve"><value>Мод добавлен: {0}</value></data>
+  <data name="Log_ArchiveCancelledFormat" xml:space="preserve"><value>Установка архива мода отменена: папка уже существует: {0}</value></data>
+  <data name="Log_ArchiveInstalledFormat" xml:space="preserve"><value>Архив мода установлен: {0} → {1}</value></data>
+  <data name="Log_ArchiveFailedFormat" xml:space="preserve"><value>Не удалось установить архив мода: {0}</value></data>
+  <data name="Log_ExecutableSelectedSourceFormat" xml:space="preserve"><value>Выбран файл запуска: {0}, источник: {1}</value></data>
+  <data name="Log_ExecutableSelectedFormat" xml:space="preserve"><value>Выбран файл запуска: {0}</value></data>
+  <data name="Log_StandaloneExeDetectedFormat" xml:space="preserve"><value>Автоматически найден файл запуска автономной сборки: {0}</value></data>
+  <data name="Log_ModsRemovedFormat" xml:space="preserve"><value>Убрано модов: {0}.</value></data>
+  <data name="Log_ModRemovedFormat" xml:space="preserve"><value>Мод убран: {0}</value></data>
+  <data name="Log_OpenModFolderFailedFormat" xml:space="preserve"><value>Не удалось открыть папку мода: {0}</value></data>
+  <data name="Log_SettingsImportedAutomaticallyFormat" xml:space="preserve"><value>Настройки импортированы автоматически: {0}</value></data>
+  <data name="Log_AutomaticSettingsImportFailedFormat" xml:space="preserve"><value>Не удалось автоматически импортировать настройки: {0}</value></data>
+  <data name="Log_StartupRefreshFailedFormat" xml:space="preserve"><value>Не удалось обновить регистрацию автозапуска Windows: {0}</value></data>
+  <data name="Log_SettingsLoaded" xml:space="preserve"><value>Настройки загружены.</value></data>
+  <data name="Log_SettingsLoadBlockedFormat" xml:space="preserve"><value>Загрузка настроек заблокирована: {0}</value></data>
+  <data name="Log_SettingsLoadFailedFormat" xml:space="preserve"><value>Не удалось загрузить настройки: {0}</value></data>
+  <data name="Log_SettingsSaved" xml:space="preserve"><value>Настройки сохранены.</value></data>
+  <data name="Log_SettingsSaveFailedFormat" xml:space="preserve"><value>Не удалось сохранить настройки: {0}</value></data>
+  <data name="Log_SettingsRecoveryFormat" xml:space="preserve"><value>Восстановление настроек: {0} → {1}. {2}</value></data>
+  <data name="Log_ExecutableDetectedAfterFormat" xml:space="preserve"><value>После {0} автоматически найден файл запуска: {1}, источник: {2}</value></data>
+  <data name="Log_ProfileExportedFormat" xml:space="preserve"><value>Профиль экспортирован: {0}</value></data>
+  <data name="Log_ExportFailedFormat" xml:space="preserve"><value>Не удалось экспортировать профиль: {0}</value></data>
+  <data name="Log_ProfileImportedFormat" xml:space="preserve"><value>Профиль импортирован: {0}</value></data>
+  <data name="Log_ImportFailedFormat" xml:space="preserve"><value>Не удалось импортировать профиль: {0}</value></data>
+  <data name="Log_SettingsImportedFormat" xml:space="preserve"><value>Настройки импортированы: {0}</value></data>
+  <data name="Log_SettingsImportFailedFormat" xml:space="preserve"><value>Не удалось импортировать настройки: {0}</value></data>
+  <data name="Log_GameFolderSelectedFormat" xml:space="preserve"><value>Выбрана папка игры: {0}</value></data>
+  <data name="Log_ProfileCreatedFormat" xml:space="preserve"><value>Профиль создан: {0}</value></data>
+  <data name="Log_Mo2ProfileImportedFormat" xml:space="preserve"><value>Профиль MO2 импортирован: {0}</value></data>
+  <data name="Log_Mo2ImportRolledBackFormat" xml:space="preserve"><value>Импорт MO2 отменён с откатом изменений: {0}</value></data>
+  <data name="Log_ProfileDuplicatedFormat" xml:space="preserve"><value>Профиль скопирован: {0}</value></data>
+  <data name="Log_ProfileDeletedFormat" xml:space="preserve"><value>Профиль удалён: {0}</value></data>
+  <data name="Log_ProfileWorkspaceDeletedFormat" xml:space="preserve"><value>Профиль и рабочая папка удалены: {0}</value></data>
+  <data name="Log_ProfileDeleteFailedFormat" xml:space="preserve"><value>Не удалось удалить профиль: {0}</value></data>
+  <data name="Log_OpenProfileFolderFailedFormat" xml:space="preserve"><value>Не удалось открыть папку профиля: {0}</value></data>
+  <data name="Mod_DefaultName" xml:space="preserve"><value>Новый мод</value></data>
+  <data name="Mod_DefaultNameFormat" xml:space="preserve"><value>Мод {0}</value></data>
+  <data name="Profile_DefaultNameFormat" xml:space="preserve"><value>Профиль {0}</value></data>
+  <data name="Profile_DefaultDescription" xml:space="preserve"><value>Профиль модификации S.T.A.L.K.E.R.</value></data>
+  <data name="Progress_LegacySaveHookRemoved" xml:space="preserve"><value>Устаревший обработчик автозагрузки сохранений удалён из рабочей папки профиля.</value></data>
+  <data name="Progress_FsgameDetectedFormat" xml:space="preserve"><value>Файл fsgame.ltx найден в «{0}»; эта папка используется как рабочая.</value></data>
+  <data name="Progress_FsgameRewritten" xml:space="preserve"><value>Файл fsgame.ltx изменён для профильных сохранений и журналов.</value></data>
+  <data name="Progress_KeepingExistingUserLtx" xml:space="preserve"><value>Существующий профильный user.ltx сохранён.</value></data>
+  <data name="Progress_KeepingModifiedUserLtx" xml:space="preserve"><value>Изменённый профильный user.ltx сохранён.</value></data>
+  <data name="Progress_UserLtxPreparedFormat" xml:space="preserve"><value>Профильный user.ltx подготовлен из {0}: {1}</value></data>
+  <data name="Progress_UserLtxCopyFailedFormat" xml:space="preserve"><value>Предупреждение: не удалось скопировать user.ltx из {0}: {1}</value></data>
+  <data name="Progress_ShaderCachePreparedFormat" xml:space="preserve"><value>Кэш шейдеров профиля подготовлен: скопировано файлов из игры и модов: {0:N0}.</value></data>
+  <data name="Progress_ShaderCacheFailedFormat" xml:space="preserve"><value>Предупреждение: не удалось скопировать в профиль файлов кэша шейдеров: {0:N0}.</value></data>
+  <data name="Progress_UsvfsDiagnosticMovedFormat" xml:space="preserve"><value>Диагностический журнал USVFS перемещён из папки игровых журналов: {0}</value></data>
+  <data name="Progress_UsvfsManualEngineFormat" xml:space="preserve"><value>Движок Anomaly для USVFS выбран вручную: {0} запускается напрямую вместо AnomalyLauncher.exe.</value></data>
+  <data name="Progress_UsvfsExecutableSourceFormat" xml:space="preserve"><value>Источник файла запуска USVFS: {0}.</value></data>
+  <data name="Progress_UsvfsRuntimeVersionFormat" xml:space="preserve"><value>Среда выполнения USVFS: {0}.</value></data>
+  <data name="Progress_UsvfsArchitectureX86" xml:space="preserve"><value>Архитектура USVFS: цель x86 через процесс той же разрядности.</value></data>
+  <data name="Progress_UsvfsArchitectureX64" xml:space="preserve"><value>Архитектура USVFS: цель x64.</value></data>
+  <data name="Progress_UsvfsRootBase" xml:space="preserve"><value>Корень USVFS: физическая папка игры для базового файла запуска.</value></data>
+  <data name="Progress_UsvfsRootAnomalyBootstrap" xml:space="preserve"><value>Корень USVFS: изолированная загрузочная папка лаунчера Anomaly.</value></data>
+  <data name="Progress_UsvfsRootAnomaly" xml:space="preserve"><value>Корень USVFS: физическая папка Anomaly.</value></data>
+  <data name="Progress_UsvfsRootXray" xml:space="preserve"><value>Корень USVFS: физическая папка игры для архивов X-Ray.</value></data>
+  <data name="Progress_UsvfsRootIsolated" xml:space="preserve"><value>Корень USVFS: изолированная загрузочная папка.</value></data>
+  <data name="Progress_UsvfsVirtualRootFormat" xml:space="preserve"><value>Виртуальный корень USVFS: {0}</value></data>
+  <data name="Progress_UsvfsOverlayPlanFormat" xml:space="preserve"><value>План наложения USVFS: сопоставлений — {0:N0}; диагностический журнал: {1}</value></data>
+  <data name="Progress_UsvfsMappedFormat" xml:space="preserve"><value>USVFS подключил источник: {0}</value></data>
+  <data name="Progress_UsvfsStartingFormat" xml:space="preserve"><value>USVFS запускает: {0}</value></data>
+  <data name="Progress_UsvfsX86StartingFormat" xml:space="preserve"><value>Хост USVFS x86 запускает: {0}</value></data>
+  <data name="Progress_UsvfsBootstrapFormat" xml:space="preserve"><value>Загрузочная папка файла запуска USVFS подготовлена: связанных файлов — {0:N0}, папка: {1}</value></data>
+  <data name="Progress_UsvfsAnomalyBootstrapFormat" xml:space="preserve"><value>Загрузочная папка лаунчера Anomaly для USVFS подготовлена: связанных файлов — {0:N0}, папка: {1}</value></data>
+  <data name="Progress_StandaloneReadyFormat" xml:space="preserve"><value>Автономная сборка готова: {0}</value></data>
+  <data name="Error_UnsupportedAnomalyRendererFormat" xml:space="preserve"><value>Неподдерживаемый рендерер Anomaly: {0}</value></data>
+  <data name="Error_UsvfsLaunchPlanNotReady" xml:space="preserve"><value>План запуска USVFS не готов.</value></data>
+  <data name="Error_UsvfsExecutableNotReady" xml:space="preserve"><value>Файл запуска USVFS не готов.</value></data>
+  <data name="Error_LaunchExecutablePathEmpty" xml:space="preserve"><value>Путь к файлу запуска не может быть пустым.</value></data>
+  <data name="Error_LaunchWorkingDirectoryEmpty" xml:space="preserve"><value>Рабочая папка запуска не может быть пустой.</value></data>
+  <data name="Error_FileNotFound" xml:space="preserve"><value>Файл не найден.</value></data>
+  <data name="Error_StandaloneLayerPlanUnsupported" xml:space="preserve"><value>Автономный профиль не может использовать план слоёв связанной рабочей папки.</value></data>
+  <data name="Error_OutsideManagedWorkspaceFormat" xml:space="preserve"><value>Операция вне управляемой рабочей папки заблокирована: {0}</value></data>
+  <data name="Update_UnexpectedReleaseUrl" xml:space="preserve"><value>GitHub вернул неожиданный адрес релиза.</value></data>
+  <data name="Update_MissingPropertyFormat" xml:space="preserve"><value>В ответе GitHub отсутствует поле «{0}».</value></data>
+  <data name="Update_InvalidValueFormat" xml:space="preserve"><value>Некорректное значение «{0}»: {1}</value></data>
+  <data name="Archive_NotFound" xml:space="preserve"><value>Архив не найден.</value></data>
+  <data name="Archive_SupportedFormats" xml:space="preserve"><value>Поддерживаются архивы модов ZIP, 7Z и RAR.</value></data>
+  <data name="Archive_Empty" xml:space="preserve"><value>Архив не содержит файлов.</value></data>
+  <data name="Archive_PasswordProtected" xml:space="preserve"><value>Архивы с паролем не поддерживаются.</value></data>
+  <data name="Archive_TooManyFilesFormat" xml:space="preserve"><value>Архив содержит больше {0:N0} файлов.</value></data>
+  <data name="Archive_InvalidEntryPathFormat" xml:space="preserve"><value>Некорректный путь элемента архива: {0}</value></data>
+  <data name="Archive_EntryPathMissing" xml:space="preserve"><value>В архиве есть элемент без пути.</value></data>
+  <data name="Archive_UnsafeEntryPathFormat" xml:space="preserve"><value>Небезопасный путь элемента архива: {0}</value></data>
+  <data name="Archive_EntryOutsideDestinationFormat" xml:space="preserve"><value>Элемент архива выходит за пределы папки назначения: {0}</value></data>
+  <data name="Archive_InvalidInstallFolder" xml:space="preserve"><value>Некорректное имя папки установки архива.</value></data>
+  <data name="Archive_InstallFolderUnavailableFormat" xml:space="preserve"><value>Папка установки архива недоступна: {0}</value></data>
+  <data name="Archive_AllocateFolderFailedFormat" xml:space="preserve"><value>Не удалось создать папку установки для «{0}».</value></data>
+  <data name="Archive_NotEnoughSpace" xml:space="preserve"><value>Недостаточно свободного места для распаковки архива.</value></data>
+  <data name="Archive_NotEnoughSafeSpace" xml:space="preserve"><value>Недостаточно свободного места для безопасной распаковки архива.</value></data>
+  <data name="Error_NativeOperationFailedFormat" xml:space="preserve"><value>Сбой системной операции: {0}.</value></data>
+  <data name="Error_UsvfsParametersNull" xml:space="preserve"><value>USVFS вернул пустые параметры создания.</value></data>
+  <data name="Error_WindowsDidNotStartGame" xml:space="preserve"><value>Windows не запустила процесс игры.</value></data>
+  <data name="Error_LinkedBackendRequired" xml:space="preserve"><value>Не зарегистрирована система запуска через связанную рабочую папку.</value></data>
+  <data name="Error_StandaloneNoValidMod" xml:space="preserve"><value>В автономном профиле нет включённого мода с доступной папкой.</value></data>
+  <data name="Error_SoundFormatMismatch" xml:space="preserve"><value>Звуки интерфейса должны иметь одинаковый аудиоформат.</value></data>
+  <data name="Error_SoundMissingFormat" xml:space="preserve"><value>Звуковой ресурс «{0}» не найден.</value></data>
+  <data name="Error_UsvfsBootstrapMissing" xml:space="preserve"><value>Не удалось создать загрузочный файл запуска USVFS.</value></data>
+  <data name="Error_UsvfsAnomalyBootstrapMissing" xml:space="preserve"><value>Не удалось создать загрузочный файл лаунчера Anomaly для USVFS.</value></data>
+  <data name="Error_UsvfsLayeredOnly" xml:space="preserve"><value>USVFS доступен только для обычных многослойных профилей.</value></data>
+  <data name="Error_UsvfsPlanRequired" xml:space="preserve"><value>Для USVFS требуются FileLayerPlan и OverlayManifest.</value></data>
+  <data name="Error_UsvfsCreateFailed" xml:space="preserve"><value>USVFS не создал экземпляр виртуальной файловой системы.</value></data>
+  <data name="Error_UsvfsMappingKindFormat" xml:space="preserve"><value>Неподдерживаемый тип сопоставления USVFS: {0}.</value></data>
+  <data name="Error_UsvfsMapFailedFormat" xml:space="preserve"><value>USVFS не смог сопоставить «{0}» с «{1}».</value></data>
+  <data name="Error_UsvfsSessionAlreadyStarted" xml:space="preserve"><value>В этом сеансе USVFS процесс уже запущен.</value></data>
+  <data name="Error_UsvfsSessionNotStarted" xml:space="preserve"><value>В этом сеансе USVFS процесс ещё не запущен.</value></data>
+  <data name="Error_GameFolderNotFoundFormat" xml:space="preserve"><value>Папка игры не найдена: {0}</value></data>
+  <data name="Error_WorkspaceDeleteOutsideRootFormat" xml:space="preserve"><value>Удаление рабочей папки вне управляемых каталогов лаунчера заблокировано: {0}</value></data>
+  <data name="Error_WorkspaceMarkerMissingFormat" xml:space="preserve"><value>Удаление рабочей папки профиля без защитного маркера заблокировано: {0}</value></data>
+  <data name="Error_WorkspaceProfilePathFormat" xml:space="preserve"><value>Рабочая папка профиля должна быть отдельной папкой внутри управляемого каталога лаунчера: {0}</value></data>
+  <data name="Error_WorkspaceParentMissingFormat" xml:space="preserve"><value>У рабочей папки нет родительского каталога: {0}</value></data>
+  <data name="Error_WorkspaceLegacyDestinationExistsFormat" xml:space="preserve"><value>Нельзя перенести старую рабочую папку: папка назначения уже существует: {0}</value></data>
+  <data name="Error_StandaloneNoModHelp" xml:space="preserve"><value>В автономном профиле нет включённого мода с доступной папкой. Добавьте и включите мод.</value></data>
+  <data name="Error_StandaloneExeMissingFormat" xml:space="preserve"><value>В папке автономного мода не найден файл запуска: {0}</value></data>
+  <data name="Error_ModFolderNotFoundFormat" xml:space="preserve"><value>Папка мода не найдена: {0}</value></data>
+  <data name="Error_UsvfsX86SessionAlreadyStarted" xml:space="preserve"><value>В этом сеансе USVFS x86 процесс уже запущен.</value></data>
+  <data name="Error_UsvfsX86HostMissing" xml:space="preserve"><value>Хост USVFS x86 не найден.</value></data>
+  <data name="Error_UsvfsX86HostStartFailed" xml:space="preserve"><value>Хост USVFS x86 не запустился.</value></data>
+  <data name="Error_UsvfsX86SessionNotStarted" xml:space="preserve"><value>В этом сеансе USVFS x86 процесс ещё не запущен.</value></data>
+  <data name="App_SplashLogFailedFormat" xml:space="preserve"><value>Не удалось загрузить заставку: {0}</value></data>
+  <data name="App_UiStartupLogFailedFormat" xml:space="preserve"><value>Не удалось запустить интерфейс лаунчера: {0}</value></data>
+  <data name="Log_UpdateAvailableFormat" xml:space="preserve"><value>Доступно обновление лаунчера: {0}.</value></data>
+  <data name="Log_AutomaticUpdateFailedFormat" xml:space="preserve"><value>Не удалось автоматически проверить обновления: {0}</value></data>
+  <data name="Dialog_ExecutableFilter" xml:space="preserve"><value>Исполняемые файлы (*.exe)|*.exe|Все файлы (*.*)|*.*</value></data>
+  <data name="Scan_DetectedArchiveFormat" xml:space="preserve"><value>архив: {0}</value></data>
+  <data name="Archive_XrayRootMissing" xml:space="preserve"><value>В архиве не найден распознаваемый корень мода X-Ray (gamedata, bin, db, patches или gamedata.db*).</value></data>
+  <data name="Archive_MultipleRoots" xml:space="preserve"><value>В архиве найдено несколько возможных корней мода. Перепакуйте его или добавьте распакованную папку вручную.</value></data>
+  <data name="Fsgame_AppDataMissingFormat" xml:space="preserve"><value>В fsgame.ltx отсутствует $app_data_root$: {0}. Изоляция сохранений и журналов профиля не гарантируется, поэтому запуск заблокирован.</value></data>
+  <data name="Health_StatusHealthy" xml:space="preserve"><value>Готово</value></data>
+  <data name="Health_StatusWarning" xml:space="preserve"><value>Предупреждение</value></data>
+  <data name="Health_StatusError" xml:space="preserve"><value>Ошибка</value></data>
+  <data name="Writable_LocalizationReason" xml:space="preserve"><value>Anomaly и некоторые сборки X-Ray записывают выбор языка в gamedata.</value></data>
+  <data name="Writable_OptionsReason" xml:space="preserve"><value>Anomaly записывает состояние лаунчера и параметров среды в axr_options.ltx.</value></data>
+  <data name="Log_TrayPanelFailedFormat" xml:space="preserve"><value>Сбой панели трея: {0}</value></data>
+  <data name="Log_ReleasePageFailedFormat" xml:space="preserve"><value>Не удалось открыть страницу релиза лаунчера: {0}</value></data>
+  <data name="Error_UsvfsAnomalyRootFormat" xml:space="preserve"><value>Лаунчер Anomaly для USVFS должен находиться в корне игры: {0}</value></data>
+  <data name="Error_UsvfsAsciiPath" xml:space="preserve"><value>USVFS требует путь к рабочей папке профиля только из символов ASCII. Перенесите её в путь без нелатинских символов.</value></data>
+  <data name="Error_UsvfsBackendUnavailableFormat" xml:space="preserve"><value>Официальный бэкенд USVFS недоступен. Поместите полный комплект USVFS x64/x86 и StalkerModLauncher.UsvfsX86Host.exe рядом с лаунчером либо задайте {0}=1 для сборки разработчика.</value></data>
+  <data name="Error_NoExecutablesInWorkspace" xml:space="preserve"><value>В собранной рабочей папке не найдено исполняемых файлов.</value></data>
+  <data name="Error_ExecutablesFoundFormat" xml:space="preserve"><value>Найдены исполняемые файлы: {0}</value></data>
+  <data name="Error_ProfileExeAfterBuildFormat" xml:space="preserve"><value>После сборки рабочей папки не найден файл запуска профиля: {0}. {1}</value></data>
+  <data name="Safety_PathEmptyFormat" xml:space="preserve"><value>Поле «{0}» не заполнено.</value></data>
+  <data name="Safety_PathRelativeFormat" xml:space="preserve"><value>Поле «{0}» должно содержать относительный путь внутри рабочей папки профиля.</value></data>
+  <data name="Safety_PathEscapesFormat" xml:space="preserve"><value>Путь «{0}» не должен выходить за пределы рабочей папки профиля.</value></data>
+  <data name="Safety_PathInvalidCharsFormat" xml:space="preserve"><value>Путь «{0}» содержит недопустимые символы.</value></data>
+  <data name="Safety_PathInsideFormat" xml:space="preserve"><value>Путь «{0}» должен находиться внутри: {1}</value></data>
+  <data name="Safety_LayerFile" xml:space="preserve"><value>файл слоя</value></data>
+  <data name="Safety_ProfileFsgame" xml:space="preserve"><value>профильный fsgame.ltx</value></data>
+  <data name="Safety_LegacyProfileData" xml:space="preserve"><value>старые данные профиля</value></data>
+  <data name="Safety_AutomaticExecutable" xml:space="preserve"><value>автоматически выбранный файл запуска</value></data>
+  <data name="Safety_LaunchExecutable" xml:space="preserve"><value>файл запуска</value></data>
+  <data name="Safety_ExcludedModFile" xml:space="preserve"><value>исключённый файл мода</value></data>
+  <data name="Safety_ProfileWritableFile" xml:space="preserve"><value>изменяемый игровой файл профиля</value></data>
+  <data name="Safety_UsvfsExecutable" xml:space="preserve"><value>файл запуска USVFS</value></data>
+  <data name="Safety_UsvfsAnomalyLauncher" xml:space="preserve"><value>лаунчер Anomaly для USVFS</value></data>
+  <data name="Safety_AnomalyLauncherProfileFile" xml:space="preserve"><value>профильный файл лаунчера Anomaly</value></data>
+  <data name="Safety_BootstrapFsgame" xml:space="preserve"><value>загрузочный fsgame.ltx</value></data>
+  <data name="Safety_UsvfsWorkingDirectory" xml:space="preserve"><value>рабочая папка USVFS</value></data>
+  <data name="Safety_UsvfsWritableFile" xml:space="preserve"><value>изменяемый файл USVFS</value></data>
+  <data name="Safety_ModFile" xml:space="preserve"><value>файл мода</value></data>
+  <data name="Safety_WorkspaceFile" xml:space="preserve"><value>файл рабочей папки</value></data>
+  <data name="Safety_ProfileShaderCacheFile" xml:space="preserve"><value>файл кэша шейдеров профиля</value></data>
+  <data name="Safety_PinnedExecutable" xml:space="preserve"><value>закреплённый файл запуска</value></data>
+  <data name="Layer_ExcludedFallbackFormat" xml:space="preserve"><value>резервный источник исключённого файла: {0}</value></data>
+  <data name="Layer_UsvfsLogCollector" xml:space="preserve"><value>сборщик журнала USVFS</value></data>
+  <data name="Update_CurrentVersionValue" xml:space="preserve"><value>текущая версия приложения</value></data>
+  <data name="Update_LatestTagValue" xml:space="preserve"><value>тег последнего релиза GitHub</value></data>
+</root>

@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -132,12 +133,12 @@ public static class UsvfsMappingPlanBuilder
     {
         foreach (var writableFile in manifest.WritableFiles.Where(file => File.Exists(file.StoragePath)))
         {
-            FileSystemSafety.EnsureRelativePath(writableFile.RelativePath, "USVFS writable file");
+            FileSystemSafety.EnsureRelativePath(writableFile.RelativePath, Strings.Safety_UsvfsWritableFile);
             operations.Add(new UsvfsMappingOperation(
                 UsvfsMappingKind.File,
                 Path.GetFullPath(writableFile.StoragePath),
                 Path.Combine(virtualRoot, writableFile.RelativePath),
-                "profile writable files",
+                Strings.Layer_ProfileWritableData,
                 int.MaxValue - 1,
                 MonitorChanges: false,
                 CreateTarget: false));
@@ -157,7 +158,7 @@ public static class UsvfsMappingPlanBuilder
                 UsvfsMappingKind.DirectoryStatic,
                 overwriteRoot,
                 virtualRoot,
-                "profile overwrite",
+                Strings.Layer_ProfileOverwrite,
                 int.MaxValue,
                 MonitorChanges: true,
                 CreateTarget: true));
@@ -177,7 +178,7 @@ public static class UsvfsMappingPlanBuilder
                 Directory.Exists(entry) ? UsvfsMappingKind.DirectoryStatic : UsvfsMappingKind.File,
                 entry,
                 Path.Combine(virtualRoot, Path.GetFileName(entry)),
-                "profile overwrite",
+                Strings.Layer_ProfileOverwrite,
                 int.MaxValue,
                 MonitorChanges: true,
                 CreateTarget: true));
@@ -194,7 +195,7 @@ public static class UsvfsMappingPlanBuilder
             .Distinct(StringComparer.OrdinalIgnoreCase);
         foreach (var relativePath in excludedPaths)
         {
-            FileSystemSafety.EnsureRelativePath(relativePath, "Excluded mod file");
+            FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_ExcludedModFile);
             var provider = layerPlan.FindFinalFile(relativePath);
             if (provider is null)
             {
@@ -205,7 +206,7 @@ public static class UsvfsMappingPlanBuilder
                 UsvfsMappingKind.File,
                 Path.GetFullPath(provider.FullPath),
                 Path.Combine(virtualRoot, relativePath),
-                $"excluded file fallback: {provider.SourceName}",
+                LocalizedText.Format(Strings.Layer_ExcludedFallbackFormat, provider.SourceName),
                 int.MaxValue - 2,
                 MonitorChanges: false,
                 CreateTarget: false));

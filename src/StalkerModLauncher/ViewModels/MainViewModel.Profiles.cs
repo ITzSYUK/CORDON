@@ -1,5 +1,6 @@
 using Microsoft.Win32;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -31,8 +32,8 @@ public sealed partial class MainViewModel
 
         var dialog = new SaveFileDialog
         {
-            Title = "Экспорт профиля",
-            Filter = "Profile files (*.stalkerprofile)|*.stalkerprofile|JSON files (*.json)|*.json|All files (*.*)|*.*",
+            Title = Strings.Profile_ExportTitle,
+            Filter = Strings.Dialog_ProfileFilter,
             FileName = $"{profile.Name}.stalkerprofile"
         };
 
@@ -44,12 +45,12 @@ public sealed partial class MainViewModel
         try
         {
             ProfileTransferService.Export(dialog.FileName, profile);
-            Log($"Profile exported: {profile.Name}");
+            Log(LocalizedText.Format(Strings.Log_ProfileExportedFormat, profile.Name));
         }
         catch (Exception ex)
         {
-            Log($"Export failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError("Ошибка экспорта", ex.Message);
+            Log(LocalizedText.Format(Strings.Log_ExportFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Profile_ExportError, ex.Message);
         }
     }
 
@@ -57,8 +58,8 @@ public sealed partial class MainViewModel
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Импорт профиля",
-            Filter = "Profile files (*.stalkerprofile)|*.stalkerprofile|JSON files (*.json)|*.json|All files (*.*)|*.*",
+            Title = Strings.Profile_ImportTitle,
+            Filter = Strings.Dialog_ProfileFilter,
             Multiselect = false
         };
 
@@ -75,20 +76,20 @@ public sealed partial class MainViewModel
             Profiles.Add(profile);
             SelectedProfile = profile;
             _ = SaveAsync();
-            Log($"Profile imported: {profile.Name}");
+            Log(LocalizedText.Format(Strings.Log_ProfileImportedFormat, profile.Name));
         }
         catch (Exception ex)
         {
-            Log($"Import failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError("Ошибка импорта", ex.Message);
+            Log(LocalizedText.Format(Strings.Log_ImportFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Profile_ImportError, ex.Message);
         }
     }
 
     private async Task ImportSettingsAsync()
     {
         var path = DialogService.PickFile(
-            "Импорт настроек CORDON",
-            "Файлы JSON (*.json)|*.json");
+            Strings.Settings_ImportTitle,
+            Strings.Common_JsonFilter);
         if (path is null)
         {
             return;
@@ -99,18 +100,18 @@ public sealed partial class MainViewModel
             _autoSave.Cancel();
             await _settingsStore.ImportAsync(path);
             await LoadAsync();
-            Log($"Settings imported: {path}");
+            Log(LocalizedText.Format(Strings.Log_SettingsImportedFormat, path));
         }
         catch (Exception ex)
         {
-            Log($"Settings import failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError("Не удалось импортировать настройки", ex.Message);
+            Log(LocalizedText.Format(Strings.Log_SettingsImportFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Settings_ImportFailed, ex.Message);
         }
     }
 
     private void ChooseGameFolder()
     {
-        var selected = DialogService.PickFolder("Choose S.T.A.L.K.E.R. GOG folder", GameInstallPath);
+        var selected = DialogService.PickFolder(Strings.Dialog_SelectGogFolder, GameInstallPath);
         if (selected is null)
         {
             return;
@@ -119,7 +120,7 @@ public sealed partial class MainViewModel
         _lastBrowsedGamePath = selected;
         GameInstallPath = selected;
         RefreshValidation();
-        Log($"Game folder selected: {selected}");
+        Log(LocalizedText.Format(Strings.Log_GameFolderSelectedFormat, selected));
     }
 
     private void NewProfile()
@@ -133,7 +134,7 @@ public sealed partial class MainViewModel
         profile.Name = ProfileManager.GetUniqueName(Profiles, profile.Name);
         Profiles.Add(profile);
         SelectedProfile = profile;
-        Log($"Profile created: {profile.Name}");
+        Log(LocalizedText.Format(Strings.Log_ProfileCreatedFormat, profile.Name));
         _ = SaveAsync();
     }
 
@@ -150,7 +151,7 @@ public sealed partial class MainViewModel
         try
         {
             await SaveOrThrowAsync();
-            Log($"MO2 profile imported: {profile.Name}");
+            Log(LocalizedText.Format(Strings.Log_Mo2ProfileImportedFormat, profile.Name));
             return true;
         }
         catch (Exception ex)
@@ -159,10 +160,10 @@ public sealed partial class MainViewModel
             SelectedProfile = previousSelection is not null && Profiles.Contains(previousSelection)
                 ? previousSelection
                 : Profiles.FirstOrDefault();
-            Log($"MO2 import rolled back: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+            Log(LocalizedText.Format(Strings.Log_Mo2ImportRolledBackFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
             _dialogService.ShowError(
-                "Не удалось перенести сборку MO2",
-                $"Профиль не создан, изменения отменены.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
+                Strings.Mo2_TransferFailed,
+                LocalizedText.Format(Strings.Mo2_TransferCancelledFormat, Environment.NewLine, ex.Message));
             return false;
         }
     }
@@ -182,7 +183,7 @@ public sealed partial class MainViewModel
         var profile = _profileManager.Duplicate(Profiles, sourceProfile);
         Profiles.Add(profile);
         SelectedProfile = profile;
-        Log($"Profile duplicated: {profile.Name}");
+        Log(LocalizedText.Format(Strings.Log_ProfileDuplicatedFormat, profile.Name));
         _ = SaveAsync();
     }
 
@@ -199,9 +200,9 @@ public sealed partial class MainViewModel
         }
 
         var deleteMessage = profile.IsStandalone
-            ? $"Удалить профиль '{profile.Name}'? Файлы мода останутся нетронутыми."
-            : $"Удалить профиль '{profile.Name}' вместе с его рабочей папкой, сохранениями и логами?";
-        if (!DialogService.Confirm("Удалить профиль", deleteMessage))
+            ? LocalizedText.Format(Strings.Profile_DeleteStandaloneFormat, profile.Name)
+            : LocalizedText.Format(Strings.Profile_DeleteRegularFormat, profile.Name);
+        if (!DialogService.Confirm(Strings.Profile_DeleteTitle, deleteMessage))
         {
             return;
         }
@@ -209,13 +210,15 @@ public sealed partial class MainViewModel
         try
         {
             SelectedProfile = _profileManager.Delete(Profiles, profile);
-            Log(profile.IsStandalone ? $"Profile deleted: {profile.Name}" : $"Profile and workspace deleted: {profile.Name}");
+            Log(LocalizedText.Format(
+                profile.IsStandalone ? Strings.Log_ProfileDeletedFormat : Strings.Log_ProfileWorkspaceDeletedFormat,
+                profile.Name));
             _ = SaveAsync();
         }
         catch (Exception ex)
         {
-            Log($"Profile delete failed: {ex.Message}", LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError("Не удалось удалить профиль", ex.Message);
+            Log(LocalizedText.Format(Strings.Log_ProfileDeleteFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Profile_DeleteFailed, ex.Message);
         }
     }
 
@@ -229,14 +232,14 @@ public sealed partial class MainViewModel
         try
         {
             var path = _profileManager.GetProfileFolderPath(SelectedProfile)
-                ?? throw new DirectoryNotFoundException("Папка включённой автономной сборки не найдена.");
+                ?? throw new DirectoryNotFoundException(Strings.Profile_StandaloneFolderMissing);
 
             Directory.CreateDirectory(path);
             DialogService.OpenFolder(path);
         }
         catch (Exception ex)
         {
-            Log($"Could not open profile folder: {ex.Message}", LauncherLogLevel.ErrorsOnly);
+            Log(LocalizedText.Format(Strings.Log_OpenProfileFolderFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
         }
     }
 

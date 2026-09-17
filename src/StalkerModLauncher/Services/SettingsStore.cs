@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -93,7 +94,7 @@ public sealed class SettingsStore : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!string.Equals(Path.GetExtension(sourcePath), ".json", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidDataException("Выберите файл настроек с расширением .json.");
+            throw new InvalidDataException(Strings.Settings_JsonRequired);
         }
 
         await _ioLock.WaitAsync();
@@ -105,10 +106,10 @@ public sealed class SettingsStore : IDisposable
             {
                 if (imported.Kind == SettingsFileLoadKind.Unavailable)
                 {
-                    throw new SettingsPersistenceException(imported.Error ?? "Файл настроек недоступен.");
+                    throw new SettingsPersistenceException(imported.Error ?? Strings.Settings_FileUnavailable);
                 }
 
-                throw new InvalidDataException(imported.Error ?? "Выбранный файл не содержит настроек CORDON.");
+                throw new InvalidDataException(imported.Error ?? Strings.Settings_FileInvalid);
             }
 
             await SaveSnapshotCoreAsync(SerializeSettings(imported.Settings));
@@ -208,7 +209,7 @@ public sealed class SettingsStore : IDisposable
                 ? new SettingsFileLoadResult(
                     path,
                     null,
-                    "Файл содержит пустой JSON-документ.",
+                Strings.Settings_EmptyJson,
                     SettingsFileLoadKind.Corrupted)
                 : new SettingsFileLoadResult(
                     path,
@@ -221,7 +222,7 @@ public sealed class SettingsStore : IDisposable
             return new SettingsFileLoadResult(
                 path,
                 null,
-                $"Некорректный JSON: {ex.Message}",
+                LocalizedText.Format(Strings.Settings_InvalidJsonFormat, ex.Message),
                 SettingsFileLoadKind.Corrupted);
         }
         catch (IOException ex)
@@ -229,7 +230,7 @@ public sealed class SettingsStore : IDisposable
             return new SettingsFileLoadResult(
                 path,
                 null,
-                $"Ошибка чтения: {ex.Message}",
+                LocalizedText.Format(Strings.Settings_ReadErrorFormat, ex.Message),
                 SettingsFileLoadKind.Unavailable);
         }
         catch (UnauthorizedAccessException ex)
@@ -237,7 +238,7 @@ public sealed class SettingsStore : IDisposable
             return new SettingsFileLoadResult(
                 path,
                 null,
-                $"Нет доступа к файлу: {ex.Message}",
+                LocalizedText.Format(Strings.Settings_AccessDeniedFormat, ex.Message),
                 SettingsFileLoadKind.Unavailable);
         }
     }
@@ -278,7 +279,7 @@ public sealed class SettingsStore : IDisposable
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             throw new SettingsPersistenceException(
-                "Не удалось безопасно сохранить повреждённый файл настроек. Исходный файл не будет перезаписан.",
+                    Strings.Settings_DamagedBackupFailed,
                 ex);
         }
 
@@ -294,7 +295,7 @@ public sealed class SettingsStore : IDisposable
         }
 
         throw new SettingsPersistenceException(
-            $"Файл настроек временно недоступен и не будет изменён: {unavailable.Path}. {unavailable.Error}");
+                LocalizedText.Format(Strings.Settings_TemporarilyUnavailableFormat, unavailable.Path, unavailable.Error));
     }
 
     private void EnsureWritesAllowed()
@@ -302,7 +303,7 @@ public sealed class SettingsStore : IDisposable
         if (_writeBlockReason is not null)
         {
             throw new SettingsPersistenceException(
-                $"Запись настроек заблокирована до успешной повторной загрузки. {_writeBlockReason}");
+            LocalizedText.Format(Strings.Settings_WriteBlockedFormat, _writeBlockReason));
         }
     }
 

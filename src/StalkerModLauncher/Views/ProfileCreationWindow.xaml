@@ -1,7 +1,8 @@
 <Window x:Class="StalkerModLauncher.Views.ProfileCreationWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Создание профиля"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="{x:Static res:Strings.Creation_Title}"
         Width="760"
         Height="590"
         MinWidth="650"
@@ -103,7 +104,7 @@
                 <Button Command="{Binding BackCommand}"
                         Width="42"
                         Height="34"
-                        ToolTip="Назад"
+                        ToolTip="{x:Static res:Strings.Common_Back}"
                         Margin="0,0,8,0">
                     <Viewbox Width="13"
                              Height="19">
@@ -115,7 +116,7 @@
                 <Button Command="{Binding NextCommand}"
                         Width="42"
                         Height="34"
-                        ToolTip="Далее"
+                        ToolTip="{x:Static res:Strings.Common_Next}"
                         Margin="0,0,8,0">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
@@ -134,7 +135,7 @@
                               Stretch="Uniform"/>
                     </Viewbox>
                 </Button>
-                <Button Content="Создать"
+                <Button Content="{x:Static res:Strings.Common_Create}"
                         Command="{Binding FinishCommand}">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
@@ -176,7 +177,7 @@
                                      IsChecked="{Binding IsOverlay}"
                                      Style="{StaticResource ProfileTypeCardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Игра с модами"
+                                <TextBlock Text="{x:Static res:Strings.Creation_ModdedGame}"
                                            FontSize="18"
                                            FontWeight="SemiBold"/>
                             </StackPanel>
@@ -186,13 +187,13 @@
                                      IsChecked="{Binding IsStandalone}"
                                      Style="{StaticResource ProfileTypeCardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Автономная сборка"
+                                <TextBlock Text="{x:Static res:Strings.Profile_Standalone}"
                                            FontSize="18"
                                            FontWeight="SemiBold"/>
                             </StackPanel>
                         </RadioButton>
                     </Grid>
-                    <TextBlock Text="Название профиля"
+                    <TextBlock Text="{x:Static res:Strings.Creation_ProfileName}"
                                Foreground="{StaticResource MutedTextBrush}"
                                Margin="0,22,0,0"/>
                     <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,5,0,0"/>
@@ -224,7 +225,7 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0"
-                                   Text="Папка базовой игры"
+                                   Text="{x:Static res:Strings.Creation_BaseGameFolder}"
                                    Foreground="{StaticResource MutedTextBrush}"/>
                         <Grid Grid.Row="1"
                               Margin="0,5,0,14"
@@ -233,7 +234,7 @@
                               PreviewDrop="GamePath_OnPreviewDrop">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <TextBox Text="{Binding GamePath}" IsReadOnly="True"/>
-                            <Button Grid.Column="1" Content="Выбрать" Command="{Binding BrowseGameCommand}" Margin="8,0,0,0"/>
+                            <Button Grid.Column="1" Content="{x:Static res:Strings.Common_ChooseBaseGame}" Command="{Binding BrowseGameCommand}" Margin="8,0,0,0"/>
                         </Grid>
                         <Grid Grid.Row="2"
                               Margin="0,0,0,5">
@@ -241,10 +242,10 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Моды"
+                            <TextBlock Text="{x:Static res:Strings.Mod_Heading}"
                                        Foreground="{StaticResource MutedTextBrush}"/>
                             <TextBlock Grid.Column="1"
-                                       Text="Ниже — больший приоритет"
+                                       Text="{x:Static res:Strings.Creation_PriorityHint}"
                                        Foreground="{StaticResource DisabledTextBrush}"
                                        FontSize="11"/>
                         </Grid>
@@ -284,7 +285,7 @@
                                                                    ToolTip="{Binding SourcePath}"/>
                                                     </StackPanel>
                                                     <Button Grid.Column="1"
-                                                            Content="Убрать"
+                                                            Content="{x:Static res:Strings.Common_Remove}"
                                                             Command="{Binding DataContext.RemoveModCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding}"
                                                             MinWidth="68"/>
@@ -306,7 +307,7 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <TextBlock Text="Перетащите сюда папки модов или нажмите «Добавить мод»."
+                                    <TextBlock Text="{x:Static res:Strings.Creation_EmptyModsHint}"
                                                Foreground="{StaticResource MutedTextBrush}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
@@ -316,7 +317,7 @@
                             </Grid>
                         </Border>
                         <Button Grid.Row="4"
-                                Content="Добавить мод"
+                                Content="{x:Static res:Strings.Creation_AddMod}"
                                 Command="{Binding AddModCommand}"
                                 HorizontalAlignment="Left"/>
                     </Grid>
@@ -328,7 +329,7 @@
                                 <Style.Triggers><DataTrigger Binding="{Binding IsStandalone}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <TextBlock Text="Выберите или переместите мышкой корневую директорию мода или игры"
+                        <TextBlock Text="{x:Static res:Strings.Creation_StandalonePrompt}"
                                    FontSize="15"
                                    FontWeight="SemiBold"
                                    Margin="0,0,0,14"/>
@@ -341,7 +342,7 @@
                                      MinHeight="38"
                                      VerticalContentAlignment="Center"/>
                             <Button Grid.Column="1"
-                                    Content="Выбрать папку"
+                                    Content="{x:Static res:Strings.Creation_SelectFolder}"
                                     Command="{Binding BrowseStandaloneCommand}"
                                     Margin="8,0,0,0"/>
                         </Grid>
@@ -370,18 +371,18 @@
                                        Margin="0,5,0,0"/>
                         </StackPanel>
                     </Border>
-                    <TextBlock Text="Файл запуска" Foreground="{StaticResource MutedTextBrush}"/>
+                    <TextBlock Text="{x:Static res:Strings.Creation_Executable}" Foreground="{StaticResource MutedTextBrush}"/>
                     <Grid Margin="0,5,0,14">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <TextBox Text="{Binding ExecutableRelativePath, UpdateSourceTrigger=PropertyChanged}"/>
-                        <Button Grid.Column="1" Content="Обзор..." Command="{Binding BrowseExecutableCommand}" Margin="8,0,0,0"/>
+                        <Button Grid.Column="1" Content="{x:Static res:Strings.Common_Browse}" Command="{Binding BrowseExecutableCommand}" Margin="8,0,0,0"/>
                     </Grid>
                     <TextBlock Text="{Binding ExecutableDetectionMessage}"
                                Foreground="{StaticResource AccentBrush}"
                                Margin="0,-8,0,14"/>
-                    <TextBlock Text="Параметры запуска" Foreground="{StaticResource MutedTextBrush}"/>
+                    <TextBlock Text="{x:Static res:Strings.Creation_LaunchArguments}" Foreground="{StaticResource MutedTextBrush}"/>
                     <TextBox Text="{Binding LaunchArguments, UpdateSourceTrigger=PropertyChanged}" Margin="0,5,0,14"/>
-                    <TextBlock Text="Перед запуском лаунчер ещё раз проверит итоговый бинарник, источники файлов и workspace."
+                    <TextBlock Text="{x:Static res:Strings.Creation_LaunchValidationHint}"
                                Foreground="{StaticResource MutedTextBrush}"/>
                 </StackPanel>
             </Grid>

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -26,7 +27,7 @@ public sealed class ProfileLauncher : IProfileLauncher
         _backends = backends.ToDictionary(backend => backend.Kind);
         if (!_backends.ContainsKey(LaunchBackendKind.LinkedWorkspace))
         {
-            throw new ArgumentException("The linked workspace launch backend must be registered.", nameof(backends));
+            throw new ArgumentException(Strings.Error_LinkedBackendRequired, nameof(backends));
         }
 
         _launchPlanExecutor = launchPlanExecutor ?? new LaunchPlanExecutor();
@@ -47,10 +48,8 @@ public sealed class ProfileLauncher : IProfileLauncher
             profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem &&
             ex is not OperationCanceledException)
         {
-            progress.Report($"Ошибка запуска USVFS: {ex.Message}");
-            progress.Report(
-                "Профиль не переключён на Workspace автоматически. " +
-                "Чтобы повторить запуск через Workspace, выберите этот режим в настройках профиля.");
+            progress.Report(LocalizedText.Format(Strings.Launch_UsvfsFailedFormat, ex.Message));
+            progress.Report(Strings.Launch_UsvfsNoAutoFallback);
             throw;
         }
     }
@@ -62,10 +61,10 @@ public sealed class ProfileLauncher : IProfileLauncher
         CancellationToken cancellationToken)
     {
         var backend = ResolveBackend(profile.LaunchBackendKind);
-        progress.Report($"Режим запуска: {(backend.Kind == LaunchBackendKind.VirtualFileSystem ? "USVFS" : "Workspace")}.");
+        progress.Report(LocalizedText.Format(Strings.Launch_BackendFormat, backend.Kind == LaunchBackendKind.VirtualFileSystem ? "USVFS" : "Workspace"));
         var context = CreateBackendContext(gamePath, profile, progress);
         var plan = await backend.PrepareAsync(context, progress, cancellationToken);
-        progress.Report($"Запуск: {plan.ExecutablePath}");
+        progress.Report(LocalizedText.Format(Strings.Launch_ExecutableFormat, plan.ExecutablePath));
         try
         {
             var process = _launchPlanExecutor.Start(plan, progress);
@@ -124,8 +123,8 @@ public sealed class ProfileLauncher : IProfileLauncher
         }
 
         throw new InvalidOperationException(kind == LaunchBackendKind.VirtualFileSystem
-            ? "Для профиля выбран USVFS, но его компоненты недоступны. Установите сборку лаунчера с файлами usvfs_x64.dll и usvfs_proxy_x64.exe либо выберите Workspace в настройках профиля."
-            : $"Система запуска профиля недоступна: {kind}.");
+            ? Strings.Launch_UsvfsUnavailable
+            : LocalizedText.Format(Strings.Launch_BackendUnavailableFormat, kind));
     }
 
     private static async Task<int> WaitForProcessExitAsync(Process process)

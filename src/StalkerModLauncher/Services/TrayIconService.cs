@@ -2,6 +2,7 @@ using System.Drawing;
 using System.ComponentModel;
 using Forms = System.Windows.Forms;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.ViewModels;
 using StalkerModLauncher.Views;
 
@@ -48,17 +49,17 @@ public sealed class TrayIconService : IDisposable
     public void ShowUpdateAvailable(LauncherUpdateResult result)
     {
         _releaseUrl = result.ReleaseUrl;
-        _notifyIcon.BalloonTipTitle = "Доступно обновление";
-        _notifyIcon.BalloonTipText = $"Версия {result.LatestVersion} готова к загрузке.";
+        _notifyIcon.BalloonTipTitle = Strings.Tray_UpdateAvailable;
+        _notifyIcon.BalloonTipText = LocalizedText.Format(Strings.Tray_UpdateReadyFormat, result.LatestVersion);
         _notifyIcon.ShowBalloonTip(5000);
     }
 
     private Forms.ContextMenuStrip CreateContextMenu()
     {
         var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("Открыть лаунчер", null, (_, _) => _openLauncher());
+        menu.Items.Add(Strings.Main_OpenLauncher, null, (_, _) => _openLauncher());
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Выход", null, (_, _) => _exitLauncher());
+        menu.Items.Add(Strings.Tray_Exit, null, (_, _) => _exitLauncher());
         return menu;
     }
 
@@ -111,11 +112,11 @@ public sealed class TrayIconService : IDisposable
         catch (Exception ex)
         {
             _applicationLogService.Write(
-                $"Tray panel failed: {ex}",
+                LocalizedText.Format(Strings.Log_TrayPanelFailedFormat, ex),
                 messageLevel: LauncherLogLevel.ErrorsOnly);
             System.Windows.MessageBox.Show(
-                "Не удалось открыть панель быстрого запуска. Подробности записаны в журнал.",
-                "Ошибка панели трея",
+                Strings.Tray_OpenFailed,
+                Strings.Tray_ErrorTitle,
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Error);
         }
@@ -135,11 +136,11 @@ public sealed class TrayIconService : IDisposable
         catch (Exception ex)
         {
             _applicationLogService.Write(
-                $"Opening launcher release page failed: {ex}",
+                LocalizedText.Format(Strings.Log_ReleasePageFailedFormat, ex),
                 messageLevel: LauncherLogLevel.ErrorsOnly);
             System.Windows.MessageBox.Show(
-                "Не удалось открыть страницу релиза. Подробности записаны в журнал.",
-                "Ошибка открытия ссылки",
+                Strings.Tray_ReleaseOpenFailed,
+                Strings.Tray_LinkErrorTitle,
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Error);
         }

@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -6,6 +7,7 @@ public static class AppSettingsNormalizer
 {
     public static AppSettings Normalize(AppSettings settings)
     {
+        var schemaVersion = settings.SchemaVersion;
         settings.LastBrowsedGamePath ??= string.Empty;
         settings.DiscordClientId ??= string.Empty;
         if (string.IsNullOrWhiteSpace(settings.LastBrowsedGamePath) &&
@@ -15,6 +17,9 @@ public static class AppSettingsNormalizer
         }
 
         settings.LegacyGameInstallPath = null;
+        settings.UiLanguage = schemaVersion < 9
+            ? UiLanguage.Russian
+            : UiLanguage.Normalize(settings.UiLanguage);
         settings.SchemaVersion = AppSettings.CurrentSchemaVersion;
         if (!Enum.IsDefined(settings.LogLevel))
         {
@@ -35,7 +40,9 @@ public static class AppSettingsNormalizer
         {
             var profile = settings.Profiles[profileIndex];
             profile.Id = EnsureUniqueId(profile.Id, profileIds);
-            profile.Name = string.IsNullOrWhiteSpace(profile.Name) ? $"Profile {profileIndex + 1}" : profile.Name.Trim();
+            profile.Name = string.IsNullOrWhiteSpace(profile.Name)
+                ? LocalizedText.Format(Strings.Profile_DefaultNameFormat, profileIndex + 1)
+                : profile.Name.Trim();
             profile.Description ??= string.Empty;
             profile.LaunchArguments ??= string.Empty;
             profile.ExecutableRelativePath = string.IsNullOrWhiteSpace(profile.ExecutableRelativePath)
@@ -90,11 +97,11 @@ public static class AppSettingsNormalizer
         try
         {
             var name = Path.GetFileName(sourcePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-            return string.IsNullOrWhiteSpace(name) ? $"Mod {order}" : name;
+            return string.IsNullOrWhiteSpace(name) ? LocalizedText.Format(Strings.Mod_DefaultNameFormat, order) : name;
         }
         catch
         {
-            return $"Mod {order}";
+            return LocalizedText.Format(Strings.Mod_DefaultNameFormat, order);
         }
     }
 
