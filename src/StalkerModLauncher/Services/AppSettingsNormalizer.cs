@@ -69,17 +69,40 @@ public static class AppSettingsNormalizer
             }
 
             profile.IsRunning = false;
+            profile.CollapsedModGroups = (profile.CollapsedModGroups ?? [])
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => name.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
             profile.Mods ??= [];
             profile.Mods = new System.Collections.ObjectModel.ObservableCollection<ModEntry>(
                 profile.Mods.Where(mod => mod is not null));
 
             var modIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var closedModGroups = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var activeModGroup = string.Empty;
             var order = 1;
             foreach (var mod in profile.Mods)
             {
                 mod.Id = EnsureUniqueId(mod.Id, modIds);
                 mod.SourcePath ??= string.Empty;
-                mod.GroupName ??= string.Empty;
+                var groupName = mod.GroupName?.Trim() ?? string.Empty;
+                if (!groupName.Equals(activeModGroup, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (activeModGroup.Length > 0)
+                    {
+                        closedModGroups.Add(activeModGroup);
+                    }
+
+                    if (groupName.Length > 0 && closedModGroups.Contains(groupName))
+                    {
+                        groupName = string.Empty;
+                    }
+
+                    activeModGroup = groupName;
+                }
+
+                mod.GroupName = groupName;
                 mod.ExcludedFiles ??= [];
                 mod.Name = string.IsNullOrWhiteSpace(mod.Name)
                     ? GetFallbackModName(mod.SourcePath, order)

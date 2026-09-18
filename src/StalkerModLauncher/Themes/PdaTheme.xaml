@@ -352,6 +352,7 @@
                             SnapsToDevicePixels="True">
                         <ContentPresenter ContentSource="Header"
                                           RecognizesAccessKey="True"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>

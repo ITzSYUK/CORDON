@@ -391,7 +391,7 @@
                                 CornerRadius="2"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter ContentSource="Header"
-                                              HorizontalAlignment="Left"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>

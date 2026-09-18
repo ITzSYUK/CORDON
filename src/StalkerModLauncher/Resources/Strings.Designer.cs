@@ -122,7 +122,15 @@ public static class Strings
     public static string Mod_Conflicts => Get();
     public static string Mod_DragTooltip => Get();
     public static string Mod_Enabled => Get();
-    public static string Mod_GroupFormat => Get();
+    public static string Mod_CreateGroup => Get();
+    public static string Mod_DeleteGroup => Get();
+    public static string Mod_GroupNameExists => Get();
+    public static string Mod_GroupNamePrompt => Get();
+    public static string Mod_MoveToGroup => Get();
+    public static string Mod_MoveToGroupEnd => Get();
+    public static string Mod_MoveToGroupStart => Get();
+    public static string Mod_NoGroup => Get();
+    public static string Mod_RenameGroup => Get();
     public static string Mod_Heading => Get();
     public static string Mod_InstallInNewFolder => Get();
     public static string Mod_InstalledHeading => Get();

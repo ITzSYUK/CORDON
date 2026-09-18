@@ -31,6 +31,7 @@ public sealed class ModProfile : ObservableObject
     private bool _isRunning;
     private bool _hasLaunchError;
     private string _launchErrorSummary = string.Empty;
+    private List<string> _collapsedModGroups = [];
     private ObservableCollection<ModEntry> _mods = new();
 
     public string Id
@@ -218,5 +219,11 @@ public sealed class ModProfile : ObservableObject
     {
         get => _mods;
         set => SetProperty(ref _mods, value);
+    }
+
+    public List<string> CollapsedModGroups
+    {
+        get => _collapsedModGroups;
+        set => SetProperty(ref _collapsedModGroups, value ?? []);
     }
 }

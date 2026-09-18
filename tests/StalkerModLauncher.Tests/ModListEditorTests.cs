@@ -83,10 +83,13 @@ public sealed class ModListEditorTests
     {
         var profile = CreateProfile("First", "Second", "Third", "Fourth", "Fifth");
         var selected = new[] { profile.Mods[1], profile.Mods[3] };
+        var collectionChanges = 0;
+        profile.Mods.CollectionChanged += (_, _) => collectionChanges++;
 
         var moved = ModListEditor.MoveManyToInsertionIndex(profile, selected, 5);
 
         Assert.True(moved);
+        Assert.Equal(selected.Length, collectionChanges);
         Assert.Equal(["First", "Third", "Fifth", "Second", "Fourth"], profile.Mods.Select(mod => mod.Name));
         Assert.Equal([1, 2, 3, 4, 5], profile.Mods.Select(mod => mod.Order));
     }
@@ -103,6 +106,49 @@ public sealed class ModListEditorTests
         Assert.True(ModListEditor.MoveManyToEnd(profile, selected));
         Assert.Equal(["First", "Third", "Fifth", "Second", "Fourth"], profile.Mods.Select(mod => mod.Name));
         Assert.Equal([1, 2, 3, 4, 5], profile.Mods.Select(mod => mod.Order));
+    }
+
+    [Fact]
+    public void CreateGroupMakesSelectedModsAContiguousBlock()
+    {
+        var profile = CreateProfile("First", "Second", "Third", "Fourth");
+
+        Assert.True(ModListEditor.CreateGroup(profile, [profile.Mods[1], profile.Mods[3]], "Gameplay"));
+
+        Assert.Equal(["First", "Second", "Fourth", "Third"], profile.Mods.Select(mod => mod.Name));
+        Assert.Equal(["", "Gameplay", "Gameplay", ""], profile.Mods.Select(mod => mod.GroupName));
+        Assert.False(ModListEditor.CreateGroup(profile, [profile.Mods[0]], "gameplay"));
+    }
+
+    [Fact]
+    public void MoveRenameAndDeleteGroupPreserveModPriorityRules()
+    {
+        var profile = CreateProfile("First", "Second", "Third", "Fourth");
+        profile.Mods[1].GroupName = "Gameplay";
+        profile.Mods[2].GroupName = "Gameplay";
+
+        Assert.True(ModListEditor.MoveToGroup(profile, [profile.Mods[3]], "Gameplay"));
+        Assert.Equal(["First", "Second", "Third", "Fourth"], profile.Mods.Select(mod => mod.Name));
+        Assert.Equal("Gameplay", profile.Mods[3].GroupName);
+        Assert.True(ModListEditor.RenameGroup(profile, "Gameplay", "Patches"));
+        Assert.Equal(["", "Patches", "Patches", "Patches"], profile.Mods.Select(mod => mod.GroupName));
+        Assert.True(ModListEditor.DeleteGroup(profile, "Patches"));
+        Assert.All(profile.Mods, mod => Assert.Equal(string.Empty, mod.GroupName));
+    }
+
+    [Fact]
+    public void ViewGroupKeysNeverCombineSeparatedPriorityRanges()
+    {
+        var profile = CreateProfile("First", "Second", "Third", "Fourth");
+        profile.Mods[0].GroupName = "Gameplay";
+        profile.Mods[1].GroupName = "Gameplay";
+        profile.Mods[3].GroupName = "Gameplay";
+
+        ModListEditor.UpdateViewGroupKeys(profile);
+
+        Assert.Equal(profile.Mods[0].ViewGroupKey, profile.Mods[1].ViewGroupKey);
+        Assert.NotEqual(profile.Mods[1].ViewGroupKey, profile.Mods[3].ViewGroupKey);
+        Assert.False(profile.Mods[2].ViewGroupKey.IsGroup);
     }
 
     private static ModProfile CreateProfile(params string[] names)

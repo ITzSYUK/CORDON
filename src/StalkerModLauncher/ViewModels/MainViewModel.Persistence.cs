@@ -246,6 +246,11 @@ public sealed partial class MainViewModel
             return;
         }
 
+        if (e.Action == NotifyCollectionChangedAction.Move && _profilesReorderingMods.Contains(profile))
+        {
+            return;
+        }
+
         SynchronizeModSubscriptions(profile);
         _validationCache.Remove(profile);
         _profilesRenumberingMods.Add(profile);
@@ -257,6 +262,7 @@ public sealed partial class MainViewModel
         {
             _profilesRenumberingMods.Remove(profile);
         }
+        ModListEditor.UpdateViewGroupKeys(profile);
 
         _automaticExecutableRefreshTimes[profile] = DateTime.UtcNow;
         RefreshAutomaticExecutableSelection(profile, Strings.Log_ReasonModListChanged);
@@ -338,7 +344,11 @@ public sealed partial class MainViewModel
             or nameof(ModEntry.OverlayDetails)
             or nameof(ModEntry.ConflictDisplay)
             or nameof(ModEntry.OverlaySummary)
-            or nameof(ModEntry.HasOverlayInfo))
+            or nameof(ModEntry.HasOverlayInfo)
+            or nameof(ModEntry.ViewGroupKey)
+            or nameof(ModEntry.ShowsGroupHeader)
+            or nameof(ModEntry.IsGroupCollapsed)
+            or nameof(ModEntry.IsVisibleInModList))
         {
             return;
         }
@@ -346,6 +356,20 @@ public sealed partial class MainViewModel
         if (sender is not ModEntry changedMod || !_modOwners.TryGetValue(changedMod, out var profile))
         {
             return;
+        }
+
+        if (_profilesReorderingMods.Contains(profile) &&
+            e.PropertyName is nameof(ModEntry.Order) or nameof(ModEntry.GroupName))
+        {
+            return;
+        }
+
+        if (e.PropertyName == nameof(ModEntry.GroupName))
+        {
+            if (ReferenceEquals(profile, SelectedProfile))
+            {
+                RefreshFilteredModsView(refresh: true);
+            }
         }
 
         _validationCache.Remove(profile);

@@ -302,8 +302,54 @@
                                 Background="Transparent"
                                 BorderBrush="Transparent"
                                 BorderThickness="1">
-                            <Grid ClipToBounds="True">
-                                <Grid Margin="{TemplateBinding Padding}">
+                            <StackPanel>
+                                <Border x:Name="ModGroupHeader"
+                                        MinHeight="26"
+                                        Padding="8,2"
+                                        HorizontalAlignment="Stretch"
+                                        Background="{DynamicResource PanelAltBrush}"
+                                        BorderBrush="{DynamicResource StrokeBrush}"
+                                        BorderThickness="0,1"
+                                        Cursor="Hand"
+                                        Visibility="Collapsed">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border x:Name="GroupToggleCircle"
+                                                Width="16"
+                                                Height="16"
+                                                Margin="0,0,7,0"
+                                                VerticalAlignment="Center"
+                                                Background="{DynamicResource AccentBrush}"
+                                                CornerRadius="8">
+                                            <Path x:Name="GroupToggleChevron"
+                                                  Width="10"
+                                                  Height="10"
+                                                  Data="M2,4 L5,7 L8,4"
+                                                  Stroke="{DynamicResource FieldBackgroundBrush}"
+                                                  StrokeThickness="2"
+                                                  StrokeStartLineCap="Round"
+                                                  StrokeEndLineCap="Round"
+                                                  Stretch="None"
+                                                  RenderTransformOrigin="0.5,0.5">
+                                                <Path.RenderTransform>
+                                                    <RotateTransform Angle="180"/>
+                                                </Path.RenderTransform>
+                                            </Path>
+                                        </Border>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding GroupName}"
+                                                   Foreground="{DynamicResource AccentBrush}"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <Grid x:Name="ModBody" ClipToBounds="True">
+                                <Grid x:Name="RowContent" Margin="{TemplateBinding Padding}">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
@@ -338,6 +384,14 @@
                                         Background="{DynamicResource ModActionShadeBrush}"
                                         Opacity="0"
                                         IsHitTestVisible="False"/>
+
+                                <Border x:Name="GroupGuide"
+                                        Width="2"
+                                        Margin="8,0,0,0"
+                                        HorizontalAlignment="Left"
+                                        Background="{DynamicResource AccentBrush}"
+                                        IsHitTestVisible="False"
+                                        Visibility="Collapsed"/>
 
                                 <Grid x:Name="ActionRail"
                                       Width="38"
@@ -396,7 +450,8 @@
                                         </Border>
                                     </Grid>
                                 </Grid>
-                            </Grid>
+                                </Grid>
+                            </StackPanel>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -407,6 +462,21 @@
                             <DataTrigger Binding="{Binding IsConflictRelated}" Value="True">
                                 <Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ModRelatedBrush}"/>
                                 <Setter TargetName="RowChrome" Property="BorderBrush" Value="{DynamicResource ModRelatedStrokeBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ViewGroupKey.IsGroup}" Value="True">
+                                <Setter TargetName="RowContent" Property="Margin" Value="22,4,4,4"/>
+                                <Setter TargetName="GroupGuide" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ShowsGroupHeader}" Value="True">
+                                <Setter TargetName="ModGroupHeader" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsGroupCollapsed}" Value="True">
+                                <Setter TargetName="ModBody" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="GroupToggleChevron" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <RotateTransform/>
+                                    </Setter.Value>
+                                </Setter>
                             </DataTrigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="RowChrome" Property="Background" Value="{DynamicResource ModSelectionBrush}"/>

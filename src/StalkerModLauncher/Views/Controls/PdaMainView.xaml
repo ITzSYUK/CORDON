@@ -674,7 +674,7 @@
                 <ContentControl x:Name="PageHost" Visibility="Collapsed"/>
 
                 <Border x:Name="InlineErrorPanel"
-                        Margin="10"
+                        Margin="18,10"
                         VerticalAlignment="Bottom"
                         Style="{DynamicResource ModArchiveProgressPanelStyle}"
                         Visibility="Collapsed"

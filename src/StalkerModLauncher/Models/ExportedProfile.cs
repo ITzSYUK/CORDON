@@ -16,6 +16,7 @@ public sealed class ExportedProfile
     public string WorkingDirectoryRelative { get; set; } = string.Empty;
     public string GameInstallPath { get; set; } = string.Empty;
     public string Mo2OverwritePath { get; set; } = string.Empty;
+    public List<string> CollapsedModGroups { get; set; } = new();
     public List<ExportedMod> Mods { get; set; } = new();
 }
 

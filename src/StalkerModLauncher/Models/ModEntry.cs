@@ -10,6 +10,10 @@ public sealed class ModEntry : ObservableObject
     private string _name = Strings.Mod_DefaultName;
     private string _sourcePath = string.Empty;
     private string _groupName = string.Empty;
+    private ModGroupKey _viewGroupKey = ModGroupKey.Ungrouped(string.Empty);
+    private bool _showsGroupHeader;
+    private bool _isGroupCollapsed;
+    private bool _isVisibleInModList = true;
     private bool _isEnabled = true;
     private List<string> _excludedFiles = [];
     private ModConflictKind _conflictKind;
@@ -48,7 +52,35 @@ public sealed class ModEntry : ObservableObject
     public string GroupName
     {
         get => _groupName;
-        set => SetProperty(ref _groupName, value);
+        set => SetProperty(ref _groupName, value ?? string.Empty);
+    }
+
+    [JsonIgnore]
+    public ModGroupKey ViewGroupKey
+    {
+        get => _viewGroupKey;
+        internal set => SetProperty(ref _viewGroupKey, value);
+    }
+
+    [JsonIgnore]
+    public bool ShowsGroupHeader
+    {
+        get => _showsGroupHeader;
+        internal set => SetProperty(ref _showsGroupHeader, value);
+    }
+
+    [JsonIgnore]
+    public bool IsGroupCollapsed
+    {
+        get => _isGroupCollapsed;
+        internal set => SetProperty(ref _isGroupCollapsed, value);
+    }
+
+    [JsonIgnore]
+    public bool IsVisibleInModList
+    {
+        get => _isVisibleInModList;
+        internal set => SetProperty(ref _isVisibleInModList, value);
     }
 
     public bool IsEnabled
@@ -258,4 +290,11 @@ public sealed class ModEntry : ObservableObject
         set => SetProperty(ref _order, value);
     }
 
+}
+
+public sealed record ModGroupKey(string Id, string Name, bool IsGroup)
+{
+    public static ModGroupKey Ungrouped(string modId) => new($"mod:{modId}", string.Empty, false);
+
+    public static ModGroupKey Group(string firstModId, string name) => new($"group:{firstModId}", name, true);
 }

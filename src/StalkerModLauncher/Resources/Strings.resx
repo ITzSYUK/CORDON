@@ -111,7 +111,15 @@
   <data name="Mod_Conflicts" xml:space="preserve"><value>Conflicts</value></data>
   <data name="Mod_DragTooltip" xml:space="preserve"><value>Drag mods between rows; lower entries have higher priority</value></data>
   <data name="Mod_Enabled" xml:space="preserve"><value>On</value></data>
-  <data name="Mod_GroupFormat" xml:space="preserve"><value>Group: {0}</value></data>
+  <data name="Mod_CreateGroup" xml:space="preserve"><value>Create group...</value></data>
+  <data name="Mod_DeleteGroup" xml:space="preserve"><value>Delete group</value></data>
+  <data name="Mod_GroupNameExists" xml:space="preserve"><value>A group with this name already exists.</value></data>
+  <data name="Mod_GroupNamePrompt" xml:space="preserve"><value>Group name:</value></data>
+  <data name="Mod_MoveToGroup" xml:space="preserve"><value>Move to group</value></data>
+  <data name="Mod_MoveToGroupEnd" xml:space="preserve"><value>Move to group end</value></data>
+  <data name="Mod_MoveToGroupStart" xml:space="preserve"><value>Move to group start</value></data>
+  <data name="Mod_NoGroup" xml:space="preserve"><value>No group</value></data>
+  <data name="Mod_RenameGroup" xml:space="preserve"><value>Rename group...</value></data>
   <data name="Mod_Heading" xml:space="preserve"><value>Mods</value></data>
   <data name="Mod_InstallInNewFolder" xml:space="preserve"><value>Install in a new folder</value></data>
   <data name="Mod_InstalledHeading" xml:space="preserve"><value>MOD INSTALLED</value></data>

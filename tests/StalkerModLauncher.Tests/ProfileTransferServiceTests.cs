@@ -27,6 +27,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
             UsvfsExecutableOverrideRelativePath = @"bin\AnomalyDX9AVX.exe",
             GameInstallPath = @"D:\Games\Stalker",
             WorkspacePath = @"D:\Workspaces\Zona",
+            CollapsedModGroups = ["Gameplay"],
             IsRunning = true,
             TotalPlaytimeSeconds = 3600,
             LastPlayedAt = DateTime.Now
@@ -35,6 +36,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
         {
             Name = "Main",
             SourcePath = @"D:\Mods\Zona",
+            GroupName = "Gameplay",
             IsEnabled = true,
             Order = 1
         });
@@ -47,6 +49,8 @@ public sealed class ProfileTransferServiceTests : IDisposable
         Assert.Equal(source.FsgameSourcePath, imported.FsgameSourcePath);
         Assert.Equal(source.UsvfsExecutableOverrideRelativePath, imported.UsvfsExecutableOverrideRelativePath);
         Assert.Equal(source.Mods[0].SourcePath, imported.Mods[0].SourcePath);
+        Assert.Equal("Gameplay", imported.Mods[0].GroupName);
+        Assert.Equal(["Gameplay"], imported.CollapsedModGroups);
         Assert.Equal(1, imported.Mods[0].Order);
         Assert.NotEqual(source.Id, imported.Id);
         Assert.Empty(imported.WorkspacePath);

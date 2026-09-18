@@ -30,6 +30,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         new(ReferenceEqualityComparer.Instance);
     private readonly HashSet<ModProfile> _trackedProfiles = new(ReferenceEqualityComparer.Instance);
     private readonly HashSet<ModProfile> _profilesRenumberingMods = new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<ModProfile> _profilesReorderingMods = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<ModProfile, ObservableCollection<ModEntry>> _trackedModCollections =
         new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<ObservableCollection<ModEntry>, ModProfile> _modCollectionOwners =
@@ -303,7 +304,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             if (SetProperty(ref _modSearchText, value))
             {
-                FilteredMods?.Refresh();
+                RefreshFilteredModsView(refresh: true);
             }
         }
     }
@@ -315,7 +316,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             if (SetProperty(ref _selectedModFilter, value))
             {
-                FilteredMods?.Refresh();
+                RefreshFilteredModsView(refresh: true);
             }
         }
     }
@@ -563,17 +564,81 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
+        ModListEditor.UpdateViewGroupKeys(profile);
+        UpdateFilteredModsPresentation(profile);
         if (!_filteredModViews.TryGetValue(profile, out var view))
         {
             view = new ListCollectionView((IList)profile.Mods)
             {
-                Filter = item => item is ModEntry mod && MatchesModFilter(mod)
+                Filter = item => item is ModEntry { IsVisibleInModList: true }
             };
+            if (view.CanChangeLiveFiltering)
+            {
+                view.LiveFilteringProperties.Add(nameof(ModEntry.IsVisibleInModList));
+                view.IsLiveFiltering = true;
+            }
+
             _filteredModViews.Add(profile, view);
         }
 
         FilteredMods = view;
-        view.Refresh();
+        if (view.IsLiveFiltering != true)
+        {
+            view.Refresh();
+        }
+    }
+
+    private void RefreshFilteredModsView(bool refresh = false)
+    {
+        var profile = SelectedProfile;
+        if (profile is null)
+        {
+            return;
+        }
+
+        ModListEditor.UpdateViewGroupKeys(profile);
+        var changed = UpdateFilteredModsPresentation(profile);
+        if (changed && _filteredModViews.TryGetValue(profile, out var view) &&
+            (refresh || view.IsLiveFiltering != true))
+        {
+            view.Refresh();
+        }
+    }
+
+    private bool UpdateFilteredModsPresentation(ModProfile profile)
+    {
+        var filterActive = !string.IsNullOrWhiteSpace(ModSearchText) || SelectedModFilter != ModListFilter.All;
+        var collapsedGroups = filterActive
+            ? null
+            : profile.CollapsedModGroups.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        string? currentGroupId = null;
+        var headerAssigned = false;
+        var changed = false;
+
+        foreach (var mod in profile.Mods)
+        {
+            var matches = MatchesModFilter(mod);
+            var isGroup = mod.ViewGroupKey.IsGroup;
+            if (!isGroup || !mod.ViewGroupKey.Id.Equals(currentGroupId, StringComparison.Ordinal))
+            {
+                currentGroupId = isGroup ? mod.ViewGroupKey.Id : null;
+                headerAssigned = false;
+            }
+
+            var showsHeader = isGroup && matches && !headerAssigned;
+            headerAssigned |= showsHeader;
+            var isCollapsed = isGroup && collapsedGroups?.Contains(mod.ViewGroupKey.Name) == true;
+            var isVisible = matches && (!isCollapsed || showsHeader);
+
+            changed |= mod.ShowsGroupHeader != showsHeader ||
+                       mod.IsGroupCollapsed != isCollapsed ||
+                       mod.IsVisibleInModList != isVisible;
+            mod.ShowsGroupHeader = showsHeader;
+            mod.IsGroupCollapsed = isCollapsed;
+            mod.IsVisibleInModList = isVisible;
+        }
+
+        return changed;
     }
 
     private bool MatchesModFilter(ModEntry mod)

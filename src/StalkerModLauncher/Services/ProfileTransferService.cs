@@ -51,6 +51,7 @@ public static class ProfileTransferService
             WorkingDirectoryRelative = profile.WorkingDirectoryRelative,
             GameInstallPath = profile.GameInstallPath,
             Mo2OverwritePath = profile.Mo2OverwritePath,
+            CollapsedModGroups = [.. profile.CollapsedModGroups],
             Mods = profile.Mods.Select(mod => new ExportedMod
             {
                 Name = mod.Name,
@@ -80,7 +81,8 @@ public static class ProfileTransferService
             LaunchArguments = exported.LaunchArguments,
             WorkingDirectoryRelative = exported.WorkingDirectoryRelative,
             GameInstallPath = exported.GameInstallPath,
-            Mo2OverwritePath = exported.Mo2OverwritePath ?? string.Empty
+            Mo2OverwritePath = exported.Mo2OverwritePath ?? string.Empty,
+            CollapsedModGroups = exported.CollapsedModGroups ?? []
         };
 
         foreach (var exportedMod in exported.Mods.OrderBy(mod => mod.Order))
@@ -89,7 +91,7 @@ public static class ProfileTransferService
             {
                 Name = exportedMod.Name,
                 SourcePath = exportedMod.SourcePath,
-                GroupName = exportedMod.GroupName,
+                GroupName = exportedMod.GroupName ?? string.Empty,
                 IsEnabled = exportedMod.IsEnabled,
                 ExcludedFiles = exportedMod.ExcludedFiles ?? [],
                 Order = profile.Mods.Count + 1

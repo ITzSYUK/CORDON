@@ -46,7 +46,8 @@ public sealed class ProfileManager
             UsvfsExecutableOverrideRelativePath = source.UsvfsExecutableOverrideRelativePath,
             WorkingDirectoryRelative = source.WorkingDirectoryRelative,
             GameInstallPath = source.GameInstallPath,
-            Mo2OverwritePath = source.Mo2OverwritePath
+            Mo2OverwritePath = source.Mo2OverwritePath,
+            CollapsedModGroups = [.. source.CollapsedModGroups]
         };
 
         foreach (var sourceMod in source.Mods.OrderBy(mod => mod.Order))

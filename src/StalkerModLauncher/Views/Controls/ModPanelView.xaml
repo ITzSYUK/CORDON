@@ -286,7 +286,7 @@
                       PreviewMouseLeftButtonUp="ModsList_OnPreviewMouseLeftButtonUp"
                       PreviewMouseRightButtonDown="ModsList_OnPreviewMouseRightButtonDown"
                       MouseDoubleClick="ModsList_OnMouseDoubleClick"
-                      MouseMove="ModsList_OnMouseMove"
+                      PreviewMouseMove="ModsList_OnMouseMove"
                       ToolTip="{x:Static res:Strings.Mod_DragTooltip}"
                       ToolTipService.InitialShowDelay="600"
                       ToolTipService.BetweenShowDelay="0"
@@ -318,23 +318,7 @@
                         <GridViewColumn Header="{x:Static res:Strings.Common_Mod}" Width="220">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding GroupName, StringFormat={x:Static res:Strings.Mod_GroupFormat}}"
-                                                   Foreground="{StaticResource MutedTextBrush}"
-                                                   FontSize="10"
-                                                   TextTrimming="CharacterEllipsis">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding GroupName}" Value="">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </StackPanel>
+                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -449,6 +433,40 @@
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        Margin="0,1,0,0"/>
                         </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border x:Name="GroupNamePromptPanel"
+                        Grid.Row="2"
+                        Margin="0,8,0,0"
+                        Style="{DynamicResource ModArchiveProgressPanelStyle}"
+                        Visibility="Collapsed"
+                        Panel.ZIndex="30">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{x:Static res:Strings.Mod_GroupNamePrompt}"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource MutedTextBrush}"/>
+                        <TextBox x:Name="GroupNamePromptTextBox"
+                                 Grid.Column="1"
+                                 Margin="8,0"
+                                 VerticalContentAlignment="Center"
+                                 KeyDown="GroupNamePromptTextBox_OnKeyDown"/>
+                        <Button Grid.Column="2"
+                                Content="{x:Static res:Strings.Common_Cancel}"
+                                MinWidth="86"
+                                Margin="0,0,6,0"
+                                Click="CancelGroupNamePrompt_OnClick"/>
+                        <Button Grid.Column="3"
+                                Content="{x:Static res:Strings.Common_Done}"
+                                MinWidth="86"
+                                Style="{DynamicResource PrimaryButtonStyle}"
+                                Click="CompleteGroupNamePrompt_OnClick"/>
                     </Grid>
                 </Border>
             </Grid>

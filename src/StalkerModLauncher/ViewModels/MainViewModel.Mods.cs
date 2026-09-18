@@ -55,12 +55,16 @@ public sealed partial class MainViewModel
             return;
         }
 
+        ModListEditor.SetGroup([source], target.GroupName);
         SelectedMod = source;
+        CreateFilteredModsView();
         RaiseCommandStates();
     }
 
     public void MoveModToEnd(ModEntry source)
     {
+        var targetGroup = SelectedProfile?.Mods.LastOrDefault(mod => !ReferenceEquals(mod, source))?.GroupName
+                          ?? string.Empty;
         if (!CanEditSelectedProfile ||
             SelectedProfile is null ||
             !ModListEditor.MoveToEnd(SelectedProfile, source))
@@ -68,7 +72,9 @@ public sealed partial class MainViewModel
             return;
         }
 
+        ModListEditor.SetGroup([source], targetGroup);
         SelectedMod = source;
+        CreateFilteredModsView();
         RaiseCommandStates();
     }
 
@@ -77,51 +83,255 @@ public sealed partial class MainViewModel
         MoveModsToInsertionIndex([source], insertionIndex);
     }
 
-    public void MoveModsToInsertionIndex(IReadOnlyList<ModEntry> sources, int insertionIndex)
+    public void MoveModsToInsertionIndex(
+        IReadOnlyList<ModEntry> sources,
+        int insertionIndex,
+        string? targetGroupName = null,
+        bool preserveGroups = false)
     {
         if (!CanEditSelectedProfile ||
             SelectedProfile is null ||
-            sources.Count == 0 ||
-            !ModListEditor.MoveManyToInsertionIndex(SelectedProfile, sources, insertionIndex))
+            sources.Count == 0)
         {
             return;
         }
 
-        SelectedMod = sources[^1];
-        RecalculateModOverlayInfo();
+        var profile = SelectedProfile;
+        var moved = false;
+        var regrouped = false;
+        if (!RunModReorder(profile, () =>
+            {
+                moved = ModListEditor.MoveManyToInsertionIndex(profile, sources, insertionIndex);
+                regrouped = !preserveGroups && ModListEditor.SetGroup(sources, targetGroupName ?? string.Empty);
+                return moved || regrouped;
+            }))
+        {
+            return;
+        }
+
+        CompleteModReorder(profile, sources[^1], moved);
+    }
+
+    private bool RunModReorder(ModProfile profile, Func<bool> reorder)
+    {
+        _profilesReorderingMods.Add(profile);
+        try
+        {
+            return reorder();
+        }
+        finally
+        {
+            _profilesReorderingMods.Remove(profile);
+        }
+    }
+
+    private void CompleteModReorder(
+        ModProfile profile,
+        ModEntry selectedMod,
+        bool affectsOverlay)
+    {
+        RefreshFilteredModsView();
+
+        SelectedMod = selectedMod;
+        _validationCache.Remove(profile);
+        _automaticExecutableRefreshTimes[profile] = DateTime.UtcNow;
+        RefreshAutomaticExecutableSelection(profile, Strings.Log_ReasonModListChanged);
+        if (affectsOverlay)
+        {
+            RecalculateModOverlayInfo();
+        }
+
+        RefreshValidation();
         _autoSave.Schedule();
         RaiseCommandStates();
     }
 
     public void MoveModsToStart(IReadOnlyList<ModEntry> sources)
     {
-        MoveModsToBoundary(sources, moveToEnd: false);
+        MoveModsToBoundary(sources, moveToEnd: false, preserveGroups: false);
     }
 
     public void MoveModsToEnd(IReadOnlyList<ModEntry> sources)
     {
-        MoveModsToBoundary(sources, moveToEnd: true);
+        MoveModsToBoundary(sources, moveToEnd: true, preserveGroups: false);
     }
 
-    private void MoveModsToBoundary(IReadOnlyList<ModEntry> sources, bool moveToEnd)
+    public void MoveModsWithinGroupToBoundary(IReadOnlyList<ModEntry> sources, bool moveToEnd)
+    {
+        if (SelectedProfile is null || sources.Count == 0)
+        {
+            return;
+        }
+
+        var groupName = sources[0].GroupName;
+        var groupMods = GetModGroupMods(groupName);
+        if (groupName.Length == 0 || groupMods.Count == 0 ||
+            sources.Any(mod => !mod.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        var insertionIndex = SelectedProfile.Mods.IndexOf(moveToEnd ? groupMods[^1] : groupMods[0]);
+        MoveModsToInsertionIndex(
+            sources,
+            moveToEnd ? insertionIndex + 1 : insertionIndex,
+            preserveGroups: true);
+    }
+
+    public void MoveModGroupToStart(string groupName) =>
+        MoveModsToBoundary(GetModGroupMods(groupName), moveToEnd: false, preserveGroups: true);
+
+    public void MoveModGroupToEnd(string groupName) =>
+        MoveModsToBoundary(GetModGroupMods(groupName), moveToEnd: true, preserveGroups: true);
+
+    public void MoveModGroupByOffset(string groupName, int offset)
+    {
+        if (!CanEditSelectedProfile || SelectedProfile is null || offset is not (-1 or 1))
+        {
+            return;
+        }
+
+        var groups = GetModGroupNames();
+        var sourceIndex = groups.ToList().FindIndex(name =>
+            name.Equals(groupName, StringComparison.OrdinalIgnoreCase));
+        var targetIndex = sourceIndex + offset;
+        if (sourceIndex < 0 || targetIndex < 0 || targetIndex >= groups.Count)
+        {
+            return;
+        }
+
+        var targetMods = GetModGroupMods(groups[targetIndex]);
+        var insertionIndex = offset < 0
+            ? SelectedProfile.Mods.IndexOf(targetMods[0])
+            : SelectedProfile.Mods.IndexOf(targetMods[^1]) + 1;
+        MoveModsToInsertionIndex(
+            GetModGroupMods(groupName),
+            insertionIndex,
+            preserveGroups: true);
+    }
+
+    private void MoveModsToBoundary(IReadOnlyList<ModEntry> sources, bool moveToEnd, bool preserveGroups)
     {
         if (!CanEditSelectedProfile || SelectedProfile is null || sources.Count == 0)
         {
             return;
         }
 
-        var moved = moveToEnd
-            ? ModListEditor.MoveManyToEnd(SelectedProfile, sources)
-            : ModListEditor.MoveManyToStart(SelectedProfile, sources);
-        if (!moved)
+        var profile = SelectedProfile;
+        var selected = sources.ToHashSet();
+        var targetGroup = moveToEnd
+            ? profile.Mods.LastOrDefault(mod => !selected.Contains(mod))?.GroupName ?? string.Empty
+            : string.Empty;
+        var moved = false;
+        var regrouped = false;
+        if (!RunModReorder(profile, () =>
+            {
+                moved = moveToEnd
+                    ? ModListEditor.MoveManyToEnd(profile, sources)
+                    : ModListEditor.MoveManyToStart(profile, sources);
+                regrouped = !preserveGroups && ModListEditor.SetGroup(sources, targetGroup);
+                return moved || regrouped;
+            }))
         {
             return;
         }
 
-        SelectedMod = sources[^1];
-        RecalculateModOverlayInfo();
+        CompleteModReorder(profile, sources[^1], moved);
+    }
+
+    public IReadOnlyList<string> GetModGroupNames() => SelectedProfile is null
+        ? []
+        : ModListEditor.GetGroupNames(SelectedProfile);
+
+    public IReadOnlyList<ModEntry> GetModGroupMods(string groupName) => SelectedProfile?.Mods
+        .Where(mod => mod.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase))
+        .ToArray() ?? [];
+
+    public bool CreateModGroup(IReadOnlyList<ModEntry> mods, string groupName)
+    {
+        if (!CanEditSelectedProfile || SelectedProfile is null ||
+            !ModListEditor.CreateGroup(SelectedProfile, mods, groupName))
+        {
+            return false;
+        }
+
+        CreateFilteredModsView();
         _autoSave.Schedule();
-        RaiseCommandStates();
+        return true;
+    }
+
+    public bool RenameModGroup(string oldName, string newName)
+    {
+        if (!CanEditSelectedProfile || SelectedProfile is null ||
+            !ModListEditor.RenameGroup(SelectedProfile, oldName, newName))
+        {
+            return false;
+        }
+
+        var collapsed = SelectedProfile.CollapsedModGroups;
+        if (collapsed.RemoveAll(name => name.Equals(oldName, StringComparison.OrdinalIgnoreCase)) > 0)
+        {
+            collapsed.Add(newName.Trim());
+            SelectedProfile.CollapsedModGroups = [.. collapsed];
+        }
+
+        CreateFilteredModsView();
+        _autoSave.Schedule();
+        return true;
+    }
+
+    public void DeleteModGroup(string groupName)
+    {
+        if (!CanEditSelectedProfile || SelectedProfile is null ||
+            !ModListEditor.DeleteGroup(SelectedProfile, groupName))
+        {
+            return;
+        }
+
+        SelectedProfile.CollapsedModGroups = SelectedProfile.CollapsedModGroups
+            .Where(name => !name.Equals(groupName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        CreateFilteredModsView();
+        _autoSave.Schedule();
+    }
+
+    public void MoveModsToGroup(IReadOnlyList<ModEntry> mods, string groupName)
+    {
+        if (!CanEditSelectedProfile || SelectedProfile is null || mods.Count == 0)
+        {
+            return;
+        }
+
+        var profile = SelectedProfile;
+        if (!RunModReorder(profile, () => ModListEditor.MoveToGroup(profile, mods, groupName)))
+        {
+            return;
+        }
+
+        CompleteModReorder(profile, mods[^1], affectsOverlay: true);
+    }
+
+    public bool IsModGroupCollapsed(string groupName) => SelectedProfile?.CollapsedModGroups.Any(
+        name => name.Equals(groupName, StringComparison.OrdinalIgnoreCase)) == true;
+
+    public void SetModGroupCollapsed(string groupName, bool collapsed)
+    {
+        if (SelectedProfile is null || string.IsNullOrWhiteSpace(groupName))
+        {
+            return;
+        }
+
+        var groups = SelectedProfile.CollapsedModGroups
+            .Where(name => !name.Equals(groupName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        if (collapsed)
+        {
+            groups.Add(groupName);
+        }
+
+        SelectedProfile.CollapsedModGroups = groups;
+        RefreshFilteredModsView(refresh: true);
+        _autoSave.Schedule();
     }
 
     private async Task ScanForModsAsync()
@@ -565,11 +775,14 @@ public sealed partial class MainViewModel
             return;
         }
 
+        var targetGroup = SelectedProfile.Mods[SelectedProfile.Mods.IndexOf(SelectedMod) + direction].GroupName;
         if (!ModListEditor.MoveByOffset(SelectedProfile, SelectedMod, direction))
         {
             return;
         }
 
+        ModListEditor.SetGroup([SelectedMod], targetGroup);
+        CreateFilteredModsView();
         RaiseCommandStates();
     }
 
@@ -593,13 +806,20 @@ public sealed partial class MainViewModel
     {
         if (!CanMoveInlineMod(mod, direction) ||
             SelectedProfile is null ||
-            mod is null ||
-            !ModListEditor.MoveByOffset(SelectedProfile, mod, direction))
+            mod is null)
         {
             return;
         }
 
+        var targetGroup = SelectedProfile.Mods[SelectedProfile.Mods.IndexOf(mod) + direction].GroupName;
+        if (!ModListEditor.MoveByOffset(SelectedProfile, mod, direction))
+        {
+            return;
+        }
+
+        ModListEditor.SetGroup([mod], targetGroup);
         SelectedMod = mod;
+        CreateFilteredModsView();
         RaiseCommandStates();
     }
 

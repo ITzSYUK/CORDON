@@ -111,7 +111,15 @@
   <data name="Mod_Conflicts" xml:space="preserve"><value>Конфликты</value></data>
   <data name="Mod_DragTooltip" xml:space="preserve"><value>Моды можно перетаскивать между строками; нижние имеют больший приоритет</value></data>
   <data name="Mod_Enabled" xml:space="preserve"><value>Вкл.</value></data>
-  <data name="Mod_GroupFormat" xml:space="preserve"><value>Группа: {0}</value></data>
+  <data name="Mod_CreateGroup" xml:space="preserve"><value>Создать группу...</value></data>
+  <data name="Mod_DeleteGroup" xml:space="preserve"><value>Удалить группу</value></data>
+  <data name="Mod_GroupNameExists" xml:space="preserve"><value>Группа с таким именем уже существует.</value></data>
+  <data name="Mod_GroupNamePrompt" xml:space="preserve"><value>Имя группы:</value></data>
+  <data name="Mod_MoveToGroup" xml:space="preserve"><value>Переместить в группу</value></data>
+  <data name="Mod_MoveToGroupEnd" xml:space="preserve"><value>В конец группы</value></data>
+  <data name="Mod_MoveToGroupStart" xml:space="preserve"><value>В начало группы</value></data>
+  <data name="Mod_NoGroup" xml:space="preserve"><value>Без группы</value></data>
+  <data name="Mod_RenameGroup" xml:space="preserve"><value>Переименовать группу...</value></data>
   <data name="Mod_Heading" xml:space="preserve"><value>Моды</value></data>
   <data name="Mod_InstallInNewFolder" xml:space="preserve"><value>Установить в новую папку</value></data>
   <data name="Mod_InstalledHeading" xml:space="preserve"><value>МОД УСТАНОВЛЕН</value></data>

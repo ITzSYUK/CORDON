@@ -71,7 +71,7 @@ public sealed partial class MainViewModel
                 }
 
                 UpdateRelatedModHighlights();
-                FilteredMods?.Refresh();
+                RefreshFilteredModsView(refresh: true);
             });
         }
         catch (OperationCanceledException)

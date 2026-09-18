@@ -87,6 +87,22 @@ public sealed class AppSettingsNormalizerTests
     }
 
     [Fact]
+    public void NormalizeUngroupsRepeatedNonContiguousGroupRunsWithoutChangingOrder()
+    {
+        var profile = new ModProfile();
+        profile.Mods.Add(new ModEntry { Name = "First", GroupName = "1" });
+        profile.Mods.Add(new ModEntry { Name = "Second", GroupName = "1" });
+        profile.Mods.Add(new ModEntry { Name = "Third", GroupName = "2" });
+        profile.Mods.Add(new ModEntry { Name = "Fourth", GroupName = "1" });
+        var settings = new AppSettings { Profiles = [profile] };
+
+        var normalized = AppSettingsNormalizer.Normalize(settings);
+
+        Assert.Equal(["First", "Second", "Third", "Fourth"], normalized.Profiles[0].Mods.Select(mod => mod.Name));
+        Assert.Equal(["1", "1", "2", ""], normalized.Profiles[0].Mods.Select(mod => mod.GroupName));
+    }
+
+    [Fact]
     public void NormalizeKeepsRussianForSettingsCreatedBeforeLocalization()
     {
         var settings = new AppSettings { SchemaVersion = 8 };

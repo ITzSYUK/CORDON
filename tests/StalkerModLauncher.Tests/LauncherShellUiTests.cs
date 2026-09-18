@@ -244,6 +244,92 @@ public sealed class LauncherShellUiTests
     }
 
     [Fact]
+    public void SharedModPanelUsesFlatVirtualizedCollapsibleGroups()
+    {
+        var panel = LoadProjectXaml("Views", "Controls", "ModPanelView.xaml").ToString();
+        var code = LoadProjectText("Views", "Controls", "ModPanelView.xaml.cs");
+
+        Assert.DoesNotContain("ListView.GroupStyle", panel);
+        Assert.DoesNotContain("GroupItem", panel);
+        Assert.DoesNotContain("RequestBringIntoView", panel);
+        Assert.DoesNotContain("Strings.Mod_CreateGroup", panel);
+        Assert.DoesNotContain("Strings.Mod_MoveToGroup", panel);
+        Assert.Contains("const int visibleGroupCount = 5", code);
+        Assert.Contains("PreviewMouseWheel", code);
+        Assert.Contains("CreateLeftClickMenuItem(\"▲\"", code);
+        Assert.Contains("CreateLeftClickMenuItem(\"▼\"", code);
+        Assert.Contains("HorizontalContentAlignment = HorizontalAlignment.Center", code);
+        Assert.Contains("Strings.Mod_MoveToGroupStart", code);
+        Assert.Contains("Strings.Mod_MoveToGroupEnd", code);
+        Assert.Contains("MinimumHorizontalDragDistance &&", code);
+        Assert.Contains("PreviewMouseMove=\"ModsList_OnMouseMove\"", panel);
+        Assert.Contains("FindAncestor<Border>(source, \"ModGroupHeader\")", code);
+        Assert.DoesNotContain("ModGroupHeader_OnPreviewMouseLeftButtonDown", panel);
+        Assert.Contains("_dropTargetGroupHeader?.DataContext as ModEntry", code);
+        Assert.Contains("var target = _dropTargetItem?.DataContext as ModEntry", code);
+        Assert.Contains("RestoreSelection(payload.Mods, scrollIntoView: false)", code);
+        Assert.DoesNotContain("_preserveScrollDuringDrop", code);
+        Assert.DoesNotContain("RestoreScrollAfterDrop", code);
+        Assert.DoesNotContain("_draggedGroupName", code);
+        Assert.DoesNotContain("bool IsGroup", code);
+        Assert.Contains("MoveModGroupByOffset(groupName, -1)", code);
+        Assert.Contains("MoveModGroupByOffset(groupName, 1)", code);
+        var modStyles = LoadProjectXaml("Themes", "MainWindowStyles.xaml").ToString();
+        Assert.Contains("x:Name=\"ModGroupHeader\"", modStyles);
+        Assert.Contains("x:Name=\"GroupToggleCircle\"", modStyles);
+        Assert.Contains("Background=\"{DynamicResource AccentBrush}\"", modStyles);
+        Assert.Contains("MinHeight=\"26\"", modStyles);
+        Assert.Contains("Binding ShowsGroupHeader", modStyles);
+        Assert.Contains("Binding IsGroupCollapsed", modStyles);
+        Assert.Contains("x:Name=\"GroupGuide\"", modStyles);
+        Assert.Contains("Binding ViewGroupKey.IsGroup", modStyles);
+        Assert.Contains("TargetName=\"RowContent\" Property=\"Margin\" Value=\"22,4,4,4\"", modStyles);
+        Assert.Contains(
+            "HorizontalAlignment=\"{TemplateBinding HorizontalContentAlignment}\"",
+            LoadProjectXaml("App.xaml").ToString());
+        Assert.Contains(
+            "HorizontalAlignment=\"{TemplateBinding HorizontalContentAlignment}\"",
+            LoadProjectXaml("Themes", "PdaTheme.xaml").ToString());
+    }
+
+    [Fact]
+    public void GroupNamePromptUsesClassicDialogAndPdaInlinePanel()
+    {
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var dialog = LoadProjectXaml("Views", "TextPromptWindow.xaml");
+        var dialogButtons = dialog.Descendants(presentation + "Button").ToList();
+        var cancel = Assert.Single(dialogButtons, button =>
+            (string?)button.Attribute("Content") == "{x:Static res:Strings.Common_Cancel}");
+        var done = Assert.Single(dialogButtons, button =>
+            (string?)button.Attribute("Content") == "{x:Static res:Strings.Common_Done}");
+
+        Assert.True(dialogButtons.IndexOf(cancel) < dialogButtons.IndexOf(done));
+        Assert.Equal("{StaticResource PrimaryButtonStyle}", (string?)done.Attribute("Style"));
+        Assert.Equal("220", (string?)dialog.Root?.Attribute("Height"));
+
+        var panel = LoadProjectXaml("Views", "Controls", "ModPanelView.xaml");
+        var inlinePrompt = Assert.Single(panel.Descendants(presentation + "Border"), element =>
+            (string?)element.Attribute(xaml + "Name") == "GroupNamePromptPanel");
+        Assert.Equal("{DynamicResource ModArchiveProgressPanelStyle}", (string?)inlinePrompt.Attribute("Style"));
+        Assert.Equal("Collapsed", (string?)inlinePrompt.Attribute("Visibility"));
+        Assert.Equal("2", (string?)inlinePrompt.Attribute("Grid.Row"));
+        Assert.Equal("0,8,0,0", (string?)inlinePrompt.Attribute("Margin"));
+        Assert.Null(inlinePrompt.Attribute("MaxWidth"));
+        Assert.DoesNotContain("GroupNamePromptTitle", panel.ToString());
+
+        var pdaMainDocument = LoadProjectXaml("Views", "Controls", "PdaMainView.xaml");
+        var pdaMain = pdaMainDocument.ToString();
+        var inlineError = Assert.Single(pdaMainDocument.Descendants(presentation + "Border"), element =>
+            (string?)element.Attribute(xaml + "Name") == "InlineErrorPanel");
+        Assert.Equal("18,10", (string?)inlineError.Attribute("Margin"));
+        var code = LoadProjectText("Views", "Controls", "ModPanelView.xaml.cs");
+        Assert.Contains("UsePdaTheme=\"True\"", pdaMain);
+        Assert.Contains("if (!UsePdaTheme)", code);
+        Assert.DoesNotContain("InputBox", LoadProjectText("Services", "DialogService.cs"));
+    }
+
+    [Fact]
     public void ProfileSettingsPlaceUserDataBetweenRendererAndExecutableWithLocalRadioGroups()
     {
         var interfaces = new[]
@@ -538,6 +624,16 @@ public sealed class LauncherShellUiTests
 
     private static XDocument LoadProjectXaml(params string[] parts)
     {
+        return XDocument.Load(FindProjectFile(parts));
+    }
+
+    private static string LoadProjectText(params string[] parts)
+    {
+        return File.ReadAllText(FindProjectFile(parts));
+    }
+
+    private static string FindProjectFile(string[] parts)
+    {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory);
              directory is not null;
              directory = directory.Parent)
@@ -545,7 +641,7 @@ public sealed class LauncherShellUiTests
             var projectRoot = Path.Combine(directory.FullName, "src", "StalkerModLauncher");
             if (File.Exists(Path.Combine(projectRoot, "StalkerModLauncher.csproj")))
             {
-                return XDocument.Load(Path.Combine([projectRoot, .. parts]));
+                return Path.Combine([projectRoot, .. parts]);
             }
         }
 

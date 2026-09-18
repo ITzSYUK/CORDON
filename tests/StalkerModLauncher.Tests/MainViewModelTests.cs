@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Globalization;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
@@ -11,6 +13,7 @@ namespace StalkerModLauncher.Tests;
 public sealed class MainViewModelTests
 {
     private static readonly string[] BoundaryTestModNames = ["First", "Second", "Third", "Fourth"];
+    private static readonly string[] GroupBoundaryTestModNames = [.. BoundaryTestModNames, "Fifth"];
 
     [Fact]
     public async Task LaunchProfileDoesNotChangeSelectedProfile()
@@ -301,15 +304,16 @@ public sealed class MainViewModelTests
         await RunWithViewModelAsync((viewModel, root) =>
         {
             var profile = new ModProfile { Name = "Overlay", GameInstallPath = Path.Combine(root, "game") };
-            profile.Mods.Add(new ModEntry { Name = "Base mod", SourcePath = Path.Combine(root, "mods", "base"), Order = 1 });
-            profile.Mods.Add(new ModEntry { Name = "Patch", SourcePath = Path.Combine(root, "mods", "patch"), Order = 2 });
-            profile.Mods.Add(new ModEntry { Name = "Fix", SourcePath = Path.Combine(root, "mods", "fix"), Order = 3 });
+            profile.Mods.Add(new ModEntry { Name = "Base mod", SourcePath = Path.Combine(root, "mods", "base"), GroupName = "1", Order = 1 });
+            profile.Mods.Add(new ModEntry { Name = "Patch", SourcePath = Path.Combine(root, "mods", "patch"), GroupName = "1", Order = 2 });
+            profile.Mods.Add(new ModEntry { Name = "Fix", SourcePath = Path.Combine(root, "mods", "fix"), GroupName = "2", Order = 3 });
             viewModel.AddCreatedProfile(profile);
 
             var moved = profile.Mods[0];
             viewModel.MoveModToInsertionIndex(moved, 3);
 
             Assert.Equal(["Patch", "Fix", "Base mod"], profile.Mods.Select(mod => mod.Name));
+            Assert.Equal(["1", "2", ""], profile.Mods.Select(mod => mod.GroupName));
             Assert.Equal([1, 2, 3], profile.Mods.Select(mod => mod.Order));
             Assert.Same(moved, viewModel.SelectedMod);
             return Task.CompletedTask;
@@ -361,6 +365,102 @@ public sealed class MainViewModelTests
             viewModel.MoveModsToEnd(selected);
             Assert.Equal(["First", "Third", "Second", "Fourth"], profile.Mods.Select(mod => mod.Name));
             Assert.Equal([1, 2, 3, 4], profile.Mods.Select(mod => mod.Order));
+            return Task.CompletedTask;
+        });
+    }
+
+    [Fact]
+    public async Task MoveModsWithinGroupToBoundariesKeepsSelectionInItsGroup()
+    {
+        await RunWithViewModelAsync((viewModel, root) =>
+        {
+            var profile = new ModProfile { Name = "Overlay", GameInstallPath = Path.Combine(root, "game") };
+            foreach (var name in GroupBoundaryTestModNames)
+            {
+                profile.Mods.Add(new ModEntry
+                {
+                    Name = name,
+                    SourcePath = Path.Combine(root, "mods", name),
+                    GroupName = name == "First" ? string.Empty : "Gameplay"
+                });
+            }
+
+            viewModel.AddCreatedProfile(profile);
+            var selected = new[] { profile.Mods[2], profile.Mods[4] };
+            var viewResets = 0;
+            ((INotifyCollectionChanged)viewModel.FilteredMods!).CollectionChanged += (_, e) =>
+                viewResets += e.Action == NotifyCollectionChangedAction.Reset ? 1 : 0;
+
+            viewModel.MoveModsWithinGroupToBoundary(selected, moveToEnd: false);
+            Assert.Equal(["First", "Third", "Fifth", "Second", "Fourth"], profile.Mods.Select(mod => mod.Name));
+
+            viewModel.MoveModsWithinGroupToBoundary(selected, moveToEnd: true);
+            Assert.Equal(["First", "Second", "Fourth", "Third", "Fifth"], profile.Mods.Select(mod => mod.Name));
+            Assert.All(profile.Mods.Skip(1), mod => Assert.Equal("Gameplay", mod.GroupName));
+            Assert.Equal(0, viewResets);
+            return Task.CompletedTask;
+        });
+    }
+
+    [Fact]
+    public async Task LargeGroupedModReorderDoesNotResetTheView()
+    {
+        await RunWithViewModelAsync((viewModel, root) =>
+        {
+            var profile = new ModProfile { Name = "Large overlay", GameInstallPath = Path.Combine(root, "game") };
+            for (var index = 0; index < 455; index++)
+            {
+                profile.Mods.Add(new ModEntry
+                {
+                    Name = $"Mod {index}",
+                    SourcePath = Path.Combine(root, "mods", index.ToString(CultureInfo.InvariantCulture)),
+                    GroupName = $"Group {index / 10}"
+                });
+            }
+
+            viewModel.AddCreatedProfile(profile);
+            Assert.Empty(viewModel.FilteredMods!.GroupDescriptions);
+            Assert.Equal(46, profile.Mods.Count(mod => mod.ShowsGroupHeader));
+            var viewResets = 0;
+            ((INotifyCollectionChanged)viewModel.FilteredMods).CollectionChanged += (_, e) =>
+                viewResets += e.Action == NotifyCollectionChangedAction.Reset ? 1 : 0;
+
+            var source = profile.Mods[307];
+            var target = profile.Mods[317];
+            viewModel.MoveModsToInsertionIndex([source], profile.Mods.IndexOf(target) + 1, target.GroupName);
+
+            Assert.Equal(0, viewResets);
+            viewModel.SetModGroupCollapsed(target.GroupName, collapsed: true);
+            Assert.Equal(445, viewModel.FilteredMods.Cast<ModEntry>().Count());
+            Assert.True(viewModel.FilteredMods.Cast<ModEntry>().Single(mod => mod.ShowsGroupHeader && mod.GroupName == target.GroupName).IsGroupCollapsed);
+            viewModel.SetModGroupCollapsed(target.GroupName, collapsed: false);
+            Assert.Equal(455, viewModel.FilteredMods.Cast<ModEntry>().Count());
+            Assert.Equal(2, viewResets);
+            return Task.CompletedTask;
+        });
+    }
+
+    [Fact]
+    public async Task MoveModGroupByOffsetMovesWholeGroupOneGroupAtATime()
+    {
+        await RunWithViewModelAsync((viewModel, root) =>
+        {
+            var profile = new ModProfile { Name = "Overlay", GameInstallPath = Path.Combine(root, "game") };
+            profile.Mods.Add(new ModEntry { Name = "A1", GroupName = "A" });
+            profile.Mods.Add(new ModEntry { Name = "A2", GroupName = "A" });
+            profile.Mods.Add(new ModEntry { Name = "B1", GroupName = "B" });
+            profile.Mods.Add(new ModEntry { Name = "C1", GroupName = "C" });
+            profile.Mods.Add(new ModEntry { Name = "C2", GroupName = "C" });
+            viewModel.AddCreatedProfile(profile);
+
+            viewModel.MoveModGroupByOffset("B", 1);
+            Assert.Equal(["A1", "A2", "C1", "C2", "B1"], profile.Mods.Select(mod => mod.Name));
+
+            viewModel.MoveModGroupByOffset("B", -1);
+            Assert.Equal(["A1", "A2", "B1", "C1", "C2"], profile.Mods.Select(mod => mod.Name));
+
+            viewModel.MoveModGroupByOffset("B", -1);
+            Assert.Equal(["B1", "A1", "A2", "C1", "C2"], profile.Mods.Select(mod => mod.Name));
             return Task.CompletedTask;
         });
     }
