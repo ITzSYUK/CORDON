@@ -254,7 +254,7 @@ public static class ModListEditor
     private static void ApplyOrder(
         ModProfile profile,
         List<ModEntry> desiredOrder,
-        IReadOnlyList<ModEntry> selection,
+        List<ModEntry> selection,
         bool movingEarlier)
     {
         var indexes = movingEarlier
