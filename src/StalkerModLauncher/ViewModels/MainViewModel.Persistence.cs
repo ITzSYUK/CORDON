@@ -179,6 +179,8 @@ public sealed partial class MainViewModel
                 SynchronizeModSubscriptions(profile);
             }
         }
+
+        SynchronizeProfileFileWatchers();
     }
 
     private void UntrackProfile(ModProfile profile)
@@ -252,6 +254,7 @@ public sealed partial class MainViewModel
         }
 
         SynchronizeModSubscriptions(profile);
+        SynchronizeProfileFileWatchers();
         _validationCache.Remove(profile);
         _profilesRenumberingMods.Add(profile);
         try
@@ -291,6 +294,7 @@ public sealed partial class MainViewModel
         if (e.PropertyName == nameof(ModProfile.Mods))
         {
             SynchronizeModSubscriptions(profile);
+            SynchronizeProfileFileWatchers();
             _automaticExecutableRefreshTimes[profile] = DateTime.UtcNow;
             RefreshAutomaticExecutableSelection(profile, Strings.Log_ReasonModListReplaced);
             if (ReferenceEquals(profile, SelectedProfile))
@@ -302,9 +306,13 @@ public sealed partial class MainViewModel
 
         if (e.PropertyName is nameof(ModProfile.GameInstallPath)
             or nameof(ModProfile.IsStandalone)
-            or nameof(ModProfile.ExecutableSourcePath))
+            or nameof(ModProfile.LaunchArguments)
+            or nameof(ModProfile.ExecutableSourcePath)
+            or nameof(ModProfile.FsgameSourcePath)
+            or nameof(ModProfile.Mo2OverwritePath))
         {
             _automaticExecutableRefreshTimes.Remove(profile);
+            SynchronizeProfileFileWatchers();
         }
 
         if (e.PropertyName == nameof(ModProfile.IsRunning))
@@ -385,6 +393,13 @@ public sealed partial class MainViewModel
             or nameof(ModEntry.ExcludedFiles);
         if (affectsOverlay)
         {
+            if (e.PropertyName is nameof(ModEntry.SourcePath)
+                or nameof(ModEntry.IsEnabled)
+                or nameof(ModEntry.ExcludedFiles))
+            {
+                SynchronizeProfileFileWatchers();
+            }
+
             _automaticExecutableRefreshTimes[profile] = DateTime.UtcNow;
             RefreshAutomaticExecutableSelection(profile, Strings.Log_ReasonModPriorityChanged);
         }
@@ -463,6 +478,164 @@ public sealed partial class MainViewModel
             LauncherLogLevel.Detailed);
     }
 
+    private void SynchronizeProfileFileWatchers()
+    {
+        foreach (var watcher in _profileFileWatchers)
+        {
+            watcher.Dispose();
+        }
+
+        _profileFileWatchers.Clear();
+        _profileFsgamePaths = Profiles
+            .SelectMany(GetProfileFsgamePaths)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var watchDirectories = Profiles
+            .SelectMany(GetProfileFileTargets)
+            .SelectMany(GetWatchDirectories)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(path => path.Length)
+            .Aggregate(new List<string>(), (paths, path) =>
+            {
+                if (!paths.Any(parent =>
+                        !FileSystemSafety.IsFileSystemRoot(parent) &&
+                        FileSystemSafety.IsDirectoryInside(path, parent)))
+                {
+                    paths.Add(path);
+                }
+
+                return paths;
+            });
+
+        var requests = new List<(string Path, bool IncludeSubdirectories)>();
+        foreach (var path in watchDirectories)
+        {
+            requests.Add((path, !FileSystemSafety.IsFileSystemRoot(path)));
+            for (var ancestor = Directory.GetParent(path); ancestor is not null; ancestor = ancestor.Parent)
+            {
+                requests.Add((ancestor.FullName, false));
+            }
+        }
+
+        var requestKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var request in requests.Where(request =>
+                     requestKeys.Add($"{request.IncludeSubdirectories}:{request.Path}")))
+        {
+            try
+            {
+                var watcher = new FileSystemWatcher(request.Path)
+                {
+                    IncludeSubdirectories = request.IncludeSubdirectories,
+                    NotifyFilter = NotifyFilters.FileName |
+                                   NotifyFilters.DirectoryName |
+                                   NotifyFilters.LastWrite |
+                                   NotifyFilters.Size
+                };
+                watcher.Changed += ProfileFileChanged;
+                watcher.Created += ProfileFilesChanged;
+                watcher.Deleted += ProfileFilesChanged;
+                watcher.Renamed += ProfileFilesChanged;
+                watcher.Error += ProfileFilesChanged;
+                watcher.EnableRaisingEvents = true;
+                _profileFileWatchers.Add(watcher);
+            }
+            catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
+            {
+                // Readiness still refreshes on profile selection when a location cannot be watched.
+            }
+        }
+    }
+
+    private static IEnumerable<string> GetProfileFileTargets(ModProfile profile)
+    {
+        yield return profile.GameInstallPath;
+        yield return profile.Mo2OverwritePath;
+        yield return profile.ExecutableSourcePath;
+        yield return Path.GetDirectoryName(profile.FsgameSourcePath) ?? string.Empty;
+        foreach (var mod in profile.Mods)
+        {
+            yield return mod.SourcePath;
+        }
+    }
+
+    private static IReadOnlyList<string> GetProfileFsgamePaths(ModProfile profile)
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(profile.FsgameSourcePath))
+            {
+                return [Path.GetFullPath(profile.FsgameSourcePath.Trim())];
+            }
+
+            var relativePath = FileLayerPlan.ResolveFsgameLaunchArgument(profile.LaunchArguments) ?? "fsgame.ltx";
+            return new[] { profile.GameInstallPath }
+                .Concat(profile.Mods.Where(mod => mod.IsEnabled).Select(mod => mod.SourcePath))
+                .Append(profile.Mo2OverwritePath)
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Select(path => Path.GetFullPath(Path.Combine(path, relativePath)))
+                .ToArray();
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException or InvalidOperationException or NotSupportedException)
+        {
+            return [];
+        }
+    }
+
+    internal static IReadOnlyList<string> GetWatchDirectories(string target)
+    {
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            return [];
+        }
+
+        try
+        {
+            var fullPath = Path.GetFullPath(target.Trim());
+            var parent = Directory.GetParent(fullPath);
+            while (parent is not null && !Directory.Exists(parent.FullName))
+            {
+                parent = parent.Parent;
+            }
+
+            if (parent is not null)
+            {
+                return FileSystemSafety.IsFileSystemRoot(parent.FullName) && Directory.Exists(fullPath)
+                    ? [parent.FullName, fullPath]
+                    : [parent.FullName];
+            }
+
+            return Directory.Exists(fullPath) ? [fullPath] : [];
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            return [];
+        }
+    }
+
+    private void ProfileFilesChanged(object sender, FileSystemEventArgs e) => _profileFileRefresh.Schedule();
+
+    private void ProfileFileChanged(object sender, FileSystemEventArgs e)
+    {
+        if (_profileFsgamePaths.Contains(e.FullPath))
+        {
+            _profileFileRefresh.Schedule();
+        }
+    }
+
+    private void ProfileFilesChanged(object sender, ErrorEventArgs e) => _profileFileRefresh.Schedule();
+
+    private void RefreshProfileFileState()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        SynchronizeProfileFileWatchers();
+        RefreshProfileLaunchReadiness(forceRefresh: true);
+        _modConflictAnalyzer.ClearCache();
+        RecalculateModOverlayInfo();
+    }
+
     public async Task CleanupAsync()
     {
         await SaveAsync();
@@ -484,6 +657,13 @@ public sealed partial class MainViewModel
             UntrackProfile(profile);
         }
 
+        foreach (var watcher in _profileFileWatchers)
+        {
+            watcher.Dispose();
+        }
+
+        _profileFileWatchers.Clear();
+
         if (_selectedProfile is not null)
         {
             _selectedProfile.PropertyChanged -= OnSelectedProfilePropertyChanged;
@@ -491,6 +671,7 @@ public sealed partial class MainViewModel
 
         _autoSave.Dispose();
         _conflictAnalysisDebounce.Dispose();
+        _profileFileRefresh.Dispose();
         _conflictAnalysisCancellation?.Cancel();
         _conflictAnalysisCancellation?.Dispose();
         _launchCoordinator.Dispose();

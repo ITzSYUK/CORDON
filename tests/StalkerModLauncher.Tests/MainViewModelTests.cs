@@ -370,6 +370,106 @@ public sealed class MainViewModelTests
     }
 
     [Fact]
+    public async Task DeletedAndRestoredModFolderRefreshesProfileWithoutSwitchingProfiles()
+    {
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            var gameRoot = CreateValidGameRoot(root);
+            var modRoot = Directory.CreateDirectory(Path.Combine(root, "mods", "watched")).FullName;
+            var profile = new ModProfile
+            {
+                Name = "Watched mod",
+                GameInstallPath = gameRoot,
+                ExecutableRelativePath = @"bin\xr_3da.exe",
+                Mods = { new ModEntry { Name = "Watched", SourcePath = modRoot, IsEnabled = true } }
+            };
+            viewModel.AddCreatedProfile(profile);
+            Assert.True(viewModel.IsGameValid);
+
+            Directory.Delete(modRoot);
+
+            await WaitUntilAsync(() => profile.HasLaunchError && !viewModel.IsGameValid);
+            Assert.Contains("Watched", profile.LaunchErrorSummary);
+
+            Directory.CreateDirectory(modRoot);
+
+            await WaitUntilAsync(() => !profile.HasLaunchError && viewModel.IsGameValid);
+        });
+    }
+
+    [Fact]
+    public async Task DeletedAutomaticExecutableRefreshesProviderWithoutChangingSelection()
+    {
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            var gameRoot = CreateValidGameRoot(root);
+            var modRoot = Directory.CreateDirectory(Path.Combine(root, "mods", "engine")).FullName;
+            var modBin = Directory.CreateDirectory(Path.Combine(modRoot, "bin_x64")).FullName;
+            var modExecutable = Path.Combine(modBin, "xrEngine.exe");
+            File.WriteAllText(modExecutable, string.Empty);
+            var engineMod = new ModEntry { Name = "Engine", SourcePath = modRoot, IsEnabled = true };
+            var profile = new ModProfile
+            {
+                Name = "Automatic executable",
+                GameInstallPath = gameRoot,
+                ExecutableRelativePath = @"bin_x64\xrEngine.exe",
+                Mods = { engineMod }
+            };
+            viewModel.AddCreatedProfile(profile);
+            await WaitUntilAsync(() => engineMod.ProvidesLaunchExecutable);
+
+            File.Delete(modExecutable);
+
+            await WaitUntilAsync(() => !engineMod.ProvidesLaunchExecutable);
+            Assert.Equal(@"bin_x64\xrEngine.exe", profile.ExecutableRelativePath);
+
+            File.WriteAllText(modExecutable, string.Empty);
+
+            await WaitUntilAsync(() => engineMod.ProvidesLaunchExecutable);
+            Assert.Equal(@"bin_x64\xrEngine.exe", profile.ExecutableRelativePath);
+        });
+    }
+
+    [Fact]
+    public async Task ModifiedFsgameRefreshesProfileWithoutSwitchingProfiles()
+    {
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            var gameRoot = CreateValidGameRoot(root);
+            var fsgamePath = Path.Combine(gameRoot, "custom.ltx");
+            File.WriteAllText(fsgamePath, "$app_data_root$ = true | false | $fs_root$ | appdata");
+            var profile = new ModProfile
+            {
+                Name = "Watched fsgame",
+                GameInstallPath = gameRoot,
+                ExecutableRelativePath = @"bin\xr_3da.exe"
+            };
+            viewModel.AddCreatedProfile(profile);
+            profile.LaunchArguments = "-fsltx custom.ltx";
+            Assert.True(viewModel.IsGameValid);
+
+            File.WriteAllText(fsgamePath, "invalid");
+
+            await WaitUntilAsync(() => profile.HasLaunchError && !viewModel.IsGameValid);
+
+            File.WriteAllText(fsgamePath, "$app_data_root$ = true | false | $fs_root$ | appdata");
+
+            await WaitUntilAsync(() => !profile.HasLaunchError && viewModel.IsGameValid);
+        });
+    }
+
+    [Fact]
+    public void MissingModDirectlyUnderDriveRootWatchesDriveRoot()
+    {
+        var driveRoot = Path.GetPathRoot(Path.GetTempPath())!;
+        var target = Path.Combine(driveRoot, $"watched-mod-{Guid.NewGuid():N}");
+
+        var directories = MainViewModel.GetWatchDirectories(target).ToArray();
+
+        Assert.Equal([driveRoot], directories);
+    }
+
+    [Fact]
     public async Task MoveModsWithinGroupToBoundariesKeepsSelectionInItsGroup()
     {
         await RunWithViewModelAsync((viewModel, root) =>
@@ -754,6 +854,16 @@ public sealed class MainViewModelTests
         }
 
         throw new TimeoutException("MainViewModel did not finish loading test settings.");
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        for (var attempt = 0; attempt < 100 && !condition(); attempt++)
+        {
+            await Task.Delay(50);
+        }
+
+        Assert.True(condition(), "Timed out waiting for an automatic profile refresh.");
     }
 
     private static string CreateValidGameRoot(string root)

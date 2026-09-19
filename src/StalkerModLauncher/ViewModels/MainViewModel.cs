@@ -12,6 +12,7 @@ namespace StalkerModLauncher.ViewModels;
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     private static readonly TimeSpan ProfileFileStateCacheLifetime = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan ProfileFileRefreshDelay = TimeSpan.FromMilliseconds(250);
     private static readonly TimeSpan ConflictAnalysisDelay = TimeSpan.FromMilliseconds(100);
     private readonly AppPaths _paths;
     private readonly SettingsStore _settingsStore;
@@ -24,6 +25,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly IStartupRegistrationService _startupRegistrationService;
     private readonly DebouncedAsyncAction _autoSave;
     private readonly DebouncedAsyncAction _conflictAnalysisDebounce;
+    private readonly DebouncedAsyncAction _profileFileRefresh;
+    private readonly List<FileSystemWatcher> _profileFileWatchers = [];
+    private HashSet<string> _profileFsgamePaths = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<ModProfile, ListCollectionView> _filteredModViews =
         new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<ModProfile, (ValidationResult Result, DateTime CreatedAtUtc)> _validationCache =
@@ -89,6 +93,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _conflictAnalysisDebounce = new DebouncedAsyncAction(
             () => InvokeOnUiAsync(CalculateModOverlayInfo),
             ConflictAnalysisDelay);
+        _profileFileRefresh = new DebouncedAsyncAction(
+            () => InvokeOnUiAsync(RefreshProfileFileState),
+            ProfileFileRefreshDelay);
         ActivityLog = new ActivityLogViewModel(_applicationLogService, _autoSave.Schedule);
 
         Profiles.CollectionChanged += ProfilesOnCollectionChanged;
@@ -490,6 +497,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             _ = GetProfileValidation(profile, forceRefresh);
         }
+
+        RefreshValidation();
     }
 
     private void RaiseCommandStates()

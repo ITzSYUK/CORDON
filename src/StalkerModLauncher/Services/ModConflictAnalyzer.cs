@@ -9,6 +9,14 @@ public sealed class ModConflictAnalyzer
     private readonly object _cacheSync = new();
     private readonly Dictionary<string, FileListCacheEntry> _fileCache = new(StringComparer.OrdinalIgnoreCase);
 
+    internal void ClearCache()
+    {
+        lock (_cacheSync)
+        {
+            _fileCache.Clear();
+        }
+    }
+
     public Task<IReadOnlyDictionary<string, ModConflictState>> AnalyzeAsync(
         IReadOnlyList<ModConflictInput> mods,
         CancellationToken cancellationToken = default)
