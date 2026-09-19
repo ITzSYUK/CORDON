@@ -150,14 +150,13 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         Assert.False(File.Exists(overwriteOptions));
         Assert.Equal("base options", File.ReadAllText(Path.Combine(configs, "axr_options.ltx")));
         Assert.NotNull(runtime.MappingPlan);
-        Assert.Contains(
+        var writableMappingRoot = Path.GetFullPath(
+            Path.Combine(workspace, ProfileWritableGameFiles.WritableGameFilesRootRelativePath));
+        var writableMapping = Assert.Single(
             runtime.MappingPlan.Operations,
-            operation => operation.Kind == UsvfsMappingKind.File &&
-                         operation.SourcePath == Path.GetFullPath(storedLocalization));
-        Assert.Contains(
-            runtime.MappingPlan.Operations,
-            operation => operation.Kind == UsvfsMappingKind.File &&
-                         operation.SourcePath == Path.GetFullPath(storedOptions));
+            operation => operation.SourcePath == writableMappingRoot);
+        Assert.Equal(UsvfsMappingKind.DirectoryStatic, writableMapping.Kind);
+        Assert.Equal(Path.GetFullPath(game), writableMapping.DestinationPath);
     }
 
     [Fact]

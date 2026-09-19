@@ -12,6 +12,11 @@ if (args.Length > 0 && args[0] == "--launcher")
     return RunLauncher(args);
 }
 
+if (args.Length > 0 && args[0] == "--read")
+{
+    return RunRead(args);
+}
+
 return await RunHostAsync(args);
 
 static async Task<int> RunHostAsync(string[] args)
@@ -107,6 +112,11 @@ static async Task<int> RunHostAsync(string[] args)
     IUsvfsRuntime runtime = args.Length >= 2
         ? new X86UsvfsHostRuntime(AppContext.BaseDirectory)
         : new UsvfsRuntime(new OfficialUsvfsNativeApi());
+    if (args.Length == 1)
+    {
+        await VerifyWritableDirectoryMappingAsync(runtime, root, childExecutable);
+    }
+
     for (var iteration = 1; iteration <= iterations; iteration++)
     {
         var expectedModValue = $"mod-{iteration}";
@@ -166,6 +176,59 @@ static async Task<int> RunHostAsync(string[] args)
     return 0;
 }
 
+static async Task VerifyWritableDirectoryMappingAsync(
+    IUsvfsRuntime runtime,
+    string root,
+    string childExecutable)
+{
+    var scenarioRoot = Path.Combine(root, "writable-directory-regression");
+    var game = Path.Combine(scenarioRoot, "game");
+    var mod = Path.Combine(scenarioRoot, "mod");
+    var workspace = Path.Combine(scenarioRoot, "workspace");
+    var resultPath = Path.Combine(scenarioRoot, "result.txt");
+    WriteText(
+        Path.Combine(game, "fsgame.ltx"),
+        "$app_data_root$ = true | false | $fs_root$ | userdata\\");
+    WriteText(Path.Combine(game, "gamedata", "configs", "localization.ltx"), "base-localization");
+    WriteText(Path.Combine(mod, "gamedata", "textures", "marker.txt"), "mod-texture");
+
+    var profile = new ModProfile { GameInstallPath = game };
+    profile.Mods.Add(new ModEntry
+    {
+        Id = "sparse-mod",
+        Name = "Sparse mod",
+        SourcePath = mod,
+        IsEnabled = true,
+        Order = 1
+    });
+    var layers = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
+    var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+    var localization = manifest.WritableFiles.Single(file =>
+        file.RelativePath == Path.Combine("gamedata", "configs", "localization.ltx"));
+    WriteText(localization.StoragePath, "profile-localization");
+    Directory.CreateDirectory(manifest.WriteOverlayRoot);
+
+    var plan = UsvfsMappingPlanBuilder.Build(layers, manifest);
+    var virtualLocalization = Path.Combine(game, "gamedata", "configs", "localization.ltx");
+    var result = await runtime.RunAsync(
+        plan,
+        new UsvfsProcessLaunchRequest(
+            childExecutable,
+            $"--read {Quote(virtualLocalization)} {Quote(resultPath)}",
+            AppContext.BaseDirectory),
+        new UsvfsRuntimeOptions(
+            "stalker_launcher_writable_directory_regression",
+            LogToConsole: false,
+            DiagnosticLogPath: Path.Combine(scenarioRoot, "usvfs.log")));
+
+    if (result.ExitCode != 0 || ReadText(resultPath) != "profile-localization")
+    {
+        throw new InvalidOperationException("USVFS writable-directory regression test failed.");
+    }
+
+    Console.WriteLine("USVFS writable-directory regression passed.");
+}
+
 static int RunLauncher(string[] args)
 {
     if (args.Length != 3)
@@ -211,6 +274,17 @@ static int RunChild(string[] args)
                 "profile-file=" + ReadText(Path.Combine(virtualRoot, "fsgame.ltx"))
             ]) + Environment.NewLine);
 
+    return 0;
+}
+
+static int RunRead(string[] args)
+{
+    if (args.Length != 3)
+    {
+        return 50;
+    }
+
+    WriteText(args[2], ReadText(args[1]));
     return 0;
 }
 

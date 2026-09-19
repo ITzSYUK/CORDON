@@ -131,18 +131,31 @@ public static class UsvfsMappingPlanBuilder
         string virtualRoot,
         OverlayManifest manifest)
     {
-        foreach (var writableFile in manifest.WritableFiles.Where(file => File.Exists(file.StoragePath)))
+        var writableFiles = manifest.WritableFiles
+            .Where(file => File.Exists(file.StoragePath))
+            .ToArray();
+        if (writableFiles.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var writableFile in writableFiles)
         {
             FileSystemSafety.EnsureRelativePath(writableFile.RelativePath, Strings.Safety_UsvfsWritableFile);
-            operations.Add(new UsvfsMappingOperation(
-                UsvfsMappingKind.File,
-                Path.GetFullPath(writableFile.StoragePath),
-                Path.Combine(virtualRoot, writableFile.RelativePath),
-                Strings.Layer_ProfileWritableData,
-                int.MaxValue - 1,
-                MonitorChanges: false,
-                CreateTarget: false));
         }
+
+        var profileWorkspace = Path.GetFullPath(Path.Combine(manifest.WriteOverlayRoot, "..", ".."));
+        var writableRoot = Path.Combine(
+            profileWorkspace,
+            ProfileWritableGameFiles.WritableGameFilesRootRelativePath);
+        operations.Add(new UsvfsMappingOperation(
+            UsvfsMappingKind.DirectoryStatic,
+            writableRoot,
+            virtualRoot,
+            Strings.Layer_ProfileWritableData,
+            int.MaxValue - 1,
+            MonitorChanges: false,
+            CreateTarget: false));
     }
 
     private static void AddProfileOverwrite(

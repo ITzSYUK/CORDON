@@ -112,15 +112,25 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
     }
 
     [Fact]
-    public void BuildAddsExistingKnownWritableFilesBeforeOverwriteCreateTarget()
+    public void BuildMapsWritableStoreWhenModHasNoConfigsDirectory()
     {
         var game = CreateDirectory("game");
+        var mod = CreateDirectory("mod");
         var workspace = CreateDirectory("workspace");
+        Directory.CreateDirectory(Path.Combine(mod, "gamedata", "textures"));
         var profile = new ModProfile
         {
             Name = "Layered",
             GameInstallPath = game
         };
+        profile.Mods.Add(new ModEntry
+        {
+            Id = "mod",
+            Name = "No configs",
+            SourcePath = mod,
+            IsEnabled = true,
+            Order = 1
+        });
         var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
         var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
         var writableFile = manifest.WritableFiles.Single(file =>
@@ -132,12 +142,14 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
 
         var knownWritable = Assert.Single(
             plan.Operations,
-            operation => operation.Kind == UsvfsMappingKind.File && operation.SourceName == Strings.Layer_ProfileWritableData);
-        Assert.Equal(Path.GetFullPath(writableFile.StoragePath), knownWritable.SourcePath);
+            operation => operation.SourceName == Strings.Layer_ProfileWritableData);
+        Assert.Equal(UsvfsMappingKind.DirectoryStatic, knownWritable.Kind);
         Assert.Equal(
-            Path.Combine(Path.GetFullPath(game), "gamedata", "configs", "localization.ltx"),
-            knownWritable.DestinationPath);
+            Path.Combine(Path.GetFullPath(workspace), ProfileWritableGameFiles.WritableGameFilesRootRelativePath),
+            knownWritable.SourcePath);
+        Assert.Equal(Path.GetFullPath(game), knownWritable.DestinationPath);
         Assert.True(knownWritable.Order < plan.Operations.Single(operation => operation.SourceName == Strings.Layer_ProfileOverwrite).Order);
+        Assert.False(Directory.Exists(Path.Combine(mod, "gamedata", "configs")));
     }
 
     [Fact]
