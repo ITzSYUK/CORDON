@@ -215,6 +215,4 @@ dotnet run --project .\src\StalkerModLauncher\StalkerModLauncher.csproj
 
 The launcher source code is licensed under the [GNU GPLv3](LICENSE.md). Third-party components and assets retain their original licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-Это неофициальный фанатский инструмент, не связанный с GSC Game World и не одобренный компанией. S.T.A.L.K.E.R. и связанные товарные знаки принадлежат их правообладателям.
-
 This is an unofficial fan-made tool and is not affiliated with or endorsed by GSC Game World. S.T.A.L.K.E.R. and related trademarks belong to their respective owners.
