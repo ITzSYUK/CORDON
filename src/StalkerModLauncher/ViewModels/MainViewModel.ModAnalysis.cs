@@ -109,13 +109,13 @@ public sealed partial class MainViewModel
         var details = new List<string> { mod.ConflictDisplay };
         if (state is { OverwrittenModNames.Count: > 0 })
         {
-            details.Add(LocalizedText.Format(Strings.ModAnalysis_OverwritesFormat, string.Join(", ", state.OverwrittenModNames)));
+            details.Add(LocalizedText.Format(Strings.ModAnalysis_OverwritesFormat, FormatModNames(state.OverwrittenModNames)));
             details.Add(LocalizedText.Format(Strings.ModAnalysis_OverwriteCountsFormat, state.OverwrittenConfigurationCount, state.OverwrittenBinaryCount));
         }
 
         if (state is { OverwrittenByModNames.Count: > 0 })
         {
-            details.Add(LocalizedText.Format(Strings.ModAnalysis_OverwrittenByFormat, string.Join(", ", state.OverwrittenByModNames)));
+            details.Add(LocalizedText.Format(Strings.ModAnalysis_OverwrittenByFormat, FormatModNames(state.OverwrittenByModNames)));
             details.Add(LocalizedText.Format(Strings.ModAnalysis_OverwrittenCountsFormat, state.OverwrittenByConfigurationCount, state.OverwrittenByBinaryCount));
         }
 
@@ -126,4 +126,7 @@ public sealed partial class MainViewModel
 
         mod.OverlayDetails = string.Join(Environment.NewLine, details);
     }
+
+    internal static string FormatModNames(IReadOnlyList<string> names) =>
+        string.Join(", ", names.Take(6)) + (names.Count > 6 ? ", …" : string.Empty);
 }

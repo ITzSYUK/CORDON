@@ -35,6 +35,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly HashSet<ModProfile> _trackedProfiles = new(ReferenceEqualityComparer.Instance);
     private readonly HashSet<ModProfile> _profilesRenumberingMods = new(ReferenceEqualityComparer.Instance);
     private readonly HashSet<ModProfile> _profilesReorderingMods = new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<ModProfile> _profilesTogglingMods = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<ModProfile, ObservableCollection<ModEntry>> _trackedModCollections =
         new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<ObservableCollection<ModEntry>, ModProfile> _modCollectionOwners =

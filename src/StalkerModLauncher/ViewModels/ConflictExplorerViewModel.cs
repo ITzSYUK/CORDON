@@ -250,17 +250,25 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
                 continue;
             }
 
-            var loses = conflict.HigherPriorityModNames.Count > 0;
-            var otherMods = loses
-                ? conflict.HigherPriorityModNames
-                : conflict.LowerPriorityModNames;
-            var item = new ConflictFileEntry(
-                relativePath,
-                loses ? Strings.Conflict_Losing : Strings.Conflict_Winning,
-                string.Join(", ", otherMods),
-                true,
-                isExcluded);
-            (loses ? losing : winning).Add(item);
+            if (conflict.LowerPriorityModNames.Count > 0)
+            {
+                winning.Add(new ConflictFileEntry(
+                    relativePath,
+                    Strings.Conflict_Winning,
+                    string.Join(", ", conflict.LowerPriorityModNames),
+                    true,
+                    isExcluded));
+            }
+
+            if (conflict.HigherPriorityModNames.Count > 0)
+            {
+                losing.Add(new ConflictFileEntry(
+                    relativePath,
+                    Strings.Conflict_Losing,
+                    string.Join(", ", conflict.HigherPriorityModNames),
+                    true,
+                    isExcluded));
+            }
         }
 
         WinningFiles = winning;

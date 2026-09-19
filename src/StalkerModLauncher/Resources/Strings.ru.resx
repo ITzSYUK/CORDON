@@ -113,6 +113,8 @@
   <data name="Mod_Enabled" xml:space="preserve"><value>Вкл.</value></data>
   <data name="Mod_CreateGroup" xml:space="preserve"><value>Создать группу...</value></data>
   <data name="Mod_DeleteGroup" xml:space="preserve"><value>Удалить группу</value></data>
+  <data name="Mod_DisableGroup" xml:space="preserve"><value>Выключить группу</value></data>
+  <data name="Mod_EnableGroup" xml:space="preserve"><value>Включить группу</value></data>
   <data name="Mod_GroupNameExists" xml:space="preserve"><value>Группа с таким именем уже существует.</value></data>
   <data name="Mod_GroupNamePrompt" xml:space="preserve"><value>Имя группы:</value></data>
   <data name="Mod_MoveToGroup" xml:space="preserve"><value>Переместить в группу</value></data>

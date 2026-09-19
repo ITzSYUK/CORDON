@@ -124,6 +124,8 @@ public static class Strings
     public static string Mod_Enabled => Get();
     public static string Mod_CreateGroup => Get();
     public static string Mod_DeleteGroup => Get();
+    public static string Mod_DisableGroup => Get();
+    public static string Mod_EnableGroup => Get();
     public static string Mod_GroupNameExists => Get();
     public static string Mod_GroupNamePrompt => Get();
     public static string Mod_MoveToGroup => Get();

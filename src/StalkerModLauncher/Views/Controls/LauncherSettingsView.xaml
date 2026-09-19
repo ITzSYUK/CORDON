@@ -180,12 +180,12 @@
                         </WrapPanel>
                         <Grid Margin="0,0,0,15">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="230"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="{x:Static res:Strings.Settings_LanguageLabel}"
                                        VerticalAlignment="Center"/>
-                            <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Left"
+                            <ComboBox Grid.Column="1" Width="180" Margin="10,0,0,0" HorizontalAlignment="Left"
                                       Style="{StaticResource SettingsComboBoxStyle}"
                                       SelectedValue="{Binding UiLanguage}" SelectedValuePath="Tag">
                                 <ComboBoxItem Content="{x:Static res:Strings.Settings_LanguageSystem}" Tag="system"/>

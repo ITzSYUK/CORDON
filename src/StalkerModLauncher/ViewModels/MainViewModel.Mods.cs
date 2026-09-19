@@ -247,6 +247,42 @@ public sealed partial class MainViewModel
         .Where(mod => mod.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase))
         .ToArray() ?? [];
 
+    public void SetModGroupEnabled(string groupName, bool enabled)
+    {
+        if (!CanEditSelectedProfile || SelectedProfile is null || string.IsNullOrWhiteSpace(groupName))
+        {
+            return;
+        }
+
+        var profile = SelectedProfile;
+        var mods = GetModGroupMods(groupName).Where(mod => mod.IsEnabled != enabled).ToArray();
+        if (mods.Length == 0)
+        {
+            return;
+        }
+
+        _profilesTogglingMods.Add(profile);
+        try
+        {
+            foreach (var mod in mods)
+            {
+                mod.IsEnabled = enabled;
+            }
+        }
+        finally
+        {
+            _profilesTogglingMods.Remove(profile);
+        }
+
+        _validationCache.Remove(profile);
+        SynchronizeProfileFileWatchers();
+        _automaticExecutableRefreshTimes[profile] = DateTime.UtcNow;
+        RefreshAutomaticExecutableSelection(profile, Strings.Log_ReasonModPriorityChanged);
+        RecalculateModOverlayInfo();
+        RefreshValidation();
+        _autoSave.Schedule();
+    }
+
     public bool CreateModGroup(IReadOnlyList<ModEntry> mods, string groupName)
     {
         if (!CanEditSelectedProfile || SelectedProfile is null ||

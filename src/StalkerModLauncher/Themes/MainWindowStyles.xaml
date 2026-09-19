@@ -364,9 +364,14 @@
                                                FontSize="9"
                                                Margin="86,0,0,2"
                                                TextWrapping="Wrap"
-                                               ToolTip="{Binding OverlayDetails}"
                                                ToolTipService.InitialShowDelay="600"
                                                ToolTipService.BetweenShowDelay="0">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip MaxWidth="520">
+                                                <TextBlock Text="{Binding OverlayDetails}"
+                                                           TextWrapping="Wrap"/>
+                                            </ToolTip>
+                                        </TextBlock.ToolTip>
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Visibility" Value="Collapsed"/>

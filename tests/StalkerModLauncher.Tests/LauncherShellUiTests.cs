@@ -261,6 +261,8 @@ public sealed class LauncherShellUiTests
         Assert.Contains("HorizontalContentAlignment = HorizontalAlignment.Center", code);
         Assert.Contains("Strings.Mod_MoveToGroupStart", code);
         Assert.Contains("Strings.Mod_MoveToGroupEnd", code);
+        Assert.Contains("Strings.Mod_DisableGroup", code);
+        Assert.Contains("SetModGroupEnabled(groupName, !groupEnabled)", code);
         Assert.Contains("MinimumHorizontalDragDistance &&", code);
         Assert.Contains("PreviewMouseMove=\"ModsList_OnMouseMove\"", panel);
         Assert.Contains("FindAncestor<Border>(source, \"ModGroupHeader\")", code);

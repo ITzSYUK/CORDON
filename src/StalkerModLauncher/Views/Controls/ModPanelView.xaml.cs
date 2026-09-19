@@ -554,6 +554,7 @@ public partial class ModPanelView : UserControl
 
         var groupName = groupMod.GroupName;
         var canEdit = ViewModel?.CanEditSelectedProfile == true;
+        var groupEnabled = ViewModel?.GetModGroupMods(groupName).Any(mod => mod.IsEnabled) == true;
         var groupNames = ViewModel?.GetModGroupNames() ?? [];
         var canMoveUp = canEdit && groupNames.Count > 0 &&
             !groupNames[0].Equals(groupName, StringComparison.OrdinalIgnoreCase);
@@ -570,6 +571,14 @@ public partial class ModPanelView : UserControl
             () =>
             {
                 ViewModel?.DeleteModGroup(groupName);
+                contextMenu.IsOpen = false;
+            }));
+        contextMenu.Items.Add(CreateLeftClickMenuItem(
+            groupEnabled ? Strings.Mod_DisableGroup : Strings.Mod_EnableGroup,
+            canEdit,
+            () =>
+            {
+                ViewModel?.SetModGroupEnabled(groupName, !groupEnabled);
                 contextMenu.IsOpen = false;
             }));
         contextMenu.Items.Add(new Separator());

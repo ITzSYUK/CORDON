@@ -372,6 +372,11 @@ public sealed partial class MainViewModel
             return;
         }
 
+        if (_profilesTogglingMods.Contains(profile) && e.PropertyName == nameof(ModEntry.IsEnabled))
+        {
+            return;
+        }
+
         if (e.PropertyName == nameof(ModEntry.GroupName))
         {
             if (ReferenceEquals(profile, SelectedProfile))

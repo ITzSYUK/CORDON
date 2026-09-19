@@ -566,6 +566,28 @@ public sealed class MainViewModelTests
     }
 
     [Fact]
+    public async Task SetModGroupEnabledChangesOnlyTheRequestedGroup()
+    {
+        await RunWithViewModelAsync((viewModel, root) =>
+        {
+            var profile = new ModProfile { Name = "Overlay", GameInstallPath = Path.Combine(root, "game") };
+            profile.Mods.Add(new ModEntry { Name = "A1", GroupName = "A", IsEnabled = true });
+            profile.Mods.Add(new ModEntry { Name = "A2", GroupName = "A", IsEnabled = true });
+            profile.Mods.Add(new ModEntry { Name = "B1", GroupName = "B", IsEnabled = true });
+            viewModel.AddCreatedProfile(profile);
+
+            viewModel.SetModGroupEnabled("A", enabled: false);
+
+            Assert.False(profile.Mods[0].IsEnabled);
+            Assert.False(profile.Mods[1].IsEnabled);
+            Assert.True(profile.Mods[2].IsEnabled);
+            viewModel.SetModGroupEnabled("A", enabled: true);
+            Assert.All(profile.Mods.Take(2), mod => Assert.True(mod.IsEnabled));
+            return Task.CompletedTask;
+        });
+    }
+
+    [Fact]
     public async Task AddDroppedModsIgnoresDuplicatesAndStandaloneProfileLimit()
     {
         await RunWithViewModelAsync((viewModel, root) =>
