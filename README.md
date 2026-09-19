@@ -15,7 +15,7 @@
   ·
   <a href="docs/USER_GUIDE_RU.md">Руководство пользователя</a>
   ·
-  <a href="#screenshots">Скриншоты</a>
+  <a href="#screenshots">Screenshots</a>
   ·
   <a href="#english">English</a>
 </p>
@@ -99,13 +99,14 @@ CORDON помогает держать несколько модификаций
 
 | Classic UI | PDA UI | PDA UI 2 |
 | --- | --- | --- |
-| [![Полный экран](docs/assets/screenshots/ClassicUI_full_screen_window.png)](docs/assets/screenshots/ClassicUI_full_screen_window.png) | [![Главное окно](docs/assets/screenshots/PDAUI_main_window.png)](docs/assets/screenshots/PDAUI_main_window.png) | [![Главное окно](docs/assets/screenshots/PDAUI2_main_window.png)](docs/assets/screenshots/PDAUI2_main_window.png) |
-| [![Главное окно](docs/assets/screenshots/ClassicUI_main_window.png)](docs/assets/screenshots/ClassicUI_main_window.png) | [![Браузер модификаций](docs/assets/screenshots/PDAUI_APPRO_browser.png)](docs/assets/screenshots/PDAUI_APPRO_browser.png) | [![Браузер модификаций](docs/assets/screenshots/PDAUI2_APPRO_browser.png)](docs/assets/screenshots/PDAUI2_APPRO_browser.png) |
-| [![Импорт MO2](docs/assets/screenshots/ClassicUI_MO2_import.png)](docs/assets/screenshots/ClassicUI_MO2_import.png) | [![Сканирование модов](docs/assets/screenshots/PDAUI_mods_scan.png)](docs/assets/screenshots/PDAUI_mods_scan.png) | [![Сканирование модов](docs/assets/screenshots/PDAUI2_mods_scan.png)](docs/assets/screenshots/PDAUI2_mods_scan.png) |
-| [![Конфликты модов](docs/assets/screenshots/ClassicUI_mod_conflicts.png)](docs/assets/screenshots/ClassicUI_mod_conflicts.png) | [![Состояние](docs/assets/screenshots/PDAUI_profile_status.png)](docs/assets/screenshots/PDAUI_profile_status.png) | [![Состояние](docs/assets/screenshots/PDAUI2_profile_status.png)](docs/assets/screenshots/PDAUI2_profile_status.png) |
-| [![Сканирование модов](docs/assets/screenshots/ClassicUI_mods_scan.png)](docs/assets/screenshots/ClassicUI_mods_scan.png) | [![Профиль](docs/assets/screenshots/PDAUI_profile_window.png)](docs/assets/screenshots/PDAUI_profile_window.png) | [![Профиль](docs/assets/screenshots/PDAUI2_profile_window.png)](docs/assets/screenshots/PDAUI2_profile_window.png) |
-| [![Состояние](docs/assets/screenshots/ClassicUI_profile_status.png)](docs/assets/screenshots/ClassicUI_profile_status.png) | [![Скриншоты](docs/assets/screenshots/PDAUI_screens_window.png)](docs/assets/screenshots/PDAUI_screens_window.png) | [![Скриншоты](docs/assets/screenshots/PDAUI2_screens_window.png)](docs/assets/screenshots/PDAUI2_screens_window.png) |
-| [![Скриншоты](docs/assets/screenshots/ClassicUI_screens_window.png)](docs/assets/screenshots/ClassicUI_screens_window.png) | [![Настройки](docs/assets/screenshots/PDAUI_settings_window.png)](docs/assets/screenshots/PDAUI_settings_window.png) | [![Настройки](docs/assets/screenshots/PDAUI2_settings_window.png)](docs/assets/screenshots/PDAUI2_settings_window.png) |
+| [![Главное окно](docs/assets/screenshots/ClassicUI_main_window.png)](docs/assets/screenshots/ClassicUI_main_window.png) | [![Главное окно](docs/assets/screenshots/PDAUI_main_window.png)](docs/assets/screenshots/PDAUI_main_window.png) | [![Главное окно](docs/assets/screenshots/PDAUI2_main_window.png)](docs/assets/screenshots/PDAUI2_main_window.png) |
+| [![Полный экран](docs/assets/screenshots/ClassicUI_full_screen_window.png)](docs/assets/screenshots/ClassicUI_full_screen_window.png) | [![Профиль](docs/assets/screenshots/PDAUI_profile_window.png)](docs/assets/screenshots/PDAUI_profile_window.png) | [![Профиль](docs/assets/screenshots/PDAUI2_profile_window.png)](docs/assets/screenshots/PDAUI2_profile_window.png) |
+| [![Состояние](docs/assets/screenshots/ClassicUI_profile_status.png)](docs/assets/screenshots/ClassicUI_profile_status.png) | [![Состояние](docs/assets/screenshots/PDAUI_profile_status.png)](docs/assets/screenshots/PDAUI_profile_status.png) | [![Состояние](docs/assets/screenshots/PDAUI2_profile_status.png)](docs/assets/screenshots/PDAUI2_profile_status.png) |
+| [![Скриншоты](docs/assets/screenshots/ClassicUI_screens_window.png)](docs/assets/screenshots/ClassicUI_screens_window.png) | [![Скриншоты](docs/assets/screenshots/PDAUI_screens_window.png)](docs/assets/screenshots/PDAUI_screens_window.png) | [![Скриншоты](docs/assets/screenshots/PDAUI2_screens_window.png)](docs/assets/screenshots/PDAUI2_screens_window.png) |
+| [![Сканирование модов](docs/assets/screenshots/ClassicUI_mods_scan.png)](docs/assets/screenshots/ClassicUI_mods_scan.png) | [![Сканирование модов](docs/assets/screenshots/PDAUI_mods_scan.png)](docs/assets/screenshots/PDAUI_mods_scan.png) | [![Сканирование модов](docs/assets/screenshots/PDAUI2_mods_scan.png)](docs/assets/screenshots/PDAUI2_mods_scan.png) |
+|  | [![Браузер модификаций](docs/assets/screenshots/PDAUI_APPRO_browser.png)](docs/assets/screenshots/PDAUI_APPRO_browser.png) | [![Браузер модификаций](docs/assets/screenshots/PDAUI2_APPRO_browser.png)](docs/assets/screenshots/PDAUI2_APPRO_browser.png) |
+| [![Импорт MO2](docs/assets/screenshots/ClassicUI_MO2_import.png)](docs/assets/screenshots/ClassicUI_MO2_import.png) |  |  |
+| [![Конфликты модов](docs/assets/screenshots/ClassicUI_mod_conflicts.png)](docs/assets/screenshots/ClassicUI_mod_conflicts.png) | [![Настройки](docs/assets/screenshots/PDAUI_settings_window.png)](docs/assets/screenshots/PDAUI_settings_window.png) | [![Настройки](docs/assets/screenshots/PDAUI2_settings_window.png)](docs/assets/screenshots/PDAUI2_settings_window.png) |
 
 ## Для разработчиков
 
