@@ -127,39 +127,87 @@ dotnet run --project .\src\StalkerModLauncher\StalkerModLauncher.csproj
 
 ## English
 
-**Run multiple S.T.A.L.K.E.R. setups from one game installation — with isolated mods, saves and settings.**
-
-CORDON is an open-source Windows profile launcher for the original trilogy, Anomaly, OGSR, iX-Ray, other X-Ray-based projects and standalone mod builds. It keeps profiles separate without modifying the original game or mod directories.
-
 ### Why use it
 
-- Create profiles with different mod lists, patches and engine builds.
-- Keep saves, settings, logs and screenshots isolated per profile.
-- Reorder mods and inspect file conflicts.
-- Import Mod Organizer 2 `modlist.txt` state.
-- Detect launch executables automatically or select one manually.
-- Use the stable linked Workspace backend without copying the entire game.
-- Use the stable USVFS backend for supported x64 and x86 games.
-- Switch between Classic UI and a S.T.A.L.K.E.R.-inspired PDA interface.
+CORDON helps you keep multiple S.T.A.L.K.E.R. modifications and addon sets together without reinstalling the game or mixing their files.
+
+- Multiple setups: create profiles with different mods, patches and engines.
+- Separate data: every profile has its own saves, settings, logs and screenshots.
+- No full game copy: Workspace connects unchanged files through NTFS links.
+
+It supports the original trilogy, Anomaly, OGSR, iX-Ray and other X-Ray projects with a typical structure, as well as ready-to-play standalone builds.
+
+### Highlights
+
+- Support for 32-bit and 64-bit X-Ray engines: the original trilogy, Anomaly, OGSR, iX-Ray and other typical builds.
+- Regular profiles with a base game and ordered mod list, plus standalone profiles for builds with their own EXE.
+- Separate saves, settings, logs and screenshots for every regular profile.
+- Enable and disable mods, and change priority with single-item or group drag-and-drop; lower mods in the list have higher priority.
+- Scan mod folders and install unpacked mods from ZIP, 7Z and RAR archives.
+- Conflict analysis: winning, replaced and unique files, the resulting build tree, and excluding one file without changing the source mod.
+- Import ready-made game profiles from `Mod Organizer 2`.
+- Automatically find the final EXE or choose it manually; engines from enabled mods are included.
+- Two regular profile modes: Workspace with NTFS links and USVFS from Mod Organizer 2 for virtual file overlays.
+- Profile readiness checks, Workspace/USVFS status, the latest game log and crash dump; cache cleanup and diagnostic report copying.
+- Import, export, duplicate and rename profiles.
+- Classic UI and two alternative S.T.A.L.K.E.R.-inspired PDA UI themes.
+- Built-in AP-PRO mod browser and screenshot viewer.
+- Quick profile launch from the system tray, launch with Windows and minimize to the tray.
+- Discord Rich Presence, a rotating launcher log and automatic update checks with system notifications.
+
+### Launch modes
+
+| Mode | Status | When to use |
+| --- | --- | --- |
+| **Workspace** | Stable | Recommended. Builds an isolated profile with NTFS links without copying the entire game. |
+| **USVFS** | Stable | Virtually combines files through Mod Organizer 2 components. Supports x64 and x86; compatibility depends on the engine and launch method. |
+| **Standalone profile** | Stable | Starts an already assembled standalone build from its own folder. |
 
 ### Quick start
 
 1. Download and extract the [latest release](https://github.com/ITzSYUK/CORDON/releases/latest).
 2. Click **Create** and choose a regular or standalone profile.
-3. Select the base game and mod folders, or one ready-to-play standalone folder.
-4. Check the detected executable and mod order.
-5. Choose either stable backend—Workspace or USVFS—then click **Launch**.
+3. Select the base game and mod folders, or the folder of a ready-made build.
+4. Check the detected EXE and mod order.
+5. Click **Launch**.
 
-### Release packages
+Detailed setup is described in the [English user guide](docs/USER_GUIDE_EN.md).
 
-| Package | Description |
+### Download
+
+Downloads are available on the [latest release](https://github.com/ITzSYUK/CORDON/releases/latest) page.
+
+| Package | For whom |
 | --- | --- |
 | `CORDON-...-win-x64-standalone.zip` | Recommended for most users. Includes the .NET Runtime. |
-| `CORDON-...-win-x64.zip` | Smaller package. Requires .NET 8 Desktop Runtime x64. |
+| `CORDON-...-win-x64.zip` | Compact version for systems with .NET 8 Desktop Runtime x64 installed. |
 
-Windows 10/11 x64 is required. USVFS may also require the Microsoft Visual C++ 2015–2022 Redistributable for both x64 and x86.
+Windows 10/11 x64 is required. USVFS may also require Microsoft Visual C++ 2015–2022 Redistributable for x64 and x86.
 
-See the [English user guide](docs/USER_GUIDE_EN.md) for detailed usage and the [English technical documentation](docs/TECHNICAL_EN.md) for architecture, Workspace safety, USVFS limitations and release packaging.
+### Security and transparency
+
+- The source code is open and distributed under GPLv3.
+- Original game and mod folders are read-only from the launcher's perspective.
+- Writable profile data is stored separately in the Workspace.
+
+### Interface
+
+The shared [interface gallery](#screenshots) above shows Classic UI, PDA UI and PDA UI 2.
+
+### For developers
+
+.NET 8 SDK and Windows 10/11 x64 are required.
+
+```powershell
+dotnet build .\StalkerModLauncher.sln
+dotnet test .\StalkerModLauncher.sln -c Release
+dotnet run --project .\src\StalkerModLauncher\StalkerModLauncher.csproj
+```
+
+- [Technical documentation in Russian](docs/TECHNICAL_RU.md)
+- [Technical documentation in English](docs/TECHNICAL_EN.md)
+- [User guide in English](docs/USER_GUIDE_EN.md)
+- [Third-party licenses](THIRD_PARTY_NOTICES.md)
 
 ---
 
