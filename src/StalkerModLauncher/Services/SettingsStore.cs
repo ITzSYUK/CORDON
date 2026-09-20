@@ -357,6 +357,7 @@ public sealed class SettingsStore : IDisposable
     private static void TransformPaths(AppSettings settings, Func<string, string> transform)
     {
         settings.LastBrowsedGamePath = transform(settings.LastBrowsedGamePath ?? string.Empty);
+        settings.LastMo2SourcePath = transform(settings.LastMo2SourcePath ?? string.Empty);
         if (settings.LegacyGameInstallPath is not null) settings.LegacyGameInstallPath = transform(settings.LegacyGameInstallPath);
         foreach (var profile in settings.Profiles ?? [])
         {

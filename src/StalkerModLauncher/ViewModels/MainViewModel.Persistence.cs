@@ -30,6 +30,7 @@ public sealed partial class MainViewModel
             var settings = loadResult.Settings;
             _uiLanguage = settings.UiLanguage;
             _lastBrowsedGamePath = settings.LastBrowsedGamePath;
+            _lastMo2SourcePath = settings.LastMo2SourcePath;
             _isPdaInterfaceEnabled = settings.IsPdaInterfaceEnabled;
             _useNewPdaInterface = settings.UseNewPdaInterface;
             _showTrayIcon = settings.ShowTrayIcon;
@@ -119,6 +120,7 @@ public sealed partial class MainViewModel
             await _settingsStore.UpdateAsync(existing => new AppSettings
             {
                 LastBrowsedGamePath = _lastBrowsedGamePath,
+                LastMo2SourcePath = _lastMo2SourcePath,
                 Profiles = Profiles.ToList(),
                 DontShowAboutOnStartup = existing.DontShowAboutOnStartup,
                 IsLogVisible = ActivityLog.IsVisible,

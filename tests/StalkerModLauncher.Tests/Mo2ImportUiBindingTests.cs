@@ -20,6 +20,29 @@ public sealed class Mo2ImportUiBindingTests
         Assert.Contains("Mode=OneWay", (string?)enabledColumn.Attribute("Binding"));
     }
 
+    [Theory]
+    [InlineData("Views/Mo2ImportWindow.xaml")]
+    [InlineData("Views/Controls/PdaMo2ImportView.xaml")]
+    public void PreviewExposesProblemFilterFolderSelectionAndLaunchModes(string relativePath)
+    {
+        var projectRoot = FindProjectRoot();
+        var document = XDocument.Load(Path.Combine(projectRoot, relativePath));
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
+        Assert.Contains(
+            document.Descendants(presentation + "DataGrid"),
+            element => ((string?)element.Attribute("ItemsSource"))?.Contains("VisibleEntries", StringComparison.Ordinal) == true);
+        Assert.Contains(
+            document.Descendants(presentation + "Button"),
+            element => ((string?)element.Attribute("Command"))?.Contains("BrowseMissingModFolderCommand", StringComparison.Ordinal) == true);
+        Assert.Contains(
+            document.Descendants(presentation + "RadioButton"),
+            element => (string?)element.Attribute("Content") == "Workspace");
+        Assert.Contains(
+            document.Descendants(presentation + "RadioButton"),
+            element => (string?)element.Attribute("Content") == "USVFS");
+    }
+
     [Fact]
     public void AmbiguousEntryHasSharedRowHighlight()
     {

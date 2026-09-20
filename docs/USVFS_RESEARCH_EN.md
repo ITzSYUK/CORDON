@@ -87,14 +87,15 @@ small same-bitness `StalkerModLauncher.UsvfsX86Host.exe`, which loads
 This deliberately avoids the unstable cross-bitness proxy path observed during
 research. The launcher permits one active USVFS profile at a time for both
 architectures; an x86 session itself runs in an isolated helper process.
+
 The helper remains alive while hooked descendants are running, so a short-lived
 launcher such as Gunslinger `Play.exe` cannot tear down USVFS before its
 `xrEngine.exe` child exits.
 
 For Anomaly, `Auto` starts the 32-bit `AnomalyLauncher.exe` through the x86
-helper, and the 64-bit engine it creates inherits USVFS. A manual DX8, DX9,
-DX10 or DX11 selection with optional AVX bypasses the launcher and starts the
-selected `AnomalyDX*.exe` directly. This selection is stored as a relative
+helper, and the 64-bit engine it creates inherits USVFS. A manual selection of
+DX8, DX9, DX10, DX11, or AVX bypasses the launcher and starts the selected
+`AnomalyDX*.exe` directly. This selection is stored as a relative
 path, so `FileLayerPlan` still resolves the executable from
 the enabled mod with the highest priority.
 
@@ -128,7 +129,7 @@ This keeps one source of truth:
 
 - `FileLayerPlan` defines layer order.
 - `OverlayManifest` defines executable, writable files and overwrite storage.
-- `UsvfsMappingPlanBuilder` translates those layers into future USVFS operations.
+- `UsvfsMappingPlanBuilder` translates those layers into USVFS operations.
 
 ## Why this direction
 

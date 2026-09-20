@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
 using StalkerModLauncher.Infrastructure;
+using StalkerModLauncher.Models;
 using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
@@ -10,6 +11,7 @@ namespace StalkerModLauncher.ViewModels;
 public sealed class Mo2ImportViewModel : ObservableObject
 {
     private readonly Func<Models.ModProfile, Task<bool>> _commitProfileAsync;
+    private readonly Action<string>? _rememberSource;
     private Mo2ImportDiscovery? _discovery;
     private Mo2ProfileSource? _selectedMo2Profile;
     private Mo2ImportPreview? _preview;
@@ -22,19 +24,32 @@ public sealed class Mo2ImportViewModel : ObservableObject
     private string _message = Strings.Mo2_SelectSource;
     private bool _isMessageWarning;
     private bool _includeOverwrite;
+    private bool _showOnlyProblems;
+    private LaunchBackendKind _launchBackendKind = LaunchBackendKind.VirtualFileSystem;
 
     public Mo2ImportViewModel(
-        Func<Models.ModProfile, Task<bool>> commitProfileAsync)
+        Func<Models.ModProfile, Task<bool>> commitProfileAsync,
+        string initialSourcePath = "",
+        Action<string>? rememberSource = null)
     {
         _commitProfileAsync = commitProfileAsync;
+        _rememberSource = rememberSource;
         BrowseSourceFolderCommand = new RelayCommand(BrowseSourceFolder);
         BrowseModListCommand = new RelayCommand(BrowseModList);
         BrowseGameCommand = new RelayCommand(BrowseGame);
         BrowseModsCommand = new RelayCommand(BrowseMods);
         BrowseOverwriteCommand = new RelayCommand(BrowseOverwrite);
+        BrowseMissingModFolderCommand = new RelayCommand(
+            parameter => BrowseMissingModFolder(parameter as Mo2ImportPreviewEntry),
+            parameter => parameter is Mo2ImportPreviewEntry { CanBrowseSource: true });
         NextCommand = new RelayCommand(CreatePreview, CanCreatePreview);
         BackCommand = new RelayCommand(Back, () => Step == 2);
         ImportCommand = new AsyncRelayCommand(ImportAsync, CanImport);
+
+        if (!string.IsNullOrWhiteSpace(initialSourcePath))
+        {
+            LoadSource(initialSourcePath, remember: false);
+        }
     }
 
     public event EventHandler? Completed;
@@ -127,6 +142,45 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
     public Mo2ImportPreview? Preview => _preview;
 
+    public IEnumerable<Mo2ImportPreviewEntry> VisibleEntries =>
+        Preview?.Entries.Where(entry => !ShowOnlyProblems || !entry.IsAvailable) ?? [];
+
+    public bool ShowOnlyProblems
+    {
+        get => _showOnlyProblems;
+        set
+        {
+            if (SetProperty(ref _showOnlyProblems, value))
+            {
+                OnPropertyChanged(nameof(VisibleEntries));
+            }
+        }
+    }
+
+    public bool UseLinkedWorkspace
+    {
+        get => _launchBackendKind == LaunchBackendKind.LinkedWorkspace;
+        set
+        {
+            if (value)
+            {
+                SetLaunchBackend(LaunchBackendKind.LinkedWorkspace);
+            }
+        }
+    }
+
+    public bool UseVirtualFileSystem
+    {
+        get => _launchBackendKind == LaunchBackendKind.VirtualFileSystem;
+        set
+        {
+            if (value)
+            {
+                SetLaunchBackend(LaunchBackendKind.VirtualFileSystem);
+            }
+        }
+    }
+
     public bool IncludeOverwrite
     {
         get => _includeOverwrite;
@@ -160,11 +214,14 @@ public sealed class Mo2ImportViewModel : ObservableObject
     public ICommand BrowseGameCommand { get; }
     public ICommand BrowseModsCommand { get; }
     public ICommand BrowseOverwriteCommand { get; }
+    public ICommand BrowseMissingModFolderCommand { get; }
     public ICommand NextCommand { get; }
     public ICommand BackCommand { get; }
     public ICommand ImportCommand { get; }
 
-    public void LoadSource(string path)
+    public void LoadSource(string path) => LoadSource(path, remember: true);
+
+    private void LoadSource(string path, bool remember)
     {
         try
         {
@@ -182,6 +239,10 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
             SelectedMo2Profile = discovery.SelectedProfile;
             SetMessage(LocalizedText.Format(Strings.Mo2_ProfilesFoundFormat, Profiles.Count));
+            if (remember)
+            {
+                _rememberSource?.Invoke(path);
+            }
         }
         catch (Exception ex)
         {
@@ -236,6 +297,20 @@ public sealed class Mo2ImportViewModel : ObservableObject
         }
     }
 
+    private void BrowseMissingModFolder(Mo2ImportPreviewEntry? entry)
+    {
+        if (entry is null)
+        {
+            return;
+        }
+
+        var path = DialogService.PickFolder(Strings.Mo2Service_SelectFolder, ModsPath);
+        if (path is not null)
+        {
+            entry.SourcePath = path;
+        }
+    }
+
     private bool CanCreatePreview() =>
         _discovery is not null &&
         SelectedMo2Profile is not null &&
@@ -260,6 +335,8 @@ public sealed class Mo2ImportViewModel : ObservableObject
             ReplacePreview(preview);
             OnPropertyChanged(nameof(Preview));
             OnPropertyChanged(nameof(PreviewSummary));
+            ShowOnlyProblems = preview.MissingModCount > 0 || preview.AmbiguousModCount > 0;
+            OnPropertyChanged(nameof(VisibleEntries));
             IncludeOverwrite = false;
             Step = 2;
             SetMessage(
@@ -298,7 +375,11 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
         try
         {
-            var profile = Mo2ImportService.CreateProfile(Preview, ProfileName, IncludeOverwrite);
+            var profile = Mo2ImportService.CreateProfile(
+                Preview,
+                ProfileName,
+                IncludeOverwrite,
+                _launchBackendKind);
             if (await _commitProfileAsync(profile))
             {
                 Completed?.Invoke(this, EventArgs.Empty);
@@ -344,12 +425,25 @@ public sealed class Mo2ImportViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(PreviewSummary));
+        OnPropertyChanged(nameof(VisibleEntries));
         if (Preview?.AmbiguousModCount == 0)
         {
             SetMessage(Strings.Mo2_AmbiguousResolved);
         }
 
         RaiseCommandStates();
+    }
+
+    private void SetLaunchBackend(LaunchBackendKind launchBackendKind)
+    {
+        if (_launchBackendKind == launchBackendKind)
+        {
+            return;
+        }
+
+        _launchBackendKind = launchBackendKind;
+        OnPropertyChanged(nameof(UseLinkedWorkspace));
+        OnPropertyChanged(nameof(UseVirtualFileSystem));
     }
 
     private void RaiseCommandStates()

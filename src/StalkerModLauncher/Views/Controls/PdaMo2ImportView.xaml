@@ -158,8 +158,16 @@
                                    FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
                         <TextBlock Text="{Binding Preview.OverwriteSummary}" Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                        <WrapPanel Margin="0,5,0,0">
+                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}"
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="10" Margin="0,0,8,0"/>
+                            <RadioButton Content="Workspace" IsChecked="{Binding UseLinkedWorkspace}" FontSize="10" Margin="0,0,10,0"/>
+                            <RadioButton Content="USVFS" IsChecked="{Binding UseVirtualFileSystem}" FontSize="10"/>
+                            <CheckBox Content="{x:Static res:Strings.Mo2_ShowOnlyProblems}"
+                                      IsChecked="{Binding ShowOnlyProblems}" FontSize="10" Margin="16,0,0,0"/>
+                        </WrapPanel>
                     </StackPanel>
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding Preview.Entries}" AutoGenerateColumns="False"
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding VisibleEntries}" AutoGenerateColumns="False"
                               Style="{StaticResource Mo2DataGridStyle}" IsReadOnly="True" CanUserAddRows="False"
                               SelectionMode="Single" FontSize="10">
                         <DataGrid.Columns>
@@ -172,6 +180,10 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock Text="{Binding PathDisplay}" TextTrimming="CharacterEllipsis"
                                                        VerticalAlignment="Center">
                                                 <TextBlock.Style>
@@ -184,7 +196,7 @@
                                                     </Style>
                                                 </TextBlock.Style>
                                             </TextBlock>
-                                            <ComboBox ItemsSource="{Binding CandidateOptions}"
+                                            <ComboBox Grid.ColumnSpan="2" ItemsSource="{Binding CandidateOptions}"
                                                       SelectedValuePath="Path"
                                                       SelectedValue="{Binding SourcePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       ToolTip="{x:Static res:Strings.Mo2_SelectMatchingFolder}">
@@ -201,6 +213,20 @@
                                                     </Style>
                                                 </ComboBox.Style>
                                             </ComboBox>
+                                            <Button Grid.Column="1" Content="{x:Static res:Strings.Mo2Service_SelectFolder}"
+                                                    Command="{Binding DataContext.BrowseMissingModFolderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}" Margin="6,0,0,0" Padding="6,1">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource PdaBaseButtonStyle}">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding CanBrowseSource}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
                                         </Grid>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

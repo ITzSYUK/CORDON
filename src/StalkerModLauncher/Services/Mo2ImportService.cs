@@ -46,9 +46,9 @@ public sealed class Mo2ImportPreviewEntry : ObservableObject
     public IReadOnlyList<string> CandidatePaths { get; }
     public IReadOnlyList<Mo2FolderCandidate> CandidateOptions { get; }
     public bool HasMultipleCandidates => CandidatePaths.Count > 1;
-    public bool IsAvailable => CandidatePaths.Any(path =>
-        path.Equals(SourcePath, StringComparison.OrdinalIgnoreCase));
+    public bool IsAvailable => Directory.Exists(SourcePath);
     public bool IsAmbiguous => HasMultipleCandidates && !IsAvailable;
+    public bool CanBrowseSource => !IsAvailable && !HasMultipleCandidates;
 
     public string SourcePath
     {
@@ -57,15 +57,18 @@ public sealed class Mo2ImportPreviewEntry : ObservableObject
         {
             var selectedPath = CandidatePaths.FirstOrDefault(path =>
                 path.Equals(value, StringComparison.OrdinalIgnoreCase));
-            if (!string.IsNullOrEmpty(value) && selectedPath is null)
+            if (!string.IsNullOrEmpty(value) && selectedPath is null && !Directory.Exists(value))
             {
                 return;
             }
 
-            if (SetProperty(ref _sourcePath, selectedPath ?? string.Empty))
+            var normalizedPath = selectedPath ??
+                                 (string.IsNullOrEmpty(value) ? string.Empty : Path.GetFullPath(value));
+            if (SetProperty(ref _sourcePath, normalizedPath))
             {
                 OnPropertyChanged(nameof(IsAvailable));
                 OnPropertyChanged(nameof(IsAmbiguous));
+                OnPropertyChanged(nameof(CanBrowseSource));
                 OnPropertyChanged(nameof(PathDisplay));
                 OnPropertyChanged(nameof(Status));
             }
@@ -77,7 +80,7 @@ public sealed class Mo2ImportPreviewEntry : ObservableObject
         ? "overwrite"
         : IsAmbiguous
             ? LocalizedText.Format(Strings.Mo2Service_SelectOneOfFormat, CandidatePaths.Count)
-            : HasMultipleCandidates
+            : HasMultipleCandidates || IsAvailable && CandidatePaths.Count == 0
                 ? Strings.Mo2Service_SelectedManually
             : IsAvailable
                 ? Strings.Mo2Service_Found
@@ -257,7 +260,11 @@ public static class Mo2ImportService
             executableSummary);
     }
 
-    public static ModProfile CreateProfile(Mo2ImportPreview preview, string requestedName, bool includeOverwrite)
+    public static ModProfile CreateProfile(
+        Mo2ImportPreview preview,
+        string requestedName,
+        bool includeOverwrite,
+        LaunchBackendKind launchBackendKind = LaunchBackendKind.VirtualFileSystem)
     {
         if (!Directory.Exists(preview.Discovery.GamePath))
         {
@@ -275,7 +282,7 @@ public static class Mo2ImportService
             Description = LocalizedText.Format(Strings.Mo2Service_ImportedDescriptionFormat, preview.Profile.Name),
             GameInstallPath = Path.GetFullPath(preview.Discovery.GamePath),
             IsStandalone = false,
-            LaunchBackendKind = LaunchBackendKind.LinkedWorkspace,
+            LaunchBackendKind = launchBackendKind,
             LaunchArguments = string.Empty,
             Mo2OverwritePath = includeOverwrite && preview.HasOverwriteContent
                 ? preview.Discovery.OverwritePath

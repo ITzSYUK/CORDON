@@ -1,3 +1,4 @@
+using StalkerModLauncher.Models;
 using StalkerModLauncher.Services;
 using Xunit;
 
@@ -47,6 +48,7 @@ public sealed class Mo2ImportServiceTests : IDisposable
         Assert.Equal(source.GamePath, profile.GameInstallPath);
         Assert.Equal(["Low", "High"], profile.Mods.Select(mod => mod.Name));
         Assert.Equal(source.OverwritePath, profile.Mo2OverwritePath);
+        Assert.Equal(LaunchBackendKind.VirtualFileSystem, profile.LaunchBackendKind);
         Assert.False(profile.Mods[0].IsEnabled);
         Assert.Equal(string.Empty, profile.Mods[0].GroupName);
         Assert.Equal("Gameplay", profile.Mods[1].GroupName);
@@ -150,6 +152,33 @@ public sealed class Mo2ImportServiceTests : IDisposable
     }
 
     [Fact]
+    public void PreviewAllowsSelectingFolderForMissingMod()
+    {
+        var source = CreatePortableMo2("+Missing");
+        var manualPath = Directory.CreateDirectory(Path.Combine(_root, "ManualMod")).FullName;
+        var discovery = Mo2ImportService.Discover(source.RootPath);
+        var preview = Mo2ImportService.CreatePreview(
+            discovery,
+            Assert.Single(discovery.Profiles),
+            discovery.GamePath,
+            discovery.ModsPath,
+            discovery.OverwritePath);
+        var entry = Assert.Single(preview.Entries);
+
+        Assert.True(entry.CanBrowseSource);
+        entry.SourcePath = manualPath;
+
+        Assert.True(entry.IsAvailable);
+        Assert.False(entry.CanBrowseSource);
+        Assert.Equal("Выбрано вручную", entry.Status);
+        var profile = Mo2ImportService.CreateProfile(
+            preview,
+            "Imported",
+            includeOverwrite: false);
+        Assert.Equal(manualPath, Assert.Single(profile.Mods).SourcePath);
+    }
+
+    [Fact]
     public void CreateProfileCanExcludeOverwrite()
     {
         var source = CreatePortableMo2("+One");
@@ -163,10 +192,15 @@ public sealed class Mo2ImportServiceTests : IDisposable
             discovery.ModsPath,
             discovery.OverwritePath);
 
-        var profile = Mo2ImportService.CreateProfile(preview, "Without overwrite", includeOverwrite: false);
+        var profile = Mo2ImportService.CreateProfile(
+            preview,
+            "Without overwrite",
+            includeOverwrite: false,
+            LaunchBackendKind.LinkedWorkspace);
 
         Assert.Equal(["One"], profile.Mods.Select(mod => mod.Name));
         Assert.Empty(profile.Mo2OverwritePath);
+        Assert.Equal(LaunchBackendKind.LinkedWorkspace, profile.LaunchBackendKind);
     }
 
     private Mo2Source CreatePortableMo2(params string[] modListLines)

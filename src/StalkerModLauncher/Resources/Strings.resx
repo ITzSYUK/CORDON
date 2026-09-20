@@ -231,6 +231,7 @@
   <data name="Mo2_EnableOverwrite" xml:space="preserve"><value>Add files from MO2 overwrite as a separate highest-priority layer</value></data>
   <data name="Mo2_Enabled" xml:space="preserve"><value>On</value></data>
   <data name="Mo2_Group" xml:space="preserve"><value>MO2 group</value></data>
+  <data name="Mo2_ShowOnlyProblems" xml:space="preserve"><value>Show only missing and ambiguous mods</value></data>
   <data name="Mo2_ModListFile" xml:space="preserve"><value>modlist.txt file</value></data>
   <data name="Mo2_ModsFolder" xml:space="preserve"><value>mods folder</value></data>
   <data name="Mo2_NewProfile" xml:space="preserve"><value>New profile</value></data>

@@ -242,6 +242,7 @@ public static class Strings
     public static string Mo2_EnableOverwrite => Get();
     public static string Mo2_Enabled => Get();
     public static string Mo2_Group => Get();
+    public static string Mo2_ShowOnlyProblems => Get();
     public static string Mo2_ModListFile => Get();
     public static string Mo2_ModsFolder => Get();
     public static string Mo2_NewProfile => Get();

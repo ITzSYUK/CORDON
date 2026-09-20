@@ -139,7 +139,14 @@ public sealed partial class MainViewModel
     }
 
     public Mo2ImportViewModel CreateMo2ImportViewModel() =>
-        new(TryAddImportedProfileAsync);
+        new(
+            TryAddImportedProfileAsync,
+            _lastMo2SourcePath,
+            path =>
+            {
+                _lastMo2SourcePath = path;
+                _autoSave.Schedule();
+            });
 
     public async Task<bool> TryAddImportedProfileAsync(ModProfile profile)
     {

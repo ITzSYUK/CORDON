@@ -45,6 +45,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         new(ReferenceEqualityComparer.Instance);
     private CancellationTokenSource? _conflictAnalysisCancellation;
     private string _lastBrowsedGamePath = string.Empty;
+    private string _lastMo2SourcePath = string.Empty;
     private ModProfile? _selectedProfile;
     private ModEntry? _selectedMod;
     private string _validationSummary = Strings.Main_SelectGame;

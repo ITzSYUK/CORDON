@@ -8,6 +8,7 @@ public sealed class AppSettings
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public string LastBrowsedGamePath { get; set; } = string.Empty;
+    public string LastMo2SourcePath { get; set; } = string.Empty;
 
     [JsonPropertyName("GameInstallPath")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

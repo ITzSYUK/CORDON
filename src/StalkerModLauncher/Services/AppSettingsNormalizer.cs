@@ -9,6 +9,7 @@ public static class AppSettingsNormalizer
     {
         var schemaVersion = settings.SchemaVersion;
         settings.LastBrowsedGamePath ??= string.Empty;
+        settings.LastMo2SourcePath ??= string.Empty;
         settings.DiscordClientId ??= string.Empty;
         if (string.IsNullOrWhiteSpace(settings.LastBrowsedGamePath) &&
             !string.IsNullOrWhiteSpace(settings.LegacyGameInstallPath))

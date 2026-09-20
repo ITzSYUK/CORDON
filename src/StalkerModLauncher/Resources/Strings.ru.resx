@@ -231,6 +231,7 @@
   <data name="Mo2_EnableOverwrite" xml:space="preserve"><value>Подключить файлы из MO2 overwrite отдельным слоем с максимальным приоритетом</value></data>
   <data name="Mo2_Enabled" xml:space="preserve"><value>Вкл.</value></data>
   <data name="Mo2_Group" xml:space="preserve"><value>Группа MO2</value></data>
+  <data name="Mo2_ShowOnlyProblems" xml:space="preserve"><value>Показывать только отсутствующие и неоднозначные моды</value></data>
   <data name="Mo2_ModListFile" xml:space="preserve"><value>Файл modlist.txt</value></data>
   <data name="Mo2_ModsFolder" xml:space="preserve"><value>Папка mods</value></data>
   <data name="Mo2_NewProfile" xml:space="preserve"><value>Новый профиль</value></data>

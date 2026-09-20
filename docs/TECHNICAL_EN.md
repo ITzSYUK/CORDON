@@ -195,7 +195,9 @@ base game -> mods in order -> known writable files -> profile overwrite
 
 ### x64 and x86
 
-x64 targets are started through the managed adapter and `usvfs_x64.dll`. x86 targets use `StalkerModLauncher.UsvfsX86Host.exe`, which loads `usvfs_x86.dll` in a process with matching architecture.
+x64 means a 64-bit game, while x86 means a 32-bit game.
+
+x64 games are started through the official `usvfs_x64.dll` library. x86 games use a separate helper, `StalkerModLauncher.UsvfsX86Host.exe`, which loads `usvfs_x86.dll` in a 32-bit process.
 
 The x86 host remains alive while injected child processes are active and publishes their PIDs to the managed readiness monitor. The managed x64 path likewise waits for the USVFS process list to remain empty after the initial EXE exits. This is required for launcher applications that exit immediately after starting the actual engine.
 
@@ -258,7 +260,7 @@ Persistent data for a standard profile is kept in:
 <workspace>\userdata
 ```
 
-The launcher takes the selected file-system configuration, preserves its name, relative path, and encoding, including Windows-1251, and changes `$app_data_root$` to the profile's absolute `userdata` path. Other aliases and mod-specific lines remain intact. Data previously misrouted into the corresponding `userdata\overwrite` subtree is copied once without replacing existing files; after a successful migration, `.stalker-launcher-manual-data-migrated` is written to the source directory. The source copy is retained but is not imported again on later launches, so files deleted by the user do not reappear. Managed workspaces always use the ASCII name `profile-<ID>`, so iXray and other engines with limited Unicode support receive a normal path without an extra junction or second data directory.
+The launcher takes the selected file-system configuration, preserves its name, relative path, and encoding, including Windows-1251, and changes `$app_data_root$` to the profile's absolute `userdata` path. If the file has a nonstandard name, a compatible `fsgame.ltx` copy with the same rewritten contents is created beside it. Other path rules and mod-specific lines remain intact. Data previously misrouted into the corresponding `userdata\overwrite` subtree is copied once without replacing existing files; after a successful migration, `.stalker-launcher-manual-data-migrated` is written to the source directory. The source copy is retained but is not imported again on later launches, so files deleted by the user do not reappear. Managed workspaces always use the ASCII name `profile-<ID>`, so iXray and other engines with limited Unicode support receive a normal path without an extra junction or second data directory.
 
 For a non-standalone profile, launch is blocked when `fsgame.ltx` is missing or does not contain `$app_data_root$`. Workspace and USVFS therefore never report profile-data isolation as successful when the engine would still use a shared data directory.
 
@@ -366,7 +368,7 @@ In ordinary mode, game and mod paths are absolute. When a source folder is moved
 Preflight validates:
 
 - base game and enabled mod folders;
-- final EXE and architecture;
+- final EXE and its architecture, either 32-bit or 64-bit;
 - working directory and arguments;
 - the complete x64/x86 USVFS bundle, PE architecture of every file, and matching versions of the upstream runtime components;
 - readiness of `fsgame.ltx` and profile data;
@@ -402,9 +404,9 @@ Archive installation is transactional through a temporary directory. The launche
 
 Grouped movement preserves the relative order of selected mods. The UI supports drag and drop plus move-to-start and move-to-end commands.
 
-The MO2 transfer wizard accepts a Mod Organizer 2 root, an MO2 profile directory, or `modlist.txt`. It reads `ModOrganizer.ini`, supports standard and relative paths, and discovers `profiles`, `mods`, the base game, and `overwrite` without writing to any source directory.
+The MO2 transfer wizard accepts a Mod Organizer 2 root, an MO2 profile directory, or `modlist.txt`. The last successfully selected source is saved and loaded when the wizard is opened again; MO2 installations are not scanned automatically. It reads `ModOrganizer.ini`, supports standard and relative paths, and discovers `profiles`, `mods`, the base game, and `overwrite` without writing to any source directory.
 
-The preview matches `modlist.txt` entries to physical directories, reports missing matches, and requires the user to select a source when several directories match. After all ambiguities are resolved, it transfers enabled state and converts MO2 order to the launcher's lower-is-higher priority rule. MO2 separators are persisted in `ModEntry.GroupName` and do not participate in the layer plan. A non-empty `overwrite` directory can be connected through `ModProfile.Mo2OverwritePath` as a separate layer after regular mods; it is hidden from the user-facing mod list and can be disconnected in profile settings. The executable is selected only through the existing detection over actual layers; MO2 launch arguments are not copied automatically.
+The preview matches `modlist.txt` entries to physical directories, can show only missing and ambiguous matches, and lets the user select an individual folder for a missing mod. After all ambiguities are resolved, it transfers enabled state and converts MO2 order to the launcher's lower-is-higher priority rule. MO2 separators are persisted in `ModEntry.GroupName` and do not participate in the layer plan. A non-empty `overwrite` directory can be connected through `ModProfile.Mo2OverwritePath` as a separate layer after regular mods; it is hidden from the user-facing mod list and can be disconnected in profile settings. The user selects Workspace or USVFS, with USVFS selected by default. The executable is selected only through the existing detection over actual layers; MO2 launch arguments are not copied automatically.
 
 Profile creation is transactional with respect to settings: the profile is first added in memory and then explicitly saved through the atomic settings store. On failure it is removed, the previous selection is restored, and the wizard remains open. Saves and `user.ltx` are not copied in the current version.
 
