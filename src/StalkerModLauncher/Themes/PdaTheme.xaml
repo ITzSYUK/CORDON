@@ -13,6 +13,7 @@
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#DDA13B"/>
     <SolidColorBrush x:Key="AccentPressedBrush" Color="#A96D1D"/>
     <SolidColorBrush x:Key="AccentGreenBrush" Color="#829A52"/>
+    <SolidColorBrush x:Key="DangerBrush" Color="#AD5848"/>
     <SolidColorBrush x:Key="ModSelectionBrush" Color="#263544"/>
     <SolidColorBrush x:Key="ModRelatedBrush" Color="#1B2B35"/>
     <SolidColorBrush x:Key="ModRelatedStrokeBrush" Color="#557080"/>

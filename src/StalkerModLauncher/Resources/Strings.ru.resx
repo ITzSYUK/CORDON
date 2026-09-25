@@ -234,7 +234,7 @@
   <data name="Mo2_ShowOnlyProblems" xml:space="preserve"><value>Показывать только отсутствующие и неоднозначные моды</value></data>
   <data name="Mo2_ModListFile" xml:space="preserve"><value>Файл modlist.txt</value></data>
   <data name="Mo2_ModsFolder" xml:space="preserve"><value>Папка mods</value></data>
-  <data name="Mo2_NewProfile" xml:space="preserve"><value>Новый профиль</value></data>
+  <data name="Mo2_NewProfile" xml:space="preserve"><value>Название профиля</value></data>
   <data name="Mo2_Or" xml:space="preserve"><value>или</value></data>
   <data name="Mo2_OverwriteFolder" xml:space="preserve"><value>Папка overwrite</value></data>
   <data name="Mo2_Preview" xml:space="preserve"><value>Предпросмотр</value></data>
@@ -244,6 +244,20 @@
   <data name="Mo2_Source" xml:space="preserve"><value>Источник MO2</value></data>
   <data name="Mo2_SourceFolder" xml:space="preserve"><value>Папка MO2</value></data>
   <data name="Mo2_Title" xml:space="preserve"><value>Перенести сборку из Mod Organizer 2</value></data>
+  <data name="Mo2_StepSourceTitle" xml:space="preserve"><value>Шаг 1 из 2 — Источник</value></data>
+  <data name="Mo2_StepPreviewTitle" xml:space="preserve"><value>Шаг 2 из 2 — Проверка модов</value></data>
+  <data name="Mo2_SourceNotSelected" xml:space="preserve"><value>Не выбрано</value></data>
+  <data name="Mo2_SelectProfilePlaceholder" xml:space="preserve"><value>Выберите профиль MO2…</value></data>
+  <data name="Mo2_RequiredFieldsHint" xml:space="preserve"><value>* — обязательные поля.</value></data>
+  <data name="Mo2_PathNotFound" xml:space="preserve"><value>Папка не найдена</value></data>
+  <data name="Mo2_SearchPlaceholder" xml:space="preserve"><value>Поиск модов…</value></data>
+  <data name="Mo2_NextBlockedNoProfile" xml:space="preserve"><value>Выберите профиль MO2 и существующие папки игры и mods.</value></data>
+  <data name="Mo2_ImportBlockedAmbiguousFormat" xml:space="preserve"><value>Разрешите {0} неоднозначных модов в столбце «Папка».</value></data>
+  <data name="Mo2_ImportBlockedName" xml:space="preserve"><value>Введите название профиля.</value></data>
+  <data name="Mo2_ImportBlockedEmpty" xml:space="preserve"><value>Нет найденных модов для импорта.</value></data>
+  <data name="Mo2_LaunchModeHint" xml:space="preserve"><value>Workspace собирает связанную папку профиля. USVFS подключает файлы виртуально без копирования.</value></data>
+  <data name="Mo2_EnabledReadOnlyHint" xml:space="preserve"><value>Состояние из modlist.txt. Меняется в MO2 или после импорта.</value></data>
+  <data name="Mo2_SelectFolderPlaceholder" xml:space="preserve"><value>Выберите папку…</value></data>
   <data name="Catalog_CallOfPripyat" xml:space="preserve"><value>Зов Припяти</value></data>
   <data name="Catalog_ClearSky" xml:space="preserve"><value>Чистое Небо</value></data>
   <data name="Catalog_Credits" xml:space="preserve"><value>Модификации, отображаемые на странице, принадлежат их авторам. Информация предоставляется с использованием материалов сайта </value></data>

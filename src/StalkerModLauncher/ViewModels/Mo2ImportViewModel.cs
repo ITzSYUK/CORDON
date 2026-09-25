@@ -25,6 +25,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
     private bool _isMessageWarning;
     private bool _includeOverwrite;
     private bool _showOnlyProblems;
+    private string _searchText = string.Empty;
     private LaunchBackendKind _launchBackendKind = LaunchBackendKind.VirtualFileSystem;
 
     public Mo2ImportViewModel(
@@ -65,6 +66,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(IsSourceStep));
                 OnPropertyChanged(nameof(IsPreviewStep));
+                OnPropertyChanged(nameof(StepTitle));
                 RaiseCommandStates();
             }
         }
@@ -73,11 +75,26 @@ public sealed class Mo2ImportViewModel : ObservableObject
     public bool IsSourceStep => Step == 1;
     public bool IsPreviewStep => Step == 2;
 
+    public string StepTitle => IsPreviewStep ? Strings.Mo2_StepPreviewTitle : Strings.Mo2_StepSourceTitle;
+
     public string SourcePath
     {
         get => _sourcePath;
-        private set => SetProperty(ref _sourcePath, value);
+        private set
+        {
+            if (SetProperty(ref _sourcePath, value))
+            {
+                OnPropertyChanged(nameof(SourceDisplay));
+                OnPropertyChanged(nameof(HasSource));
+            }
+        }
     }
+
+    public string SourceDisplay => string.IsNullOrWhiteSpace(SourcePath)
+        ? Strings.Mo2_SourceNotSelected
+        : SourcePath;
+
+    public bool HasSource => !string.IsNullOrWhiteSpace(SourcePath);
 
     public string GamePath
     {
@@ -86,6 +103,8 @@ public sealed class Mo2ImportViewModel : ObservableObject
         {
             if (SetProperty(ref _gamePath, value))
             {
+                OnPropertyChanged(nameof(IsGamePathValid));
+                OnPropertyChanged(nameof(NextBlockedReason));
                 RaiseCommandStates();
             }
         }
@@ -98,6 +117,8 @@ public sealed class Mo2ImportViewModel : ObservableObject
         {
             if (SetProperty(ref _modsPath, value))
             {
+                OnPropertyChanged(nameof(IsModsPathValid));
+                OnPropertyChanged(nameof(NextBlockedReason));
                 RaiseCommandStates();
             }
         }
@@ -109,6 +130,44 @@ public sealed class Mo2ImportViewModel : ObservableObject
         set => SetProperty(ref _overwritePath, value);
     }
 
+    public bool IsGamePathValid => Directory.Exists(GamePath);
+
+    public bool IsModsPathValid => Directory.Exists(ModsPath);
+
+    public string NextBlockedReason => CanCreatePreview()
+        ? string.Empty
+        : Strings.Mo2_NextBlockedNoProfile;
+
+    public string ImportBlockedReason
+    {
+        get
+        {
+            if (Preview is null)
+            {
+                return string.Empty;
+            }
+
+            if (Preview.AmbiguousModCount > 0)
+            {
+                return LocalizedText.Format(
+                    Strings.Mo2_ImportBlockedAmbiguousFormat,
+                    Preview.AmbiguousModCount);
+            }
+
+            if (string.IsNullOrWhiteSpace(ProfileName))
+            {
+                return Strings.Mo2_ImportBlockedName;
+            }
+
+            if (Preview.FoundModCount == 0)
+            {
+                return Strings.Mo2_ImportBlockedEmpty;
+            }
+
+            return string.Empty;
+        }
+    }
+
     public string ProfileName
     {
         get => _profileName;
@@ -116,6 +175,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
         {
             if (SetProperty(ref _profileName, value))
             {
+                OnPropertyChanged(nameof(ImportBlockedReason));
                 RaiseCommandStates();
             }
         }
@@ -135,6 +195,10 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
                 ReplacePreview(null);
                 OnPropertyChanged(nameof(Preview));
+                OnPropertyChanged(nameof(PreviewSummary));
+                OnPropertyChanged(nameof(VisibleEntries));
+                OnPropertyChanged(nameof(ImportBlockedReason));
+                OnPropertyChanged(nameof(NextBlockedReason));
                 RaiseCommandStates();
             }
         }
@@ -142,8 +206,26 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
     public Mo2ImportPreview? Preview => _preview;
 
-    public IEnumerable<Mo2ImportPreviewEntry> VisibleEntries =>
-        Preview?.Entries.Where(entry => !ShowOnlyProblems || !entry.IsAvailable) ?? [];
+    public IEnumerable<Mo2ImportPreviewEntry> VisibleEntries
+    {
+        get
+        {
+            var entries = Preview?.Entries.AsEnumerable() ?? [];
+            if (ShowOnlyProblems)
+            {
+                entries = entries.Where(entry => !entry.IsAvailable);
+            }
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                entries = entries.Where(entry =>
+                    entry.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    entry.GroupName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return entries;
+        }
+    }
 
     public bool ShowOnlyProblems
     {
@@ -151,6 +233,18 @@ public sealed class Mo2ImportViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _showOnlyProblems, value))
+            {
+                OnPropertyChanged(nameof(VisibleEntries));
+            }
+        }
+    }
+
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (SetProperty(ref _searchText, value ?? string.Empty))
             {
                 OnPropertyChanged(nameof(VisibleEntries));
             }
@@ -239,6 +333,9 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
             SelectedMo2Profile = discovery.SelectedProfile;
             SetMessage(LocalizedText.Format(Strings.Mo2_ProfilesFoundFormat, Profiles.Count));
+            OnPropertyChanged(nameof(IsGamePathValid));
+            OnPropertyChanged(nameof(IsModsPathValid));
+            OnPropertyChanged(nameof(NextBlockedReason));
             if (remember)
             {
                 _rememberSource?.Invoke(path);
@@ -335,7 +432,9 @@ public sealed class Mo2ImportViewModel : ObservableObject
             ReplacePreview(preview);
             OnPropertyChanged(nameof(Preview));
             OnPropertyChanged(nameof(PreviewSummary));
+            OnPropertyChanged(nameof(ImportBlockedReason));
             ShowOnlyProblems = preview.MissingModCount > 0 || preview.AmbiguousModCount > 0;
+            SearchText = string.Empty;
             OnPropertyChanged(nameof(VisibleEntries));
             IncludeOverwrite = false;
             Step = 2;
@@ -362,9 +461,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
     private bool CanImport() =>
         Step == 2 &&
         Preview is not null &&
-        !string.IsNullOrWhiteSpace(ProfileName) &&
-        Preview.FoundModCount > 0 &&
-        Preview.AmbiguousModCount == 0;
+        ImportBlockedReason == string.Empty;
 
     private async Task ImportAsync()
     {
@@ -426,6 +523,8 @@ public sealed class Mo2ImportViewModel : ObservableObject
 
         OnPropertyChanged(nameof(PreviewSummary));
         OnPropertyChanged(nameof(VisibleEntries));
+        OnPropertyChanged(nameof(ImportBlockedReason));
+        OnPropertyChanged(nameof(NextBlockedReason));
         if (Preview?.AmbiguousModCount == 0)
         {
             SetMessage(Strings.Mo2_AmbiguousResolved);
@@ -451,5 +550,9 @@ public sealed class Mo2ImportViewModel : ObservableObject
         ((RelayCommand)NextCommand).RaiseCanExecuteChanged();
         ((RelayCommand)BackCommand).RaiseCanExecuteChanged();
         ((AsyncRelayCommand)ImportCommand).RaiseCanExecuteChanged();
+        OnPropertyChanged(nameof(NextBlockedReason));
+        OnPropertyChanged(nameof(ImportBlockedReason));
+        OnPropertyChanged(nameof(IsGamePathValid));
+        OnPropertyChanged(nameof(IsModsPathValid));
     }
 }
