@@ -4,14 +4,15 @@
         xmlns:res="clr-namespace:StalkerModLauncher.Resources"
         Title="{x:Static res:Strings.Mo2_Title}"
         Width="940"
-        Height="650"
+        Height="640"
         MinWidth="820"
-        MinHeight="560"
+        MinHeight="520"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterOwner"
         SourceInitialized="Window_OnSourceInitialized"
         Background="{StaticResource WindowBackgroundBrush}"
-        Foreground="{StaticResource TextBrush}">
+        Foreground="{StaticResource TextBrush}"
+        FocusManager.FocusedElement="{Binding ElementName=SourcePathTextBox}">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -22,29 +23,51 @@
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Margin="0,0,0,12">
-            <TextBlock Text="{Binding Message}" TextWrapping="Wrap">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsMessageWarning}" Value="True">
-                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-        </StackPanel>
+        <TextBlock Margin="0,0,0,8" Text="{Binding StepTitle}" Style="{StaticResource Mo2StepTitleStyle}" VerticalAlignment="Center"/>
 
-        <Border Grid.Row="1" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource StrokeBrush}"
+        <Border Grid.Row="1" Style="{StaticResource Mo2MessageBorderStyle}" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="&#x26A0;" FontSize="14" VerticalAlignment="Top" Margin="0,0,8,0"
+                           Foreground="{StaticResource DangerBrush}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsMessageWarning}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Grid.Column="1" Text="{Binding Message}" TextWrapping="Wrap" ToolTip="{Binding Message}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsMessageWarning}" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource StrokeBrush}"
                 BorderThickness="1" CornerRadius="6" Padding="16">
             <Grid>
-                <StackPanel>
+                <StackPanel VerticalAlignment="Top">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -63,16 +86,44 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="SourcePathTextBox" Text="{Binding SourcePath, Mode=OneWay}" IsReadOnly="True"/>
+                        <TextBox x:Name="SourcePathTextBox" Text="{Binding SourceDisplay, Mode=OneWay}" IsReadOnly="True"
+                                 ToolTip="{Binding SourcePath}">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasSource}" Value="False">
+                                            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
                         <Button Grid.Column="1" Content="{x:Static res:Strings.Mo2_SourceFolder}" Command="{Binding BrowseSourceFolderCommand}" Margin="8,0,0,0"/>
                         <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Mo2_Or}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                         <Button Grid.Column="3" Content="{x:Static res:Strings.Mo2_ModListFile}" Command="{Binding BrowseModListCommand}" Margin="8,0,0,0"/>
                     </Grid>
 
-                    <TextBlock Text="{x:Static res:Strings.Mo2_Profile}" FontSize="17" FontWeight="SemiBold" Margin="0,14,0,10"/>
-                    <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedMo2Profile}"
-                              DisplayMemberPath="Name" Style="{StaticResource Mo2ComboBoxStyle}"
-                              Height="{Binding ActualHeight, ElementName=SourcePathTextBox}"/>
+                    <TextBlock FontSize="17" FontWeight="SemiBold" Margin="0,14,0,10">
+                        <Run Text="{x:Static res:Strings.Mo2_Profile}"/>
+                    </TextBlock>
+                    <Grid>
+                        <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedMo2Profile}"
+                                  DisplayMemberPath="Name" Style="{StaticResource Mo2ComboBoxStyle}"
+                                  Height="{Binding ActualHeight, ElementName=SourcePathTextBox}"
+                                  ToolTip="{Binding SelectedMo2Profile.Name}"/>
+                        <TextBlock Text="{x:Static res:Strings.Mo2_SelectProfilePlaceholder}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource Mo2PlaceholderTextStyle}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedMo2Profile}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
 
                     <TextBlock Text="{x:Static res:Strings.Mo2_DetectedPaths}" FontSize="15" FontWeight="SemiBold" Margin="0,18,0,8"/>
                     <Grid>
@@ -85,19 +136,58 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <TextBlock Text="{x:Static res:Strings.Common_BaseGame}" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" Text="{Binding GamePath}" IsReadOnly="True" Margin="0,0,8,6"/>
-                        <Button Grid.Column="2" Content="{x:Static res:Strings.Common_Change}" Command="{Binding BrowseGameCommand}" Margin="0,0,0,6"/>
-                        <TextBlock Grid.Row="1" Text="{x:Static res:Strings.Mo2_ModsFolder}" VerticalAlignment="Center"/>
-                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ModsPath}" IsReadOnly="True" Margin="0,0,8,6"/>
-                        <Button Grid.Row="1" Grid.Column="2" Content="{x:Static res:Strings.Common_Change}" Command="{Binding BrowseModsCommand}" Margin="0,0,0,6"/>
-                        <TextBlock Grid.Row="2" Text="{x:Static res:Strings.Mo2_OverwriteFolder}" VerticalAlignment="Center"/>
-                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding OverwritePath}" IsReadOnly="True" Margin="0,0,8,0"/>
-                        <Button Grid.Row="2" Grid.Column="2" Content="{x:Static res:Strings.Common_Change}" Command="{Binding BrowseOverwriteCommand}"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{x:Static res:Strings.Common_BaseGame}"/>
+                            <TextBlock Text="*" Foreground="{StaticResource DangerBrush}" Margin="3,0,0,0" FontWeight="Bold"/>
+                        </StackPanel>
+                        <TextBox Grid.Column="1" Text="{Binding GamePath}" IsReadOnly="True"
+                                 ToolTip="{Binding GamePath}" Margin="0,0,8,2"/>
+                        <Button Grid.Column="2" Content="{x:Static res:Strings.Common_Change}" Command="{Binding BrowseGameCommand}" Margin="0,0,0,2"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Static res:Strings.Mo2_PathNotFound}"
+                                   Foreground="{StaticResource DangerBrush}" Margin="0,0,0,6" FontSize="12">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsGamePathValid}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{x:Static res:Strings.Mo2_ModsFolder}"/>
+                            <TextBlock Text="*" Foreground="{StaticResource DangerBrush}" Margin="3,0,0,0" FontWeight="Bold"/>
+                        </StackPanel>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ModsPath}" IsReadOnly="True"
+                                 ToolTip="{Binding ModsPath}" Margin="0,0,8,2"/>
+                        <Button Grid.Row="2" Grid.Column="2" Content="{x:Static res:Strings.Common_Change}" Command="{Binding BrowseModsCommand}" Margin="0,0,0,2"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{x:Static res:Strings.Mo2_PathNotFound}"
+                                   Foreground="{StaticResource DangerBrush}" Margin="0,0,0,6" FontSize="12">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsModsPathValid}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Grid.Row="4" Text="{x:Static res:Strings.Mo2_OverwriteFolder}" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding OverwritePath}" IsReadOnly="True"
+                                 ToolTip="{Binding OverwritePath}" Margin="0,0,8,0"/>
+                        <Button Grid.Row="4" Grid.Column="2" Content="{x:Static res:Strings.Common_Change}" Command="{Binding BrowseOverwriteCommand}"/>
                     </Grid>
                     <TextBlock Text="{x:Static res:Strings.Mo2_ReadOnlyHint}"
-                               Foreground="{StaticResource MutedTextBrush}" Margin="0,16,0,0"/>
+                               Foreground="{StaticResource MutedTextBrush}" Margin="0,16,0,0" TextWrapping="Wrap"/>
+                    <TextBlock Text="{x:Static res:Strings.Mo2_RequiredFieldsHint}"
+                               Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <Grid>
@@ -114,6 +204,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -123,43 +214,105 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{x:Static res:Strings.Mo2_NewProfile}" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" Text="{Binding ProfileName, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBox x:Name="ProfileNameTextBox" Grid.Column="1" Text="{Binding ProfileName, UpdateSourceTrigger=PropertyChanged}"/>
                     </Grid>
-                    <StackPanel Grid.Row="1" Margin="0,10,0,8">
-                        <TextBlock Text="{Binding PreviewSummary}" FontWeight="SemiBold"/>
+                    <StackPanel Grid.Row="1" Margin="0,10,0,8" HorizontalAlignment="Stretch">
+                        <TextBlock Text="{Binding PreviewSummary}" FontWeight="SemiBold" TextWrapping="Wrap" HorizontalAlignment="Stretch"/>
                         <TextBlock Text="{Binding Preview.ExecutableSummary}" Foreground="{StaticResource MutedTextBrush}"
-                                   TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" HorizontalAlignment="Stretch"
+                                   ToolTip="{Binding Preview.ExecutableSummary}"/>
                         <TextBlock Text="{Binding Preview.OverwriteSummary}" Foreground="{StaticResource MutedTextBrush}"
-                                   TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
-                        <WrapPanel Margin="0,7,0,0">
-                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}"
-                                       Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0"/>
-                            <RadioButton Content="Workspace" IsChecked="{Binding UseLinkedWorkspace}" Margin="0,0,14,0"/>
-                            <RadioButton Content="USVFS" IsChecked="{Binding UseVirtualFileSystem}"/>
-                            <CheckBox Content="{x:Static res:Strings.Mo2_ShowOnlyProblems}"
-                                      IsChecked="{Binding ShowOnlyProblems}" Margin="24,0,0,0"/>
-                        </WrapPanel>
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" HorizontalAlignment="Stretch"
+                                   ToolTip="{Binding Preview.OverwriteSummary}"/>
                     </StackPanel>
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding VisibleEntries}" AutoGenerateColumns="False"
+                    <Grid Grid.Row="2" Margin="0,0,0,8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                            <!-- Hint aligned to the TextBox text origin (19,11): 1px border plus doubled 8,5 padding, verified by render test. -->
+                            <TextBlock Text="{x:Static res:Strings.Mo2_SearchPlaceholder}" Margin="19,11,0,0" VerticalAlignment="Top">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Mo2PlaceholderTextStyle}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SearchText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                        <CheckBox Grid.Row="1" Content="{x:Static res:Strings.Mo2_ShowOnlyProblems}"
+                                  IsChecked="{Binding ShowOnlyProblems}" Margin="0,7,0,0" VerticalAlignment="Center" FontSize="10"
+                                  Style="{StaticResource Mo2CompactCheckBoxStyle}"/>
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,7,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}"
+                                       Foreground="{StaticResource MutedTextBrush}" Margin="0,0,10,0" VerticalAlignment="Center"
+                                       ToolTip="{x:Static res:Strings.Mo2_LaunchModeHint}"/>
+                            <RadioButton Content="Workspace" IsChecked="{Binding UseLinkedWorkspace}" Margin="0,0,14,0" VerticalAlignment="Center"
+                                           Style="{StaticResource Mo2LaunchRadioButtonStyle}"/>
+                            <RadioButton Content="USVFS" IsChecked="{Binding UseVirtualFileSystem}" VerticalAlignment="Center"
+                                           Style="{StaticResource Mo2LaunchRadioButtonStyle}"/>
+                            <TextBlock Text="?" Foreground="{StaticResource MutedTextBrush}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                       ToolTip="{x:Static res:Strings.Mo2_LaunchModeHint}" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Grid>
+                    <DataGrid Grid.Row="3" ItemsSource="{Binding VisibleEntries}" AutoGenerateColumns="False"
                               Style="{StaticResource Mo2DataGridStyle}"
                               IsReadOnly="True" CanUserAddRows="False" HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal" SelectionMode="Single">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="#" Binding="{Binding Order}" Width="38"/>
-                            <DataGridCheckBoxColumn Header="{x:Static res:Strings.Mo2_Enabled}" Binding="{Binding IsEnabled, Mode=OneWay}" Width="48"/>
+                            <DataGridCheckBoxColumn Header="{x:Static res:Strings.Mo2_Enabled}" Binding="{Binding IsEnabled, Mode=OneWay}" Width="60">
+                                <DataGridCheckBoxColumn.ElementStyle>
+                                    <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+                                        <Setter Property="ToolTip" Value="{x:Static res:Strings.Mo2_EnabledReadOnlyHint}"/>
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridCheckBoxColumn.ElementStyle>
+                            </DataGridCheckBoxColumn>
                             <DataGridTextColumn Header="{x:Static res:Strings.Common_Mod}" Binding="{Binding Name}" Width="2*"/>
                             <DataGridTextColumn Header="{x:Static res:Strings.Mo2_Group}" Binding="{Binding GroupName}" Width="*"/>
-                            <DataGridTextColumn Header="{x:Static res:Strings.Common_Status}" Binding="{Binding Status}" Width="150"/>
+                            <DataGridTemplateColumn Header="{x:Static res:Strings.Common_Status}" Width="160" SortMemberPath="Status">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" ToolTip="{Binding Status}">
+                                            <TextBlock Text="&#x25CF;" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="{DynamicResource AccentGreenBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsAmbiguous}" Value="True">
+                                                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsAvailable}" Value="False">
+                                                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding Status}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="{x:Static res:Strings.Common_Folder}" Width="2*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Grid>
+                                        <Grid ToolTip="{Binding SourcePath}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{Binding PathDisplay}" TextTrimming="CharacterEllipsis"
-                                                       VerticalAlignment="Center">
+                                                       VerticalAlignment="Center" ToolTip="{Binding SourcePath}">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Style.Triggers>
@@ -170,12 +323,9 @@
                                                     </Style>
                                                 </TextBlock.Style>
                                             </TextBlock>
-                                            <ComboBox Grid.ColumnSpan="2" ItemsSource="{Binding CandidateOptions}"
-                                                      SelectedValuePath="Path"
-                                                      SelectedValue="{Binding SourcePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                      ToolTip="{x:Static res:Strings.Mo2_SelectMatchingFolder}">
-                                                <ComboBox.Style>
-                                                    <Style TargetType="ComboBox" BasedOn="{StaticResource Mo2ComboBoxStyle}">
+                                            <Grid Grid.ColumnSpan="2">
+                                                <Grid.Style>
+                                                    <Style TargetType="Grid">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding HasMultipleCandidates}" Value="True">
@@ -183,8 +333,30 @@
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </ComboBox.Style>
-                                            </ComboBox>
+                                                </Grid.Style>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <ComboBox ItemsSource="{Binding CandidateOptions}"
+                                                          Style="{StaticResource Mo2ComboBoxStyle}"
+                                                          SelectedValuePath="Path"
+                                                          SelectedValue="{Binding SourcePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          ToolTip="{x:Static res:Strings.Mo2_SelectMatchingFolder}"/>
+                                                <TextBlock Text="{x:Static res:Strings.Mo2_SelectFolderPlaceholder}"
+                                                           IsHitTestVisible="False" VerticalAlignment="Center" Margin="10,0,30,0"
+                                                           Foreground="{DynamicResource MutedTextBrush}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsAvailable}" Value="False">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
                                             <Button Grid.Column="1" Content="{x:Static res:Strings.Mo2Service_SelectFolder}"
                                                     Command="{Binding DataContext.BrowseMissingModFolderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                     CommandParameter="{Binding}" Margin="8,0,0,0" Padding="8,2">
@@ -205,33 +377,50 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-                    <CheckBox Grid.Row="3" Content="{x:Static res:Strings.Mo2_EnableOverwrite}"
-                              IsChecked="{Binding IncludeOverwrite}" Margin="0,10,0,0"
-                              IsEnabled="{Binding Preview.HasOverwriteContent}"/>
+                    <CheckBox Grid.Row="4" Content="{x:Static res:Strings.Mo2_EnableOverwrite}"
+                              IsChecked="{Binding IncludeOverwrite}" Margin="0,10,0,0" FontSize="10"
+                              IsEnabled="{Binding Preview.HasOverwriteContent}"
+                              Style="{StaticResource Mo2CompactCheckBoxStyle}"/>
                 </Grid>
             </Grid>
         </Border>
 
-        <Grid Grid.Row="2" Margin="0,12,0,0">
+        <Grid Grid.Row="3" Margin="0,12,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Button Content="{x:Static res:Strings.Common_Cancel}" Click="CancelButton_OnClick" HorizontalAlignment="Left"/>
+            <Button Content="{x:Static res:Strings.Common_Cancel}" Click="CancelButton_OnClick" HorizontalAlignment="Left" IsCancel="True"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="{x:Static res:Strings.Common_Back}" Command="{Binding BackCommand}" Margin="0,0,8,0"/>
-                <Button Content="{x:Static res:Strings.Mo2_Preview}" Command="{Binding NextCommand}">
+                <Button Content="{x:Static res:Strings.Common_Back}" Command="{Binding BackCommand}" Margin="0,0,8,0">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                            <Setter Property="Visibility" Value="Visible"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsSourceStep}" Value="False">
+                                <DataTrigger Binding="{Binding IsSourceStep}" Value="True">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Button.Style>
                 </Button>
-                <Button Content="{x:Static res:Strings.Mo2_CreateProfile}" Command="{Binding ImportCommand}">
+                <Button Content="{x:Static res:Strings.Mo2_Preview}" Command="{Binding NextCommand}" IsDefault="True"
+                        ToolTipService.ShowOnDisabled="True">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSourceStep}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="ToolTip" Value="{Binding NextBlockedReason}"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="{x:Static res:Strings.Mo2_CreateProfile}" Command="{Binding ImportCommand}" IsDefault="True"
+                        ToolTipService.ShowOnDisabled="True">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -239,6 +428,9 @@
                                 <DataTrigger Binding="{Binding IsPreviewStep}" Value="True">
                                     <Setter Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="ToolTip" Value="{Binding ImportBlockedReason}"/>
+                                </Trigger>
                             </Style.Triggers>
                         </Style>
                     </Button.Style>

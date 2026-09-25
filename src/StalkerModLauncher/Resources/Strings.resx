@@ -233,10 +233,10 @@
   <data name="Mo2_Group" xml:space="preserve"><value>MO2 group</value></data>
   <data name="Mo2_ShowOnlyProblems" xml:space="preserve"><value>Show only missing and ambiguous mods</value></data>
   <data name="Mo2_ModListFile" xml:space="preserve"><value>modlist.txt file</value></data>
-  <data name="Mo2_ModsFolder" xml:space="preserve"><value>mods folder</value></data>
-  <data name="Mo2_NewProfile" xml:space="preserve"><value>New profile</value></data>
+  <data name="Mo2_ModsFolder" xml:space="preserve"><value>Mods folder</value></data>
+  <data name="Mo2_NewProfile" xml:space="preserve"><value>Profile name</value></data>
   <data name="Mo2_Or" xml:space="preserve"><value>or</value></data>
-  <data name="Mo2_OverwriteFolder" xml:space="preserve"><value>overwrite folder</value></data>
+  <data name="Mo2_OverwriteFolder" xml:space="preserve"><value>Overwrite folder</value></data>
   <data name="Mo2_Preview" xml:space="preserve"><value>Preview</value></data>
   <data name="Mo2_Profile" xml:space="preserve"><value>MO2 profile</value></data>
   <data name="Mo2_ReadOnlyHint" xml:space="preserve"><value>The launcher does not modify the source game, mods, or overwrite folders.</value></data>
@@ -244,6 +244,20 @@
   <data name="Mo2_Source" xml:space="preserve"><value>MO2 source</value></data>
   <data name="Mo2_SourceFolder" xml:space="preserve"><value>MO2 folder</value></data>
   <data name="Mo2_Title" xml:space="preserve"><value>Transfer setup from Mod Organizer 2</value></data>
+  <data name="Mo2_StepSourceTitle" xml:space="preserve"><value>Step 1 of 2 — Source</value></data>
+  <data name="Mo2_StepPreviewTitle" xml:space="preserve"><value>Step 2 of 2 — Check mods</value></data>
+  <data name="Mo2_SourceNotSelected" xml:space="preserve"><value>Not selected</value></data>
+  <data name="Mo2_SelectProfilePlaceholder" xml:space="preserve"><value>Select an MO2 profile…</value></data>
+  <data name="Mo2_RequiredFieldsHint" xml:space="preserve"><value>* — required fields.</value></data>
+  <data name="Mo2_PathNotFound" xml:space="preserve"><value>Folder not found</value></data>
+  <data name="Mo2_SearchPlaceholder" xml:space="preserve"><value>Search mods…</value></data>
+  <data name="Mo2_NextBlockedNoProfile" xml:space="preserve"><value>Select an MO2 profile and existing game and mods folders.</value></data>
+  <data name="Mo2_ImportBlockedAmbiguousFormat" xml:space="preserve"><value>Resolve {0} ambiguous mods in the Folder column.</value></data>
+  <data name="Mo2_ImportBlockedName" xml:space="preserve"><value>Enter a profile name.</value></data>
+  <data name="Mo2_ImportBlockedEmpty" xml:space="preserve"><value>No found mods to import.</value></data>
+  <data name="Mo2_LaunchModeHint" xml:space="preserve"><value>Workspace builds a linked profile folder. USVFS mounts files virtually without copying.</value></data>
+  <data name="Mo2_EnabledReadOnlyHint" xml:space="preserve"><value>State from modlist.txt. Change it in MO2 or after import.</value></data>
+  <data name="Mo2_SelectFolderPlaceholder" xml:space="preserve"><value>Select a folder…</value></data>
   <data name="Catalog_CallOfPripyat" xml:space="preserve"><value>Call of Pripyat</value></data>
   <data name="Catalog_ClearSky" xml:space="preserve"><value>Clear Sky</value></data>
   <data name="Catalog_Credits" xml:space="preserve"><value>Mods displayed on this page belong to their authors. Information is provided using materials from </value></data>
