@@ -17,7 +17,7 @@
                             <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PanelAltBrush}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="#3A3325"/>
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource ModSelectionBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
@@ -68,7 +68,7 @@
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="#7A6D50"/>
+                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -113,7 +113,7 @@
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="#3A3325"/>
+                <Setter Property="Background" Value="{DynamicResource ModSelectionBrush}"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             </Trigger>
         </Style.Triggers>
@@ -131,10 +131,15 @@
                 <Setter Property="Background" Value="{DynamicResource PanelAltBrush}"/>
             </Trigger>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="#3A3325"/>
+                <Setter Property="Background" Value="{DynamicResource ModSelectionBrush}"/>
             </Trigger>
+            <DataTrigger Binding="{Binding IsAvailable}" Value="False">
+                <Setter Property="Background" Value="{DynamicResource ModRelatedBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
+                <Setter Property="BorderThickness" Value="0,0,0,2"/>
+            </DataTrigger>
             <DataTrigger Binding="{Binding IsAmbiguous}" Value="True">
-                <Setter Property="Background" Value="#4A2B1D"/>
+                <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                 <Setter Property="BorderThickness" Value="0,0,0,2"/>
             </DataTrigger>
@@ -157,5 +162,106 @@
         <Setter Property="ColumnHeaderStyle" Value="{StaticResource Mo2DataGridColumnHeaderStyle}"/>
         <Setter Property="RowStyle" Value="{StaticResource Mo2DataGridRowStyle}"/>
         <Setter Property="CellStyle" Value="{StaticResource Mo2DataGridCellStyle}"/>
+    </Style>
+
+    <Style x:Key="Mo2MessageBorderStyle" TargetType="Border">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="10,7"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsMessageWarning}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource ModRelatedBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="Mo2StepTitleStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+
+    <Style x:Key="Mo2PlaceholderTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+        <Setter Property="IsHitTestVisible" Value="False"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="10,0,0,0"/>
+    </Style>
+
+    <!-- Launch-mode radios: 4px bullet gap and yellow dot in both interfaces. -->
+    <Style x:Key="Mo2LaunchRadioButtonStyle" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <BulletDecorator Background="Transparent">
+                        <BulletDecorator.Bullet>
+                            <Grid Width="15" Height="15">
+                                <Ellipse x:Name="OuterCircle"
+                                         Fill="{DynamicResource FieldBackgroundBrush}"
+                                         Stroke="{DynamicResource MutedTextBrush}"
+                                         StrokeThickness="1"/>
+                                <Ellipse x:Name="InnerCircle"
+                                         Width="7" Height="7"
+                                         Fill="{DynamicResource AccentBrush}"
+                                         Visibility="Collapsed"/>
+                            </Grid>
+                        </BulletDecorator.Bullet>
+                        <ContentPresenter Margin="4,0,0,0"
+                                          VerticalAlignment="Center"/>
+                    </BulletDecorator>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="OuterCircle" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+                            <Setter TargetName="InnerCircle" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="OuterCircle" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.38"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Mo2CompactCheckBoxStyle" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="Center">
+                        <Image x:Name="CheckImage"
+                               Source="{StaticResource RadiationOffImage}"
+                               Width="16" Height="16"
+                               Stretch="Uniform"
+                               Margin="0,0,6,0"/>
+                        <ContentPresenter RecognizesAccessKey="True"
+                                          VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="CheckImage" Property="Source"
+                                    Value="{StaticResource RadiationOnImage}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="CheckImage" Property="Opacity" Value="0.35"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 </ResourceDictionary>
