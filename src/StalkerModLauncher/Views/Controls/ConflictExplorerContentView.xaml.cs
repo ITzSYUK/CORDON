@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using StalkerModLauncher.Resources;
 using StalkerModLauncher.Themes;
 
 namespace StalkerModLauncher.Views.Controls;
@@ -13,12 +12,6 @@ public partial class ConflictExplorerContentView : UserControl
         typeof(ConflictExplorerContentView),
         new PropertyMetadata(false, OnUsePdaThemeChanged));
 
-    public static readonly DependencyProperty CloseButtonTextProperty = DependencyProperty.Register(
-        nameof(CloseButtonText),
-        typeof(string),
-        typeof(ConflictExplorerContentView),
-        new PropertyMetadata(Strings.Common_Close));
-
     private ResourceDictionary? _pdaTheme;
 
     public ConflictExplorerContentView()
@@ -26,18 +19,10 @@ public partial class ConflictExplorerContentView : UserControl
         InitializeComponent();
     }
 
-    public event EventHandler? CloseRequested;
-
     public bool UsePdaTheme
     {
         get => (bool)GetValue(UsePdaThemeProperty);
         set => SetValue(UsePdaThemeProperty, value);
-    }
-
-    public string CloseButtonText
-    {
-        get => (string)GetValue(CloseButtonTextProperty);
-        set => SetValue(CloseButtonTextProperty, value);
     }
 
     private static void OnUsePdaThemeChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
@@ -61,6 +46,4 @@ public partial class ConflictExplorerContentView : UserControl
             _pdaTheme = null;
         }
     }
-
-    private void CloseButton_OnClick(object sender, RoutedEventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
 }

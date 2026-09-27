@@ -53,10 +53,8 @@ public partial class PdaWindow : Window
         var page = new ConflictExplorerContentView
         {
             DataContext = viewModel,
-            UsePdaTheme = true,
-            CloseButtonText = Strings.Common_Back
+            UsePdaTheme = true
         };
-        page.CloseRequested += (_, _) => PdaView.ShowProfilePage();
         PdaView.ShowPage(
             page,
             Strings.Pda_ConflictTitle,

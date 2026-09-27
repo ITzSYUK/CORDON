@@ -39,6 +39,39 @@ public sealed class ConflictExplorerViewModelTests : IDisposable
         Assert.Equal(relativePath, Assert.Single(viewModel.LosingFiles).RelativePath);
     }
 
+    [Fact]
+    public void TabSelectionFlagsAndCommandFollowSelectedTabIndex()
+    {
+        var game = Directory.CreateDirectory(Path.Combine(_root, "game")).FullName;
+        var profile = new ModProfile { GameInstallPath = game, WorkspacePath = Path.Combine(_root, "workspace") };
+
+        using var viewModel = new ConflictExplorerViewModel(
+            profile,
+            null,
+            new ModConflictAnalyzer(),
+            new DialogService(),
+            () => Task.CompletedTask,
+            () => { });
+
+        Assert.Equal(1, viewModel.SelectedTabIndex);
+        Assert.False(viewModel.IsModConflictsTab);
+        Assert.True(viewModel.IsFinalTreeTab);
+
+        viewModel.SelectTabCommand.Execute("0");
+        Assert.Equal(0, viewModel.SelectedTabIndex);
+        Assert.True(viewModel.IsModConflictsTab);
+        Assert.False(viewModel.IsFinalTreeTab);
+
+        viewModel.SelectTabCommand.Execute(1);
+        Assert.Equal(1, viewModel.SelectedTabIndex);
+
+        viewModel.SelectTabCommand.Execute("nope");
+        Assert.Equal(1, viewModel.SelectedTabIndex);
+
+        viewModel.SelectTabCommand.Execute(5);
+        Assert.Equal(1, viewModel.SelectedTabIndex);
+    }
+
     private ModEntry CreateMod(string name, int order) => new()
     {
         Name = name,

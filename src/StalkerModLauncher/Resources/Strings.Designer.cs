@@ -105,7 +105,6 @@ public static class Strings
     public static string Common_Refresh => Get();
     public static string Common_Status => Get();
     public static string Conflict_FinalTree => Get();
-    public static string Conflict_Heading => Get();
     public static string Conflict_Loses => Get();
     public static string Conflict_ModConflicts => Get();
     public static string Conflict_OtherWinningMods => Get();
