@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:infrastructure="clr-namespace:StalkerModLauncher.Infrastructure"
         xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        xmlns:vm="clr-namespace:StalkerModLauncher.ViewModels"
         Title="{x:Static res:Strings.Health_Title}"
-        Width="900"
+        Width="950"
         Height="650"
         MinWidth="720"
         MinHeight="480"
@@ -145,7 +146,7 @@
                                Margin="0,2,0,0"/>
                 </StackPanel>
                 <ListBox Grid.Row="1"
-                         ItemsSource="{Binding Checks}"
+                         ItemsSource="{Binding VisibleChecks}"
                          BorderThickness="0"
                          infrastructure:SmoothScrollBehavior.IsEnabled="True"
                          ScrollViewer.CanContentScroll="False"
@@ -198,6 +199,36 @@
         </Border>
 
         <WrapPanel Grid.Row="3" HorizontalAlignment="Right" Margin="0,14,0,0">
+                <Button Content="{Binding WarningsButtonContent}"
+                        Command="{Binding SetHealthFilterCommand}"
+                        CommandParameter="{x:Static vm:HealthCheckFilter.Warnings}"
+                        Margin="0,0,8,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsWarningFilterActive}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="{Binding ErrorsButtonContent}"
+                        Command="{Binding SetHealthFilterCommand}"
+                        CommandParameter="{x:Static vm:HealthCheckFilter.Errors}"
+                        Margin="0,0,8,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsErrorFilterActive}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
                 <Button Content="{x:Static res:Strings.Common_Refresh}"
                         Command="{Binding RefreshCommand}"
                         Margin="0,0,8,0"/>

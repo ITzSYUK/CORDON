@@ -149,6 +149,8 @@ public static class Strings
     public static string Health_RebuildWorkspace => Get();
     public static string Health_Saves => Get();
     public static string Health_Title => Get();
+    public static string Health_Warnings => Get();
+    public static string Health_Errors => Get();
     public static string Health_WarningHint => Get();
     public static string Scan_AddSelected => Get();
     public static string Scan_Detected => Get();

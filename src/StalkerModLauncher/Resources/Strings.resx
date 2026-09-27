@@ -138,6 +138,8 @@
   <data name="Health_RebuildWorkspace" xml:space="preserve"><value>Rebuild</value></data>
   <data name="Health_Saves" xml:space="preserve"><value>Saves</value></data>
   <data name="Health_Title" xml:space="preserve"><value>Profile status</value></data>
+  <data name="Health_Warnings" xml:space="preserve"><value>Warnings</value></data>
+  <data name="Health_Errors" xml:space="preserve"><value>Errors</value></data>
   <data name="Health_WarningHint" xml:space="preserve"><value>Errors prevent launch. Warnings show what you should check.</value></data>
   <data name="Scan_AddSelected" xml:space="preserve"><value>Add selected</value></data>
   <data name="Scan_Detected" xml:space="preserve"><value>Detected by</value></data>
