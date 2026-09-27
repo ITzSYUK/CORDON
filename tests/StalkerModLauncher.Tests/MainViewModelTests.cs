@@ -881,6 +881,39 @@ public sealed class MainViewModelTests
         });
     }
 
+    [Fact]
+    public async Task ConcurrentModTogglesDuringCleanupDoNotThrow()
+    {
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            var gameRoot = CreateValidGameRoot(root);
+            var modsRoot = Directory.CreateDirectory(Path.Combine(root, "mods")).FullName;
+            var first = Directory.CreateDirectory(Path.Combine(modsRoot, "First")).FullName;
+            var second = Directory.CreateDirectory(Path.Combine(modsRoot, "Second")).FullName;
+            var profile = new ModProfile
+            {
+                Name = "Concurrent toggles",
+                GameInstallPath = gameRoot,
+                ExecutableRelativePath = @"bin\xr_3da.exe"
+            };
+            viewModel.AddCreatedProfile(profile);
+            profile.Mods.Add(new ModEntry { Name = "First", SourcePath = first, Order = 1, IsEnabled = true });
+            profile.Mods.Add(new ModEntry { Name = "Second", SourcePath = second, Order = 2, IsEnabled = true });
+
+            var churn = Task.Run(async () =>
+            {
+                for (var i = 0; i < 200; i++)
+                {
+                    viewModel.SetSelectedModsEnabled(profile.Mods, enabled: i % 2 == 0);
+                    await Task.Yield();
+                }
+            });
+            await Task.Delay(50);
+            await viewModel.CleanupAsync();
+            await churn;
+        });
+    }
+
     private sealed class CapturingStartupRegistrationService : IStartupRegistrationService
     {
         public List<(bool Enabled, bool Minimized)> Values { get; } = [];

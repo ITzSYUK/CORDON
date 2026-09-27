@@ -487,67 +487,75 @@ public sealed partial class MainViewModel
 
     private void SynchronizeProfileFileWatchers()
     {
-        foreach (var watcher in _profileFileWatchers)
+        lock (_fileWatcherSync)
         {
-            watcher.Dispose();
-        }
-
-        _profileFileWatchers.Clear();
-        _profileFsgamePaths = Profiles
-            .SelectMany(GetProfileFsgamePaths)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var watchDirectories = Profiles
-            .SelectMany(GetProfileFileTargets)
-            .SelectMany(GetWatchDirectories)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(path => path.Length)
-            .Aggregate(new List<string>(), (paths, path) =>
+            if (_disposed)
             {
-                if (!paths.Any(parent =>
-                        !FileSystemSafety.IsFileSystemRoot(parent) &&
-                        FileSystemSafety.IsDirectoryInside(path, parent)))
+                return;
+            }
+
+            foreach (var watcher in _profileFileWatchers)
+            {
+                watcher.Dispose();
+            }
+
+            _profileFileWatchers.Clear();
+            _profileFsgamePaths = Profiles
+                .SelectMany(GetProfileFsgamePaths)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var watchDirectories = Profiles
+                .SelectMany(GetProfileFileTargets)
+                .SelectMany(GetWatchDirectories)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(path => path.Length)
+                .Aggregate(new List<string>(), (paths, path) =>
                 {
-                    paths.Add(path);
+                    if (!paths.Any(parent =>
+                            !FileSystemSafety.IsFileSystemRoot(parent) &&
+                            FileSystemSafety.IsDirectoryInside(path, parent)))
+                    {
+                        paths.Add(path);
+                    }
+
+                    return paths;
+                });
+
+            var requests = new List<(string Path, bool IncludeSubdirectories)>();
+            foreach (var path in watchDirectories)
+            {
+                requests.Add((path, !FileSystemSafety.IsFileSystemRoot(path)));
+                for (var ancestor = Directory.GetParent(path); ancestor is not null; ancestor = ancestor.Parent)
+                {
+                    requests.Add((ancestor.FullName, false));
                 }
-
-                return paths;
-            });
-
-        var requests = new List<(string Path, bool IncludeSubdirectories)>();
-        foreach (var path in watchDirectories)
-        {
-            requests.Add((path, !FileSystemSafety.IsFileSystemRoot(path)));
-            for (var ancestor = Directory.GetParent(path); ancestor is not null; ancestor = ancestor.Parent)
-            {
-                requests.Add((ancestor.FullName, false));
             }
-        }
 
-        var requestKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var request in requests.Where(request =>
-                     requestKeys.Add($"{request.IncludeSubdirectories}:{request.Path}")))
-        {
-            try
+            var requestKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var request in requests.Where(request =>
+                         requestKeys.Add($"{request.IncludeSubdirectories}:{request.Path}")))
             {
-                var watcher = new FileSystemWatcher(request.Path)
+                try
                 {
-                    IncludeSubdirectories = request.IncludeSubdirectories,
-                    NotifyFilter = NotifyFilters.FileName |
-                                   NotifyFilters.DirectoryName |
-                                   NotifyFilters.LastWrite |
-                                   NotifyFilters.Size
-                };
-                watcher.Changed += ProfileFileChanged;
-                watcher.Created += ProfileFilesChanged;
-                watcher.Deleted += ProfileFilesChanged;
-                watcher.Renamed += ProfileFilesChanged;
-                watcher.Error += ProfileFilesChanged;
-                watcher.EnableRaisingEvents = true;
-                _profileFileWatchers.Add(watcher);
-            }
-            catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
-            {
-                // Readiness still refreshes on profile selection when a location cannot be watched.
+                    var watcher = new FileSystemWatcher(request.Path)
+                    {
+                        IncludeSubdirectories = request.IncludeSubdirectories,
+                        NotifyFilter = NotifyFilters.FileName |
+                                       NotifyFilters.DirectoryName |
+                                       NotifyFilters.LastWrite |
+                                       NotifyFilters.Size
+                    };
+                    watcher.Changed += ProfileFileChanged;
+                    watcher.Created += ProfileFilesChanged;
+                    watcher.Deleted += ProfileFilesChanged;
+                    watcher.Renamed += ProfileFilesChanged;
+                    watcher.Error += ProfileFilesChanged;
+                    watcher.EnableRaisingEvents = true;
+                    _profileFileWatchers.Add(watcher);
+                }
+                catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
+                {
+                    // Readiness still refreshes on profile selection when a location cannot be watched.
+                }
             }
         }
     }
@@ -664,12 +672,15 @@ public sealed partial class MainViewModel
             UntrackProfile(profile);
         }
 
-        foreach (var watcher in _profileFileWatchers)
+        lock (_fileWatcherSync)
         {
-            watcher.Dispose();
-        }
+            foreach (var watcher in _profileFileWatchers)
+            {
+                watcher.Dispose();
+            }
 
-        _profileFileWatchers.Clear();
+            _profileFileWatchers.Clear();
+        }
 
         if (_selectedProfile is not null)
         {
