@@ -94,7 +94,6 @@
   <data name="Common_Refresh" xml:space="preserve"><value>Обновить</value></data>
   <data name="Common_Status" xml:space="preserve"><value>Состояние</value></data>
   <data name="Conflict_FinalTree" xml:space="preserve"><value>Итоговое дерево</value></data>
-  <data name="Conflict_Heading" xml:space="preserve"><value>КОНФЛИКТЫ И ИТОГОВЫЕ ФАЙЛЫ</value></data>
   <data name="Conflict_Loses" xml:space="preserve"><value>Проигрывает</value></data>
   <data name="Conflict_ModConflicts" xml:space="preserve"><value>Конфликты мода</value></data>
   <data name="Conflict_OtherWinningMods" xml:space="preserve"><value>Побеждающие моды</value></data>
