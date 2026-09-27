@@ -138,6 +138,8 @@
   <data name="Health_RebuildWorkspace" xml:space="preserve"><value>Пересобрать</value></data>
   <data name="Health_Saves" xml:space="preserve"><value>Сохранения</value></data>
   <data name="Health_Title" xml:space="preserve"><value>Состояние профиля</value></data>
+  <data name="Health_Warnings" xml:space="preserve"><value>Предупреждения</value></data>
+  <data name="Health_Errors" xml:space="preserve"><value>Ошибки</value></data>
   <data name="Health_WarningHint" xml:space="preserve"><value>Ошибки остановят запуск. Предупреждения подскажут, что стоит проверить.</value></data>
   <data name="Scan_AddSelected" xml:space="preserve"><value>Добавить выбранные</value></data>
   <data name="Scan_Detected" xml:space="preserve"><value>Обнаружено по</value></data>

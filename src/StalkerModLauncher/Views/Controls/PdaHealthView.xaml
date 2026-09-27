@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:res="clr-namespace:StalkerModLauncher.Resources"
              xmlns:themes="clr-namespace:StalkerModLauncher.Themes"
+             xmlns:vm="clr-namespace:StalkerModLauncher.ViewModels"
              xmlns:infrastructure="clr-namespace:StalkerModLauncher.Infrastructure"
              Background="{DynamicResource PdaPageBackgroundBrush}">
     <UserControl.Resources>
@@ -46,7 +47,7 @@
             <Grid>
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <TextBlock Text="{Binding Summary}" FontFamily="Bahnschrift SemiCondensed" FontSize="15" Foreground="#E4DFC9"/>
-                <ListBox Grid.Row="1" ItemsSource="{Binding Checks}" BorderThickness="0" Background="Transparent" Margin="0,5,0,0"
+                <ListBox Grid.Row="1" ItemsSource="{Binding VisibleChecks}" BorderThickness="0" Background="Transparent" Margin="0,5,0,0"
                          infrastructure:SmoothScrollBehavior.IsEnabled="True" ScrollViewer.CanContentScroll="False">
                     <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
@@ -77,6 +78,36 @@
             </Grid>
         </Border>
         <WrapPanel Grid.Row="2" HorizontalAlignment="Right" Margin="0,8,0,0">
+                <Button Content="{Binding WarningsButtonContent}"
+                        Command="{Binding SetHealthFilterCommand}"
+                        CommandParameter="{x:Static vm:HealthCheckFilter.Warnings}"
+                        Margin="0,0,5,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource PdaBaseButtonStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsWarningFilterActive}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="{Binding ErrorsButtonContent}"
+                        Command="{Binding SetHealthFilterCommand}"
+                        CommandParameter="{x:Static vm:HealthCheckFilter.Errors}"
+                        Margin="0,0,5,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource PdaBaseButtonStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsErrorFilterActive}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
                 <Button Content="{x:Static res:Strings.Common_Refresh}" Command="{Binding RefreshCommand}" Margin="0,0,5,0"/>
                 <Button Content="{x:Static res:Strings.Common_Profile}" Command="{Binding OpenProfileCommand}" Margin="0,0,5,0"/>
                 <Button Content="{x:Static res:Strings.Health_Saves}" Command="{Binding OpenSavesCommand}" Margin="0,0,5,0"/>
