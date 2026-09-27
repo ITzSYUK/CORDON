@@ -845,6 +845,75 @@ public sealed class MainViewModelTests
         });
     }
 
+    [Fact]
+    public async Task SetSelectedModsEnabledTogglesOnlyMismatchedMods()
+    {
+        await RunWithViewModelAsync((viewModel, root) =>
+        {
+            var gameRoot = CreateValidGameRoot(root);
+            var modsRoot = Directory.CreateDirectory(Path.Combine(root, "mods")).FullName;
+            var first = Directory.CreateDirectory(Path.Combine(modsRoot, "First")).FullName;
+            var second = Directory.CreateDirectory(Path.Combine(modsRoot, "Second")).FullName;
+            var third = Directory.CreateDirectory(Path.Combine(modsRoot, "Third")).FullName;
+            var profile = new ModProfile
+            {
+                Name = "Toggle selection",
+                GameInstallPath = gameRoot,
+                ExecutableRelativePath = @"bin\xr_3da.exe"
+            };
+            viewModel.AddCreatedProfile(profile);
+            profile.Mods.Add(new ModEntry { Name = "First", SourcePath = first, Order = 1, IsEnabled = true });
+            profile.Mods.Add(new ModEntry { Name = "Second", SourcePath = second, Order = 2, IsEnabled = false });
+            profile.Mods.Add(new ModEntry { Name = "Third", SourcePath = third, Order = 3, IsEnabled = true });
+
+            viewModel.SetSelectedModsEnabled([profile.Mods[0], profile.Mods[1]], enabled: false);
+            Assert.False(profile.Mods[0].IsEnabled);
+            Assert.False(profile.Mods[1].IsEnabled);
+            Assert.True(profile.Mods[2].IsEnabled);
+
+            viewModel.SetSelectedModsEnabled(profile.Mods, enabled: true);
+            Assert.All(profile.Mods, mod => Assert.True(mod.IsEnabled));
+            Assert.Equal(["First", "Second", "Third"], profile.Mods.Select(mod => mod.Name));
+
+            viewModel.SetSelectedModsEnabled([], enabled: false);
+            Assert.All(profile.Mods, mod => Assert.True(mod.IsEnabled));
+            return Task.CompletedTask;
+        });
+    }
+
+    [Fact]
+    public async Task ConcurrentModTogglesDuringCleanupDoNotThrow()
+    {
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            var gameRoot = CreateValidGameRoot(root);
+            var modsRoot = Directory.CreateDirectory(Path.Combine(root, "mods")).FullName;
+            var first = Directory.CreateDirectory(Path.Combine(modsRoot, "First")).FullName;
+            var second = Directory.CreateDirectory(Path.Combine(modsRoot, "Second")).FullName;
+            var profile = new ModProfile
+            {
+                Name = "Concurrent toggles",
+                GameInstallPath = gameRoot,
+                ExecutableRelativePath = @"bin\xr_3da.exe"
+            };
+            viewModel.AddCreatedProfile(profile);
+            profile.Mods.Add(new ModEntry { Name = "First", SourcePath = first, Order = 1, IsEnabled = true });
+            profile.Mods.Add(new ModEntry { Name = "Second", SourcePath = second, Order = 2, IsEnabled = true });
+
+            var churn = Task.Run(async () =>
+            {
+                for (var i = 0; i < 200; i++)
+                {
+                    viewModel.SetSelectedModsEnabled(profile.Mods, enabled: i % 2 == 0);
+                    await Task.Yield();
+                }
+            });
+            await Task.Delay(50);
+            await viewModel.CleanupAsync();
+            await churn;
+        });
+    }
+
     private sealed class CapturingStartupRegistrationService : IStartupRegistrationService
     {
         public List<(bool Enabled, bool Minimized)> Values { get; } = [];

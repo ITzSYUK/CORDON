@@ -27,6 +27,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly DebouncedAsyncAction _conflictAnalysisDebounce;
     private readonly DebouncedAsyncAction _profileFileRefresh;
     private readonly List<FileSystemWatcher> _profileFileWatchers = [];
+    private readonly object _fileWatcherSync = new();
     private HashSet<string> _profileFsgamePaths = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<ModProfile, ListCollectionView> _filteredModViews =
         new(ReferenceEqualityComparer.Instance);

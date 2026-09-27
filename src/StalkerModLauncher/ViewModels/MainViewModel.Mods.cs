@@ -283,6 +283,42 @@ public sealed partial class MainViewModel
         _autoSave.Schedule();
     }
 
+    public void SetSelectedModsEnabled(IReadOnlyList<ModEntry> mods, bool enabled)
+    {
+        if (!CanEditSelectedProfile || SelectedProfile is null || mods.Count == 0)
+        {
+            return;
+        }
+
+        var profile = SelectedProfile;
+        var targets = mods.Where(mod => profile.Mods.Contains(mod) && mod.IsEnabled != enabled).ToArray();
+        if (targets.Length == 0)
+        {
+            return;
+        }
+
+        _profilesTogglingMods.Add(profile);
+        try
+        {
+            foreach (var mod in targets)
+            {
+                mod.IsEnabled = enabled;
+            }
+        }
+        finally
+        {
+            _profilesTogglingMods.Remove(profile);
+        }
+
+        _validationCache.Remove(profile);
+        SynchronizeProfileFileWatchers();
+        _automaticExecutableRefreshTimes[profile] = DateTime.UtcNow;
+        RefreshAutomaticExecutableSelection(profile, Strings.Log_ReasonModPriorityChanged);
+        RecalculateModOverlayInfo();
+        RefreshValidation();
+        _autoSave.Schedule();
+    }
+
     public bool CreateModGroup(IReadOnlyList<ModEntry> mods, string groupName)
     {
         if (!CanEditSelectedProfile || SelectedProfile is null ||
