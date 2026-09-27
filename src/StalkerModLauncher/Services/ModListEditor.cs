@@ -30,6 +30,7 @@ public static class ModListEditor
         }
 
         Renumber(profile);
+        PruneCollapsedGroups(profile);
         return removed;
     }
 
@@ -114,6 +115,26 @@ public static class ModListEditor
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToArray();
 
+    public static bool PruneCollapsedGroups(ModProfile profile)
+    {
+        if (profile.CollapsedModGroups.Count == 0)
+        {
+            return false;
+        }
+
+        var existing = new HashSet<string>(GetGroupNames(profile), StringComparer.OrdinalIgnoreCase);
+        var pruned = profile.CollapsedModGroups
+            .Where(existing.Contains)
+            .ToList();
+        if (pruned.Count == profile.CollapsedModGroups.Count)
+        {
+            return false;
+        }
+
+        profile.CollapsedModGroups = pruned;
+        return true;
+    }
+
     public static void UpdateViewGroupKeys(ModProfile profile)
     {
         ModGroupKey? currentGroup = null;
@@ -158,7 +179,9 @@ public static class ModListEditor
 
         var insertionIndex = selected.Min(profile.Mods.IndexOf);
         MoveManyToInsertionIndex(profile, selected, insertionIndex);
-        return SetGroup(selected, normalized);
+        var created = SetGroup(selected, normalized);
+        PruneCollapsedGroups(profile);
+        return created;
     }
 
     public static bool RenameGroup(ModProfile profile, string oldName, string newName)
@@ -172,12 +195,29 @@ public static class ModListEditor
             return false;
         }
 
-        return SetGroup(mods, normalized);
+        var renamed = SetGroup(mods, normalized);
+        if (renamed)
+        {
+            var collapsed = profile.CollapsedModGroups;
+            if (collapsed.RemoveAll(name => name.Equals(oldName, StringComparison.OrdinalIgnoreCase)) > 0)
+            {
+                collapsed.Add(normalized);
+                profile.CollapsedModGroups = [.. collapsed];
+            }
+        }
+
+        PruneCollapsedGroups(profile);
+        return renamed;
     }
 
-    public static bool DeleteGroup(ModProfile profile, string groupName) => SetGroup(
-        profile.Mods.Where(mod => mod.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase)),
-        string.Empty);
+    public static bool DeleteGroup(ModProfile profile, string groupName)
+    {
+        var deleted = SetGroup(
+            profile.Mods.Where(mod => mod.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase)),
+            string.Empty);
+        PruneCollapsedGroups(profile);
+        return deleted;
+    }
 
     public static bool MoveToGroup(ModProfile profile, IEnumerable<ModEntry> mods, string groupName)
     {
@@ -203,7 +243,9 @@ public static class ModListEditor
             }
         }
 
-        return SetGroup(selected, normalized) || moved;
+        var regrouped = SetGroup(selected, normalized);
+        PruneCollapsedGroups(profile);
+        return regrouped || moved;
     }
 
     public static bool SetGroup(IEnumerable<ModEntry> mods, string groupName)
