@@ -184,6 +184,24 @@ public partial class ModPanelView : UserControl
                 contextMenu.IsOpen = false;
             }));
         contextMenu.Items.Add(new Separator());
+        var canEnableSelected = canEdit && selectedMods.Any(mod => !mod.IsEnabled);
+        var canDisableSelected = canEdit && selectedMods.Any(mod => mod.IsEnabled);
+        contextMenu.Items.Add(CreateLeftClickMenuItem(
+            Strings.Mod_EnableSelected,
+            canEnableSelected,
+            () =>
+            {
+                ViewModel?.SetSelectedModsEnabled(selectedMods, enabled: true);
+                contextMenu.IsOpen = false;
+            }));
+        contextMenu.Items.Add(CreateLeftClickMenuItem(
+            Strings.Mod_DisableSelected,
+            canDisableSelected,
+            () =>
+            {
+                ViewModel?.SetSelectedModsEnabled(selectedMods, enabled: false);
+                contextMenu.IsOpen = false;
+            }));
         contextMenu.Items.Add(CreateLeftClickMenuItem(
             Strings.Mod_CreateGroup,
             canEdit,
