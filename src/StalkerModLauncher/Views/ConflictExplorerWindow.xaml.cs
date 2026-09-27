@@ -17,6 +17,4 @@ public partial class ConflictExplorerWindow : Window
     {
         WindowSystemIntegrationService.Initialize(this);
     }
-
-    private void ContentView_OnCloseRequested(object? sender, EventArgs e) => Close();
 }

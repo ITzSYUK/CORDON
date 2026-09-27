@@ -94,7 +94,6 @@
   <data name="Common_Refresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="Common_Status" xml:space="preserve"><value>Status</value></data>
   <data name="Conflict_FinalTree" xml:space="preserve"><value>Final tree</value></data>
-  <data name="Conflict_Heading" xml:space="preserve"><value>CONFLICTS AND FINAL FILES</value></data>
   <data name="Conflict_Loses" xml:space="preserve"><value>Loses</value></data>
   <data name="Conflict_ModConflicts" xml:space="preserve"><value>Mod conflicts</value></data>
   <data name="Conflict_OtherWinningMods" xml:space="preserve"><value>Winning mods</value></data>

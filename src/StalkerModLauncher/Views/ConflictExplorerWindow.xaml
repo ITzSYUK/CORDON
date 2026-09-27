@@ -9,5 +9,5 @@
         Background="{StaticResource WindowBackgroundBrush}"
         Foreground="{StaticResource TextBrush}"
         SourceInitialized="Window_OnSourceInitialized">
-    <controls:ConflictExplorerContentView x:Name="ContentView" CloseRequested="ContentView_OnCloseRequested"/>
+    <controls:ConflictExplorerContentView x:Name="ContentView"/>
 </Window>

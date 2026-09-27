@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Windows.Input;
 using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Resources;
@@ -45,6 +47,7 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
             parameter => _ = ToggleFileAsync(parameter as ConflictFileEntry),
             parameter => parameter is ConflictFileEntry { CanExclude: true } && !IsBusy);
         RefreshCommand = new AsyncRelayCommand(RefreshAsync, () => !IsBusy);
+        SelectTabCommand = new RelayCommand(SelectTab);
         _ = RefreshAsync();
     }
 
@@ -149,11 +152,37 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
     public int SelectedTabIndex
     {
         get => _selectedTabIndex;
-        set => SetProperty(ref _selectedTabIndex, value);
+        set
+        {
+            if (SetProperty(ref _selectedTabIndex, value))
+            {
+                OnPropertyChanged(nameof(IsModConflictsTab));
+                OnPropertyChanged(nameof(IsFinalTreeTab));
+            }
+        }
     }
+
+    public bool IsModConflictsTab => SelectedTabIndex == 0;
+
+    public bool IsFinalTreeTab => SelectedTabIndex == 1;
 
     public RelayCommand ToggleFileCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
+    public ICommand SelectTabCommand { get; }
+
+    private void SelectTab(object? parameter)
+    {
+        var index = parameter switch
+        {
+            int value => value,
+            string text when int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) => parsed,
+            _ => SelectedTabIndex
+        };
+        if (index is 0 or 1)
+        {
+            SelectedTabIndex = index;
+        }
+    }
 
     public async Task RefreshAsync()
     {

@@ -42,31 +42,109 @@
                 <Setter Property="Background" Value="{DynamicResource FieldBackgroundBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
             </Style>
+            <Style x:Key="ConflictTabRadioButtonStyle" TargetType="RadioButton">
+                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                <Setter Property="Background" Value="{DynamicResource PanelBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
+                <Setter Property="Padding" Value="13,7"/>
+                <Setter Property="Margin" Value="0,0,3,0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1,1,1,0"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PanelAltBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ConflictTabButtonStyle" TargetType="Button">
+                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                <Setter Property="Background" Value="{DynamicResource PanelBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
+                <Setter Property="Padding" Value="13,7"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1,1,1,0"
+                                    Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PanelAltBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PanelBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.45"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Background="{DynamicResource CommandPanelBrush}" BorderBrush="{DynamicResource StrokeBrush}"
-                BorderThickness="1" CornerRadius="5" Padding="10" Margin="0,0,0,9">
-            <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Text="{x:Static res:Strings.Conflict_Heading}" FontWeight="SemiBold" FontSize="15"/>
-                    <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,2,0,0"/>
-                </StackPanel>
-                <Button Grid.Column="1" Content="{x:Static res:Strings.Common_Refresh}" Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
-            </Grid>
-        </Border>
+        <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
 
-        <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}">
-            <TabItem Header="{x:Static res:Strings.Conflict_ModConflicts}">
-                <Grid Margin="9">
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <RadioButton Content="{x:Static res:Strings.Conflict_ModConflicts}" GroupName="ConflictTabs"
+                         IsChecked="{Binding IsModConflictsTab, Mode=OneWay}"
+                         Command="{Binding SelectTabCommand}" CommandParameter="0"
+                         Style="{StaticResource ConflictTabRadioButtonStyle}"/>
+            <RadioButton Grid.Column="1" Content="{x:Static res:Strings.Conflict_FinalTree}" GroupName="ConflictTabs"
+                         IsChecked="{Binding IsFinalTreeTab, Mode=OneWay}"
+                         Command="{Binding SelectTabCommand}" CommandParameter="1"
+                         Style="{StaticResource ConflictTabRadioButtonStyle}"/>
+            <Button Grid.Column="2" Content="{x:Static res:Strings.Common_Refresh}" Command="{Binding RefreshCommand}"
+                    HorizontalAlignment="Right" Style="{StaticResource ConflictTabButtonStyle}"/>
+        </Grid>
+
+        <Border Grid.Row="2" Background="{DynamicResource FieldBackgroundBrush}"
+                BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1" Padding="9">
+            <Grid>
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedTabIndex}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -138,10 +216,18 @@
                         </TabItem>
                     </TabControl>
                 </Grid>
-            </TabItem>
 
-            <TabItem Header="{x:Static res:Strings.Conflict_FinalTree}">
-                <Grid Margin="9">
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions>
@@ -167,11 +253,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
-            </TabItem>
-
-        </TabControl>
-
-        <Button Grid.Row="2" Content="{Binding CloseButtonText, ElementName=Root}" HorizontalAlignment="Right"
-                Margin="0,9,0,0" Click="CloseButton_OnClick"/>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>
