@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Windows.Input;
 using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
@@ -6,6 +7,13 @@ using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
+
+public enum HealthCheckFilter
+{
+    All,
+    Warnings,
+    Errors
+}
 
 public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
 {
@@ -17,6 +25,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     private ProfileHealthReport? _report;
     private string _summary = Strings.Health_Checking;
     private bool _isChecking;
+    private HealthCheckFilter _filter = HealthCheckFilter.All;
     private WorkspaceStatus? _workspace;
     private CancellationTokenSource? _refreshCancellation;
 
@@ -39,15 +48,77 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         OpenLatestLogCommand = new RelayCommand(OpenLatestLog, () => File.Exists(_report?.LatestLogPath));
         OpenCrashDumpCommand = new RelayCommand(OpenCrashDump, () => File.Exists(_report?.LatestCrashDumpPath));
         CopyReportCommand = new RelayCommand(CopyReport, () => _report is not null);
+        SetHealthFilterCommand = new RelayCommand(
+            parameter => SetHealthFilter(parameter as HealthCheckFilter? ?? HealthCheckFilter.All));
         ClearWorkspaceCommand = new RelayCommand(ClearWorkspace, () => CanManageWorkspace && UsesLinkedWorkspace);
         RebuildWorkspaceCommand = new AsyncRelayCommand(RebuildWorkspaceAsync, () => CanManageWorkspace && UsesLinkedWorkspace && !IsChecking);
         MoveWorkspaceCommand = new AsyncRelayCommand(MoveWorkspaceAsync, () => CanManageWorkspace && !IsChecking);
 
+        Checks.CollectionChanged += ChecksOnCollectionChanged;
         _ = RefreshAsync();
+    }
+
+    private void SetHealthFilter(HealthCheckFilter requested) =>
+        CurrentFilter = ToggleFilter(CurrentFilter, requested);
+
+    private void ChecksOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+        RaiseFilterProperties();
+
+    private void RaiseFilterProperties()
+    {
+        OnPropertyChanged(nameof(VisibleChecks));
+        OnPropertyChanged(nameof(IsWarningFilterActive));
+        OnPropertyChanged(nameof(IsErrorFilterActive));
+        OnPropertyChanged(nameof(WarningCount));
+        OnPropertyChanged(nameof(ErrorCount));
+        OnPropertyChanged(nameof(WarningsButtonContent));
+        OnPropertyChanged(nameof(ErrorsButtonContent));
     }
 
     public string ProfileName => _profile.Name;
     public ObservableCollection<ProfileHealthCheck> Checks { get; } = new();
+
+    public HealthCheckFilter CurrentFilter
+    {
+        get => _filter;
+        private set
+        {
+            if (SetProperty(ref _filter, value))
+            {
+                OnPropertyChanged(nameof(VisibleChecks));
+                OnPropertyChanged(nameof(IsWarningFilterActive));
+                OnPropertyChanged(nameof(IsErrorFilterActive));
+                OnPropertyChanged(nameof(WarningsButtonContent));
+                OnPropertyChanged(nameof(ErrorsButtonContent));
+            }
+        }
+    }
+
+    public IEnumerable<ProfileHealthCheck> VisibleChecks =>
+        Checks.Where(check => MatchesFilter(check, CurrentFilter));
+
+    public bool IsWarningFilterActive => CurrentFilter == HealthCheckFilter.Warnings;
+
+    public bool IsErrorFilterActive => CurrentFilter == HealthCheckFilter.Errors;
+
+    public int WarningCount => Checks.Count(check => check.Status == ProfileHealthStatus.Warning);
+
+    public int ErrorCount => Checks.Count(check => check.Status == ProfileHealthStatus.Error);
+
+    public string WarningsButtonContent => $"{Strings.Health_Warnings} ({WarningCount})";
+
+    public string ErrorsButtonContent => $"{Strings.Health_Errors} ({ErrorCount})";
+
+    public static bool MatchesFilter(ProfileHealthCheck check, HealthCheckFilter filter) =>
+        filter switch
+        {
+            HealthCheckFilter.Warnings => check.Status == ProfileHealthStatus.Warning,
+            HealthCheckFilter.Errors => check.Status == ProfileHealthStatus.Error,
+            _ => true
+        };
+
+    public static HealthCheckFilter ToggleFilter(HealthCheckFilter current, HealthCheckFilter requested) =>
+        requested == current ? HealthCheckFilter.All : requested;
 
     public string ProfileKind => _profile.IsStandalone
         ? Strings.Profile_Standalone
@@ -126,6 +197,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     public ICommand OpenLatestLogCommand { get; }
     public ICommand OpenCrashDumpCommand { get; }
     public ICommand CopyReportCommand { get; }
+    public ICommand SetHealthFilterCommand { get; }
     public ICommand ClearWorkspaceCommand { get; }
     public ICommand RebuildWorkspaceCommand { get; }
     public ICommand MoveWorkspaceCommand { get; }
@@ -144,6 +216,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         {
             IsChecking = true;
             Summary = Strings.Health_Checking;
+            CurrentFilter = HealthCheckFilter.All;
             var report = await _healthService.AnalyzeAsync(_profile, _refreshCancellation.Token);
             _report = report;
             Workspace = report.Workspace;
@@ -173,6 +246,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        Checks.CollectionChanged -= ChecksOnCollectionChanged;
         _refreshCancellation?.Cancel();
         _refreshCancellation?.Dispose();
         _refreshCancellation = null;
