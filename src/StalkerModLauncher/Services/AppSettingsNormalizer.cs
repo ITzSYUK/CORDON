@@ -111,6 +111,8 @@ public static class AppSettingsNormalizer
                 mod.Order = order++;
                 mod.HasOverlapsAbove = false;
             }
+
+            ModListEditor.PruneCollapsedGroups(profile);
         }
 
         return settings;
