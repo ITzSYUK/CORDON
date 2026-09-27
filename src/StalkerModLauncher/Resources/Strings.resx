@@ -114,7 +114,9 @@
   <data name="Mod_CreateGroup" xml:space="preserve"><value>Create group...</value></data>
   <data name="Mod_DeleteGroup" xml:space="preserve"><value>Delete group</value></data>
   <data name="Mod_DisableGroup" xml:space="preserve"><value>Disable group</value></data>
+  <data name="Mod_DisableSelected" xml:space="preserve"><value>Disable selected</value></data>
   <data name="Mod_EnableGroup" xml:space="preserve"><value>Enable group</value></data>
+  <data name="Mod_EnableSelected" xml:space="preserve"><value>Enable selected</value></data>
   <data name="Mod_GroupNameExists" xml:space="preserve"><value>A group with this name already exists.</value></data>
   <data name="Mod_GroupNamePrompt" xml:space="preserve"><value>Group name:</value></data>
   <data name="Mod_MoveToGroup" xml:space="preserve"><value>Move to group</value></data>
