@@ -140,6 +140,9 @@ public static class Strings
     public static string Mod_PriorityHint => Get();
     public static string Mod_SearchWatermark => Get();
     public static string Mod_SelectedDetailsTooltip => Get();
+    public static string Mod_EditInNewWindow => Get();
+    public static string Mod_ListTitle => Get();
+    public static string Mod_ListWindowTitleFormat => Get();
     public static string Profile_Standalone => Get();
     public static string Profile_StandaloneTooltip => Get();
     public static string Common_Profile => Get();

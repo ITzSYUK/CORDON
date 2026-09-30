@@ -105,6 +105,9 @@
                             <DataTrigger Binding="{Binding UseCompactHeader, ElementName=Root}" Value="True">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding ShowHeadingText, ElementName=Root}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </StackPanel.Style>
@@ -121,7 +124,7 @@
                               IsChecked="{Binding SelectedProfile.IsStandalone}"
                               IsEnabled="{Binding CanEditSelectedProfile}"
                               Style="{StaticResource ProfileToggleButtonStyle}"
-                              Margin="0,0,8,8"
+                              Margin="0,0,8,0"
                               Visibility="{Binding ShowStandaloneToggle, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}"
                               ToolTipService.InitialShowDelay="600"
                               ToolTipService.BetweenShowDelay="0">
@@ -136,7 +139,7 @@
                         ToolTip="{x:Static res:Strings.Mod_ScanFolderTooltip}"
                         ToolTipService.InitialShowDelay="600"
                         ToolTipService.BetweenShowDelay="0"
-                        Margin="0,0,8,8">
+                        Margin="0,0,8,0">
                     <Viewbox Width="26" Height="26">
                         <Canvas Width="24" Height="24">
                             <Path Data="M4,5.5 C4,4.672 4.672,4 5.5,4 H10 L12,6 H18.5 C19.328,6 20,6.672 20,7.5 V10"
@@ -170,13 +173,13 @@
                         ToolTip="{x:Static res:Strings.Mod_InstallArchiveTooltip}"
                         ToolTipService.InitialShowDelay="600"
                         ToolTipService.BetweenShowDelay="0"
-                        Margin="0,0,8,8">
-                    <Grid Width="26" Height="26">
+                        Margin="0,0,8,0">
+                    <Grid Width="23" Height="23">
                         <Path Data="M5,3.5 H14 L19,8.5 V20.5 H5 Z M14,3.5 V8.5 H19"
                               Stroke="{StaticResource TextBrush}" StrokeThickness="1.6"
                               StrokeLineJoin="Round"/>
                         <TextBlock Text="ZIP" Foreground="{StaticResource AccentBrush}"
-                                   FontSize="7" FontWeight="Bold"
+                                   FontSize="6" FontWeight="Bold"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Margin="0,5,0,0"/>
                     </Grid>
@@ -186,7 +189,7 @@
                         ToolTip="{x:Static res:Strings.Mod_AddFolderTooltip}"
                         ToolTipService.InitialShowDelay="600"
                         ToolTipService.BetweenShowDelay="0"
-                        Margin="0,0,8,8">
+                        Margin="0,0,8,0">
                     <Viewbox Width="26" Height="26">
                         <Canvas Width="24" Height="24">
                             <Path Data="M4,18 V6.5 C4,5.672 4.672,5 5.5,5 H10 L12,7 H18.5 C19.328,7 20,7.672 20,8.5 V18 C20,18.828 19.328,19.5 18.5,19.5 H5.5 C4.672,19.5 4,18.828 4,18 Z"
@@ -215,7 +218,7 @@
                 >
             <Border.Style>
                 <Style TargetType="Border">
-                    <Setter Property="Margin" Value="0,12,0,0"/>
+                    <Setter Property="Margin" Value="0,3,0,0"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding UseCompactHeader, ElementName=Root}" Value="True">
                             <Setter Property="Margin" Value="0"/>

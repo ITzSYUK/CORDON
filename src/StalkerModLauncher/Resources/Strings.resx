@@ -129,6 +129,9 @@
   <data name="Mod_PriorityHint" xml:space="preserve"><value>Mods lower in the list override mods above them</value></data>
   <data name="Mod_SearchWatermark" xml:space="preserve"><value>Search by name, group, or folder</value></data>
   <data name="Mod_SelectedDetailsTooltip" xml:space="preserve"><value>Selected mod details</value></data>
+  <data name="Mod_EditInNewWindow" xml:space="preserve"><value>Edit in new window</value></data>
+  <data name="Mod_ListTitle" xml:space="preserve"><value>Mod list</value></data>
+  <data name="Mod_ListWindowTitleFormat" xml:space="preserve"><value>Mods — {0}</value></data>
   <data name="Profile_Standalone" xml:space="preserve"><value>Standalone build</value></data>
   <data name="Profile_StandaloneTooltip" xml:space="preserve"><value>A standalone build has its own engine and all game files and runs from its own folder</value></data>
   <data name="Common_Profile" xml:space="preserve"><value>Profile</value></data>

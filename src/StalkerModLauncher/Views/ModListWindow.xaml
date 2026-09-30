@@ -1,0 +1,21 @@
+<Window x:Class="StalkerModLauncher.Views.ModListWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:StalkerModLauncher.Views.Controls"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="{x:Static res:Strings.Mod_ListTitle}"
+        Width="920"
+        Height="640"
+        MinWidth="700"
+        MinHeight="480"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}"
+        WindowStartupLocation="CenterOwner"
+        SourceInitialized="Window_OnSourceInitialized">
+    <Grid Margin="16,3,16,16">
+        <controls:ModPanelView x:Name="ModListPanel"
+                               ShowStandaloneToggle="False"
+                               UseCompactHeader="False"
+                               ShowHeadingText="False"/>
+    </Grid>
+</Window>
