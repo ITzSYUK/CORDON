@@ -31,6 +31,12 @@ public partial class ModPanelView : UserControl
         typeof(ModPanelView),
         new PropertyMetadata(false, OnUsePdaThemeChanged));
 
+    public static readonly DependencyProperty ShowHeadingTextProperty = DependencyProperty.Register(
+        nameof(ShowHeadingText),
+        typeof(bool),
+        typeof(ModPanelView),
+        new PropertyMetadata(true));
+
     private sealed record ModDragPayload(IReadOnlyList<ModEntry> Mods);
 
     private Point _dragStartPoint;
@@ -64,6 +70,12 @@ public partial class ModPanelView : UserControl
     {
         get => (bool)GetValue(UsePdaThemeProperty);
         set => SetValue(UsePdaThemeProperty, value);
+    }
+
+    public bool ShowHeadingText
+    {
+        get => (bool)GetValue(ShowHeadingTextProperty);
+        set => SetValue(ShowHeadingTextProperty, value);
     }
 
     private static void OnUsePdaThemeChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
@@ -183,6 +195,10 @@ public partial class ModPanelView : UserControl
                 ViewModel?.ShowSelectedModConflictsCommand.Execute(mod);
                 contextMenu.IsOpen = false;
             }));
+        contextMenu.Items.Add(CreateLeftClickMenuItem(
+            Strings.Mod_EditInNewWindow,
+            ViewModel is not null,
+            () => OpenModListWindow(contextMenu)));
         contextMenu.Items.Add(new Separator());
         var canEnableSelected = canEdit && selectedMods.Any(mod => !mod.IsEnabled);
         var canDisableSelected = canEdit && selectedMods.Any(mod => mod.IsEnabled);
@@ -580,6 +596,11 @@ public partial class ModPanelView : UserControl
             !groupNames[groupNames.Count - 1].Equals(groupName, StringComparison.OrdinalIgnoreCase);
         var contextMenu = new ContextMenu();
         contextMenu.Items.Add(CreateLeftClickMenuItem(
+            Strings.Mod_EditInNewWindow,
+            ViewModel is not null,
+            () => OpenModListWindow(contextMenu)));
+        contextMenu.Items.Add(new Separator());
+        contextMenu.Items.Add(CreateLeftClickMenuItem(
             Strings.Mod_RenameGroup,
             canEdit,
             () => RenameModGroup(groupName, contextMenu)));
@@ -649,6 +670,23 @@ public partial class ModPanelView : UserControl
                 ViewModel?.DialogService.ShowError(Strings.Mod_RenameGroup, Strings.Mod_GroupNameExists);
             }
         });
+    }
+
+    private void OpenModListWindow(ContextMenu contextMenu)
+    {
+        contextMenu.IsOpen = false;
+        if (ViewModel is null)
+        {
+            return;
+        }
+
+        var owner = Window.GetWindow(this);
+        if (owner is null || owner is ModListWindow)
+        {
+            return;
+        }
+
+        ModListWindow.Show(owner, ViewModel, UsePdaTheme);
     }
 
     private void ShowGroupNamePrompt(string title, string initialValue, Action<string> complete)
