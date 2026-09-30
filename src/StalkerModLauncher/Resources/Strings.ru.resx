@@ -129,6 +129,9 @@
   <data name="Mod_PriorityHint" xml:space="preserve"><value>Моды ниже в списке перезаписывают моды выше</value></data>
   <data name="Mod_SearchWatermark" xml:space="preserve"><value>Поиск по названию, группе или папке</value></data>
   <data name="Mod_SelectedDetailsTooltip" xml:space="preserve"><value>Подробности выбранного мода</value></data>
+  <data name="Mod_EditInNewWindow" xml:space="preserve"><value>Редактировать в новом окне</value></data>
+  <data name="Mod_ListTitle" xml:space="preserve"><value>Список модов</value></data>
+  <data name="Mod_ListWindowTitleFormat" xml:space="preserve"><value>Моды — {0}</value></data>
   <data name="Profile_Standalone" xml:space="preserve"><value>Автономная сборка</value></data>
   <data name="Profile_StandaloneTooltip" xml:space="preserve"><value>Автономная сборка имеет свой движок и все файлы игры, запускается из своей папки</value></data>
   <data name="Common_Profile" xml:space="preserve"><value>Профиль</value></data>
