@@ -51,6 +51,23 @@ public partial class ModListWindow : Window
         modListWindow.Show();
     }
 
+    public static void CloseForViewModel(MainViewModel viewModel)
+    {
+        var application = Application.Current;
+        if (application is null)
+        {
+            return;
+        }
+
+        foreach (var window in application.Windows.OfType<ModListWindow>().ToList())
+        {
+            if (ReferenceEquals(window.DataContext, viewModel))
+            {
+                window.Close();
+            }
+        }
+    }
+
     private MainViewModel? ViewModel => DataContext as MainViewModel;
 
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -58,6 +75,10 @@ public partial class ModListWindow : Window
         if (e.PropertyName is nameof(MainViewModel.SelectedProfile) or nameof(MainViewModel.HasProfiles))
         {
             Dispatcher.BeginInvoke(UpdateTitle);
+        }
+        else if (e.PropertyName is nameof(MainViewModel.IsPdaInterfaceEnabled) or nameof(MainViewModel.UseNewPdaInterface))
+        {
+            Dispatcher.BeginInvoke(Close);
         }
     }
 

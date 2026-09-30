@@ -175,6 +175,7 @@ public partial class MainWindow : Window
 
         Dispatcher.BeginInvoke(() =>
         {
+            CloseModListWindows();
             if (e.PropertyName == nameof(MainViewModel.UseNewPdaInterface) &&
                 _pdaWindow is not null &&
                 _pdaWindow.UsesNewTheme != ViewModel.UseNewPdaInterface)
@@ -239,6 +240,16 @@ public partial class MainWindow : Window
         };
         _pdaWindow.Show();
         Hide();
+    }
+
+    private void CloseModListWindows()
+    {
+        if (ViewModel is null)
+        {
+            return;
+        }
+
+        ModListWindow.CloseForViewModel(ViewModel);
     }
 
     public void ShowFromTray()
