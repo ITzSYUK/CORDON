@@ -87,6 +87,95 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         Assert.False(Directory.Exists(oldWorkspace));
     }
 
+    [Theory]
+    [InlineData(LaunchBackendKind.LinkedWorkspace, true)]
+    [InlineData(LaunchBackendKind.LinkedWorkspace, false)]
+    [InlineData(LaunchBackendKind.VirtualFileSystem, true)]
+    [InlineData(LaunchBackendKind.VirtualFileSystem, false)]
+    public async Task MoveAsyncPreservesNewestWritableSettings(LaunchBackendKind backend, bool workspaceIsNewer)
+    {
+        var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
+        var service = new WorkspaceManagementService(new WorkspaceBuilder(paths));
+        var oldWorkspace = Path.Combine(paths.WorkspaceRoot, "profile-writable-settings");
+        File.WriteAllText(CreateDirectoryAndReturnFile(oldWorkspace, ".stalker-launcher-workspace"), "marker");
+        var storedWriteTime = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        foreach (var rule in ProfileWritableGameFiles.Rules)
+        {
+            var workspaceFile = Path.Combine(oldWorkspace, "current", rule.RelativePath);
+            Directory.CreateDirectory(Path.GetDirectoryName(workspaceFile)!);
+            File.WriteAllText(workspaceFile, "workspace settings");
+            File.SetLastWriteTimeUtc(workspaceFile, storedWriteTime.AddMinutes(workspaceIsNewer ? 1 : -1));
+            var storedFile = Path.Combine(oldWorkspace, rule.StorageRelativePath);
+            Directory.CreateDirectory(Path.GetDirectoryName(storedFile)!);
+            File.WriteAllText(storedFile, "stored settings");
+            File.SetLastWriteTimeUtc(storedFile, storedWriteTime);
+        }
+        var profile = new ModProfile
+        {
+            Id = "writable-settings",
+            WorkspacePath = oldWorkspace,
+            LaunchBackendKind = backend
+        };
+
+        var result = await service.MoveAsync(profile, Path.Combine(_root, "destination-writable"), new Progress<string>());
+
+        Assert.True(result.WasMoved);
+        Assert.Null(result.CleanupFailure);
+        Assert.Equal(result.DestinationPath, profile.WorkspacePath);
+        foreach (var rule in ProfileWritableGameFiles.Rules)
+        {
+            Assert.Equal(
+                workspaceIsNewer ? "workspace settings" : "stored settings",
+                File.ReadAllText(Path.Combine(result.DestinationPath, rule.StorageRelativePath)));
+        }
+        Assert.False(Directory.Exists(Path.Combine(result.DestinationPath, "current")));
+        Assert.False(Directory.Exists(oldWorkspace));
+    }
+
+    [Fact]
+    public async Task MoveAsyncCapturesWritableSettingsWithoutExistingUserData()
+    {
+        var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
+        var service = new WorkspaceManagementService(new WorkspaceBuilder(paths));
+        var oldWorkspace = Path.Combine(paths.WorkspaceRoot, "profile-first-move");
+        File.WriteAllText(CreateDirectoryAndReturnFile(oldWorkspace, ".stalker-launcher-workspace"), "marker");
+        var rule = ProfileWritableGameFiles.Rules[0];
+        var workspaceFile = Path.Combine(oldWorkspace, "current", rule.RelativePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(workspaceFile)!);
+        File.WriteAllText(workspaceFile, "latest settings");
+        var profile = new ModProfile { Id = "first-move", WorkspacePath = oldWorkspace };
+
+        var result = await service.MoveAsync(profile, Path.Combine(_root, "destination-first-move"), new Progress<string>());
+
+        Assert.Null(result.CleanupFailure);
+        Assert.Equal("latest settings", File.ReadAllText(Path.Combine(result.DestinationPath, rule.StorageRelativePath)));
+        Assert.False(Directory.Exists(oldWorkspace));
+    }
+
+    [Fact]
+    public async Task MoveAsyncKeepsOldWorkspaceWhenWritableSettingsCannotBeCaptured()
+    {
+        var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
+        var service = new WorkspaceManagementService(new WorkspaceBuilder(paths));
+        var oldWorkspace = Path.Combine(paths.WorkspaceRoot, "profile-locked-settings");
+        File.WriteAllText(CreateDirectoryAndReturnFile(oldWorkspace, ".stalker-launcher-workspace"), "marker");
+        var rule = ProfileWritableGameFiles.Rules[0];
+        var workspaceFile = Path.Combine(oldWorkspace, "current", rule.RelativePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(workspaceFile)!);
+        File.WriteAllText(workspaceFile, "latest settings");
+        var profile = new ModProfile { Id = "locked-settings", WorkspacePath = oldWorkspace };
+        var destinationRoot = Path.Combine(_root, "destination-locked-settings");
+
+        using (File.Open(workspaceFile, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            await Assert.ThrowsAsync<IOException>(() => service.MoveAsync(profile, destinationRoot, new Progress<string>()));
+        }
+
+        Assert.Equal(oldWorkspace, profile.WorkspacePath);
+        Assert.Equal("latest settings", File.ReadAllText(workspaceFile));
+        Assert.Empty(Directory.EnumerateDirectories(destinationRoot));
+    }
+
     [Fact]
     public async Task MoveAsyncDoesNotCopyTemporaryUsvfsBootstrap()
     {

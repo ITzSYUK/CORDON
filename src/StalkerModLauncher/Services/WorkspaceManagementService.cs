@@ -129,6 +129,14 @@ public sealed class WorkspaceManagementService
                 Path.Combine(temporary, ".stalker-launcher-workspace"),
                 "Managed by CORDON. It is safe for the launcher to recreate the 'current' subfolder.");
 
+            if (!string.IsNullOrWhiteSpace(oldWorkspace))
+            {
+                ProfileWritableGameFileStore.CaptureFromWorkspace(
+                    Path.Combine(oldWorkspace, "current"),
+                    oldWorkspace,
+                    progress);
+            }
+
             var sourceUserData = string.IsNullOrWhiteSpace(oldWorkspace) ? string.Empty : Path.Combine(oldWorkspace, "userdata");
             var targetUserData = Path.Combine(temporary, "userdata");
             if (Directory.Exists(sourceUserData))
