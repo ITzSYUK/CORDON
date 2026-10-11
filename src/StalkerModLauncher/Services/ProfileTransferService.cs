@@ -21,8 +21,25 @@ public static class ProfileTransferService
     public static ModProfile Import(string filePath)
     {
         var json = File.ReadAllText(filePath);
-        var exported = JsonSerializer.Deserialize<ExportedProfile>(json, JsonOptions)
-                      ?? throw new InvalidDataException(Strings.Profile_ImportInvalid);
+        ExportedProfile? exported;
+        try
+        {
+            exported = JsonSerializer.Deserialize<ExportedProfile>(json, JsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException(Strings.Profile_ImportInvalid, ex);
+        }
+
+        if (exported is null || exported.Name is null || exported.Mods is null ||
+            !Enum.IsDefined(exported.LaunchBackendKind) ||
+            exported.IsStandalone && exported.LaunchBackendKind != LaunchBackendKind.LinkedWorkspace ||
+            exported.CollapsedModGroups?.Any(name => name is null) == true ||
+            exported.Mods.Any(mod => mod is null || mod.Name is null || mod.SourcePath is null ||
+                                     mod.ExcludedFiles?.Any(path => path is null) == true))
+        {
+            throw new InvalidDataException(Strings.Profile_ImportInvalid);
+        }
 
         var validation = ProfileSettingsValidator.Validate(exported.Name, exported.ExecutableRelativePath, _ => false);
         if (!validation.IsValid)
@@ -42,7 +59,7 @@ public static class ProfileTransferService
             IsDiscordStatusEnabled = profile.IsDiscordStatusEnabled,
             IsStandalone = profile.IsStandalone,
             UseBaseGameData = profile.UseBaseGameData,
-            LaunchBackendKind = LaunchBackendKind.LinkedWorkspace,
+            LaunchBackendKind = profile.LaunchBackendKind,
             ExecutableRelativePath = profile.ExecutableRelativePath,
             ExecutableSourcePath = profile.ExecutableSourcePath,
             FsgameSourcePath = profile.FsgameSourcePath,
@@ -73,14 +90,14 @@ public static class ProfileTransferService
             IsDiscordStatusEnabled = exported.IsDiscordStatusEnabled,
             IsStandalone = exported.IsStandalone,
             UseBaseGameData = exported.UseBaseGameData,
-            LaunchBackendKind = LaunchBackendKind.LinkedWorkspace,
+            LaunchBackendKind = exported.LaunchBackendKind,
             ExecutableRelativePath = exported.ExecutableRelativePath,
             ExecutableSourcePath = exported.ExecutableSourcePath ?? string.Empty,
             FsgameSourcePath = exported.FsgameSourcePath ?? string.Empty,
             UsvfsExecutableOverrideRelativePath = exported.UsvfsExecutableOverrideRelativePath ?? string.Empty,
-            LaunchArguments = exported.LaunchArguments,
-            WorkingDirectoryRelative = exported.WorkingDirectoryRelative,
-            GameInstallPath = exported.GameInstallPath,
+            LaunchArguments = exported.LaunchArguments ?? string.Empty,
+            WorkingDirectoryRelative = exported.WorkingDirectoryRelative ?? string.Empty,
+            GameInstallPath = exported.GameInstallPath ?? string.Empty,
             Mo2OverwritePath = exported.Mo2OverwritePath ?? string.Empty,
             CollapsedModGroups = exported.CollapsedModGroups ?? []
         };
