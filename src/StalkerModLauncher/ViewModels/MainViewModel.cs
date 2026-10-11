@@ -119,7 +119,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             parameter => DeleteProfile(parameter as ModProfile),
             parameter => parameter is ModProfile { IsRunning: false });
         BrowseExecutableCommand = new RelayCommand(BrowseExecutable, () => SelectedProfile is not null);
-        AddModCommand = new RelayCommand(AddMod, CanAddMod);
+        AddModCommand = new AsyncRelayCommand(AddModAsync, CanAddMod);
         InstallModArchiveCommand = new AsyncRelayCommand(InstallModArchiveAsync, CanInstallModArchive);
         DismissModArchiveInstallCompletedCommand = new RelayCommand(() => IsModArchiveInstallCompleted = false);
         ContinueModArchiveInstallCommand = new RelayCommand(() => ResolveModArchiveInstallDestinationChoice(true));
@@ -432,7 +432,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public RelayCommand InlineExportProfileCommand { get; }
     public RelayCommand InlineDeleteProfileCommand { get; }
     public RelayCommand BrowseExecutableCommand { get; }
-    public RelayCommand AddModCommand { get; }
+    public AsyncRelayCommand AddModCommand { get; }
     public AsyncRelayCommand InstallModArchiveCommand { get; }
     public RelayCommand DismissModArchiveInstallCompletedCommand { get; }
     public RelayCommand ContinueModArchiveInstallCommand { get; }

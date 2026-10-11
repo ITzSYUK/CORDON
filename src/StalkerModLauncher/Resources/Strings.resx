@@ -80,7 +80,7 @@
   <data name="Common_Remove" xml:space="preserve"><value>Remove</value></data>
   <data name="Common_MoveUp" xml:space="preserve"><value>Up</value></data>
   <data name="Common_MoveDown" xml:space="preserve"><value>Down</value></data>
-  <data name="Mod_AddFolderTooltip" xml:space="preserve"><value>Add mod folder</value></data>
+  <data name="Mod_AddFolderTooltip" xml:space="preserve"><value>Add mod folder. If it contains FOMOD, the installation wizard will open.</value></data>
   <data name="Mod_InstallArchiveTooltip" xml:space="preserve"><value>Install a mod from ZIP, 7Z, or RAR</value></data>
   <data name="Mod_OverwriteWarning" xml:space="preserve"><value>Overrides files from mods above it; conflicts may occur.</value></data>
   <data name="Mod_ScanFolderTooltip" xml:space="preserve"><value>Find mods in the selected folder</value></data>
@@ -406,11 +406,11 @@
   <data name="Mod_NotFound" xml:space="preserve"><value>No mods were found in the selected folder.</value></data>
   <data name="Mod_ScanFailed" xml:space="preserve"><value>Scan error</value></data>
   <data name="Mod_PickArchive" xml:space="preserve"><value>Select mod archive</value></data>
-  <data name="Mod_ArchiveFilter" xml:space="preserve"><value>Mod archives (*.zip;*.7z;*.rar)|*.zip;*.7z;*.rar|All files (*.*)|*.*</value></data>
+  <data name="Mod_ArchiveFilter" xml:space="preserve"><value>Mod archives (*.zip;*.7z;*.rar;*.fomod)|*.zip;*.7z;*.rar;*.fomod|All files (*.*)|*.*</value></data>
   <data name="Mod_PreparingFormat" xml:space="preserve"><value>Preparing {0}...</value></data>
   <data name="Mod_DatabaseNote" xml:space="preserve"><value>Archives .db* were placed in db\mods.</value></data>
   <data name="Mod_FileCountFormat" xml:space="preserve"><value>Files: {0:N0}{1}</value></data>
-  <data name="Mod_InstallFailed" xml:space="preserve"><value>Could not install mod archive</value></data>
+  <data name="Mod_InstallFailed" xml:space="preserve"><value>Could not install mod</value></data>
   <data name="Mod_AnalyzingFormat" xml:space="preserve"><value>Analyzing {0}...</value></data>
   <data name="Mod_ExtractingPercentFormat" xml:space="preserve"><value>Extracting {0}: {1:0}% · {2} / {3} · {4}</value></data>
   <data name="Mod_ExtractingSizeFormat" xml:space="preserve"><value>Extracting {0}: {1}</value></data>
@@ -934,9 +934,9 @@
   <data name="Log_ModsAddedFromScanFormat" xml:space="preserve"><value>Added {0} mod(s) from scan.</value></data>
   <data name="Log_ScanFailedFormat" xml:space="preserve"><value>Scan failed: {0}</value></data>
   <data name="Log_ModAddedFormat" xml:space="preserve"><value>Mod added: {0}</value></data>
-  <data name="Log_ArchiveCancelledFormat" xml:space="preserve"><value>Mod archive installation cancelled because the folder already exists: {0}</value></data>
-  <data name="Log_ArchiveInstalledFormat" xml:space="preserve"><value>Mod archive installed: {0} → {1}</value></data>
-  <data name="Log_ArchiveFailedFormat" xml:space="preserve"><value>Mod archive installation failed: {0}</value></data>
+  <data name="Log_ArchiveCancelledFormat" xml:space="preserve"><value>Mod installation cancelled: {0}</value></data>
+  <data name="Log_ArchiveInstalledFormat" xml:space="preserve"><value>Mod installed: {0} → {1}</value></data>
+  <data name="Log_ArchiveFailedFormat" xml:space="preserve"><value>Mod installation failed: {0}</value></data>
   <data name="Log_ExecutableSelectedSourceFormat" xml:space="preserve"><value>Launch executable selected: {0} from {1}</value></data>
   <data name="Log_ExecutableSelectedFormat" xml:space="preserve"><value>Launch executable selected: {0}</value></data>
   <data name="Log_StandaloneExeDetectedFormat" xml:space="preserve"><value>Standalone executable detected automatically: {0}</value></data>
@@ -1013,7 +1013,7 @@
   <data name="Update_InvalidValueFormat" xml:space="preserve"><value>Invalid {0}: {1}</value></data>
   <data name="Archive_NotFound" xml:space="preserve"><value>Archive not found.</value></data>
   <data name="Archive_SupportedFormats" xml:space="preserve"><value>Supported mod archive formats: ZIP, 7Z, and RAR.</value></data>
-  <data name="Archive_Empty" xml:space="preserve"><value>The archive contains no files.</value></data>
+  <data name="Archive_Empty" xml:space="preserve"><value>No files were found for installation.</value></data>
   <data name="Archive_PasswordProtected" xml:space="preserve"><value>Password-protected archives are not supported.</value></data>
   <data name="Archive_TooManyFilesFormat" xml:space="preserve"><value>The archive contains more than {0:N0} files.</value></data>
   <data name="Archive_InvalidEntryPathFormat" xml:space="preserve"><value>Invalid archive entry path: {0}</value></data>
@@ -1021,7 +1021,7 @@
   <data name="Archive_UnsafeEntryPathFormat" xml:space="preserve"><value>Unsafe archive entry path: {0}</value></data>
   <data name="Archive_EntryOutsideDestinationFormat" xml:space="preserve"><value>Archive entry leaves the destination folder: {0}</value></data>
   <data name="Archive_InvalidInstallFolder" xml:space="preserve"><value>Invalid archive installation folder name.</value></data>
-  <data name="Archive_InstallFolderUnavailableFormat" xml:space="preserve"><value>Archive installation folder is unavailable: {0}</value></data>
+  <data name="Archive_InstallFolderUnavailableFormat" xml:space="preserve"><value>Mod installation folder is unavailable: {0}</value></data>
   <data name="Archive_AllocateFolderFailedFormat" xml:space="preserve"><value>Could not allocate an installation folder for “{0}”.</value></data>
   <data name="Archive_NotEnoughSpace" xml:space="preserve"><value>Not enough free space to extract the archive.</value></data>
   <data name="Archive_NotEnoughSafeSpace" xml:space="preserve"><value>Not enough free space to extract this archive safely.</value></data>
@@ -1062,6 +1062,16 @@
   <data name="Scan_DetectedArchiveFormat" xml:space="preserve"><value>archive: {0}</value></data>
   <data name="Archive_XrayRootMissing" xml:space="preserve"><value>The archive does not contain a recognizable X-Ray mod root (gamedata, bin, db, patches, or gamedata.db*).</value></data>
   <data name="Archive_MultipleRoots" xml:space="preserve"><value>The archive contains several possible mod roots. Repack it or add the extracted folder manually.</value></data>
+  <data name="Archive_FomodInvalidFormat" xml:space="preserve"><value>The FOMOD script is invalid: {0}</value></data>
+  <data name="Archive_FomodInvalidRoot" xml:space="preserve"><value>expected a 'config' root element</value></data>
+  <data name="Archive_FomodNameMissing" xml:space="preserve"><value>missing required 'moduleName'</value></data>
+  <data name="Archive_FomodMissingSourceFormat" xml:space="preserve"><value>The FOMOD script references a missing file or folder: {0}</value></data>
+  <data name="Archive_FomodCSharpUnsupported" xml:space="preserve"><value>This mod uses a C# FOMOD script, which is not supported. Install it manually or via Mod Organizer 2.</value></data>
+  <data name="Log_FomodAppliedFormat" xml:space="preserve"><value>FOMOD installer '{0}' applied: {1} files installed.</value></data>
+  <data name="Fomod_Title" xml:space="preserve"><value>FOMOD installer</value></data>
+  <data name="Fomod_StepFormat" xml:space="preserve"><value>Step {0} of {1}</value></data>
+  <data name="Fomod_Install" xml:space="preserve"><value>Install</value></data>
+  <data name="Fomod_SelectAtLeastOneFormat" xml:space="preserve"><value>Select at least one option in '{0}'.</value></data>
   <data name="Fsgame_AppDataMissingFormat" xml:space="preserve"><value>fsgame.ltx does not contain $app_data_root$: {0}. Profile-local saves and logs cannot be guaranteed, so launch was blocked.</value></data>
   <data name="Health_StatusHealthy" xml:space="preserve"><value>OK</value></data>
   <data name="Health_StatusWarning" xml:space="preserve"><value>Warning</value></data>
@@ -1102,4 +1112,22 @@
   <data name="Layer_UsvfsLogCollector" xml:space="preserve"><value>USVFS log collector</value></data>
   <data name="Update_CurrentVersionValue" xml:space="preserve"><value>current application version</value></data>
   <data name="Update_LatestTagValue" xml:space="preserve"><value>latest GitHub release tag</value></data>
+  <data name="Fomod_DependenciesNotMet" xml:space="preserve"><value>This installer requires files or game/manager versions that are unavailable in this X-Ray profile.</value></data>
+  <data name="Fomod_InvalidSelectionFormat" xml:space="preserve"><value>Required options must be selected in '{0}'.</value></data>
+  <data name="Fomod_SelectAtMostOneFormat" xml:space="preserve"><value>Select at most one option in '{0}'.</value></data>
+  <data name="Fomod_Required" xml:space="preserve"><value>Required</value></data>
+  <data name="Fomod_Recommended" xml:space="preserve"><value>Recommended</value></data>
+  <data name="Fomod_NotUsable" xml:space="preserve"><value>Unavailable</value></data>
+  <data name="Fomod_CouldBeUsable" xml:space="preserve"><value>Check compatibility before selecting</value></data>
+  <data name="Fomod_Optional" xml:space="preserve"><value>Optional</value></data>
+  <data name="Fomod_ExactlyOne" xml:space="preserve"><value>Choose one option</value></data>
+  <data name="Fomod_AtMostOne" xml:space="preserve"><value>Choose one option or leave all unchecked</value></data>
+  <data name="Fomod_AtLeastOne" xml:space="preserve"><value>Choose one or more options</value></data>
+  <data name="Fomod_All" xml:space="preserve"><value>All available options are required</value></data>
+  <data name="Fomod_Any" xml:space="preserve"><value>Choose any options</value></data>
+  <data name="Fomod_Intro" xml:space="preserve"><value>Configure the mod before installation</value></data>
+  <data name="Fomod_DestinationInsideSource" xml:space="preserve"><value>The installation folder must not overlap the original FOMOD folder.</value></data>
+  <data name="Fomod_FolderNotFoundFormat" xml:space="preserve"><value>The FOMOD source folder was not found: {0}</value></data>
+  <data name="Fomod_ConfigNotFound" xml:space="preserve"><value>The selected folder does not contain a FOMOD installer.</value></data>
+  <data name="Fomod_CopyingFormat" xml:space="preserve"><value>Copying selected files from {0}...</value></data>
 </root>

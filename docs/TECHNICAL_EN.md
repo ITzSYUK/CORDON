@@ -20,7 +20,7 @@ Support is based on file structure rather than a hard-coded game title. The file
 
 In practice this covers Shadow of Chernobyl, Clear Sky, Call of Pripyat, Anomaly, OGSR, iX-Ray, and many derived projects. Compatibility with every custom launcher or modified engine cannot be guaranteed.
 
-The launcher can install mods from ZIP, 7Z, and RAR archives into separate managed storage. It does not execute EXE installers, process FOMOD scripts, or repair incompatible game content.
+The launcher can install mods from ZIP, 7Z, RAR, and FOMOD archives, or from unpacked FOMOD folders, into separate managed storage. In an existing profile, adding or dropping a folder containing FOMOD opens the same installer as an archive; only selected files are copied, and the source folder is preserved. Plain folders are connected directly. Declarative FOMOD XML installers use a separate wizard in classic UI and an embedded page in PDA UI, with option images, dependency checks, and conditional file installation. File dependencies use the profile's existing layer plan; files in disabled mods are inactive. It does not execute EXE installers or C# FOMOD scripts, satisfy Bethesda game/manager version dependencies, or repair incompatible game content.
 
 ## 2. Core concepts
 

@@ -123,7 +123,7 @@ Changing the order changes the resulting file set. On the next launch, Workspace
 
 ## Adding and finding mods
 
-The add button lets you select one folder manually. Scanning is useful when one common directory contains many mods: the launcher searches for typical X-Ray structures, including `gamedata`, `bin`, `bin_x64`, game archives, and `db` or `patches` folders.
+The add button lets you select one folder manually. In an existing profile, selecting or dropping an unpacked folder containing `fomod/ModuleConfig.xml` opens the FOMOD wizard. Select the required options: their files are copied to the profile's permanent mods folder, while the original package stays unchanged. No archive is needed. Plain folders are connected directly. Scanning is useful when one common directory contains many mods: the launcher searches for typical X-Ray structures, including `gamedata`, `bin`, `bin_x64`, game archives, and `db` or `patches` folders.
 
 The `ZIP` button installs a mod from a ZIP, 7Z, or RAR archive. The archive is extracted to the profile's permanent mods folder and then added to the list like a regular mod. You can change this folder's path in the profile settings. Workspace is not used for the extracted sources and can be freely recreated.
 
