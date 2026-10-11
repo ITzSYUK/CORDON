@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using SharpCompress.Common;
@@ -152,6 +153,89 @@ public sealed class ModArchiveInstallerTests : IDisposable
             report.ExtractedBytes == result.ExtractedBytes);
         Assert.Equal(ModArchiveInstallStage.Finalizing, reports[^1].Stage);
         Assert.Equal(result.ExtractedBytes, reports[^1].ExtractedBytes);
+    }
+
+    [Theory]
+    [InlineData(ArchiveType.Zip)]
+    [InlineData(ArchiveType.SevenZip)]
+    public async Task InstallAsyncPreservesDifferentFileSizesAcrossCopyBufferBoundaries(ArchiveType archiveType)
+    {
+        Directory.CreateDirectory(_root);
+        var archivePath = Path.Combine(_root, archiveType == ArchiveType.Zip ? "sizes.zip" : "sizes.7z");
+        var random = new Random(7146);
+        var files = new[] { 0, 1, 128 * 1024 - 1, 128 * 1024, 128 * 1024 + 1, 300_000, 17 }
+            .Select((size, index) => (Path: $"gamedata/file{index}.bin", Content: new byte[size]))
+            .ToArray();
+        using (var archiveStream = File.Create(archivePath))
+        using (var writer = WriterFactory.OpenWriter(
+                   archiveStream,
+                   archiveType,
+                   archiveType == ArchiveType.SevenZip
+                       ? new SevenZipWriterOptions(CompressionType.LZMA2)
+                       : new WriterOptions(CompressionType.Deflate)))
+        {
+            foreach (var file in files)
+            {
+                random.NextBytes(file.Content);
+                using var content = new MemoryStream(file.Content);
+                writer.Write(file.Path, content, DateTime.UtcNow);
+            }
+        }
+
+        var result = await ModArchiveInstaller.InstallAsync(archivePath, InstallRoot);
+
+        Assert.Equal(files.Length, result.FileCount);
+        Assert.Equal(files.Sum(file => (long)file.Content.Length), result.ExtractedBytes);
+        foreach (var file in files)
+        {
+            Assert.Equal(file.Content, File.ReadAllBytes(Path.Combine(result.ModPath, file.Path)));
+        }
+    }
+
+    [Fact]
+    public async Task InstallAsyncThrottlesSmallFileProgressAndReportsExactFinalTotals()
+    {
+        var entries = Enumerable.Range(0, 256)
+            .Select(index => ($"gamedata/configs/file{index}.ltx", new string('x', 256)))
+            .ToArray();
+        var archive = CreateZip("small-files.zip", entries);
+        var reports = new List<ModArchiveInstallProgress>();
+        var timer = Stopwatch.StartNew();
+
+        var result = await ModArchiveInstaller.InstallAsync(
+            archive,
+            InstallRoot,
+            new InlineProgress<ModArchiveInstallProgress>(reports.Add));
+        timer.Stop();
+
+        Assert.InRange(reports.Count, 4, 4 + (int)Math.Ceiling(timer.Elapsed.TotalMilliseconds / 100));
+        Assert.Equal(ModArchiveInstallStage.Inspecting, reports[0].Stage);
+        Assert.Equal(ModArchiveInstallStage.Finalizing, reports[^1].Stage);
+        Assert.Equal(entries.Length, reports[^1].ExtractedFileCount);
+        Assert.Equal(result.ExtractedBytes, reports[^1].ExtractedBytes);
+        Assert.Equal(result.ExtractedBytes, reports[^1].TotalBytes);
+        Assert.True(reports.Zip(reports.Skip(1)).All(pair =>
+            pair.First.ExtractedBytes <= pair.Second.ExtractedBytes &&
+            pair.First.ExtractedFileCount <= pair.Second.ExtractedFileCount));
+    }
+
+    [Fact]
+    public async Task InstallAsyncCancellationDuringCopyRemovesPartialInstallation()
+    {
+        var archive = CreateZip("cancel.zip", ("gamedata/large.ltx", new string('x', 2 * 1024 * 1024)));
+        using var cancellation = new CancellationTokenSource();
+        var progress = new InlineProgress<ModArchiveInstallProgress>(report =>
+        {
+            if (report.Stage == ModArchiveInstallStage.Extracting && report.ExtractedBytes >= 1024 * 1024)
+            {
+                cancellation.Cancel();
+            }
+        });
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            ModArchiveInstaller.InstallAsync(archive, InstallRoot, progress, cancellationToken: cancellation.Token));
+
+        Assert.Empty(Directory.EnumerateFileSystemEntries(InstallRoot));
     }
 
     private string InstallRoot => Path.Combine(_root, "installed");

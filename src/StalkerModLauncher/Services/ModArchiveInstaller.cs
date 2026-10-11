@@ -291,7 +291,7 @@ public static class ModArchiveInstaller
 
         using var output = new FileStream(destinationPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
         CopyEntry(input, output, state, cancellationToken);
-        state.Report(ModArchiveInstallStage.Extracting, force: true);
+        state.Report(ModArchiveInstallStage.Extracting);
     }
 
     private static void CopyEntry(
@@ -300,7 +300,7 @@ public static class ModArchiveInstaller
         ExtractionState state,
         CancellationToken cancellationToken)
     {
-        var buffer = new byte[128 * 1024];
+        var buffer = state.CopyBuffer;
         int read;
         while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
         {
@@ -522,6 +522,7 @@ public static class ModArchiveInstaller
 
         public long MaximumBytes { get; } = maximumBytes;
         public long? TotalBytes { get; } = totalBytes;
+        public byte[] CopyBuffer { get; } = new byte[128 * 1024];
         public int FileCount { get; set; }
         public long ExtractedBytes { get; private set; }
 
