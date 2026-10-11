@@ -30,6 +30,10 @@ jobs:
       - name: Verify formatting
         run: dotnet format .\StalkerModLauncher.sln --verify-no-changes --no-restore
 
+      - name: Verify release and USVFS CI guards
+        shell: pwsh
+        run: .\scripts\Test-RepositoryGuards.ps1
+
       - name: Build
         run: dotnet build .\StalkerModLauncher.sln -c Release --no-restore
 

@@ -15,9 +15,9 @@ $usvfsManifest = Import-UsvfsRuntimeManifest -Path $usvfsManifestPath
 
 $gitStatus = Invoke-RepositoryGit `
     -SourceRoot $repositoryRoot `
-    -CommandArguments @("status", "--porcelain", "--untracked-files=no")
+    -CommandArguments @("status", "--porcelain", "--untracked-files=all")
 if ($gitStatus.ExitCode -ne 0 -or @($gitStatus.Output).Count -ne 0) {
-    throw "Release packaging requires a clean tracked working tree. Commit the current changes first."
+    throw "Release packaging requires a clean working tree, including untracked files. Commit or remove the current changes first."
 }
 
 $revisionResult = Invoke-RepositoryGit `
