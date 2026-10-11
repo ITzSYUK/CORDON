@@ -14,7 +14,9 @@ internal static class WorkspaceManifestStore
         string currentWorkspace,
         ModProfile profile,
         WorkspaceBuildFingerprint buildFingerprint,
-        IProgress<string> progress)
+        FileLayerPlan fileLayerPlan,
+        IProgress<string> progress,
+        CancellationToken cancellationToken)
     {
         var manifestPath = Path.Combine(workspaceRoot, ManifestFileName);
         if (!Directory.Exists(currentWorkspace))
@@ -45,8 +47,41 @@ internal static class WorkspaceManifestStore
                 return null;
             }
 
+            var layers = fileLayerPlan.SourceLayers.ToDictionary(layer => layer.Id);
+            foreach (var source in buildFingerprint.Sources)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var missingEntry = source.Directories.FirstOrDefault(relativePath =>
+                    !Directory.Exists(Path.Combine(currentWorkspace, relativePath)));
+                if (missingEntry is null)
+                {
+                    foreach (var file in source.Files)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        if (!FileLayerPlan.IsExcluded(layers[source.LayerId], file.RelativePath) &&
+                            !File.Exists(Path.Combine(currentWorkspace, file.RelativePath)))
+                        {
+                            missingEntry = file.RelativePath;
+                            break;
+                        }
+                    }
+                }
+
+                if (missingEntry is not null)
+                {
+                    progress.Report(LocalizedText.Format(
+                        Strings.WorkspaceManifest_RebuildReasonFormat,
+                        LocalizedText.Format(Strings.Check_NotFoundFormat, Path.Combine(currentWorkspace, missingEntry))));
+                    return null;
+                }
+            }
+
             progress.Report(Strings.WorkspaceManifest_Current);
             return executablePath;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch
         {

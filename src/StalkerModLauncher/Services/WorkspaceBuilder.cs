@@ -17,7 +17,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
     private const string MarkerFileName = ".stalker-launcher-workspace";
     internal const string RootMarkerFileName = ".stalker-launcher-workspace-root";
     private const string ManifestFileName = "build-manifest.json";
-    private const string WorkspaceFormatVersion = "strict-links-v4";
+    private const string WorkspaceFormatVersion = "strict-links-v5";
     private readonly AppPaths _paths;
     private static EnumerationOptions SafeEnumerationOptions { get; } = new()
     {
@@ -81,7 +81,9 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
             currentWorkspace,
             profile,
             buildFingerprint,
-            progress);
+            fileLayerPlan,
+            progress,
+            cancellationToken);
         if (cachedExecutable is not null)
         {
             ProfileWritableGameFileStore.EnsureWorkspaceDirectories(currentWorkspace);

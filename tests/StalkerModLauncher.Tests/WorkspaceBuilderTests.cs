@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 using System.Text;
 using Xunit;
@@ -59,6 +60,107 @@ public sealed class WorkspaceBuilderTests : IDisposable
 
         Assert.True(Directory.Exists(Path.Combine(result.WorkspaceRoot, "gamedata", "empty-game-directory")));
         Assert.True(Directory.Exists(Path.Combine(result.WorkspaceRoot, "gamedata", "empty-mod-directory")));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BuildAsyncRebuildsWhenEmptySourceDirectoryIsAddedOrRemoved(bool useMod)
+    {
+        var modPath = CreateMod("empty-directory-changes", "mod");
+        var profile = CreateProfile(modPath);
+        var first = await _builder.BuildAsync(_gamePath, profile, new ProgressLog());
+        var relative = Path.Combine("gamedata", "empty-directory-changes");
+        var sourceDirectory = Path.Combine(useMod ? modPath : _gamePath, relative);
+        var workspaceDirectory = Path.Combine(first.WorkspaceRoot, relative);
+        Directory.CreateDirectory(sourceDirectory);
+        var addedProgress = new ProgressLog();
+
+        await _builder.BuildAsync(_gamePath, profile, addedProgress);
+
+        Assert.True(Directory.Exists(workspaceDirectory));
+        Assert.DoesNotContain(Strings.WorkspaceManifest_Current, addedProgress.Messages);
+        Directory.Delete(sourceDirectory);
+        var removedProgress = new ProgressLog();
+
+        await _builder.BuildAsync(_gamePath, profile, removedProgress);
+
+        Assert.False(Directory.Exists(workspaceDirectory));
+        Assert.DoesNotContain(Strings.WorkspaceManifest_Current, removedProgress.Messages);
+    }
+
+    [Fact]
+    public async Task BuildAsyncRestoresMissingCachedEmptyDirectory()
+    {
+        var relative = Path.Combine("gamedata", "cached-empty-directory");
+        Directory.CreateDirectory(Path.Combine(_gamePath, relative));
+        var profile = CreateProfile();
+        var first = await _builder.BuildAsync(_gamePath, profile, new ProgressLog());
+        var workspaceDirectory = Path.Combine(first.WorkspaceRoot, relative);
+        Directory.Delete(workspaceDirectory);
+        var progress = new ProgressLog();
+
+        await _builder.BuildAsync(_gamePath, profile, progress);
+
+        Assert.True(Directory.Exists(workspaceDirectory));
+        Assert.DoesNotContain(Strings.WorkspaceManifest_Current, progress.Messages);
+    }
+
+    [Theory]
+    [InlineData("bin/xrCore.dll")]
+    [InlineData("gamedata/config/shared.ltx")]
+    public async Task BuildAsyncRestoresMissingCachedFileWithoutChangingSource(string relative)
+    {
+        CreateFile(_gamePath, relative, "source content");
+        var profile = CreateProfile();
+        var first = await _builder.BuildAsync(_gamePath, profile, new ProgressLog());
+        var workspaceFile = Path.Combine(first.WorkspaceRoot, relative);
+        File.Delete(workspaceFile);
+        var progress = new ProgressLog();
+
+        await _builder.BuildAsync(_gamePath, profile, progress);
+
+        Assert.Equal("source content", File.ReadAllText(workspaceFile));
+        Assert.Equal("source content", File.ReadAllText(Path.Combine(_gamePath, relative)));
+        Assert.DoesNotContain(Strings.WorkspaceManifest_Current, progress.Messages);
+    }
+
+    [Fact]
+    public async Task BuildAsyncReusesCacheWithExcludedModFile()
+    {
+        var modPath = CreateMod("excluded-cache", "mod");
+        const string relative = "gamedata/config/excluded.ltx";
+        CreateFile(modPath, relative, "excluded content");
+        var profile = CreateProfile(modPath);
+        profile.Mods[0].ExcludedFiles.Add(relative);
+        var first = await _builder.BuildAsync(_gamePath, profile, new ProgressLog());
+        var progress = new ProgressLog();
+
+        await _builder.BuildAsync(_gamePath, profile, progress);
+
+        Assert.Contains(Strings.WorkspaceManifest_Current, progress.Messages);
+        Assert.False(File.Exists(Path.Combine(first.WorkspaceRoot, relative)));
+    }
+
+    [Fact]
+    public async Task BuildAsyncPreservesWritableSettingsWhileRepairingCache()
+    {
+        const string optionsRelative = "gamedata/configs/axr_options.ltx";
+        CreateFile(_gamePath, optionsRelative, "source options");
+        var profile = CreateProfile();
+        var first = await _builder.BuildAsync(_gamePath, profile, new ProgressLog());
+        var options = Path.Combine(first.WorkspaceRoot, optionsRelative);
+        File.WriteAllText(options, "latest profile options");
+        var save = Path.Combine(first.ProfileWorkspacePath, "userdata", "savedgames", "cache-repair.sav");
+        CreateFileAtPath(save, "profile save");
+        File.Delete(Path.Combine(first.WorkspaceRoot, "gamedata", "config", "shared.ltx"));
+
+        await _builder.BuildAsync(_gamePath, profile, new ProgressLog());
+
+        Assert.True(File.Exists(Path.Combine(first.WorkspaceRoot, "gamedata", "config", "shared.ltx")));
+        Assert.Equal("latest profile options", File.ReadAllText(options));
+        Assert.Equal("profile save", File.ReadAllText(save));
+        Assert.Equal("source options", File.ReadAllText(Path.Combine(_gamePath, optionsRelative)));
     }
 
     [Fact]

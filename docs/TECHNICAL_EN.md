@@ -150,9 +150,9 @@ Workspace layout:
 
 ### Building current
 
-Before building, the launcher snapshots the base game and mods. It then creates a signature from source paths, file state, mod order, selected EXE, and relevant profile options. `build-manifest.json` also stores the detailed inputs of that signature, so a mismatch can name the exact changed file, EXE, EXE source, layer set, or layer order in the log.
+Before building, the launcher snapshots the base game and mods. It then creates a signature from source paths, file state, directory structure (including empty directories), mod order, selected EXE, and relevant profile options. `build-manifest.json` also stores the detailed inputs of that signature, so a mismatch can name the exact changed file, EXE, EXE source, layer set, or layer order in the log.
 
-When the signature matches `build-manifest.json` and the selected EXE still exists, `current` is reused. Profile writable files are still restored and validated.
+When the signature matches `build-manifest.json`, the selected EXE and all expected source files and directories must still exist in `current` before it is reused. Excluded mod files are checked through the shared layer plan. Missing entries trigger a rebuild that preserves profile writable files and user data. Cached file contents are not compared with their sources, so independent profile configuration edits remain valid. Older cache formats are rebuilt automatically on the next launch.
 
 When sources have changed, the workspace is rebuilt:
 

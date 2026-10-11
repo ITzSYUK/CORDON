@@ -103,6 +103,7 @@ internal static class WorkspaceSourceScanner
             DisplayName = FileLayerPlan.GetDisplayName(layer),
             RootPath = snapshot.RootPath,
             ExcludedFiles = excludedFiles.ToList(),
+            Directories = snapshot.Directories.Order(StringComparer.OrdinalIgnoreCase).ToList(),
             Files = snapshot.Files
                 .Select(file => new WorkspaceBuildFileFingerprint
                 {
@@ -140,6 +141,11 @@ internal static class WorkspaceSourceScanner
             foreach (var excluded in source.ExcludedFiles)
             {
                 builder.Append("excluded|").AppendLine(excluded);
+            }
+
+            foreach (var directory in source.Directories)
+            {
+                builder.Append("directory|").AppendLine(directory);
             }
 
             foreach (var file in source.Files)
@@ -239,6 +245,7 @@ internal sealed class WorkspaceBuildSourceFingerprint
     public string DisplayName { get; set; } = string.Empty;
     public string RootPath { get; set; } = string.Empty;
     public List<string> ExcludedFiles { get; set; } = [];
+    public List<string> Directories { get; set; } = [];
     public List<WorkspaceBuildFileFingerprint> Files { get; set; } = [];
 }
 
