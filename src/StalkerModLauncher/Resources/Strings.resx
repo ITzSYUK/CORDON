@@ -622,7 +622,7 @@
   <data name="Check_WorkspaceCache" xml:space="preserve"><value>Workspace cache</value></data>
   <data name="Check_WorkspacePresent" xml:space="preserve"><value>Prepared workspace and manifest are present.</value></data>
   <data name="Check_WorkspacePending" xml:space="preserve"><value>The workspace will be prepared or rebuilt on next launch.</value></data>
-  <data name="Check_ManualSourceMissingFormat" xml:space="preserve"><value>Manual executable source not found: {0}{1}{2}.</value></data>
+  <data name="Check_ManualSourceMissingFormat" xml:space="preserve"><value>The manually selected launch executable is unavailable: {0}{1}{2}.</value></data>
   <data name="Check_FinalManualFormat" xml:space="preserve"><value>Final file: {0}{1}Source: {2}. Selected manually; mod priority will not replace this EXE.</value></data>
   <data name="Check_FinalAutomaticFormat" xml:space="preserve"><value>Final file: {0}{1}Source: {2}. Lower mods in the list have priority.</value></data>
   <data name="Check_FinalFallbackFormat" xml:space="preserve"><value>Selected path not found: {0}{1}The launcher can use: {2}{1}Selection reason: {3}. Source: {4}.</value></data>
@@ -864,7 +864,7 @@
   <data name="LaunchPlan_ManualSource" xml:space="preserve"><value>manual source</value></data>
   <data name="LaunchPlan_ManualSourceUnavailable" xml:space="preserve"><value>manual source folder is unavailable or the mod is disabled</value></data>
   <data name="LaunchPlan_SelectedManually" xml:space="preserve"><value>selected manually by the user</value></data>
-  <data name="LaunchPlan_ManualFileMissing" xml:space="preserve"><value>manual source found, but the file is missing</value></data>
+  <data name="LaunchPlan_ManualFileMissing" xml:space="preserve"><value>The file does not exist at this path. Select another EXE in the profile settings</value></data>
   <data name="Settings_JsonRequired" xml:space="preserve"><value>Select a settings file with a .json extension.</value></data>
   <data name="Settings_FileUnavailable" xml:space="preserve"><value>Settings file is unavailable.</value></data>
   <data name="Settings_FileInvalid" xml:space="preserve"><value>The selected file does not contain CORDON settings.</value></data>
