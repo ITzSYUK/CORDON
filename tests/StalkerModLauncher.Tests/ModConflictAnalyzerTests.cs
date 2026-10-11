@@ -146,6 +146,54 @@ public sealed class ModConflictAnalyzerTests : IDisposable
         Assert.False(result["patch"].ProvidesLaunchExecutable);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task AnalyzeAsyncDoesNotMarkModWhenExecutableIsPinnedOutsideMods(bool sourceExists)
+    {
+        const string relative = @"bin\xrEngine.exe";
+        var mod = CreateMod("engine-mod", relative);
+        var pinnedRoot = sourceExists ? CreateMod("game", relative) : Path.Combine(_root, "missing-source");
+
+        var result = await new ModConflictAnalyzer().AnalyzeAsync(
+            [new ModConflictInput("mod", "Engine mod", mod, true, [])], relative, pinnedRoot);
+
+        Assert.False(result["mod"].ProvidesLaunchExecutable);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsyncMarksPinnedExecutableEvenWhenExcludedFromNormalOverlay()
+    {
+        const string relative = @"bin\xrEngine.exe";
+        var lower = CreateMod("pinned-excluded", relative);
+        var higher = CreateMod("engine-patch", relative);
+
+        var result = await new ModConflictAnalyzer().AnalyzeAsync(
+        [
+            new ModConflictInput("lower", "Lower", lower, true, [relative]),
+            new ModConflictInput("higher", "Higher", higher, true, [])
+        ], relative, lower);
+
+        Assert.True(result["lower"].ProvidesLaunchExecutable);
+        Assert.False(result["higher"].ProvidesLaunchExecutable);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsyncDoesNotFallbackWhenPinnedExecutableIsMissing()
+    {
+        const string relative = @"bin\xrEngine.exe";
+        var lower = CreateMod("pinned-missing", "shared.ltx");
+        var higher = CreateMod("engine-fallback", relative);
+
+        var result = await new ModConflictAnalyzer().AnalyzeAsync(
+        [
+            new ModConflictInput("lower", "Lower", lower, true, []),
+            new ModConflictInput("higher", "Higher", higher, true, [])
+        ], relative, lower);
+
+        Assert.All(result.Values, state => Assert.False(state.ProvidesLaunchExecutable));
+    }
+
     [Fact]
     public async Task AnalyzeAsyncClassifiesConfigurationAndBinaryOverlays()
     {

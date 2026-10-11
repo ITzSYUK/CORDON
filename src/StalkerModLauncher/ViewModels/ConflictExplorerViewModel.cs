@@ -199,11 +199,15 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
         {
             IsBusy = true;
             Summary = Strings.Conflict_Analyzing;
+            _conflictAnalyzer.ClearCache();
             var workspace = string.IsNullOrWhiteSpace(_profile.WorkspacePath)
                 ? Path.Combine(AppPaths.Current.TempDirectory, "analysis", _profile.Id)
                 : _profile.WorkspacePath;
             var plan = FileLayerPlan.CreateLinkedWorkspace(_profile.GameInstallPath, _profile, workspace);
-            var finalTreeTask = FileLayerExplorerService.BuildFinalTreeAsync(plan, workspace, cancellationToken);
+            var launch = _profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem
+                ? ProfileLaunchPlanResolver.PreviewVirtualFileSystem(_profile, plan)
+                : ProfileLaunchPlanResolver.PreviewLinkedWorkspace(_profile, plan, workspace);
+            var finalTreeTask = FileLayerExplorerService.BuildFinalTreeAsync(plan, workspace, launch.Executable, cancellationToken);
             var conflictTask = AnalyzeSelectedModAsync(cancellationToken);
             await Task.WhenAll(finalTreeTask, conflictTask);
 

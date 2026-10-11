@@ -10,14 +10,24 @@ public static class FileLayerExplorerService
         string? workspacePath = null,
         CancellationToken cancellationToken = default)
     {
+        return BuildFinalTreeAsync(plan, workspacePath, executable: null, cancellationToken);
+    }
+
+    internal static Task<IReadOnlyList<FinalFileEntry>> BuildFinalTreeAsync(
+        FileLayerPlan plan,
+        string? workspacePath,
+        LaunchExecutableResolution? executable,
+        CancellationToken cancellationToken)
+    {
         return Task.Run<IReadOnlyList<FinalFileEntry>>(
-            () => BuildFinalTree(plan, workspacePath, cancellationToken),
+            () => BuildFinalTree(plan, workspacePath, executable, cancellationToken),
             cancellationToken);
     }
 
     private static FinalFileEntry[] BuildFinalTree(
         FileLayerPlan plan,
         string? workspacePath,
+        LaunchExecutableResolution? executable,
         CancellationToken cancellationToken)
     {
         var providers = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
@@ -47,6 +57,16 @@ public static class FileLayerExplorerService
         }
 
         AddProfileFiles(providers, workspacePath, cancellationToken);
+
+        if (executable is { IsAvailable: true, IsPinned: true })
+        {
+            if (providers.TryGetValue(executable.RelativePath, out var executableProviders))
+            {
+                executableProviders.Remove(executable.SourceName);
+            }
+
+            AddProvider(providers, executable.RelativePath, executable.SourceName);
+        }
 
         return providers
             .Select(pair => new FinalFileEntry(

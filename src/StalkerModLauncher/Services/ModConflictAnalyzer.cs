@@ -74,11 +74,12 @@ public sealed class ModConflictAnalyzer
         }
 
         var normalizedExecutable = NormalizeRelativePath(launchExecutableRelativePath);
-        var executableProviderId = FindPinnedExecutableProvider(mods, launchExecutableSourcePath, normalizedExecutable, fileCache)
-            ?? mods
+        var executableProviderId = string.IsNullOrWhiteSpace(launchExecutableSourcePath)
+            ? mods
                 .Where(mod => mod.IsEnabled)
                 .LastOrDefault(mod => fileCache.GetValueOrDefault(mod.Id)?.Contains(normalizedExecutable) == true)
-                ?.Id;
+                ?.Id
+            : FindPinnedExecutableProvider(mods, launchExecutableSourcePath, normalizedExecutable);
 
         var providersByPath = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
         for (var index = 0; index < mods.Count; index++)
@@ -179,21 +180,15 @@ public sealed class ModConflictAnalyzer
 
     private static string? FindPinnedExecutableProvider(
         IReadOnlyList<ModConflictInput> mods,
-        string? launchExecutableSourcePath,
-        string normalizedExecutable,
-        IReadOnlyDictionary<string, HashSet<string>> fileCache)
+        string launchExecutableSourcePath,
+        string normalizedExecutable)
     {
-        if (string.IsNullOrWhiteSpace(launchExecutableSourcePath))
-        {
-            return null;
-        }
-
         var pinnedRoot = Path.GetFullPath(launchExecutableSourcePath);
         return mods
             .Where(mod => mod.IsEnabled && Directory.Exists(mod.SourcePath))
             .FirstOrDefault(mod =>
                 FileSystemSafety.IsSameDirectory(mod.SourcePath, pinnedRoot) &&
-                fileCache.GetValueOrDefault(mod.Id)?.Contains(normalizedExecutable) == true)
+                File.Exists(Path.Combine(mod.SourcePath, normalizedExecutable)))
             ?.Id;
     }
 
