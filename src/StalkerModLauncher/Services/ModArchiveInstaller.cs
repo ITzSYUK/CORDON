@@ -1,6 +1,7 @@
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using StalkerModLauncher.Resources;
+using StalkerModLauncher.Services.Fomod;
 
 namespace StalkerModLauncher.Services;
 
@@ -9,7 +10,9 @@ public sealed record ModArchiveInstallResult(
     string ModPath,
     int FileCount,
     long ExtractedBytes,
-    bool DatabaseArchivesRelocated);
+    bool DatabaseArchivesRelocated,
+    bool FomodApplied = false,
+    string FomodModuleName = "");
 
 public sealed record ModArchiveInstallDestination(
     string ModName,
@@ -21,8 +24,15 @@ public enum ModArchiveInstallStage
 {
     Inspecting,
     Extracting,
-    Finalizing
+    Finalizing,
+    Copying
 }
+
+/// <summary>
+/// Interactive FOMOD choice request. The callback runs on a background thread
+/// and must marshal to the UI thread itself; returning null cancels the install.
+/// </summary>
+public sealed record FomodChoiceRequest(FomodModule Module, string PackageRoot);
 
 public sealed record ModArchiveInstallProgress(
     ModArchiveInstallStage Stage,
@@ -39,6 +49,7 @@ public static class ModArchiveInstaller
     private static readonly HashSet<string> SupportedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".zip",
+        ".fomod",
         ".7z",
         ".rar"
     };
@@ -61,7 +72,7 @@ public static class ModArchiveInstaller
         CancellationToken cancellationToken = default)
     {
         return Task.Run(
-            () => InstallCore(archivePath, installRoot, progress: null, cancellationToken),
+            () => InstallCore(archivePath, installRoot, progress: null, fomodChooser: null, cancellationToken),
             cancellationToken);
     }
 
@@ -70,12 +81,21 @@ public static class ModArchiveInstaller
         string installRoot,
         string packageDirectoryName,
         IProgress<ModArchiveInstallProgress> progress,
+        CancellationToken cancellationToken = default) =>
+        InstallAsync(archivePath, installRoot, packageDirectoryName, progress, null, cancellationToken);
+
+    public static Task<ModArchiveInstallResult> InstallAsync(
+        string archivePath,
+        string installRoot,
+        string packageDirectoryName,
+        IProgress<ModArchiveInstallProgress> progress,
+        Func<FomodChoiceRequest, FomodSelector.Selection?>? fomodChooser,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(packageDirectoryName);
         ArgumentNullException.ThrowIfNull(progress);
         return Task.Run(
-            () => InstallCore(archivePath, installRoot, packageDirectoryName, progress, cancellationToken),
+            () => InstallCore(archivePath, installRoot, packageDirectoryName, progress, fomodChooser, cancellationToken),
             cancellationToken);
     }
 
@@ -97,6 +117,28 @@ public static class ModArchiveInstaller
 
         var fullInstallRoot = Path.GetFullPath(installRoot);
         var modName = FileSystemSafety.SanitizeName(Path.GetFileNameWithoutExtension(fullArchivePath));
+        return PlanDestination(fullInstallRoot, modName);
+    }
+
+    public static ModArchiveInstallDestination PlanFomodFolderInstall(string folderPath, string installRoot)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(folderPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
+        var source = Path.GetFullPath(folderPath);
+        if (!Directory.Exists(source))
+        {
+            throw new DirectoryNotFoundException(LocalizedText.Format(Strings.Fomod_FolderNotFoundFormat, source));
+        }
+        var target = Path.GetFullPath(installRoot);
+        if (FileSystemSafety.IsDirectoryInside(target, source))
+        {
+            throw new InvalidOperationException(Strings.Fomod_DestinationInsideSource);
+        }
+        return PlanDestination(target, FileSystemSafety.SanitizeName(Path.GetFileName(Path.TrimEndingDirectorySeparator(source))));
+    }
+
+    private static ModArchiveInstallDestination PlanDestination(string fullInstallRoot, string modName)
+    {
         var preferredPath = Path.Combine(fullInstallRoot, modName);
         var requiresConfirmation = Directory.Exists(preferredPath) || File.Exists(preferredPath);
         var packageDirectoryName = requiresConfirmation
@@ -110,15 +152,77 @@ public static class ModArchiveInstaller
             requiresConfirmation);
     }
 
+    public static Task<ModArchiveInstallResult> InstallFomodFolderAsync(
+        string folderPath,
+        string installRoot,
+        IProgress<ModArchiveInstallProgress> progress,
+        Func<FomodChoiceRequest, FomodSelector.Selection?>? fomodChooser = null,
+        string? packageDirectoryName = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(progress);
+        return Task.Run(() => InstallFomodFolderCore(folderPath, installRoot, progress, fomodChooser, packageDirectoryName, cancellationToken), cancellationToken);
+    }
+
+    private static ModArchiveInstallResult InstallFomodFolderCore(
+        string folderPath,
+        string installRoot,
+        IProgress<ModArchiveInstallProgress> progress,
+        Func<FomodChoiceRequest, FomodSelector.Selection?>? fomodChooser,
+        string? packageDirectoryName,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var destination = PlanFomodFolderInstall(folderPath, installRoot);
+        var fullSource = Path.GetFullPath(folderPath);
+        var fullInstallRoot = Path.GetFullPath(installRoot);
+        var location = FomodDetector.TryLocate(fullSource)
+            ?? throw new InvalidDataException(Strings.Fomod_ConfigNotFound);
+        if (location.ConfigPath is null) throw new InvalidDataException(Strings.Archive_FomodCSharpUnsupported);
+        FomodMaterializer.EnsureNoLinks(fullSource, location.ConfigPath);
+        var module = FomodParser.Parse(location.ConfigPath);
+        var selection = fomodChooser is null ? FomodSelector.CreateDefaults(module)
+            : fomodChooser(new FomodChoiceRequest(module, location.PackageRoot));
+        if (selection is null) throw new OperationCanceledException();
+        cancellationToken.ThrowIfCancellationRequested();
+        var files = FomodSelector.ResolveFiles(module, selection);
+        var stagingPath = Path.Combine(fullInstallRoot, $".installing-{Guid.NewGuid():N}");
+        try
+        {
+            progress.Report(new ModArchiveInstallProgress(ModArchiveInstallStage.Copying, 0, 0, null));
+            var count = FomodMaterializer.CopyToStaging(location.PackageRoot, stagingPath, fullInstallRoot, files, cancellationToken);
+            var bytes = Directory.EnumerateFiles(stagingPath, "*", SearchOption.AllDirectories).Sum(file => new FileInfo(file).Length);
+            progress.Report(new ModArchiveInstallProgress(ModArchiveInstallStage.Finalizing, count, bytes, bytes));
+            var databaseArchivesRelocated = RelocateLooseDatabaseArchives(stagingPath);
+            cancellationToken.ThrowIfCancellationRequested();
+            var packagePath = GetRequestedPackagePath(fullInstallRoot, packageDirectoryName ?? destination.PackageDirectoryName);
+            Directory.Move(stagingPath, packagePath);
+            return new ModArchiveInstallResult(destination.ModName, packagePath, count, bytes, databaseArchivesRelocated, true, module.Name);
+        }
+        catch
+        {
+            if (Directory.Exists(stagingPath)) FileSystemSafety.DeleteDirectoryContents(stagingPath, fullInstallRoot);
+            throw;
+        }
+    }
+
     public static Task<ModArchiveInstallResult> InstallAsync(
         string archivePath,
         string installRoot,
         IProgress<ModArchiveInstallProgress> progress,
+        CancellationToken cancellationToken = default) =>
+        InstallAsync(archivePath, installRoot, progress, null, cancellationToken);
+
+    public static Task<ModArchiveInstallResult> InstallAsync(
+        string archivePath,
+        string installRoot,
+        IProgress<ModArchiveInstallProgress> progress,
+        Func<FomodChoiceRequest, FomodSelector.Selection?>? fomodChooser,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(progress);
         return Task.Run(
-            () => InstallCore(archivePath, installRoot, progress, cancellationToken),
+            () => InstallCore(archivePath, installRoot, progress, fomodChooser, cancellationToken),
             cancellationToken);
     }
 
@@ -126,9 +230,10 @@ public static class ModArchiveInstaller
         string archivePath,
         string installRoot,
         IProgress<ModArchiveInstallProgress>? progress,
+        Func<FomodChoiceRequest, FomodSelector.Selection?>? fomodChooser,
         CancellationToken cancellationToken)
     {
-        return InstallCore(archivePath, installRoot, packageDirectoryName: null, progress, cancellationToken);
+        return InstallCore(archivePath, installRoot, packageDirectoryName: null, progress, fomodChooser, cancellationToken);
     }
 
     private static ModArchiveInstallResult InstallCore(
@@ -136,6 +241,7 @@ public static class ModArchiveInstaller
         string installRoot,
         string? packageDirectoryName,
         IProgress<ModArchiveInstallProgress>? progress,
+        Func<FomodChoiceRequest, FomodSelector.Selection?>? fomodChooser,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(archivePath);
@@ -173,7 +279,12 @@ public static class ModArchiveInstaller
                 extraction.FileCount,
                 extraction.ExtractedBytes,
                 extraction.ExtractedBytes));
-            var contentRoot = FindContentRoot(stagingPath);
+            // Install destination (profile ModInstallPath or the default Mods folder)
+            // is resolved by the caller; FOMOD only changes which files from the
+            // archive are materialized, never where the mod is placed.
+            var (fileCount, fomodApplied, fomodModuleName) =
+                ApplyFomodDefaults(stagingPath, fullInstallRoot, extraction.FileCount, fomodChooser, cancellationToken);
+            var contentRoot = fomodApplied ? stagingPath : FindContentRoot(stagingPath);
             var databaseArchivesRelocated = RelocateLooseDatabaseArchives(contentRoot);
             var contentRootRelativePath = Path.GetRelativePath(stagingPath, contentRoot);
             var modName = FileSystemSafety.SanitizeName(Path.GetFileNameWithoutExtension(fullArchivePath));
@@ -189,9 +300,11 @@ public static class ModArchiveInstaller
             return new ModArchiveInstallResult(
                 modName,
                 installedContentRoot,
-                extraction.FileCount,
+                fileCount,
                 extraction.ExtractedBytes,
-                databaseArchivesRelocated);
+                databaseArchivesRelocated,
+                fomodApplied,
+                fomodModuleName);
         }
         catch
         {
@@ -202,6 +315,53 @@ public static class ModArchiveInstaller
 
             throw;
         }
+    }
+
+    /// <summary>
+    /// Detects a FOMOD script in the extracted staging content and materializes
+    /// the chosen options (interactive wizard when a chooser is provided,
+    /// Required/Recommended defaults otherwise). Plain archives are left
+    /// untouched. C# scripts are rejected: arbitrary code execution is out of
+    /// scope, install such mods manually or via Mod Organizer 2.
+    /// A null chooser result cancels the install.
+    /// </summary>
+    private static (int FileCount, bool FomodApplied, string FomodModuleName) ApplyFomodDefaults(
+        string stagingPath,
+        string installRoot,
+        int extractedFileCount,
+        Func<FomodChoiceRequest, FomodSelector.Selection?>? fomodChooser,
+        CancellationToken cancellationToken)
+    {
+        var location = FomodDetector.TryLocate(stagingPath);
+        if (location is null)
+        {
+            return (extractedFileCount, false, string.Empty);
+        }
+
+        if (location.ConfigPath is null)
+        {
+            throw new InvalidDataException(Strings.Archive_FomodCSharpUnsupported);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var module = FomodParser.Parse(location.ConfigPath);
+        var selection = fomodChooser is null
+            ? FomodSelector.CreateDefaults(module)
+            : fomodChooser(new FomodChoiceRequest(module, location.PackageRoot));
+        if (selection is null)
+        {
+            throw new OperationCanceledException();
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var files = FomodSelector.ResolveFiles(module, selection);
+        var materialized = FomodMaterializer.ApplyToStaging(
+            location.PackageRoot,
+            stagingPath,
+            installRoot,
+            files,
+            cancellationToken);
+        return (materialized, true, module.Name);
     }
 
     private static ExtractionResult ExtractArchive(

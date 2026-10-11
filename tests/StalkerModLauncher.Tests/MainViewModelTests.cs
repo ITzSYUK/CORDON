@@ -788,7 +788,7 @@ public sealed class MainViewModelTests
         }
     }
 
-    private static MainViewModel CreateViewModel(
+    internal static MainViewModel CreateViewModel(
         string root,
         DialogService? dialogService = null,
         IStartupRegistrationService? startupRegistrationService = null)
@@ -932,7 +932,7 @@ public sealed class MainViewModelTests
         }
     }
 
-    private static async Task WaitForSettingsLoadedAsync(MainViewModel viewModel)
+    internal static async Task WaitForSettingsLoadedAsync(MainViewModel viewModel)
     {
         for (var attempt = 0; attempt < 100; attempt++)
         {

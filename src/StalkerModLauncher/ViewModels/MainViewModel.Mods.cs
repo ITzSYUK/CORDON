@@ -3,35 +3,40 @@ using System.Media;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
+using StalkerModLauncher.Services.Fomod;
 
 namespace StalkerModLauncher.ViewModels;
 
 public sealed partial class MainViewModel
 {
-    public void AddDroppedMods(IEnumerable<string> paths)
+    public void AddDroppedMods(IEnumerable<string> paths) => _ = AddDroppedModsAsync(paths);
+
+    internal async Task AddDroppedModsAsync(IEnumerable<string> paths)
     {
-        if (!CanEditSelectedProfile || SelectedProfile is null)
+        if (IsBuilding || !CanEditSelectedProfile || SelectedProfile is not { } profile) return;
+        try
         {
-            return;
+            foreach (var path in paths.Where(Directory.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (!ReferenceEquals(SelectedProfile, profile) || profile.IsStandalone && profile.Mods.Count >= 1) break;
+                if (profile.Mods.Any(mod => AreSamePaths(mod.SourcePath, path))) continue;
+                if (FomodDetector.TryLocate(path) is not null)
+                {
+                    if (!await InstallModPackageAsync(profile, path, fromFolder: true)) break;
+                }
+                else
+                {
+                    SelectedMod = ModListEditor.Add(profile, path);
+                }
+            }
+            RefreshValidation();
+            _ = SaveAsync();
         }
-
-        foreach (var path in paths.Where(Directory.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
+        catch (Exception ex)
         {
-            if (SelectedProfile.IsStandalone && SelectedProfile.Mods.Count >= 1)
-            {
-                break;
-            }
-
-            if (SelectedProfile.Mods.Any(mod => AreSamePaths(mod.SourcePath, path)))
-            {
-                continue;
-            }
-
-            SelectedMod = ModListEditor.Add(SelectedProfile, path);
+            Log(LocalizedText.Format(Strings.Log_ArchiveFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Mod_InstallFailed, ex.Message);
         }
-
-        RefreshValidation();
-        _ = SaveAsync();
     }
 
     private static bool AreSamePaths(string left, string right)
@@ -490,23 +495,35 @@ public sealed partial class MainViewModel
         }
     }
 
-    private void AddMod()
+    private async Task AddModAsync()
     {
-        if (SelectedProfile is null)
-        {
-            return;
-        }
-
+        if (!CanAddMod()) return;
         var selected = DialogService.PickFolder(Strings.Creation_PickMod);
-        if (selected is null)
-        {
-            return;
-        }
+        if (selected is not null) await AddModFolderAsync(selected);
+    }
 
-        SelectedMod = ModListEditor.Add(SelectedProfile, selected);
-        RefreshValidation();
-        Log(LocalizedText.Format(Strings.Log_ModAddedFormat, selected));
-        _ = SaveAsync();
+    internal async Task AddModFolderAsync(string selected)
+    {
+        if (SelectedProfile is not { } profile || !CanAddMod()) return;
+        try
+        {
+            if (!Directory.Exists(selected))
+                throw new DirectoryNotFoundException(LocalizedText.Format(Strings.Error_ModFolderNotFoundFormat, selected));
+            if (FomodDetector.TryLocate(selected) is not null)
+            {
+                await InstallModPackageAsync(profile, selected, fromFolder: true);
+                return;
+            }
+            SelectedMod = ModListEditor.Add(profile, selected);
+            RefreshValidation();
+            Log(LocalizedText.Format(Strings.Log_ModAddedFormat, selected));
+            _ = SaveAsync();
+        }
+        catch (Exception ex)
+        {
+            Log(LocalizedText.Format(Strings.Log_ArchiveFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            _dialogService.ShowError(Strings.Mod_InstallFailed, ex.Message);
+        }
     }
 
     private async Task InstallModArchiveAsync()
@@ -524,6 +541,12 @@ public sealed partial class MainViewModel
             return;
         }
 
+        await InstallModPackageAsync(profile, archivePath, fromFolder: false);
+    }
+
+    private async Task<bool> InstallModPackageAsync(ModProfile profile, string sourcePath, bool fromFolder)
+    {
+        ModArchiveInstallDestination? destination = null;
         try
         {
             IsBuilding = true;
@@ -531,8 +554,8 @@ public sealed partial class MainViewModel
             IsModArchiveInstallCompleted = false;
             IsModArchiveInstallProgressIndeterminate = true;
             ModArchiveInstallProgress = 0;
-            var archiveFileName = Path.GetFileName(archivePath);
-            ModArchiveInstallProgressText = LocalizedText.Format(Strings.Mod_PreparingFormat, archiveFileName);
+            var sourceName = Path.GetFileName(Path.TrimEndingDirectorySeparator(sourcePath));
+            ModArchiveInstallProgressText = LocalizedText.Format(Strings.Mod_PreparingFormat, sourceName);
             BuildProgressText = ModArchiveInstallProgressText;
             RaiseCommandStates();
 
@@ -541,11 +564,13 @@ public sealed partial class MainViewModel
                 : profile.ModInstallPath;
             profile.ModInstallPath = ValidateModInstallPath(profile, installRoot);
 
-            var destination = ModArchiveInstaller.PlanInstall(archivePath, profile.ModInstallPath);
+            destination = fromFolder
+                ? ModArchiveInstaller.PlanFomodFolderInstall(sourcePath, profile.ModInstallPath)
+                : ModArchiveInstaller.PlanInstall(sourcePath, profile.ModInstallPath);
             if (destination.RequiresConfirmation && !await ConfirmModArchiveInstallDestinationAsync(destination))
             {
                 Log(LocalizedText.Format(Strings.Log_ArchiveCancelledFormat, destination.PackagePath));
-                return;
+                return false;
             }
 
             IsInstallingModArchive = true;
@@ -553,12 +578,15 @@ public sealed partial class MainViewModel
 
             var progressTimer = Stopwatch.StartNew();
             var progress = new Progress<ModArchiveInstallProgress>(value =>
-                UpdateModArchiveInstallProgress(value, archiveFileName, progressTimer.Elapsed));
-            var result = await ModArchiveInstaller.InstallAsync(
-                archivePath,
-                profile.ModInstallPath,
-                destination.PackageDirectoryName,
-                progress);
+                UpdateModArchiveInstallProgress(value, sourceName, progressTimer.Elapsed));
+            var result = fromFolder
+                ? await ModArchiveInstaller.InstallFomodFolderAsync(
+                    sourcePath, profile.ModInstallPath, progress,
+                    fomodChooser: request => ChooseFomodOptions(request, profile),
+                    packageDirectoryName: destination.PackageDirectoryName)
+                : await ModArchiveInstaller.InstallAsync(
+                    sourcePath, profile.ModInstallPath, destination.PackageDirectoryName, progress,
+                    fomodChooser: request => ChooseFomodOptions(request, profile));
             var installedMod = ModListEditor.Add(profile, result.ModPath, result.ModName);
 
             if (ReferenceEquals(SelectedProfile, profile))
@@ -573,7 +601,11 @@ public sealed partial class MainViewModel
             }
 
             await SaveAsync();
-            Log(LocalizedText.Format(Strings.Log_ArchiveInstalledFormat, archivePath, result.ModPath));
+            Log(LocalizedText.Format(Strings.Log_ArchiveInstalledFormat, sourcePath, result.ModPath));
+            if (result.FomodApplied)
+            {
+                Log(LocalizedText.Format(Strings.Log_FomodAppliedFormat, result.FomodModuleName, result.FileCount));
+            }
 
             var databaseNote = result.DatabaseArchivesRelocated
                 ? Environment.NewLine + Strings.Mod_DatabaseNote
@@ -585,11 +617,18 @@ public sealed partial class MainViewModel
             InstalledModArchivePath = result.ModPath;
             InstalledModArchiveDetails = details;
             IsModArchiveInstallCompleted = true;
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            Log(LocalizedText.Format(Strings.Log_ArchiveCancelledFormat, destination?.PackagePath ?? sourcePath));
+            return false;
         }
         catch (Exception ex)
         {
             Log(LocalizedText.Format(Strings.Log_ArchiveFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
             _dialogService.ShowError(Strings.Mod_InstallFailed, ex.Message);
+            return false;
         }
         finally
         {
@@ -647,9 +686,59 @@ public sealed partial class MainViewModel
                 ModArchiveInstallProgress = 100;
                 ModArchiveInstallProgressText = LocalizedText.Format(Strings.Mod_FinalizingFormat, archiveFileName);
                 break;
+
+            case ModArchiveInstallStage.Copying:
+                IsModArchiveInstallProgressIndeterminate = true;
+                ModArchiveInstallProgressText = LocalizedText.Format(Strings.Fomod_CopyingFormat, archiveFileName);
+                break;
         }
 
         BuildProgressText = ModArchiveInstallProgressText;
+    }
+
+    public event EventHandler<FomodInstallerViewModel>? FomodInstallRequested;
+
+    private FomodSelector.Selection? ChooseFomodOptions(FomodChoiceRequest request, ModProfile profile)
+    {
+        var app = App.Current;
+        if (app is null)
+        {
+            throw new InvalidOperationException(Strings.Fomod_Title);
+        }
+
+        var wizard = app.Dispatcher.Invoke(() =>
+        {
+            var layerPlan = new Lazy<FileLayerPlan>(() => FileLayerPlan.CreateLinkedWorkspace(
+                profile.GameInstallPath, profile, _profileManager.GetProfileFolderPath(profile)!));
+            string FileState(string path)
+            {
+                var relative = FomodMaterializer.NormalizeRelative(path);
+                FileSystemSafety.EnsureRelativePath(relative, Strings.Safety_LayerFile);
+                if (layerPlan.Value.FindFinalFile(relative) is not null) return "Active";
+                return profile.Mods.Where(mod => !mod.IsEnabled).Any(mod =>
+                    File.Exists(FileSystemSafety.ResolvePathInside(mod.SourcePath, relative, Strings.Safety_LayerFile))) ? "Inactive" : "Missing";
+            }
+
+            var viewModel = new FomodInstallerViewModel(request.Module, request.PackageRoot, FileState);
+            if (!viewModel.HasChoices)
+            {
+                viewModel.InstallCommand.Execute(null);
+            }
+            else if (IsPdaInterfaceEnabled && FomodInstallRequested is not null)
+            {
+                FomodInstallRequested.Invoke(this, viewModel);
+            }
+            else
+            {
+                var window = new Views.FomodInstallerWindow(viewModel)
+                {
+                    Owner = app.Windows.OfType<System.Windows.Window>().FirstOrDefault(window => window.IsActive) ?? app.MainWindow
+                };
+                window.ShowDialog();
+            }
+            return viewModel;
+        });
+        return wizard.Completion.GetAwaiter().GetResult();
     }
 
     private async Task<bool> ConfirmModArchiveInstallDestinationAsync(ModArchiveInstallDestination destination)
@@ -917,7 +1006,7 @@ public sealed partial class MainViewModel
 
     private bool CanAddMod()
     {
-        if (!CanEditSelectedProfile || SelectedProfile is null)
+        if (IsBuilding || !CanEditSelectedProfile || SelectedProfile is null)
         {
             return false;
         }

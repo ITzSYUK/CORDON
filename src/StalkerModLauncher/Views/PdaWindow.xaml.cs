@@ -22,6 +22,7 @@ public partial class PdaWindow : Window
         DataContext = viewModel;
         viewModel.ProfileCreationRequested += ViewModel_ProfileCreationRequested;
         viewModel.Mo2ImportRequested += ViewModel_Mo2ImportRequested;
+        viewModel.FomodInstallRequested += ViewModel_FomodInstallRequested;
         viewModel.ModScanSelectionRequested += ViewModel_ModScanSelectionRequested;
         viewModel.ConflictExplorerRequested += ViewModel_ConflictExplorerRequested;
         viewModel.DialogService.ErrorRequested += DialogService_ErrorRequested;
@@ -29,6 +30,7 @@ public partial class PdaWindow : Window
         {
             viewModel.ProfileCreationRequested -= ViewModel_ProfileCreationRequested;
             viewModel.Mo2ImportRequested -= ViewModel_Mo2ImportRequested;
+            viewModel.FomodInstallRequested -= ViewModel_FomodInstallRequested;
             viewModel.ModScanSelectionRequested -= ViewModel_ModScanSelectionRequested;
             viewModel.ConflictExplorerRequested -= ViewModel_ConflictExplorerRequested;
             viewModel.DialogService.ErrorRequested -= DialogService_ErrorRequested;
@@ -36,6 +38,19 @@ public partial class PdaWindow : Window
     }
 
     public bool UsesNewTheme { get; }
+
+    private void ViewModel_FomodInstallRequested(object? sender, FomodInstallerViewModel wizard)
+    {
+        var page = new FomodInstallerContentView { DataContext = wizard, UsePdaTheme = true };
+        EventHandler? completed = null;
+        completed = (_, _) =>
+        {
+            wizard.Completed -= completed;
+            PdaView.ShowProfilePage();
+        };
+        wizard.Completed += completed;
+        PdaView.ShowPage(page, Strings.Fomod_Title, wizard.ModuleName, lifetime: wizard);
+    }
 
     private void DialogService_ErrorRequested(string title, string message)
     {

@@ -80,7 +80,7 @@
   <data name="Common_Remove" xml:space="preserve"><value>Убрать</value></data>
   <data name="Common_MoveUp" xml:space="preserve"><value>Выше</value></data>
   <data name="Common_MoveDown" xml:space="preserve"><value>Ниже</value></data>
-  <data name="Mod_AddFolderTooltip" xml:space="preserve"><value>Добавить папку мода</value></data>
+  <data name="Mod_AddFolderTooltip" xml:space="preserve"><value>Добавить папку мода. При наличии FOMOD откроется мастер установки.</value></data>
   <data name="Mod_InstallArchiveTooltip" xml:space="preserve"><value>Установить мод из ZIP, 7Z или RAR</value></data>
   <data name="Mod_OverwriteWarning" xml:space="preserve"><value>Перезаписывает файлы вышестоящих модификаций: могут возникать конфликты.</value></data>
   <data name="Mod_ScanFolderTooltip" xml:space="preserve"><value>Найти моды в выбранной папке</value></data>
@@ -406,11 +406,11 @@
   <data name="Mod_NotFound" xml:space="preserve"><value>В выбранной папке не обнаружено модов.</value></data>
   <data name="Mod_ScanFailed" xml:space="preserve"><value>Ошибка сканирования</value></data>
   <data name="Mod_PickArchive" xml:space="preserve"><value>Выберите архив мода</value></data>
-  <data name="Mod_ArchiveFilter" xml:space="preserve"><value>Архивы модов (*.zip;*.7z;*.rar)|*.zip;*.7z;*.rar|Все файлы (*.*)|*.*</value></data>
+  <data name="Mod_ArchiveFilter" xml:space="preserve"><value>Архивы модов (*.zip;*.7z;*.rar;*.fomod)|*.zip;*.7z;*.rar;*.fomod|Все файлы (*.*)|*.*</value></data>
   <data name="Mod_PreparingFormat" xml:space="preserve"><value>Подготовка {0}...</value></data>
   <data name="Mod_DatabaseNote" xml:space="preserve"><value>Архивы .db* помещены в db\mods.</value></data>
   <data name="Mod_FileCountFormat" xml:space="preserve"><value>Файлов: {0:N0}{1}</value></data>
-  <data name="Mod_InstallFailed" xml:space="preserve"><value>Не удалось установить архив мода</value></data>
+  <data name="Mod_InstallFailed" xml:space="preserve"><value>Не удалось установить мод</value></data>
   <data name="Mod_AnalyzingFormat" xml:space="preserve"><value>Анализ {0}...</value></data>
   <data name="Mod_ExtractingPercentFormat" xml:space="preserve"><value>Распаковка {0}: {1:0}% · {2} / {3} · {4}</value></data>
   <data name="Mod_ExtractingSizeFormat" xml:space="preserve"><value>Распаковка {0}: {1}</value></data>
@@ -934,9 +934,9 @@
   <data name="Log_ModsAddedFromScanFormat" xml:space="preserve"><value>Добавлено модов из результатов поиска: {0}.</value></data>
   <data name="Log_ScanFailedFormat" xml:space="preserve"><value>Не удалось выполнить поиск модов: {0}</value></data>
   <data name="Log_ModAddedFormat" xml:space="preserve"><value>Мод добавлен: {0}</value></data>
-  <data name="Log_ArchiveCancelledFormat" xml:space="preserve"><value>Установка архива мода отменена: папка уже существует: {0}</value></data>
-  <data name="Log_ArchiveInstalledFormat" xml:space="preserve"><value>Архив мода установлен: {0} → {1}</value></data>
-  <data name="Log_ArchiveFailedFormat" xml:space="preserve"><value>Не удалось установить архив мода: {0}</value></data>
+  <data name="Log_ArchiveCancelledFormat" xml:space="preserve"><value>Установка мода отменена: {0}</value></data>
+  <data name="Log_ArchiveInstalledFormat" xml:space="preserve"><value>Мод установлен: {0} → {1}</value></data>
+  <data name="Log_ArchiveFailedFormat" xml:space="preserve"><value>Не удалось установить мод: {0}</value></data>
   <data name="Log_ExecutableSelectedSourceFormat" xml:space="preserve"><value>Выбран файл запуска: {0}, источник: {1}</value></data>
   <data name="Log_ExecutableSelectedFormat" xml:space="preserve"><value>Выбран файл запуска: {0}</value></data>
   <data name="Log_StandaloneExeDetectedFormat" xml:space="preserve"><value>Автоматически найден файл запуска автономной сборки: {0}</value></data>
@@ -1013,7 +1013,7 @@
   <data name="Update_InvalidValueFormat" xml:space="preserve"><value>Некорректное значение «{0}»: {1}</value></data>
   <data name="Archive_NotFound" xml:space="preserve"><value>Архив не найден.</value></data>
   <data name="Archive_SupportedFormats" xml:space="preserve"><value>Поддерживаются архивы модов ZIP, 7Z и RAR.</value></data>
-  <data name="Archive_Empty" xml:space="preserve"><value>Архив не содержит файлов.</value></data>
+  <data name="Archive_Empty" xml:space="preserve"><value>Не найдены файлы для установки.</value></data>
   <data name="Archive_PasswordProtected" xml:space="preserve"><value>Архивы с паролем не поддерживаются.</value></data>
   <data name="Archive_TooManyFilesFormat" xml:space="preserve"><value>Архив содержит больше {0:N0} файлов.</value></data>
   <data name="Archive_InvalidEntryPathFormat" xml:space="preserve"><value>Некорректный путь элемента архива: {0}</value></data>
@@ -1021,7 +1021,7 @@
   <data name="Archive_UnsafeEntryPathFormat" xml:space="preserve"><value>Небезопасный путь элемента архива: {0}</value></data>
   <data name="Archive_EntryOutsideDestinationFormat" xml:space="preserve"><value>Элемент архива выходит за пределы папки назначения: {0}</value></data>
   <data name="Archive_InvalidInstallFolder" xml:space="preserve"><value>Некорректное имя папки установки архива.</value></data>
-  <data name="Archive_InstallFolderUnavailableFormat" xml:space="preserve"><value>Папка установки архива недоступна: {0}</value></data>
+  <data name="Archive_InstallFolderUnavailableFormat" xml:space="preserve"><value>Папка установки мода недоступна: {0}</value></data>
   <data name="Archive_AllocateFolderFailedFormat" xml:space="preserve"><value>Не удалось создать папку установки для «{0}».</value></data>
   <data name="Archive_NotEnoughSpace" xml:space="preserve"><value>Недостаточно свободного места для распаковки архива.</value></data>
   <data name="Archive_NotEnoughSafeSpace" xml:space="preserve"><value>Недостаточно свободного места для безопасной распаковки архива.</value></data>
@@ -1062,6 +1062,16 @@
   <data name="Scan_DetectedArchiveFormat" xml:space="preserve"><value>архив: {0}</value></data>
   <data name="Archive_XrayRootMissing" xml:space="preserve"><value>В архиве не найден распознаваемый корень мода X-Ray (gamedata, bin, db, patches или gamedata.db*).</value></data>
   <data name="Archive_MultipleRoots" xml:space="preserve"><value>В архиве найдено несколько возможных корней мода. Перепакуйте его или добавьте распакованную папку вручную.</value></data>
+  <data name="Archive_FomodInvalidFormat" xml:space="preserve"><value>Недопустимый сценарий FOMOD: {0}</value></data>
+  <data name="Archive_FomodInvalidRoot" xml:space="preserve"><value>ожидался корневой элемент 'config'</value></data>
+  <data name="Archive_FomodNameMissing" xml:space="preserve"><value>отсутствует обязательный 'moduleName'</value></data>
+  <data name="Archive_FomodMissingSourceFormat" xml:space="preserve"><value>Сценарий FOMOD ссылается на отсутствующий файл или папку: {0}</value></data>
+  <data name="Archive_FomodCSharpUnsupported" xml:space="preserve"><value>Этот мод использует C#-сценарий FOMOD, который не поддерживается. Установите его вручную или через Mod Organizer 2.</value></data>
+  <data name="Log_FomodAppliedFormat" xml:space="preserve"><value>Установщик FOMOD '{0}' применён: установлено файлов: {1}.</value></data>
+  <data name="Fomod_Title" xml:space="preserve"><value>Установщик FOMOD</value></data>
+  <data name="Fomod_StepFormat" xml:space="preserve"><value>Шаг {0} из {1}</value></data>
+  <data name="Fomod_Install" xml:space="preserve"><value>Установить</value></data>
+  <data name="Fomod_SelectAtLeastOneFormat" xml:space="preserve"><value>Выберите хотя бы один вариант в «{0}».</value></data>
   <data name="Fsgame_AppDataMissingFormat" xml:space="preserve"><value>В fsgame.ltx отсутствует $app_data_root$: {0}. Изоляция сохранений и журналов профиля не гарантируется, поэтому запуск заблокирован.</value></data>
   <data name="Health_StatusHealthy" xml:space="preserve"><value>Готово</value></data>
   <data name="Health_StatusWarning" xml:space="preserve"><value>Предупреждение</value></data>
@@ -1102,4 +1112,22 @@
   <data name="Layer_UsvfsLogCollector" xml:space="preserve"><value>сборщик журнала USVFS</value></data>
   <data name="Update_CurrentVersionValue" xml:space="preserve"><value>текущая версия приложения</value></data>
   <data name="Update_LatestTagValue" xml:space="preserve"><value>тег последнего релиза GitHub</value></data>
+  <data name="Fomod_DependenciesNotMet" xml:space="preserve"><value>Установщику нужны файлы или версии игры/менеджера, недоступные в этом профиле X-Ray.</value></data>
+  <data name="Fomod_InvalidSelectionFormat" xml:space="preserve"><value>В группе «{0}» должны быть выбраны обязательные варианты.</value></data>
+  <data name="Fomod_SelectAtMostOneFormat" xml:space="preserve"><value>Выберите не больше одного варианта в «{0}».</value></data>
+  <data name="Fomod_Required" xml:space="preserve"><value>Обязательный</value></data>
+  <data name="Fomod_Recommended" xml:space="preserve"><value>Рекомендуемый</value></data>
+  <data name="Fomod_NotUsable" xml:space="preserve"><value>Недоступный</value></data>
+  <data name="Fomod_CouldBeUsable" xml:space="preserve"><value>Проверьте совместимость перед выбором</value></data>
+  <data name="Fomod_Optional" xml:space="preserve"><value>Необязательный</value></data>
+  <data name="Fomod_ExactlyOne" xml:space="preserve"><value>Выберите один вариант</value></data>
+  <data name="Fomod_AtMostOne" xml:space="preserve"><value>Выберите один вариант или не выбирайте ничего</value></data>
+  <data name="Fomod_AtLeastOne" xml:space="preserve"><value>Выберите хотя бы один вариант</value></data>
+  <data name="Fomod_All" xml:space="preserve"><value>Все доступные варианты обязательны</value></data>
+  <data name="Fomod_Any" xml:space="preserve"><value>Выберите любые варианты</value></data>
+  <data name="Fomod_Intro" xml:space="preserve"><value>Настройте мод перед установкой</value></data>
+  <data name="Fomod_DestinationInsideSource" xml:space="preserve"><value>Папка установки не должна пересекаться с исходной папкой FOMOD.</value></data>
+  <data name="Fomod_FolderNotFoundFormat" xml:space="preserve"><value>Исходная папка FOMOD не найдена: {0}</value></data>
+  <data name="Fomod_ConfigNotFound" xml:space="preserve"><value>В выбранной папке нет установщика FOMOD.</value></data>
+  <data name="Fomod_CopyingFormat" xml:space="preserve"><value>Копирование выбранных файлов из {0}...</value></data>
 </root>
