@@ -25,13 +25,6 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
         IProgress<string> progress,
         CancellationToken cancellationToken = default)
     {
-        if (!UsvfsFeatureGate.IsEnabled(_runtimeDirectory))
-        {
-            throw new InvalidOperationException(LocalizedText.Format(
-                Strings.Error_UsvfsBackendUnavailableFormat,
-                UsvfsFeatureGate.EnableEnvironmentVariable));
-        }
-
         if (context.Profile.IsStandalone)
         {
             throw new InvalidOperationException(Strings.Error_UsvfsLayeredOnly);
@@ -43,20 +36,56 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
         }
 
         var profile = context.Profile;
-        var profileWorkspace = Path.GetFullPath(Path.Combine(context.OverlayManifest.WriteOverlayRoot, "..", ".."));
+        // Capture only launch inputs; the worker must not read WPF's live profile or mod collection.
+        var snapshot = new ModProfile
+        {
+            Id = profile.Id,
+            GameInstallPath = profile.GameInstallPath,
+            ExecutableRelativePath = profile.ExecutableRelativePath,
+            ExecutableSourcePath = profile.ExecutableSourcePath,
+            LaunchArguments = profile.LaunchArguments,
+            UsvfsExecutableOverrideRelativePath = profile.UsvfsExecutableOverrideRelativePath,
+            Mods = new(profile.Mods.Select(mod => new ModEntry
+            {
+                Name = mod.Name,
+                SourcePath = mod.SourcePath,
+                Order = mod.Order,
+                IsEnabled = mod.IsEnabled
+            }))
+        };
+        return Task.Run(() => PrepareCoreAsync(context with { Profile = snapshot }, progress, cancellationToken), cancellationToken);
+    }
+
+    private async Task<LaunchPlan> PrepareCoreAsync(
+        ProfileLaunchBackendContext context,
+        IProgress<string> progress,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!UsvfsFeatureGate.IsEnabled(_runtimeDirectory))
+        {
+            throw new InvalidOperationException(LocalizedText.Format(
+                Strings.Error_UsvfsBackendUnavailableFormat,
+                UsvfsFeatureGate.EnableEnvironmentVariable));
+        }
+
+        var profile = context.Profile;
+        var layerPlan = context.FileLayerPlan!;
+        var manifest = context.OverlayManifest!;
+        var profileWorkspace = Path.GetFullPath(Path.Combine(manifest.WriteOverlayRoot, "..", ".."));
         var profileFsgamePath = UsvfsProfileDataPreparer.Prepare(
-            context.FileLayerPlan,
-            context.OverlayManifest,
+            layerPlan,
+            manifest,
             profileWorkspace,
             progress,
             cancellationToken);
-        var launchResolution = ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, context.FileLayerPlan);
+        var launchResolution = ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, layerPlan);
         if (!launchResolution.IsReady || launchResolution.Plan is null)
         {
             throw new InvalidOperationException(launchResolution.Error ?? Strings.Error_UsvfsLaunchPlanNotReady);
         }
 
-        var launchTarget = AnomalyUsvfsLaunchTargetResolver.Resolve(profile, context.FileLayerPlan, launchResolution);
+        var launchTarget = AnomalyUsvfsLaunchTargetResolver.Resolve(profile, layerPlan, launchResolution);
         if (launchTarget.BypassedLauncher)
         {
             progress.Report(LocalizedText.Format(
@@ -89,18 +118,18 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                                          AnomalyLauncherLocator.IsLauncherExecutable(
                                              launchTarget.ExecutablePath);
         var isAnomalyEngine = IsAnomalyEngine(launchTarget.ExecutableRelativePath);
-        var useSharedAnomalyBootstrap = context.FileLayerPlan.UsesSharedGameData && isAnomalyEngine;
+        var useSharedAnomalyBootstrap = layerPlan.UsesSharedGameData && isAnomalyEngine;
         var usePhysicalAnomalyRoot = isAnomalyEngine && !useSharedAnomalyBootstrap;
         var usePhysicalBaseGameRoot = !useAnomalyLauncherBootstrap &&
                                       !useSharedAnomalyBootstrap &&
-                                      ShouldUsePhysicalBaseGameRoot(context.FileLayerPlan, launchTarget);
+                                      ShouldUsePhysicalBaseGameRoot(layerPlan, launchTarget);
         var usePhysicalArchiveRoot = !useAnomalyLauncherBootstrap &&
                                      !useSharedAnomalyBootstrap &&
-                                     RequiresPhysicalArchiveRoot(context.FileLayerPlan);
+                                     RequiresPhysicalArchiveRoot(layerPlan);
         var bootstrapRoot = UsvfsBootstrapPathResolver.Resolve(profileWorkspace);
         UsvfsBootstrapPathResolver.DeleteLegacySharedProfile(
             profileWorkspace,
-            context.FileLayerPlan.BaseGame.RootPath,
+            layerPlan.BaseGame.RootPath,
             profile.Id);
         UsvfsBootstrapResult? bootstrap = null;
         UsvfsExecutableBootstrapper.Clear(profileWorkspace, bootstrapRoot);
@@ -108,41 +137,41 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
         {
             bootstrap = useAnomalyLauncherBootstrap
                 ? UsvfsExecutableBootstrapper.PrepareAnomalyLauncher(
-                    context.FileLayerPlan,
+                    layerPlan,
                     launchTarget,
                     bootstrapRoot,
-                    context.OverlayManifest.WriteOverlayRoot,
+                    manifest.WriteOverlayRoot,
                     progress,
                     cancellationToken)
                 : UsvfsExecutableBootstrapper.Prepare(
-                    context.FileLayerPlan,
+                    layerPlan,
                     launchTarget,
                     bootstrapRoot,
                     progress,
                     cancellationToken);
             MaterializeBootstrapFsgame(
                 profileFsgamePath,
-                context.OverlayManifest.WriteOverlayRoot,
+                manifest.WriteOverlayRoot,
                 bootstrap.RootPath);
         }
 
         var usePhysicalGameRoot = usePhysicalAnomalyRoot || usePhysicalBaseGameRoot || usePhysicalArchiveRoot;
         var virtualRoot = usePhysicalGameRoot
-            ? context.FileLayerPlan.BaseGame.RootPath
+            ? layerPlan.BaseGame.RootPath
             : bootstrap!.RootPath;
         var mappingPlan = useAnomalyLauncherBootstrap || useSharedAnomalyBootstrap
             ? UsvfsMappingPlanBuilder.BuildAnomalyLauncherBootstrap(
-                context.FileLayerPlan,
-                context.OverlayManifest,
+                layerPlan,
+                manifest,
                 virtualRoot)
             : UsvfsMappingPlanBuilder.Build(
-                context.FileLayerPlan,
-                context.OverlayManifest,
+                layerPlan,
+                manifest,
                 virtualRoot);
         var workingDirectory = usePhysicalGameRoot
             ? launchTarget.WorkingDirectory
             : ResolveBootstrapWorkingDirectory(
-                context.FileLayerPlan.BaseGame.RootPath,
+                layerPlan.BaseGame.RootPath,
                 launchTarget.WorkingDirectory,
                 bootstrap!.RootPath);
         var executablePath = usePhysicalBaseGameRoot
@@ -171,6 +200,7 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             Strings.Progress_UsvfsOverlayPlanFormat,
             mappingPlan.Operations.Count,
             diagnosticLogPath));
+        cancellationToken.ThrowIfCancellationRequested();
         var session = selectedRuntime.CreateSession(
             mappingPlan,
             new UsvfsRuntimeOptions(
@@ -179,18 +209,27 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                 DiagnosticLogPath: diagnosticLogPath),
             progress);
 
-        var processStarter = new Func<LaunchPlan, IProgress<string>?, System.Diagnostics.Process>(
-            (_, startProgress) => session.StartProcess(launchRequest, startProgress, cancellationToken));
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var processStarter = new Func<LaunchPlan, IProgress<string>?, System.Diagnostics.Process>(
+                (_, startProgress) => session.StartProcess(launchRequest, startProgress, cancellationToken));
 
-        return Task.FromResult(new LaunchPlan(
-            LaunchBackendKind.VirtualFileSystem,
-            launchRequest.ExecutablePath,
-            launchRequest.Arguments,
-            launchRequest.WorkingDirectory,
-            session,
-            processStarter,
-            () => session.GetExitCodeAsync(),
-            session.GetActiveProcessIds));
+            return new LaunchPlan(
+                LaunchBackendKind.VirtualFileSystem,
+                launchRequest.ExecutablePath,
+                launchRequest.Arguments,
+                launchRequest.WorkingDirectory,
+                session,
+                processStarter,
+                () => session.GetExitCodeAsync(),
+                session.GetActiveProcessIds);
+        }
+        catch
+        {
+            await session.DisposeAsync();
+            throw;
+        }
     }
 
     private static void MaterializeBootstrapFsgame(

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Windows.Threading;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Services;
 using Xunit;
@@ -750,6 +751,117 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         Assert.Contains("32-битной игры", error.Message);
     }
 
+    [Fact]
+    public async Task PrepareAsyncRunsOnWorkerAndDeliversProgressToDispatcher()
+    {
+        var context = CreatePreparationContext();
+        var runtime = new RecordingUsvfsRuntime();
+        var backend = new UsvfsLaunchBackend(runtime, context.GamePath);
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            var dispatcher = Dispatcher.CurrentDispatcher;
+            SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(dispatcher));
+            dispatcher.BeginInvoke(new Action(async () =>
+            {
+                try
+                {
+                    var callerThread = Environment.CurrentManagedThreadId;
+                    var progressThreads = new List<int>();
+                    var plan = await backend.PrepareAsync(context,
+                        new Progress<string>(_ => progressThreads.Add(Environment.CurrentManagedThreadId)));
+                    await Dispatcher.Yield(DispatcherPriority.Background);
+
+                    Assert.NotEqual(callerThread, runtime.CreationThreadId);
+                    Assert.NotEmpty(progressThreads);
+                    Assert.All(progressThreads, id => Assert.Equal(callerThread, id));
+                    await plan.RuntimeLease!.DisposeAsync();
+                    completion.SetResult();
+                }
+                catch (Exception ex)
+                {
+                    completion.SetException(ex);
+                }
+                finally
+                {
+                    dispatcher.InvokeShutdown();
+                }
+            }));
+            Dispatcher.Run();
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+
+        await completion.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        thread.Join();
+    }
+
+    [Fact]
+    public async Task PrepareAsyncUsesCapturedProfileSettingsAndModSources()
+    {
+        var context = CreatePreparationContext();
+        var original = context.Profile;
+        original.LaunchArguments = "-before";
+        var runtime = new RecordingUsvfsRuntime();
+        var backend = new UsvfsLaunchBackend(runtime, context.GamePath);
+        var changed = false;
+        var progress = new InlineProgress<string>(_ =>
+        {
+            if (changed)
+            {
+                return;
+            }
+            changed = true;
+            original.Id = "changed";
+            original.LaunchArguments = "-after";
+            original.GameInstallPath = Path.Combine(_root, "missing-game");
+            original.ExecutableRelativePath = @"bin\missing.exe";
+            original.ExecutableSourcePath = Path.Combine(_root, "missing-mod");
+            original.UsvfsExecutableOverrideRelativePath = @"bin\invalid.exe";
+            original.Mods[0].IsEnabled = false;
+            original.Mods.Clear();
+        });
+
+        var plan = await backend.PrepareAsync(context, progress);
+
+        Assert.True(changed);
+        Assert.Equal("-before", plan.Arguments);
+        Assert.Equal("stalker_launcher_snapshot", runtime.Options!.InstanceName);
+        Assert.Equal("-after", original.LaunchArguments);
+        await plan.RuntimeLease!.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task PrepareAsyncAlreadyCanceledDoesNotWriteProfileDataOrCreateSession()
+    {
+        var context = CreatePreparationContext();
+        var runtime = new RecordingUsvfsRuntime();
+        var backend = new UsvfsLaunchBackend(runtime, context.GamePath);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => backend.PrepareAsync(
+            context, new Progress<string>(), cancellation.Token));
+
+        Assert.Null(runtime.MappingPlan);
+        Assert.False(Directory.Exists(context.OverlayManifest!.WriteOverlayRoot));
+    }
+
+    [Fact]
+    public async Task PrepareAsyncCancellationDuringSessionCreationDisposesSession()
+    {
+        var context = CreatePreparationContext();
+        using var cancellation = new CancellationTokenSource();
+        var runtime = new RecordingUsvfsRuntime { OnCreateSession = cancellation.Cancel };
+        var backend = new UsvfsLaunchBackend(runtime, context.GamePath);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => backend.PrepareAsync(
+            context, new Progress<string>(), cancellation.Token));
+
+        Assert.NotNull(runtime.MappingPlan);
+        Assert.True(runtime.Session.IsDisposed);
+    }
+
     public void Dispose()
     {
         Environment.SetEnvironmentVariable(UsvfsFeatureGate.EnableEnvironmentVariable, _previousGateValue);
@@ -764,6 +876,34 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         var path = Path.Combine(_root, relativePath);
         Directory.CreateDirectory(path);
         return path;
+    }
+
+    private ProfileLaunchBackendContext CreatePreparationContext()
+    {
+        var game = CreateDirectory("background-game");
+        var mod = CreateDirectory("background-mod");
+        var workspace = CreateDirectory("background-workspace");
+        File.WriteAllText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true | false | $fs_root$ | appdata\\");
+        Directory.CreateDirectory(Path.Combine(mod, "bin"));
+        CopyExecutable(Path.Combine(mod, "bin", "XR_3DA.exe"), WindowsExecutableArchitecture.X64);
+        CreateUsvfsRuntimeFiles(game);
+        var profile = new ModProfile
+        {
+            Id = "snapshot",
+            GameInstallPath = game,
+            ExecutableRelativePath = @"bin\XR_3DA.exe",
+            ExecutableSourcePath = mod,
+            LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
+        };
+        profile.Mods.Add(new ModEntry { Name = "Engine", SourcePath = mod, IsEnabled = true, Order = 1 });
+        var layers = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
+        return new ProfileLaunchBackendContext(game, profile, layers,
+            OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace));
+    }
+
+    private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
+    {
+        public void Report(T value) => report(value);
     }
 
     private static void CreateUsvfsRuntimeFiles(string directory)
@@ -804,6 +944,9 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
     {
         public UsvfsMappingPlan? MappingPlan { get; private set; }
         public UsvfsRuntimeOptions? Options { get; private set; }
+        public int CreationThreadId { get; private set; }
+        public Action? OnCreateSession { get; init; }
+        public FakeUsvfsRuntimeSession Session { get; } = new();
 
         public IUsvfsRuntimeSession CreateSession(
             UsvfsMappingPlan mappingPlan,
@@ -812,7 +955,9 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         {
             MappingPlan = mappingPlan;
             Options = options;
-            return new FakeUsvfsRuntimeSession();
+            CreationThreadId = Environment.CurrentManagedThreadId;
+            OnCreateSession?.Invoke();
+            return Session;
         }
 
         public Task<UsvfsProcessLaunchResult> RunAsync(
@@ -828,6 +973,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
 
     private sealed class FakeUsvfsRuntimeSession : IUsvfsRuntimeSession
     {
+        public bool IsDisposed { get; private set; }
+
         public Process StartProcess(
             UsvfsProcessLaunchRequest launchRequest,
             IProgress<string>? progress = null,
@@ -840,6 +987,10 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
 
         public IReadOnlyList<int> GetActiveProcessIds() => [];
 
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        public ValueTask DisposeAsync()
+        {
+            IsDisposed = true;
+            return ValueTask.CompletedTask;
+        }
     }
 }

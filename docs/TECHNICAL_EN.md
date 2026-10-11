@@ -203,6 +203,8 @@ The x86 host remains alive while injected child processes are active and publish
 
 Only one USVFS session may run at a time because the official runtime uses shared process state and a shared namespace.
 
+USVFS captures the profile's launch settings and mod source list on the calling thread, then prepares profile data, shader caches, bootstrap files, mappings and the runtime session on a worker thread. Progress returns through the caller's `IProgress<string>`. The worker does not modify the live WPF profile. If preparation is canceled while a session is being created, the newly created session is disposed before cancellation is returned to the caller.
+
 ### Virtual-root strategy
 
 The launcher chooses a virtual-root strategy according to the launch layout:
