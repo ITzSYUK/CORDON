@@ -330,7 +330,6 @@ public sealed partial class MainViewModel
             return false;
         }
 
-        ModListEditor.PruneCollapsedGroups(SelectedProfile);
         CreateFilteredModsView();
         _autoSave.Schedule();
         return true;
@@ -357,7 +356,6 @@ public sealed partial class MainViewModel
             return;
         }
 
-        ModListEditor.PruneCollapsedGroups(SelectedProfile);
         CreateFilteredModsView();
         _autoSave.Schedule();
     }
@@ -816,7 +814,6 @@ public sealed partial class MainViewModel
         }
 
         var removed = ModListEditor.Remove(SelectedProfile, mods);
-        ModListEditor.PruneCollapsedGroups(SelectedProfile);
         RefreshValidation();
         Log(LocalizedText.Format(Strings.Log_ModsRemovedFormat, removed));
         _ = SaveAsync();
@@ -831,7 +828,6 @@ public sealed partial class MainViewModel
 
         var removed = SelectedMod;
         ModListEditor.Remove(SelectedProfile, [removed]);
-        ModListEditor.PruneCollapsedGroups(SelectedProfile);
         RefreshValidation();
         Log(LocalizedText.Format(Strings.Log_ModRemovedFormat, removed.Name));
         _ = SaveAsync();
