@@ -1,11 +1,8 @@
-# USVFS research branch
+# USVFS research history
 
 [English version](USVFS_RESEARCH_EN.md) | [Русская версия](USVFS_RESEARCH_RU.md)
 
-This branch is intentionally separate from `main`. The stable launcher mode is still
-`LinkedWorkspace`; this branch is for researching integration with
-[ModOrganizer2/usvfs](https://github.com/ModOrganizer2/usvfs) without risking the
-current workspace-based launch path.
+This document records the original research into [ModOrganizer2/usvfs](https://github.com/ModOrganizer2/usvfs), initially conducted on a separate branch. The integration is now part of `main`: Workspace and USVFS are both stable, and new regular profiles default to USVFS. The architecture and restrictions described below reflect the research stage, not the current release. For current launch rules, writable storage and build instructions, use the [technical documentation](TECHNICAL_EN.md) and [user guide](USER_GUIDE_EN.md). Game data is profile-local by default; explicitly selecting shared game data permits writes to that selected directory.
 
 ## What was verified
 
@@ -99,7 +96,7 @@ DX8, DX9, DX10, DX11, or AVX bypasses the launcher and starts the selected
 path, so `FileLayerPlan` still resolves the executable from
 the enabled mod with the highest priority.
 
-## Current integration
+## Integration during research
 
 `UsvfsMappingPlanBuilder` converts the existing launcher model into operations
 applied by the official USVFS runtime:
@@ -131,7 +128,7 @@ This keeps one source of truth:
 - `OverlayManifest` defines executable, writable files and overwrite storage.
 - `UsvfsMappingPlanBuilder` translates those layers into USVFS operations.
 
-## Why this direction
+## Initial direction
 
 The removed custom VFS tried to solve too many native-hooking problems inside
 this launcher. It crashed too often and did not reliably apply mod layers.
@@ -144,7 +141,7 @@ The new direction is narrower:
 4. Expose it as an explicit per-profile setting without changing
    the default backend.
 
-## Manual test workflow
+## Research test workflow
 
 1. Put the USVFS runtime files next to the launcher: `usvfs_x64.dll`,
    `usvfs_proxy_x64.exe`, `usvfs_x86.dll`, `usvfs_proxy_x86.exe` and
@@ -155,7 +152,7 @@ The new direction is narrower:
 5. Switch the profile back to `Workspace - stable` if the game build is not
    compatible with the current USVFS runtime.
 
-## Important constraints
+## Research constraints
 
 - Do not replace `LinkedWorkspace` automatically; select the backend per profile.
 - Do not reintroduce custom hook DLLs.

@@ -44,26 +44,27 @@ CORDON помогает держать несколько модификаций
 
 - Поддержка 32- и 64-битных движков X-Ray: классической трилогии, Anomaly, OGSR, iX-Ray и других типичных сборок.
 - Обычные профили с базовой игрой и упорядоченным списком модов, а также автономные профили для готовых сборок со своим EXE.
-- Отдельные сохранения, настройки, логи и скриншоты для каждого обычного профиля.
+- Отдельные сохранения, настройки, логи и скриншоты для каждого обычного профиля по умолчанию; общий каталог данных базовой игры можно выбрать в настройках профиля.
 - Включение и отключение модов, изменение приоритета одиночным и групповым перетаскиванием; моды ниже в списке имеют больший приоритет.
-- Сканирование папки с модами и установка распакованных модов из ZIP, 7Z и RAR.
+- Сканирование папки с модами и установка из ZIP, 7Z, RAR и `.fomod`.
+- Мастер FOMOD с выбором компонентов и картинками: отдельное окно в Classic UI, встроенная страница в обоих PDA UI. Поддерживаются архивы и уже распакованные пакеты.
 - Анализ конфликтов: победившие, заменённые и уникальные файлы, итоговое дерево сборки и исключение отдельного файла без изменения исходного мода.
 - Импорт готовых игровых профилей из `Mod Organizer 2`.
 - Автоматический поиск итогового EXE с возможностью выбрать файл вручную; учитываются движки из включённых модов.
 - Два режима обычного профиля: Workspace с NTFS-ссылками и USVFS от Mod Organizer 2 для виртуального наложения файлов.
 - Проверка готовности профиля, состояния Workspace/USVFS, последнего игрового лога и crash dump; очистка кэша и копирование диагностического отчёта.
 - Импорт, экспорт, копирование и переименование профилей.
-- Классический интерфейс и альтернативный интерфейс в стиле КПК S.T.A.L.K.E.R.
+- Классический интерфейс и две темы интерфейса в стиле КПК S.T.A.L.K.E.R., русский и английский языки.
 - Встроенный браузер модификаций из каталога AP-PRO и просмотрщик скриншотов.
 - Быстрый запуск профилей из системного трея, запуск лаунчера вместе с Windows и сворачивание в трей.
-- Discord Rich Presence, журнал лаунчера с ротацией и автоматическая проверка обновлений с системными уведомлениями.
+- Discord Rich Presence, журнал лаунчера с ротацией, проверка обновлений с системными уведомлениями и установка обновления из настроек.
 
 ## Режимы запуска
 
 | Режим | Статус | Когда использовать |
 | --- | --- | --- |
-| **Workspace** | Стабильный | Рекомендуемый режим. Собирает изолированный профиль с помощью NTFS-ссылок, не копируя игру целиком. |
-| **USVFS** | Стабильный | Виртуально объединяет файлы через компоненты Mod Organizer 2. Поддерживает x64 и x86; совместимость зависит от движка и способа запуска. |
+| **Workspace** | Стабильный | Собирает изолированный профиль с помощью NTFS-ссылок, не копируя игру целиком. Подходит для сборок, несовместимых с USVFS. |
+| **USVFS** | Стабильный | Режим по умолчанию для новых обычных профилей. Виртуально объединяет файлы через компоненты Mod Organizer 2; поддерживает x64 и x86. |
 | **Автономный профиль** | Стабильный | Запускает уже готовую самостоятельную сборку из её собственной папки. |
 
 ## Быстрый старт
@@ -82,16 +83,16 @@ CORDON помогает держать несколько модификаций
 
 | Архив | Для кого |
 | --- | --- |
-| `CORDON-...-win-x64-standalone.zip` | Рекомендуется большинству пользователей. Уже содержит .NET Runtime. |
-| `CORDON-...-win-x64.zip` | Компактная версия для системы с установленным .NET 8 Desktop Runtime x64. |
+| `CORDON-...-win-x64-standalone.zip` | Содержит .NET Runtime. `CORDON-Standalone.exe` хранит настройки лаунчера рядом с EXE, в `Data\StalkerModLauncher`. |
+| `CORDON-...-win-x64.zip` | Компактная версия для системы с установленным .NET 8 Desktop Runtime x64; настройки лаунчера находятся в AppData. |
 
 Требуется Windows 10/11 x64. Для USVFS может потребоваться Microsoft Visual C++ 2015–2022 Redistributable x64 и x86.
 
 ## Безопасность и прозрачность
 
 - Исходный код открыт и распространяется по лицензии GPLv3.
-- Исходные папки игры и модов используются только для чтения.
-- Записываемые данные профилей хранятся отдельно в Workspace.
+- Исходные файлы игры и модов используются только для чтения.
+- Игровые данные обычного профиля по умолчанию хранятся отдельно в Workspace. Явный выбор общего каталога данных разрешает игре запись в этот каталог; автономная сборка использует собственное расположение данных.
 
 <a id="screenshots"></a>
 
@@ -120,6 +121,7 @@ dotnet run --project .\src\StalkerModLauncher\StalkerModLauncher.csproj
 - [Техническая документация на русском](docs/TECHNICAL_RU.md)
 - [Technical documentation in English](docs/TECHNICAL_EN.md)
 - [User guide in English](docs/USER_GUIDE_EN.md)
+- [Перенос сборки из MO2](docs/MO2_IMPORT_GUIDE_RU.md)
 - [Лицензии сторонних компонентов](THIRD_PARTY_NOTICES.md)
 
 ---
@@ -142,26 +144,27 @@ It supports the original trilogy, Anomaly, OGSR, iX-Ray and other X-Ray projects
 
 - Support for 32-bit and 64-bit X-Ray engines: the original trilogy, Anomaly, OGSR, iX-Ray and other typical builds.
 - Regular profiles with a base game and ordered mod list, plus standalone profiles for builds with their own EXE.
-- Separate saves, settings, logs and screenshots for every regular profile.
+- Separate saves, settings, logs and screenshots for every regular profile by default; the base game's shared data directory can be selected in profile settings.
 - Enable and disable mods, and change priority with single-item or group drag-and-drop; lower mods in the list have higher priority.
-- Scan mod folders and install unpacked mods from ZIP, 7Z and RAR archives.
+- Scan mod folders and install from ZIP, 7Z, RAR and `.fomod` archives.
+- FOMOD component selection and image previews: a separate window in Classic UI and an embedded page in both PDA themes. Archives and unpacked packages are supported.
 - Conflict analysis: winning, replaced and unique files, the resulting build tree, and excluding one file without changing the source mod.
 - Import ready-made game profiles from `Mod Organizer 2`.
 - Automatically find the final EXE or choose it manually; engines from enabled mods are included.
 - Two regular profile modes: Workspace with NTFS links and USVFS from Mod Organizer 2 for virtual file overlays.
 - Profile readiness checks, Workspace/USVFS status, the latest game log and crash dump; cache cleanup and diagnostic report copying.
 - Import, export, duplicate and rename profiles.
-- Classic UI and two alternative S.T.A.L.K.E.R.-inspired PDA UI themes.
+- Classic UI and two alternative S.T.A.L.K.E.R.-inspired PDA UI themes, with Russian and English languages.
 - Built-in AP-PRO mod browser and screenshot viewer.
 - Quick profile launch from the system tray, launch with Windows and minimize to the tray.
-- Discord Rich Presence, a rotating launcher log and automatic update checks with system notifications.
+- Discord Rich Presence, a rotating launcher log, update checks with system notifications and update installation from settings.
 
 ### Launch modes
 
 | Mode | Status | When to use |
 | --- | --- | --- |
-| **Workspace** | Stable | Recommended. Builds an isolated profile with NTFS links without copying the entire game. |
-| **USVFS** | Stable | Virtually combines files through Mod Organizer 2 components. Supports x64 and x86; compatibility depends on the engine and launch method. |
+| **Workspace** | Stable | Builds an isolated profile with NTFS links without copying the entire game. Useful for builds incompatible with USVFS. |
+| **USVFS** | Stable | The default for new regular profiles. Virtually combines files through Mod Organizer 2 components; supports x64 and x86. |
 | **Standalone profile** | Stable | Starts an already assembled standalone build from its own folder. |
 
 ### Quick start
@@ -180,16 +183,16 @@ Downloads are available on the [latest release](https://github.com/ITzSYUK/CORDO
 
 | Package | For whom |
 | --- | --- |
-| `CORDON-...-win-x64-standalone.zip` | Recommended for most users. Includes the .NET Runtime. |
-| `CORDON-...-win-x64.zip` | Compact version for systems with .NET 8 Desktop Runtime x64 installed. |
+| `CORDON-...-win-x64-standalone.zip` | Includes the .NET Runtime. `CORDON-Standalone.exe` stores launcher settings beside the EXE in `Data\StalkerModLauncher`. |
+| `CORDON-...-win-x64.zip` | Compact version for systems with .NET 8 Desktop Runtime x64 installed; launcher settings are stored in AppData. |
 
 Windows 10/11 x64 is required. USVFS may also require Microsoft Visual C++ 2015–2022 Redistributable for x64 and x86.
 
 ### Security and transparency
 
 - The source code is open and distributed under GPLv3.
-- Original game and mod folders are read-only from the launcher's perspective.
-- Writable profile data is stored separately in the Workspace.
+- Original game and mod files are read-only from the launcher's perspective.
+- Regular profiles store game data separately in the Workspace by default. Explicitly selecting the shared data directory permits the game to write there; standalone builds use their own data location.
 
 ### Interface
 
@@ -208,6 +211,7 @@ dotnet run --project .\src\StalkerModLauncher\StalkerModLauncher.csproj
 - [Technical documentation in Russian](docs/TECHNICAL_RU.md)
 - [Technical documentation in English](docs/TECHNICAL_EN.md)
 - [User guide in English](docs/USER_GUIDE_EN.md)
+- [Importing a build from MO2](docs/MO2_IMPORT_GUIDE_EN.md)
 - [Third-party licenses](THIRD_PARTY_NOTICES.md)
 
 ---

@@ -3,15 +3,22 @@
 This research-only console app verifies the managed adapter in
 `StalkerModLauncher.Services.UsvfsRuntime`.
 
-It uses the official `usvfs_x64.dll` through P/Invoke, applies a
-`UsvfsMappingPlan`, starts itself as a hooked child process and checks that the
-child sees the overlaid files.
+It uses the official USVFS runtime through P/Invoke, applies a
+`UsvfsMappingPlan` and checks that hooked processes see the overlaid files.
+The x64 scenario starts a managed child; the x86 scenario uses the native x86
+host, launcher and child executables.
 
-Example:
+Run from the repository root after building dependencies with
+`scripts\Build-UsvfsDependencies.ps1`:
 
 ```powershell
-dotnet run --project .\research\usvfs-managed-poc\StalkerUsvfsManagedPoc.csproj -- "$env:TEMP\stalker-usvfs-src\usvfs"
+.\scripts\Test-UsvfsRuntime.ps1
 ```
+
+The script uses `.external\usvfs` by default, runs five sessions for each
+architecture, and checks changed overlay contents, child lifetime and writable
+directory behavior. See the [technical documentation](../../docs/TECHNICAL_EN.md)
+for dependency preparation and release checks.
 
 This project is not part of the normal launcher runtime. It remains an isolated
 smoke-test harness for the stable production USVFS backend.

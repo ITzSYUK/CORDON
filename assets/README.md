@@ -9,7 +9,9 @@ This folder contains non-code assets used by CORDON.
 - `icons/profile-actions/` — icons for profile creation, import, export, copy and delete actions.
 - `icons/navigation/` — arrows and refresh/navigation icons.
 - `icons/profile-icons/` — optional profile icon artwork.
-- `screenshots/` — README screenshots.
+- `logo/` — launcher logo artwork.
+- `ui/pda/` — PDA shells and interface atlases.
+- `../docs/assets/screenshots/` — README and documentation screenshots.
 - `sounds/pda/` — UI sounds.
 
 ## Notes
