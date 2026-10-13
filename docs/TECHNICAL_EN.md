@@ -248,7 +248,7 @@ StalkerModLauncher.UsvfsX86Host.exe
 
 ## 8. Profile data isolation
 
-Standard profiles now have a **Game data** setting: profile-local data (default), or the base game's configured directory. Shared mode resolves `$app_data_root$` and referenced aliases from the base game's `fsgame.ltx`; missing, unknown, cyclic, and unsafe paths block launch. Only the prepared configuration is rewritten. Standalone profiles keep their direct-launch behavior.
+Standard profiles have a **User data** setting: profile-local data (default), or a shared configured directory. Shared mode resolves `$app_data_root$` and referenced aliases from the base game's `fsgame.ltx` by default; a manually selected configuration or an automatically resolved `-fsltx` source takes precedence. Missing, unknown, cyclic, and unsafe paths block launch. Only the prepared configuration is rewritten. Standalone profiles keep their direct-launch behavior.
 
 Workspace and USVFS write the resolved absolute path into the prepared configuration. A manually selected file keeps its original name and relative path. If its name differs from `fsgame.ltx`, the prepared working layer also gets a sibling `fsgame.ltx` compatibility copy with identical content; the source file in the game or mod is neither renamed nor changed. `$fs_root$` resolves from the game or virtual root rather than the configuration directory. With USVFS, the shared directory stays outside the virtual bootstrap root and is not mapped through `CreateTarget`, so X-Ray accesses the base game's directory directly. This is an explicit write exception for that directory only. Service stores, diagnostics, writable game-tree files, and overwrite remain inside the profile. Save/log/screenshot discovery and folder opening follow the selected location; deleting a profile never deletes shared data.
 
@@ -264,7 +264,7 @@ Persistent data for a standard profile is kept in:
 
 The launcher takes the selected file-system configuration, preserves its name, relative path, and encoding, including Windows-1251, and changes `$app_data_root$` to the profile's absolute `userdata` path. If the file has a nonstandard name, a compatible `fsgame.ltx` copy with the same rewritten contents is created beside it. Other path rules and mod-specific lines remain intact. Data previously misrouted into the corresponding `userdata\overwrite` subtree is copied once without replacing existing files; after a successful migration, `.stalker-launcher-manual-data-migrated` is written to the source directory. The source copy is retained but is not imported again on later launches, so files deleted by the user do not reappear. Managed workspaces always use the ASCII name `profile-<ID>`, so iXray and other engines with limited Unicode support receive a normal path without an extra junction or second data directory.
 
-For a non-standalone profile, launch is blocked when `fsgame.ltx` is missing or does not contain `$app_data_root$`. Workspace and USVFS therefore never report profile-data isolation as successful when the engine would still use a shared data directory.
+For a non-standalone profile, launch is blocked when the selected file-system configuration is missing or does not contain `$app_data_root$`. Workspace and USVFS validate the selected data routing rather than silently falling back to a different directory.
 
 The same validation runs when profile settings are explicitly saved. A missing, inaccessible, or invalid source prevents the changes from being saved; the settings window remains open and shows the reason.
 
@@ -328,7 +328,7 @@ Deleting a standard profile removes only its validated managed workspace. Deleti
 
 `CORDON-Standalone.exe` automatically uses `<EXE directory>\Data\StalkerModLauncher` for settings, backup, launcher logs, `Cache`, and `Temp`. Regular `CORDON.exe` always uses AppData and ignores `portable.flag`. `Mods` and `Workspaces` keep their normal `<game drive>\StalkerModLauncher` location; the `%LOCALAPPDATA%` fallback is used when a drive cannot be resolved. Write access is checked before startup; failure shows an error without falling back to AppData. Windows startup registration is supported and points to the current `CORDON-Standalone.exe`.
 
-The portable launcher must be outside game/mod source folders: overlapping source roots are rejected before building layers to avoid including its own Data tree. USVFS still requires an ASCII-only workspace path, so place the portable launcher under a path without non-ASCII characters.
+The portable launcher's local Data, cache, temporary and workspace directories must not overlap game/mod source folders. Source folders containing these managed directories, or contained inside them, are rejected before building layers. USVFS requires an ASCII-only workspace/bootstrap path; this is separate from the launcher's installation path.
 
 Paths inside the EXE directory are stored relative to it; external game, mod, and workspace paths stay absolute. On the first launch without a local `settings.json` or backup, the primary AppData settings file is imported automatically. The standalone store is independent after that import; manual `settings.json` import is also available while the profile list is empty. Profile `userdata`, `Mods`, and `Workspaces` remain under `<game drive>\StalkerModLauncher`.
 
@@ -341,7 +341,7 @@ Settings files are stored at:
 %APPDATA%\StalkerModLauncher\settings.backup.json
 ```
 
-The JSON file contains a settings-structure version number. Its current value is `8`. While loading the file, the launcher:
+The JSON file contains a settings-structure version number. Its current value is `9`. While loading the file, the launcher:
 
 - upgrades the schema version;
 - creates missing collections;
@@ -392,7 +392,7 @@ Application logs are stored at:
 
 The current log rotates at 1 MB, replacing `launcher.old.log` with the previous log.
 
-Game logs and dumps are searched in profile `userdata` or the common data folders of a standalone build. Diagnostics use the launch timestamp so an old crash dump is not reported as the result of the current session.
+Game logs and dumps are searched in the profile's selected local or shared data directory, or the common data folders of a standalone build. Standalone launcher application logs are stored in its local `Data\StalkerModLauncher`. Diagnostics use the launch timestamp so an old crash dump is not reported as the result of the current session.
 
 After process creation the launcher watches actual readiness for up to 30 seconds: a main window, normal process memory growth, or a fresh game log. When none of these signals appears, the profile remains running, but the user receives a warning and may terminate the related processes or keep waiting.
 
@@ -402,7 +402,19 @@ The internal USVFS message queue is drained continuously outside the game logs i
 
 Scanning searches recursively for mod roots, but stops treating nested folders as separate mods after a valid root is found. It recognizes unpacked files and X-Ray archives, including `db` and `patches` directories.
 
-Archive installation is transactional through a temporary directory. The launcher validates entry paths, prevents extraction outside the destination, finds one X-Ray content root, and renames the temporary directory only after successful extraction. The storage path is profile-specific and defaults to `StalkerModLauncher\Mods\profile-<ID>` beside the workspace root. Source mods are never stored in the workspace because it is a rebuildable overlay result. Like MO2's Anomaly checker, loose `.db*` files are moved into `db\mods`.
+Archive installation is transactional through a temporary directory. The launcher validates entry paths, prevents extraction outside the destination, and finds one X-Ray content root for plain archives. The temporary directory is renamed only after extraction and any FOMOD materialization succeed. The storage path is profile-specific and defaults to `StalkerModLauncher\Mods\profile-<ID>` beside the workspace root. Source mods are never stored in the workspace because it is a rebuildable overlay result. Like MO2's Anomaly checker, loose `.db*` files are moved into `db\mods`.
+
+### FOMOD installation
+
+`FomodDetector` locates `fomod/ModuleConfig.xml` at the package root or inside wrappers. `FomodParser` reads declarative XML with DTDs/external entities disabled, an 8 MiB document limit, and bounded dependency nesting. `FomodInstallerViewModel` drives the shared classic/PDA wizard; `FomodSelector` validates selection cardinality, evaluates flags and file states, and resolves required, selected, forced, and conditional file entries.
+
+All five group rules are supported: `SelectExactlyOne`, `SelectAtMostOne`, `SelectAtLeastOne`, `SelectAny`, and `SelectAll`. File dependencies query the existing `FileLayerPlan`; a matching file in a disabled mod is inactive. Version dependencies specific to Bethesda games/managers are unsatisfied, and C# installer scripts are never executed. Packages with only required components can finish without opening the wizard.
+
+`FomodMaterializer` copies resolved entries into independent staging and preserves the declared destination root. Higher `priority` entries overwrite lower ones; equal priorities use the original XML file order independently of alphabetical display order. Unsafe paths, directory links and missing payloads are rejected. Source archives/folders and existing installed packages remain unchanged; failure or cancellation removes only the new staging directory. Image previews retain aspect ratio, decode to at most 480 pixels on either side without upscaling, and do not keep source files open.
+
+Folder installation is available through Add mod folder and folder drag-and-drop in an existing profile. Plain folders still connect directly. Profile creation and scanning expect already prepared mod folders and do not run FOMOD.
+
+### Ordering, MO2 and conflicts
 
 Grouped movement preserves the relative order of selected mods. The UI supports drag and drop plus move-to-start and move-to-end commands.
 
@@ -442,7 +454,8 @@ Catalog pages are parsed as an HTML5 DOM rather than with regular expressions. T
 - Screenshot discovery finds PNG, JPG, and BMP files in profile and standalone data locations.
 - Clipboard copying releases the full-size image after transfer instead of keeping it in memory unnecessarily.
 - Discord Rich Presence publishes profile and launch state only when the user enables the option.
-- Update checking is manual and compares the installed version with the latest GitHub release tag.
+- Update checking runs manually or automatically on startup, with optional system notifications. Settings can download a compact or Standalone release package, verify its archive checksum and contents, then close, replace and restart the launcher after confirmation. Installation is blocked during game sessions and build/mod-install operations; existing Data and game/profile sources are preserved.
+- Launcher language can follow the system or be selected explicitly as Russian or English.
 - UI sounds reuse embedded OGG decoders instead of creating a new decoder on every click.
 - Child-window navigation is kept outside the main window so its code can focus on display and user actions.
 
@@ -483,15 +496,19 @@ dotnet test .\StalkerModLauncher.sln -c Release
 dotnet run --project .\src\StalkerModLauncher\StalkerModLauncher.csproj
 ```
 
-NuGet dependencies are pinned by per-project lock files. Built-in .NET analyzers and warnings-as-errors run during every build; the explicit baseline in `Directory.Build.props` records pre-existing analyzer debt without hiding new warning IDs. GitHub Actions restores in locked mode, verifies formatting, builds Release, runs all tests, and uploads Cobertura coverage on every push to `main` and every pull request.
+NuGet dependencies are pinned by per-project lock files. Built-in .NET analyzers and warnings-as-errors are configured in `Directory.Build.props` and run during every build. GitHub Actions restores in locked mode, verifies formatting and repository guards, builds Release, runs all tests, and uploads Cobertura coverage on every push to `main` and every pull request.
 
 Complete release packaging:
+
+Before packaging, set `Version` and `InformationalVersion` in the application project to the intended release number and set `FileVersion`/`AssemblyVersion` to its four-part form. Commit all release changes: `Build-Release.ps1` rejects a dirty working tree, including untracked files. Its optional `-Version` must match the project version; it does not override it.
 
 ```powershell
 .\scripts\Build-Release.ps1
 ```
 
 The script reads the version from the project file and verifies formatting, the Release build, all unit tests, and the native x64/x86 USVFS overlay before packaging. Both smoke scenarios verify a short-lived launcher, its child process, and a changed mod file across five consecutive sessions.
+
+To run these checks without creating archives, use `.\scripts\Verify-Release.ps1`, optionally with `-ExpectedVersion` to require a specific project version. Release packages are written to `publish\release\v<version>`; `publish\usvfs` is a separate test build. Archive creation and verification are still required before publishing a release.
 
 The full local stress test is started with `.\scripts\Test-UsvfsStress.ps1`. By default it performs 50 consecutive x64 and x86 sessions while changing overlay contents between launches.
 

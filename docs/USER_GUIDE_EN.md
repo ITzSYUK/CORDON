@@ -12,7 +12,7 @@ Each configured setup is called a **profile**. A profile remembers:
 - the list of mods and their order;
 - the file used to start the game;
 - the file mounting mode;
-- separate saves, settings, logs, and screenshots;
+- the location of saves, settings, logs, and screenshots: separate profile data by default, or an explicitly selected shared directory;
 - play time and additional launch arguments.
 
 For example, you can create one profile for Anomaly with gameplay add-ons, another for Anomaly with graphics add-ons, and a third for a different custom build. The launcher means you do not have to install THREE copies of the base Anomaly game at the same time: the same base game can be connected to three different profiles and used as the foundation on which add-ons, modified engine files, and other content are overlaid.
@@ -22,10 +22,10 @@ For example, you can create one profile for Anomaly with gameplay add-ons, anoth
 A **Game with mods** profile requires:
 
 1. An installed base game or ready-to-use base installation, such as Shadow of Chernobyl, Clear Sky, Call of Pripyat, or Anomaly.
-2. Mod folders or ZIP, 7Z, and RAR archives.
+2. Mod folders or ZIP, 7Z, RAR, and `.fomod` archives.
 3. Free space for the profile's small internal files and writable data.
 
-The launcher does not download mods. You can add a prepared folder directly, or install a ZIP, 7Z, or RAR archive with the built-in `ZIP` button.
+The launcher does not download mods. You can add a prepared folder directly, or install a ZIP, 7Z, RAR, or `.fomod` archive with the built-in `ZIP` button. FOMOD packages open a component-selection wizard in an existing Game with mods profile.
 
 If a mod is distributed as a complete ready-to-run build with its own game and engine, you can create a **Standalone build** profile for it. A base game is not required in this case.
 
@@ -37,6 +37,10 @@ If a mod is distributed as a complete ready-to-run build with its own game and e
 4. Run `CORDON.exe` or `CORDON-Standalone.exe`.
 
 The compact version requires .NET 8 Desktop Runtime x64. The Standalone version already includes .NET. USVFS may also require Microsoft Visual C++ 2015–2022 Redistributable x64 and x86.
+
+`CORDON.exe` stores launcher settings in AppData. `CORDON-Standalone.exe` stores them beside the executable in `Data\StalkerModLauncher`; this folder must be writable. On the first launch without local settings, the Standalone launcher imports the existing primary AppData settings file, then keeps its own independent settings. Game and mod folders outside the launcher directory are not made portable automatically.
+
+The Standalone launcher package and the Standalone build profile type are different: both launcher packages support both profile types.
 
 ## What a profile is
 
@@ -125,9 +129,21 @@ Changing the order changes the resulting file set. On the next launch, Workspace
 
 The add button lets you select one folder manually. In an existing profile, selecting or dropping an unpacked folder containing `fomod/ModuleConfig.xml` opens the FOMOD wizard. Select the required options: their files are copied to the profile's permanent mods folder, while the original package stays unchanged. No archive is needed. Plain folders are connected directly. Scanning is useful when one common directory contains many mods: the launcher searches for typical X-Ray structures, including `gamedata`, `bin`, `bin_x64`, game archives, and `db` or `patches` folders.
 
-The `ZIP` button installs a mod from a ZIP, 7Z, or RAR archive. The archive is extracted to the profile's permanent mods folder and then added to the list like a regular mod. You can change this folder's path in the profile settings. Workspace is not used for the extracted sources and can be freely recreated.
+The `ZIP` button installs a mod from a ZIP, 7Z, RAR, or `.fomod` archive. Plain archives are extracted to the profile's permanent mods folder and then added to the list like a regular mod; FOMOD archives install only the resolved components. You can change this folder's path in the profile settings. Workspace is not used for the installed sources and can be freely recreated.
 
 Check the detected root folders before adding scan results. Automatic detection helps, but an unusually packaged mod may need to be added manually.
+
+### Installing a FOMOD package
+
+First create a Game with mods profile with a base game. Then use `ZIP` for an archive or **Add mod folder** for an unpacked package containing `fomod/ModuleConfig.xml`. You can also drop the unpacked package into the existing profile's mod list. Adding folders during profile creation or scanning does not run the FOMOD wizard; use those flows for already prepared mods.
+
+Classic UI opens a separate installer window. PDA UI and PDA UI 2 show the same wizard inside the shell. Choose the components, read their descriptions and images, then use **Next**, **Back**, and **Install**. A group may require one choice, allow several choices, or require all available components. Required components cannot be unchecked, recommended components are preselected, and unavailable components cannot be selected. Canceling does not add a mod or change the source package.
+
+Only selected, required, and conditionally included files are installed. The original archive or folder is preserved. To change the component set, run the installer again from that original package; when the destination name already exists, the launcher offers a separate folder instead of replacing the previous installation.
+
+Declarative XML installers are supported; C# FOMOD scripts and Bethesda-specific game/manager version dependencies are not. Successful installation does not provide missing engine or addon dependencies. For example, addons requiring Anomaly Modded Exes still need that engine installed in the profile.
+
+### Importing from Mod Organizer 2
 
 For a ready-made MO2 setup, select **MO2** next to the profile creation and import controls. In the wizard, you can select a Mod Organizer 2 root folder, an MO2 profile folder, or its `modlist.txt`. The last successfully selected source is loaded the next time the wizard opens; MO2 installations are not scanned automatically. The launcher searches for `profiles`, `mods`, the base game, and `overwrite`, then asks you to select an MO2 profile.
 
@@ -143,15 +159,13 @@ When there are problems, the preview initially shows only missing and ambiguous 
 
 `overwrite` is an MO2 service folder for files created by the game or tools outside a specific mod, such as generated configs, patches, and other outputs. Mount it only if the setup actually depends on these files. The launcher keeps it as a separate highest-priority layer; you can disable the layer in the imported profile's settings.
 
+The MO2 wizard does not currently copy saves or `user.ltx`. Move them separately after checking the created profile. The **Apply modlist.txt only** button in profile settings changes only the order and enabled state of already added mods; it does not add folders. See the [MO2 import guide](MO2_IMPORT_GUIDE_EN.md) for the complete procedure.
+
 ## Mod conflicts
 
 The radiation symbol's color shows the status of an enabled mod: yellow means no conflicts, green means the mod overwrites earlier mods, red means its files are overwritten, multicolored means a mixed conflict, and gray means the mod is completely overwritten. A disabled mod has a dimmed icon. The tooltip shows the exact status and file count.
 
 Double-click a mod or select **Conflicts** to see winning, losing, and unique files. **Exclude** disables only the selected conflicting file in the current profile; the source mod folder is not modified. The **Final tree** tab in the conflicts window shows the resulting build with search, filters, and the replacement chain for every file.
-
-The wizard does not currently copy saves or `user.ltx`. Move them separately after checking the created profile.
-
-The **Apply modlist.txt only** button in the profile settings keeps the previous narrow behavior: it changes only the order and enabled state of mods already added to the profile, and does not add folders.
 
 ## Choosing the launch file
 
@@ -174,7 +188,7 @@ Select the mode in the settings of a regular profile.
 
 ### Workspace: stable mode
 
-This is the recommended mode for a first launch and unusual builds. The launcher creates a `current` folder in which the game sees the final structure after mods are overlaid.
+Use this mode when a build is incompatible with USVFS or you need to inspect the assembled file tree. The launcher creates a `current` folder in which the game sees the final structure after mods are overlaid.
 
 Most large files are not copied again. Hard links are used on the same drive, and symbolic links are used across drives. Only files that must be writable or physically present in the working environment are created separately.
 
@@ -209,7 +223,7 @@ Things to know:
 - all x64 and x86 USVFS files must remain next to the launcher;
 - if there is a problem, you can always switch the profile back to Workspace without modifying the source folders.
 
-If launching requires physical EXE and DLL files before USVFS is mounted, the launcher creates a bootstrap cache at `<workspace>\.usvfs-bootstrap`. It is inside the profile's ASCII-only workspace and is not a copy of the whole game. This cache is not created for a regular base-game EXE.
+If launching requires physical EXE and DLL files before USVFS is mounted, the launcher creates a bootstrap cache at `<workspace>\.usvfs-bootstrap`. It is inside the profile's ASCII-only workspace and is not a copy of the whole game. This cache is not created when an unmodified base-game EXE can launch directly.
 
 ## What a workspace is
 
@@ -280,6 +294,15 @@ Do not remove the marker manually. If it is missing, clearing may be blocked for
 
 ## How saves and settings are isolated
 
+For a Game with mods profile, **Profile settings → User data** selects where saves, `user.ltx`, logs, screenshots, and shader caches are stored:
+
+- **In the profile folder** is the default. Data is separate in `<workspace>\userdata`.
+- **In the base game's data folder** uses the directory configured through `$app_data_root$`. The settings show the resolved path; a manually selected configuration or `-fsltx` can change its source. Profiles using the same directory share these data, and the game is explicitly allowed to write there. Deleting a profile does not delete shared data.
+
+Switching the setting does not move files. **Copy missing data to the selected folder** copies from the other location, skips existing files, and excludes service stores. This action requires confirmation and is not undone by canceling the settings window. The selected location is used by log, save, screenshot, and folder-opening commands. Standalone build profiles retain their own data routing.
+
+The following isolation and initial `user.ltx` rules describe In the profile folder mode.
+
 For a regular profile, the launcher takes the resulting file configuration and changes only the `$app_data_root$` path, redirecting it to `userdata`. By default, the source is detected automatically in the enabled layers: either the regular `fsgame.ltx` or the file specified by the `-fsltx` launch argument.
 
 If automatic detection is unsuitable, open **Profile settings → fsgame.ltx source → Select file...** and choose an `.ltx` file from the base game or an enabled mod. The manually selected source determines the configuration contents, while `-fsltx` determines the relative path the engine opens. If the paths differ, a prepared copy of the manually selected file is also created at the `-fsltx` path.
@@ -332,7 +355,7 @@ When the file reaches approximately 1 MB, it is moved to `launcher.old.log` and 
 
 Open the settings with the gear button. Here you can:
 
-- select Classic UI, PDA UI, or PDA UI 2;
+- select Classic UI, PDA UI, or PDA UI 2, and System, Russian, or English language;
 - configure startup with Windows and tray-icon behavior;
 - select the `launcher.log` level;
 - configure update checks;
@@ -347,17 +370,21 @@ In PDA UI and PDA UI 2, errors appear inside the current interface and are accom
 %APPDATA%\StalkerModLauncher\settings.backup.json
 ```
 
-These files contain profile descriptions and absolute folder paths. Game files are not copied into them.
+These paths apply to `CORDON.exe`. For `CORDON-Standalone.exe`, the same settings and backup filenames are stored in `<EXE directory>\Data\StalkerModLauncher`; launcher logs, cache, and temporary files are local too. Use **Open settings folder** in launcher settings to open the active location.
+
+The files contain profile descriptions and source paths. The Standalone launcher stores paths inside its own directory relatively; external paths stay absolute. Game files are not copied into settings. Mods and profile workspaces keep their separate storage locations.
 
 If a game or mod has been moved to another drive, correct the path in the profile. Do not edit the JSON while the launcher is running: the application saves all settings at once and may overwrite manual changes.
 
 ## What to back up
 
-For reliable recovery, it is enough to save:
+For reliable recovery, save:
 
 1. `settings.json` and `settings.backup.json`;
 2. the `userdata` folders of the required regular profiles;
 3. exported profile files.
+
+For profiles using shared game data and for standalone builds, also back up the actual data directory shown in profile settings or Status. Keep game/mod source folders and original archives separately: profile exports contain no game or mod files. In the Standalone launcher, include `Data\StalkerModLauncher` in the backup.
 
 You do not need to back up `current`: the launcher can rebuild it from the base game and mod folders.
 
@@ -375,7 +402,7 @@ The launcher scans typical screenshot folders for the profile and standalone bui
 - **Delete profile** removes the entry and the managed workspace of a regular profile. The source game and mod folders are preserved.
 - Deleting a standalone profile also preserves the ready-made build's folder.
 
-Before deleting a profile with important saves, back up `userdata`.
+Before deleting a profile with important saves, back up its actual game-data directory. Shared data is preserved when the profile is deleted.
 
 ## Mod browser
 
@@ -387,7 +414,9 @@ The launcher does not download or install mods from the browser. Covers and page
 
 For each profile, you can enable **Show profile status in Discord**. Disable this setting if the build already provides its own Rich Presence.
 
-The launcher compares the installed version with the latest GitHub release and, when a newer version is available, offers to open the download page. In the settings, you can enable an automatic check on startup and a system notification; a manual check is available in the **About** window.
+The launcher compares the installed version with the latest GitHub release. Automatic checking on startup and system notifications can be configured in launcher settings; a manual check is available in settings and the **About** window.
+
+When an update is available, settings offer the release page and package download. Choose the compact or Standalone package and confirm installation. The archive is saved beside the launcher, its checksum and contents are verified, and the launcher closes, replaces its application files, and starts again. Existing `Data`, game/mod sources, workspaces, and saves are preserved. Updates cannot be installed while a game or profile preparation/mod installation is active. Choosing a different package type shows a warning because it changes the .NET requirement and launcher-settings location.
 
 ## Usage examples
 
