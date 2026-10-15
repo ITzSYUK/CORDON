@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Services;
 using Xunit;
@@ -7,6 +8,21 @@ namespace StalkerModLauncher.Tests;
 
 public sealed class UsvfsRuntimeTests
 {
+    [Theory]
+    [InlineData(false, UsvfsLogLevel.Info)]
+    [InlineData(true, UsvfsLogLevel.Debug)]
+    public async Task CreateSessionUsesDebugLoggingOnlyWhenDebuggerModeIsRequested(bool debugMode, UsvfsLogLevel logLevel)
+    {
+        var native = new FakeUsvfsNativeApi();
+        var runtime = new UsvfsRuntime(native);
+        await using var session = runtime.CreateSession(
+            new UsvfsMappingPlan(@"C:\game", @"C:\overwrite", []),
+            new UsvfsRuntimeOptions("test-instance", DebugMode: debugMode));
+
+        Assert.Equal(debugMode, native.DebugMode);
+        Assert.Equal(logLevel, native.LogLevel);
+    }
+
     [Fact]
     public async Task RunAsyncAppliesMappingsInPriorityOrderAndRunsHookedProcess()
     {
@@ -142,6 +158,70 @@ public sealed class UsvfsRuntimeTests
     }
 
     [Fact]
+    public async Task CreateSessionRotatesBufferedUtf8MessagesAtByteLimit()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "StalkerModLauncherUsvfsLogTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            var logPath = Path.Combine(root, "usvfs.log");
+            var prefix = new string('x', 2 * 1024 * 1024 - 6);
+            File.WriteAllText(logPath, prefix, new UTF8Encoding(false));
+            var native = new FakeUsvfsNativeApi();
+            native.LogMessages.Enqueue("я");
+            native.LogMessages.Enqueue("🙂");
+            native.LogMessages.Enqueue("tail");
+
+            await using (new UsvfsRuntime(native).CreateSession(
+                             new UsvfsMappingPlan(@"C:\virtual", @"C:\overwrite", []),
+                             new UsvfsRuntimeOptions("test-instance", DiagnosticLogPath: logPath)))
+            {
+            }
+
+            Assert.Equal(prefix + "я" + Environment.NewLine, await File.ReadAllTextAsync(Path.Combine(root, "usvfs.old.log")));
+            Assert.Equal("🙂" + Environment.NewLine + "tail" + Environment.NewLine, await File.ReadAllTextAsync(logPath));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task CreateSessionFlushesDiagnosticBatchBeforeSessionEnds()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "StalkerModLauncherUsvfsLogTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var native = new FakeUsvfsNativeApi();
+            var logPath = Path.Combine(root, "usvfs.log");
+            await using (new UsvfsRuntime(native).CreateSession(
+                             new UsvfsMappingPlan(@"C:\virtual", @"C:\overwrite", []),
+                             new UsvfsRuntimeOptions("test-instance", DiagnosticLogPath: logPath)))
+            {
+                native.LogMessages.Enqueue("live diagnostic");
+                Assert.True(SpinWait.SpinUntil(() =>
+                {
+                    if (!File.Exists(logPath))
+                    {
+                        return false;
+                    }
+
+                    using var reader = new StreamReader(new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                    return reader.ReadToEnd().Contains("live diagnostic", StringComparison.Ordinal);
+                }, TimeSpan.FromSeconds(5)));
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void X86HostProcessListIgnoresInvalidEntries()
     {
         var path = Path.Combine(Path.GetTempPath(), $"stalker-usvfs-pids-{Guid.NewGuid():N}");
@@ -167,6 +247,8 @@ public sealed class UsvfsRuntimeTests
         public string? CommandLine { get; private set; }
         public string? WorkingDirectory { get; private set; }
         public bool? LogToConsole { get; private set; }
+        public bool? DebugMode { get; private set; }
+        public UsvfsLogLevel? LogLevel { get; private set; }
         public ConcurrentQueue<string> LogMessages { get; } = new();
 
         public IntPtr CreateParameters()
@@ -187,8 +269,17 @@ public sealed class UsvfsRuntimeTests
             Calls.Add("set-instance");
         }
 
-        public void SetDebugMode(IntPtr parameters, bool debugMode) => Calls.Add("set-debug");
-        public void SetLogLevel(IntPtr parameters, UsvfsLogLevel level) => Calls.Add("set-log-level");
+        public void SetDebugMode(IntPtr parameters, bool debugMode)
+        {
+            DebugMode = debugMode;
+            Calls.Add("set-debug");
+        }
+
+        public void SetLogLevel(IntPtr parameters, UsvfsLogLevel level)
+        {
+            LogLevel = level;
+            Calls.Add("set-log-level");
+        }
         public void SetCrashDumpType(IntPtr parameters, UsvfsCrashDumpType type) => Calls.Add("set-dump-type");
         public void SetCrashDumpPath(IntPtr parameters, string path) => Calls.Add("set-dump-path");
         public void InitLogging(bool toLocal)

@@ -76,7 +76,7 @@ public sealed class UsvfsRuntime(IUsvfsNativeApi nativeApi) : IUsvfsRuntime
     {
         nativeApi.SetInstanceName(parameters, options.InstanceName);
         nativeApi.SetDebugMode(parameters, options.DebugMode);
-        nativeApi.SetLogLevel(parameters, UsvfsLogLevel.Debug);
+        nativeApi.SetLogLevel(parameters, options.DebugMode ? UsvfsLogLevel.Debug : UsvfsLogLevel.Info);
         nativeApi.SetCrashDumpType(parameters, UsvfsCrashDumpType.None);
         nativeApi.SetCrashDumpPath(parameters, string.Empty);
     }
