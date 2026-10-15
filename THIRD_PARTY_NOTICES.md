@@ -12,7 +12,7 @@ CORDON includes or uses the following third-party components. Their original lic
 - Source revision: `57f1ea5e6ad13f7435a7af184748e6c1312c5637`
 - Build compatibility patch: `scripts/patches/usvfs-msvc-pch.patch`
 
-The release package contains unmodified runtime binaries built from the upstream project. The complete corresponding source is available from the linked repository. The launcher itself is distributed under GNU GPLv3.
+The release package contains runtime binaries built from the pinned upstream revision with the tracked MSVC build compatibility patch. The corresponding upstream source is available from the linked repository; the patch and build manifest are included in this launcher's source repository. The launcher itself is distributed under GNU GPLv3.
 
 ## Managed libraries
 

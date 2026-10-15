@@ -10,6 +10,7 @@ internal sealed class UsvfsLogCollector : IDisposable
     private readonly string _logPath;
     private readonly ManualResetEventSlim _stop = new(false);
     private readonly Thread _thread;
+    private long _logFileBytes;
     private int _disposed;
 
     public UsvfsLogCollector(IUsvfsNativeApi nativeApi, string logPath)
@@ -69,14 +70,14 @@ internal sealed class UsvfsLogCollector : IDisposable
         {
             if (!_nativeApi.TryGetLogMessage(out var message))
             {
-                return;
+                break;
             }
 
             if (!string.IsNullOrWhiteSpace(message))
             {
                 var line = message.TrimEnd();
                 var lineBytes = Encoding.UTF8.GetByteCount(line) + Environment.NewLine.Length;
-                if (writer.BaseStream.Length + lineBytes > MaxLogFileBytes)
+                if (_logFileBytes + lineBytes > MaxLogFileBytes)
                 {
                     writer.Dispose();
                     RotateLogFile(_logPath);
@@ -84,18 +85,20 @@ internal sealed class UsvfsLogCollector : IDisposable
                 }
 
                 writer.WriteLine(line);
+                _logFileBytes += lineBytes;
             }
         }
+
+        writer.Flush();
     }
 
     private StreamWriter OpenWriter()
     {
-        return new StreamWriter(
+        var writer = new StreamWriter(
             new FileStream(_logPath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite),
-            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false))
-        {
-            AutoFlush = true
-        };
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        _logFileBytes = writer.BaseStream.Length;
+        return writer;
     }
 
     private static void PrepareLogFile(string logPath)

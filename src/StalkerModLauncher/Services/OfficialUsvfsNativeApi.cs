@@ -7,6 +7,8 @@ namespace StalkerModLauncher.Services;
 
 public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
 {
+    private readonly byte[] _logBuffer = new byte[8192];
+
     public IntPtr CreateParameters()
     {
         var parameters = Native.usvfsCreateParameters();
@@ -80,7 +82,7 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
 
     public bool TryGetLogMessage(out string message)
     {
-        var buffer = new byte[8192];
+        var buffer = _logBuffer;
         if (!Native.usvfsGetLogMessages(buffer, (nuint)buffer.Length, blocking: false))
         {
             message = string.Empty;
