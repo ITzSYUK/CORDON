@@ -1078,6 +1078,8 @@
   <data name="Health_StatusError" xml:space="preserve"><value>Ошибка</value></data>
   <data name="Writable_LocalizationReason" xml:space="preserve"><value>Anomaly и некоторые сборки X-Ray записывают выбор языка в gamedata.</value></data>
   <data name="Writable_OptionsReason" xml:space="preserve"><value>Anomaly записывает состояние лаунчера и параметров среды в axr_options.ltx.</value></data>
+  <data name="Error_AppDataAliasFormat" xml:space="preserve"><value>Не удалось перенаправить appdata лаунчера Anomaly в выбранную папку данных игры: {0}. Очистите кэш Workspace профиля и повторите запуск.</value></data>
+  <data name="Error_AnomalyFsgameInAppData" xml:space="preserve"><value>Для перенаправления данных AnomalyLauncher конфигурация файловой системы должна находиться вне appdata. Выберите конфигурацию вне этого каталога.</value></data>
   <data name="Log_TrayPanelFailedFormat" xml:space="preserve"><value>Сбой панели трея: {0}</value></data>
   <data name="Log_ReleasePageFailedFormat" xml:space="preserve"><value>Не удалось открыть страницу релиза лаунчера: {0}</value></data>
   <data name="Error_UsvfsAnomalyRootFormat" xml:space="preserve"><value>Лаунчер Anomaly для USVFS должен находиться в корне игры: {0}</value></data>

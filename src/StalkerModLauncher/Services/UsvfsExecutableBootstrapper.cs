@@ -137,6 +137,7 @@ internal static class UsvfsExecutableBootstrapper
             throw new FileNotFoundException(Strings.Error_UsvfsAnomalyBootstrapMissing, executablePath);
         }
 
+        AnomalyAppDataAlias.Prepare(bootstrapRoot, layerPlan);
         progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsAnomalyBootstrapFormat, stats.FileCount, bootstrapRoot));
         return new UsvfsBootstrapResult(executablePath, bootstrapRoot, bootstrapRoot, stats.FileCount);
     }

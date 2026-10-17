@@ -17,6 +17,19 @@ if (args.Length > 0 && args[0] == "--read")
     return RunRead(args);
 }
 
+if (args.Length > 0 && args[0] == "--appdata-child")
+{
+    var user = Path.Combine(args[1], "appdata", "user.ltx");
+    if (File.ReadAllText(user) != "profile settings") return 60;
+    File.WriteAllText(user, "written settings");
+    File.WriteAllText(Path.Combine(args[1], "appdata", "user.tmp"), "replaced settings");
+    File.Move(Path.Combine(args[1], "appdata", "user.tmp"), user, overwrite: true);
+    if (File.ReadAllText(user) != "replaced settings") return 61;
+    File.Delete(user);
+    File.WriteAllText(user, "reset settings");
+    return 0;
+}
+
 return await RunHostAsync(args);
 
 static async Task<int> RunHostAsync(string[] args)
@@ -115,6 +128,7 @@ static async Task<int> RunHostAsync(string[] args)
     if (args.Length == 1)
     {
         await VerifyWritableDirectoryMappingAsync(runtime, root, childExecutable);
+        await VerifyAppDataAliasAsync(runtime, root, childExecutable);
     }
 
     for (var iteration = 1; iteration <= iterations; iteration++)
@@ -227,6 +241,38 @@ static async Task VerifyWritableDirectoryMappingAsync(
     }
 
     Console.WriteLine("USVFS writable-directory regression passed.");
+}
+
+static async Task VerifyAppDataAliasAsync(IUsvfsRuntime runtime, string root, string childExecutable)
+{
+    var scenarioRoot = Path.Combine(root, "appdata-alias-regression");
+    var game = Path.Combine(scenarioRoot, "game");
+    WriteText(Path.Combine(game, "AnomalyLauncher.exe"), "fixture launcher");
+    WriteText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true | false | appdata");
+    WriteText(Path.Combine(game, "appdata", "user.ltx"), "source settings");
+    var profile = new ModProfile { GameInstallPath = game, ExecutableRelativePath = "AnomalyLauncher.exe" };
+    var builder = new WorkspaceBuilder(new AppPaths(
+        Path.Combine(scenarioRoot, "config"), Path.Combine(scenarioRoot, "workspaces"), preferGameDriveWorkspace: false));
+    foreach (var shared in new[] { false, true })
+    {
+        profile.UseBaseGameData = shared;
+        var built = await builder.BuildAsync(game, profile, new Progress<string>());
+        profile.WorkspacePath = built.ProfileWorkspacePath;
+        var layers = FileLayerPlan.CreateLinkedWorkspace(game, profile, profile.WorkspacePath);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, profile.WorkspacePath);
+        Directory.CreateDirectory(manifest.WriteOverlayRoot);
+        WriteText(Path.Combine(manifest.WriteOverlayRoot, "appdata", "user.ltx.old"), "legacy backup");
+        var canonical = Path.Combine(layers.GameDataRoot, "user.ltx");
+        WriteText(canonical, "profile settings");
+        var result = await runtime.RunAsync(
+            UsvfsMappingPlanBuilder.BuildAnomalyLauncherBootstrap(layers, manifest, built.WorkspaceRoot),
+            new UsvfsProcessLaunchRequest(childExecutable, $"--appdata-child {Quote(built.WorkspaceRoot)}", AppContext.BaseDirectory),
+            new UsvfsRuntimeOptions("stalker_appdata_alias_regression", LogToConsole: false));
+        if (result.ExitCode != 0 || ReadText(canonical) != "reset settings" ||
+            File.Exists(Path.Combine(manifest.WriteOverlayRoot, "appdata", "user.ltx")))
+            throw new InvalidOperationException($"USVFS appdata alias regression failed (shared={shared}, exit={result.ExitCode}).");
+    }
+    Console.WriteLine("USVFS appdata alias read/write/replace/reset regression passed (local and shared data).");
 }
 
 static int RunLauncher(string[] args)

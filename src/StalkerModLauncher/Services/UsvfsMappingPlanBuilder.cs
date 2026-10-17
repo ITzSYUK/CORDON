@@ -75,6 +75,9 @@ public static class UsvfsMappingPlanBuilder
         AddWritableFiles(operations, fullVirtualRoot, manifest);
         AddProfileOverwrite(operations, layerPlan, manifest, fullVirtualRoot);
 
+        if (layerPlan.UsesAnomalyAppDataAlias)
+            operations.RemoveAll(operation => AnomalyAppDataAlias.IsAppDataPath(Path.GetRelativePath(fullVirtualRoot, operation.DestinationPath)));
+
         return new UsvfsMappingPlan(
             fullVirtualRoot,
             Path.GetFullPath(manifest.WriteOverlayRoot),

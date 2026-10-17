@@ -867,6 +867,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         Environment.SetEnvironmentVariable(UsvfsFeatureGate.EnableEnvironmentVariable, _previousGateValue);
         if (Directory.Exists(_root))
         {
+            foreach (var directory in Directory.EnumerateDirectories(_root))
+                AnomalyAppDataAlias.Detach(Path.Combine(directory, ".usvfs-bootstrap"));
             Directory.Delete(_root, recursive: true);
         }
     }
