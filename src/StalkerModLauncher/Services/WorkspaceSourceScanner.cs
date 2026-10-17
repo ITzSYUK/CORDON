@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.IO.Enumeration;
 using System.Text;
 using System.Text.Json.Serialization;
 using StalkerModLauncher.Models;
@@ -11,7 +12,7 @@ internal static class WorkspaceSourceScanner
 {
     public static WorkspaceSourceSnapshot Capture(FileLayerPlan plan, CancellationToken cancellationToken)
     {
-        var game = CaptureDirectory(plan.BaseGame.RootPath, cancellationToken);
+        var game = CaptureDirectory(plan.BaseGame.RootPath, cancellationToken, plan.UsesAnomalyAppDataAlias);
         var mods = new Dictionary<string, DirectorySnapshot>();
         foreach (var layer in plan.Mods)
         {
@@ -21,7 +22,7 @@ internal static class WorkspaceSourceScanner
                 throw new DirectoryNotFoundException(LocalizedText.Format(Strings.Error_ModFolderNotFoundFormat, layer.RootPath));
             }
 
-            mods.Add(layer.Id, CaptureDirectory(layer.RootPath, cancellationToken));
+            mods.Add(layer.Id, CaptureDirectory(layer.RootPath, cancellationToken, plan.UsesAnomalyAppDataAlias));
         }
 
         return new WorkspaceSourceSnapshot(game, mods);
@@ -159,14 +160,24 @@ internal static class WorkspaceSourceScanner
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString())));
     }
 
-    private static DirectorySnapshot CaptureDirectory(string directoryPath, CancellationToken cancellationToken)
+    private static DirectorySnapshot CaptureDirectory(string directoryPath, CancellationToken cancellationToken, bool skipAppData = false)
     {
-        var fullRoot = Path.GetFullPath(directoryPath);
+        var fullRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directoryPath));
         var directories = new List<string>();
         var files = new List<SourceFileSnapshot>();
         var root = new DirectoryInfo(fullRoot);
 
-        foreach (var entry in root.EnumerateFileSystemInfos("*", SafeEnumerationOptions))
+        var entries = skipAppData
+            ? new FileSystemEnumerable<FileSystemInfo>(fullRoot,
+                (ref FileSystemEntry entry) => entry.ToFileSystemInfo(), SafeEnumerationOptions)
+            {
+                ShouldIncludePredicate = (ref FileSystemEntry entry) =>
+                    entry.Directory.Length != fullRoot.Length || !entry.FileName.Equals("appdata", StringComparison.OrdinalIgnoreCase),
+                ShouldRecursePredicate = (ref FileSystemEntry entry) =>
+                    entry.Directory.Length != fullRoot.Length || !entry.FileName.Equals("appdata", StringComparison.OrdinalIgnoreCase)
+            }
+            : root.EnumerateFileSystemInfos("*", SafeEnumerationOptions);
+        foreach (var entry in entries)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var relativePath = Path.GetRelativePath(fullRoot, entry.FullName);
@@ -198,6 +209,7 @@ internal static class WorkspaceSourceScanner
         IgnoreInaccessible = false,
         AttributesToSkip = FileAttributes.ReparsePoint
     };
+
 }
 
 internal sealed record WorkspaceSourceSnapshot(

@@ -286,6 +286,14 @@ On first preparation, the source is selected from the highest-priority layer dow
 
 If the profile copy still equals the previous lower-layer source, a new `user.ltx` from a higher-priority patch may safely replace it.
 
+For profiles launching AnomalyLauncher, `current\appdata` and the launcher's USVFS bootstrap `appdata` are NTFS directory junctions to the selected `GameDataRoot`. The launcher and engine therefore use one active `user.ltx`. Switching local/shared data retargets the junction without copying settings between stores. Source `appdata` trees are omitted from Workspace materialization and its fingerprint, and from the Anomaly bootstrap directory mappings; shader-cache seeding still uses the original layers. USVFS does not recursively map the selected data directory. Cleanup detaches the junctions before deleting runtime directories.
+
+The first Workspace launch after upgrading rebuilds only AnomalyLauncher profiles once to replace the old physical `appdata` tree. Obsolete launcher-only `user.ltx` copies are removed when identical to the selected file; differing copies are preserved as `diagnostics\user.ltx.migrated-<ID>.bak`. Existing selected settings are not replaced by those copies. Standalone profiles retain their direct-launch behavior.
+
+For AnomalyLauncher, the selected file-system configuration must be outside `appdata`. An overlapping configuration is rejected before preparation so redirecting shared data cannot overwrite the original configuration.
+
+On 17 October 2026, a synthetic fixture with 40 overlapping mods, 10,000 source configuration files and 2,000 profile saves was measured before and after this change under identical permissions (Release, warm file cache, one warmup plus seven measured runs, medians). Cached Workspace preparation changed from 424.66 ms to 117.29 ms after eliminating repeated existence checks for the same paths across layers. USVFS data and mapping-plan preparation changed from 74.64 ms to 84.55 ms. These measurements exclude native session/process creation, game loading and FPS.
+
 ### Shader cache
 
 Prepared shader caches from layer appdata folders are merged according to priority. Existing user cache files are not overwritten without a reason. This supports Anomaly builds that ship a prepared cache with their fixes or presets.
@@ -294,7 +302,7 @@ Prepared shader caches from layer appdata folders are merged according to priori
 
 Some engines write configuration inside the game tree. Known paths including `gamedata\configs\localization.ltx` and Anomaly `gamedata\configs\axr_options.ltx` receive a separate profile copy under `userdata\writable-game-files`. Workspace materializes these as independent local copies from the first build instead of hard-linking them to a source.
 
-Workspace places that copy into `current` and collects changes before the next preparation or profile cleanup. When switching between Workspace and USVFS, the newer of the two copies wins, so a stale `current` cannot overwrite settings changed through USVFS. On its first launch, USVFS seeds the profile copy from the highest-priority layer and maps it to the expected virtual path. Legacy copies of these files under `userdata\overwrite` are migrated into the profile store.
+Workspace places that copy into `current` and collects changes before the next preparation or profile cleanup, including preparation for USVFS. When switching between Workspace and USVFS, the newer of the two copies wins, so a stale `current` cannot overwrite settings changed through USVFS. On its first launch, USVFS seeds the profile copy from the highest-priority layer and maps it to the expected virtual path. Legacy copies of these files under `userdata\overwrite` are migrated into the profile store.
 
 ### Standalone profiles
 

@@ -89,6 +89,9 @@ public static class FileSystemSafety
 
         // Never change attributes here: workspace files can be hard links to original game files,
         // and NTFS attributes are shared by every hard link to the same file.
+        AnomalyAppDataAlias.Detach(directoryPath);
+        AnomalyAppDataAlias.Detach(Path.Combine(directoryPath, "current"));
+        AnomalyAppDataAlias.Detach(Path.Combine(directoryPath, ".usvfs-bootstrap"));
         Directory.Delete(directoryPath, recursive: true);
     }
 

@@ -71,6 +71,11 @@ internal static class ProfileDataConfigurator
         Directory.CreateDirectory(profileDataPath);
         if (layerPlan?.UsesSharedGameData == true)
         {
+            if (layerPlan.UsesAnomalyAppDataAlias)
+            {
+                AnomalyAppDataAlias.Prepare(currentWorkspace, layerPlan);
+                AnomalyAppDataAlias.ArchiveLegacyUserFiles(profileWorkspace, profileDataPath);
+            }
             progress.Report(LocalizedText.Format(Strings.ProfileData_SharedFormat, profileDataPath));
             return workingDirectoryRelative;
         }
@@ -85,6 +90,11 @@ internal static class ProfileDataConfigurator
         if (layerPlan is not null)
         {
             ProfileShaderCacheSeeder.Seed(layerPlan, profileDataPath, progress, cancellationToken);
+            if (layerPlan.UsesAnomalyAppDataAlias)
+            {
+                AnomalyAppDataAlias.Prepare(currentWorkspace, layerPlan);
+                AnomalyAppDataAlias.ArchiveLegacyUserFiles(profileWorkspace, profileDataPath);
+            }
         }
 
         progress.Report(Strings.Progress_FsgameRewritten);
@@ -275,7 +285,7 @@ internal static class ProfileDataConfigurator
         }
     }
 
-    private static bool FilesAreEqual(string first, string second)
+    internal static bool FilesAreEqual(string first, string second)
     {
         var firstInfo = new FileInfo(first);
         var secondInfo = new FileInfo(second);

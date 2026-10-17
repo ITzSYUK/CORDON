@@ -28,6 +28,7 @@ public sealed partial class FileLayerPlan
     public FileLayer UserData { get; }
     public string GameDataRoot { get; private set; } = string.Empty;
     public bool UsesSharedGameData { get; private init; }
+    internal bool UsesAnomalyAppDataAlias { get; private set; }
     internal ProfileFsgameSource? ManualFsgameSource { get; private set; }
     internal bool UsesFsgameLaunchArgument { get; private set; }
     internal string FsgameLaunchRelativePath => _automaticFsgameRelativePath;
@@ -209,6 +210,13 @@ public sealed partial class FileLayerPlan
             workspaceRoot,
             gamePath,
             launchArgumentSource?.FullPath);
+        var executable = plan.FindFinalFile(profile.ExecutableRelativePath);
+        plan.UsesAnomalyAppDataAlias = executable is not null &&
+            (AnomalyLauncherLocator.IsLauncherExecutable(executable.FullPath) ||
+             AnomalyLauncherLocator.IsBaseGameLauncher(gamePath, executable.FullPath));
+        if (plan.UsesAnomalyAppDataAlias && plan.FindFsgameSource() is { } fsgame &&
+            AnomalyAppDataAlias.IsAppDataPath(fsgame.RelativePath))
+            throw new InvalidOperationException(Strings.Error_AnomalyFsgameInAppData);
         return plan;
     }
 
