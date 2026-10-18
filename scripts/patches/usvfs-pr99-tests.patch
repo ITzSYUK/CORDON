@@ -1,0 +1,175 @@
+diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
+index 9f91331..830ae9f 100644
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -38 +38 @@ function(usvfs_target_link_usvfs TARGET)
+-    target_link_libraries(${TARGET} PRIVATE usvfs_dll)
++    target_link_libraries(${TARGET} PRIVATE usvfs_dll delayimp)
+diff --git a/test/tvfs_directory_bench/CMakeLists.txt b/test/tvfs_directory_bench/CMakeLists.txt
+index c87a961..c5ae3a6 100644
+--- a/test/tvfs_directory_bench/CMakeLists.txt
++++ b/test/tvfs_directory_bench/CMakeLists.txt
+@@ -3 +3,5 @@ cmake_minimum_required(VERSION 3.16)
+-find_package(benchmark CONFIG REQUIRED)
++find_package(benchmark CONFIG QUIET)
++if(NOT benchmark_FOUND)
++    message(STATUS "Google Benchmark not installed; building correctness tests only")
++    return()
++endif()
+diff --git a/test/tvfs_test/directory_enumeration.cpp b/test/tvfs_test/directory_enumeration.cpp
+index 7290b52..4944b8b 100644
+--- a/test/tvfs_test/directory_enumeration.cpp
++++ b/test/tvfs_test/directory_enumeration.cpp
+@@ -1213 +1213,2 @@ ListedQuery queryOnce(NtQueryDirectoryFile_type query, HANDLE directory,
+-  std::vector<std::byte> buffer(listing.length);
++  constexpr std::byte CANARY{0x5a};
++  std::vector<std::byte> buffer(listing.length + 32, CANARY);
+@@ -1220,0 +1222,2 @@ ListedQuery queryOnce(NtQueryDirectoryFile_type query, HANDLE directory,
++  EXPECT_TRUE(std::ranges::all_of(std::span(buffer).subspan(listing.length),
++                                [](std::byte value) { return value == CANARY; }));
+@@ -1222,0 +1226,4 @@ ListedQuery queryOnce(NtQueryDirectoryFile_type query, HANDLE directory,
++    EXPECT_LE(listed.outcome.statusBlock.Information, listing.length);
++    if (listed.outcome.statusBlock.Information > listing.length) {
++      return listed;
++    }
+@@ -1923,0 +1931,62 @@ std::vector<std::wstring> recordNames(const DirectoryRecordLayout& layout,
++// Compare the complete stream; NTFS may split the same names into different batches.
++void listCheckedNames(NtQueryDirectoryFile_type query, HANDLE directory,
++                      ListingQuery listing, size_t entryCount,
++                      std::vector<std::wstring>& names, bool changeClass = false)
++{
++  size_t classIndex =
++      std::ranges::find(DIRECTORY_INFORMATION_CLASSES, listing.informationClass) -
++      std::begin(DIRECTORY_INFORMATION_CLASSES);
++  for (size_t call = 0; call <= entryCount; ++call) {
++    SCOPED_TRACE(call);
++    listing.informationClass = DIRECTORY_INFORMATION_CLASSES[classIndex];
++    ListingQuery current = listing;
++    const DirectoryRecordLayout layout =
++        findDirectoryRecordLayout(current.informationClass).value();
++    ListedQuery result = queryOnce(query, directory, current);
++    // A larger information class may need more room for the same next file.
++    if (result.outcome.result == STATUS_BUFFER_OVERFLOW ||
++        (result.outcome.result == STATUS_SUCCESS && result.data.empty())) {
++      ASSERT_TRUE(changeClass);
++      ASSERT_EQ(result.outcome.result, result.outcome.statusBlock.Status);
++      if (result.outcome.result == STATUS_BUFFER_OVERFLOW) {
++        ASSERT_TRUE(DirectoryRecord(layout, result.data).isTruncated());
++      }
++      current.length = 0x1000;
++      result = queryOnce(query, directory, current);
++    }
++    if (result.outcome.result == STATUS_NO_MORE_FILES) {
++      ASSERT_EQ(entryCount, names.size());
++      return;
++    }
++    ASSERT_EQ(STATUS_SUCCESS, result.outcome.result);
++    ASSERT_EQ(STATUS_SUCCESS, result.outcome.statusBlock.Status);
++    ASSERT_FALSE(result.data.empty());
++    ASSERT_LE(result.data.size(), current.length);
++    size_t offset = 0;
++    size_t count = 0;
++    for (;;) {
++      ASSERT_GE(result.data.size() - offset, layout.fileNameOffset);
++      const DirectoryRecord record(layout, std::span(result.data).subspan(offset));
++      ASSERT_FALSE(record.isTruncated());
++      ASSERT_EQ(0u, record.fileNameLength() % sizeof(WCHAR));
++      names.push_back(record.fileName());
++      ++count;
++      if (record.nextEntryOffset() == 0) {
++        ASSERT_EQ(result.data.size(), offset + record.size());
++        break;
++      }
++      ASSERT_EQ(0u, record.nextEntryOffset() % 8);
++      ASSERT_GE(record.nextEntryOffset(), record.size());
++      ASSERT_LT(record.nextEntryOffset(), result.data.size() - offset);
++      offset += record.nextEntryOffset();
++    }
++    if (listing.isSingleEntry) {
++      ASSERT_EQ(1u, count);
++    }
++    if (changeClass) {
++      classIndex = (classIndex + 1) % std::size(DIRECTORY_INFORMATION_CLASSES);
++    }
++  }
++  FAIL() << "listing did not terminate";
++}
++
+@@ -1926,4 +1995 @@ std::vector<std::wstring> recordNames(const DirectoryRecordLayout& layout,
+-// ntdll is the reference for how many virtual entries a query returns, as it lists
+-// files of the virtual names: as many as the buffer holds, the first that does not fit
+-// starting the next query. The pattern leaves out "." and "..", so the regular entries
+-// end before the first query writes any.
++// The full ordered listing must match ntdll, with valid records in every batch.
+@@ -1974,14 +2040,6 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsSeveralVirtualEntriesPerQueryLikeNtdl
+-        const std::vector<ListedQuery> expected =
+-            listQueries(nativeQueryDirectoryFile(), namesakeHandle, listing);
+-        const std::vector<ListedQuery> actual =
+-            listQueries(&usvfs::hook_NtQueryDirectoryFile, hookedHandle, listing);
+-
+-        ASSERT_EQ(expected.size(), actual.size());
+-        for (size_t query = 0; query < expected.size(); ++query) {
+-          SCOPED_TRACE(query);
+-          expectSameOutcome(expected[query].outcome, actual[query].outcome);
+-          EXPECT_EQ(recordOffsets(layout, expected[query].data),
+-                    recordOffsets(layout, actual[query].data));
+-          EXPECT_EQ(recordNames(layout, expected[query].data),
+-                    recordNames(layout, actual[query].data));
+-        }
++        std::vector<std::wstring> expected, actual;
++        listCheckedNames(nativeQueryDirectoryFile(), namesakeHandle, listing,
++                         ENTRY_COUNT, expected);
++        listCheckedNames(&usvfs::hook_NtQueryDirectoryFile, hookedHandle, listing,
++                         ENTRY_COUNT, actual);
++        EXPECT_EQ(expected, actual);
+@@ -2081,27 +2139,7 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
+-      size_t classIndex =
+-          std::ranges::find(DIRECTORY_INFORMATION_CLASSES, informationClass) -
+-          std::begin(DIRECTORY_INFORMATION_CLASSES);
+-      for (size_t query = 0;; ++query) {
+-        SCOPED_TRACE(query);
+-        const FILE_INFORMATION_CLASS queryClass =
+-            DIRECTORY_INFORMATION_CLASSES[classIndex];
+-        const ListingQuery listing{queryClass, length, false, PATTERN};
+-        const ListedQuery expected =
+-            queryOnce(nativeQueryDirectoryFile(), namesakeHandle, listing);
+-        const ListedQuery actual =
+-            queryOnce(&usvfs::hook_NtQueryDirectoryFile, hookedHandle, listing);
+-
+-        expectSameOutcome(expected.outcome, actual.outcome);
+-        const DirectoryRecordLayout queryLayout =
+-            findDirectoryRecordLayout(queryClass).value();
+-        EXPECT_EQ(recordOffsets(queryLayout, expected.data),
+-                  recordOffsets(queryLayout, actual.data));
+-        EXPECT_EQ(recordNames(queryLayout, expected.data),
+-                  recordNames(queryLayout, actual.data));
+-        if (expected.outcome.result != STATUS_SUCCESS || query > LISTED_COUNT) {
+-          break;
+-        }
+-        if (isClassChanging) {
+-          classIndex = (classIndex + 1) % std::size(DIRECTORY_INFORMATION_CLASSES);
+-        }
+-      }
++      const ListingQuery listing{informationClass, length, false, PATTERN};
++      std::vector<std::wstring> expected, actual;
++      listCheckedNames(nativeQueryDirectoryFile(), namesakeHandle, listing,
++                       LISTED_COUNT, expected, isClassChanging);
++      listCheckedNames(&usvfs::hook_NtQueryDirectoryFile, hookedHandle, listing,
++                       LISTED_COUNT, actual, isClassChanging);
++      EXPECT_EQ(expected, actual);
+@@ -2162,0 +2201,15 @@ TEST_F(USVFSTest, NtQueryDirectoryFileMatchesVirtualEntriesLikeNtdll)
++    // Virtual names have no source 8.3 aliases; give the reference the same namespace.
++    WIN32_FIND_DATAW found{};
++    HANDLE search = ::FindFirstFileW((namesakeDirectory / names[index]).c_str(), &found);
++    ASSERT_NE(INVALID_HANDLE_VALUE, search);
++    ::FindClose(search);
++    if (found.cAlternateFileName[0] != L'\0') {
++      HANDLE file = ::CreateFileW((namesakeDirectory / names[index]).c_str(), DELETE,
++                                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
++                                 nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
++      ASSERT_NE(INVALID_HANDLE_VALUE, file);
++      const BOOL removed = ::SetFileShortNameW(file, L"");
++      const DWORD error = ::GetLastError();
++      ::CloseHandle(file);
++      ASSERT_TRUE(removed) << "SetFileShortNameW: " << error;
++    }

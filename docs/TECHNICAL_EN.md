@@ -546,6 +546,8 @@ The `.github\workflows\usvfs.yml` workflow repeats the complete build and smoke 
 
 ## 17. Known limitations
 
+Experimental PR #99 can be compiled separately with `.\scripts\Build-UsvfsPr99.ps1` after the normal native dependencies have been prepared. It pins commit `c5f7ef2085bd29a3cca2cd57f3aba84dae030ff5`, applies `scripts\patches\usvfs-pr99-tests.patch`, runs all native correctness suites and `Test-UsvfsRuntime.ps1` for x64/x86, and writes four runtime files plus `build-info.json` to `.external\usvfs-pr99\runtime`. It reuses the normal vcpkg dependency installations and x86 smoke tools; it does not change the normal source, runtime manifest or publish folders. Visual Studio 2022/2026 with MSVC v143, CMake, Git and an ASCII TEMP path are required. The patch corrects batch-boundary and 8.3-name assumptions in tests and their build; it does not change the PR runtime algorithm. This version remains experimental: asynchronous directory enumeration sees only physical entries. Use these four files only in a separate test copy of the launcher.
+
 - USVFS and Workspace are both considered stable. Use the other backend for builds that are incompatible with one of them.
 - USVFS requires the Microsoft Visual C++ 2015-2022 Redistributable matching the target game's architecture.
 - Cross-drive symbolic links depend on Windows configuration.
