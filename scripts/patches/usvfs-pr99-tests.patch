@@ -17,7 +17,7 @@ index c87a961..c5ae3a6 100644
 +    return()
 +endif()
 diff --git a/test/tvfs_test/directory_enumeration.cpp b/test/tvfs_test/directory_enumeration.cpp
-index 7290b52..4944b8b 100644
+index 7290b52..889db2f 100644
 --- a/test/tvfs_test/directory_enumeration.cpp
 +++ b/test/tvfs_test/directory_enumeration.cpp
 @@ -1213 +1213,2 @@ ListedQuery queryOnce(NtQueryDirectoryFile_type query, HANDLE directory,
@@ -157,7 +157,56 @@ index 7290b52..4944b8b 100644
 +      listCheckedNames(&usvfs::hook_NtQueryDirectoryFile, hookedHandle, listing,
 +                       LISTED_COUNT, actual, isClassChanging);
 +      EXPECT_EQ(expected, actual);
-@@ -2162,0 +2201,15 @@ TEST_F(USVFSTest, NtQueryDirectoryFileMatchesVirtualEntriesLikeNtdll)
+@@ -2114,0 +2153,48 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
++TEST_F(USVFSTest, NtQueryDirectoryFileKeepsAllMappedRecordsWhenSourceScanStopsEarly)
++{
++  const std::filesystem::path root = test::path_of_test_temp(L"source_scan_early_stop");
++  std::filesystem::remove_all(root);
++  const std::filesystem::path source = root / L"source";
++  std::filesystem::create_directories(source);
++  std::ofstream(source / L"a_early_0.txt");
++  std::ofstream(source / L"a_early_1.txt");
++  // More than one native buffer, even for FileNamesInformation.
++  for (int index = 0; index < 2000; ++index) {
++    std::ofstream(source / std::format(L"m_unused_{:04}.txt", index));
++  }
++  std::ofstream(source / L"z_wanted_tail.txt");
++
++  for (const bool includeTail : {false, true}) {
++    SCOPED_TRACE(includeTail ? "mapped tail" : "unmapped tail");
++    const std::filesystem::path target = root / (includeTail ? L"with_tail" : L"early");
++    std::filesystem::create_directories(target);
++    auto params = defaultUsvfsParams();
++    std::unique_ptr<usvfs::HookContext> ctx(
++        usvfsCreateHookContext(*params, ::GetModuleHandle(nullptr)));
++    std::vector<std::wstring> expected;
++    for (int index = 0; index < (includeTail ? 3 : 2); ++index) {
++      const std::wstring name = std::format(L"wanted_{}.txt", index);
++      const std::wstring sourceName = index == 2 ? L"z_wanted_tail.txt"
++                                               : std::format(L"a_early_{}.txt", index);
++      expected.push_back(name);
++      ctx->redirectionTable().addFile(
++          (target / name).c_str(),
++          usvfs::RedirectionDataLocal((source / sourceName).string()));
++    }
++    for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
++      for (const bool singleEntry : {false, true}) {
++        SCOPED_TRACE(std::format("class {}, single {}",
++                                 static_cast<int>(informationClass), singleEntry));
++        HANDLE handle = openHookedDirectory(target);
++        ASSERT_NE(INVALID_HANDLE_VALUE, handle);
++        std::vector<std::wstring> actual;
++        listCheckedNames(&usvfs::hook_NtQueryDirectoryFile, handle,
++                         {informationClass, 0x1000, singleEntry, L"wanted_*"},
++                         expected.size(), actual, singleEntry);
++        EXPECT_EQ(expected, actual);
++        usvfs::hook_NtClose(handle);
++      }
++    }
++  }
++}
++
+@@ -2162,0 +2249,15 @@ TEST_F(USVFSTest, NtQueryDirectoryFileMatchesVirtualEntriesLikeNtdll)
 +    // Virtual names have no source 8.3 aliases; give the reference the same namespace.
 +    WIN32_FIND_DATAW found{};
 +    HANDLE search = ::FindFirstFileW((namesakeDirectory / names[index]).c_str(), &found);

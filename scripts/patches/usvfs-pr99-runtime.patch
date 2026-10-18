@@ -1,0 +1,234 @@
+diff --git a/src/usvfs_dll/hooks/directory_scan.cpp b/src/usvfs_dll/hooks/directory_scan.cpp
+index ca5f107..5e8a556 100644
+--- a/src/usvfs_dll/hooks/directory_scan.cpp
++++ b/src/usvfs_dll/hooks/directory_scan.cpp
+@@ -31,0 +32 @@
++#include "internal_io.h"
+@@ -92,22 +92,0 @@ private:
+-// Marks the calling thread as doing I/O of the scan itself while it lives: the
+-// NtOpenFile and NtClose hooks then pass the calls straight to ntdll, so that the
+-// handles of the scan are neither rerouted nor tracked, and their opening and closing
+-// takes no lock of the hook context. A count rather than a flag, so that a scope
+-// nested in another one does not end it.
+-class InternalIoScope
+-{
+-public:
+-  InternalIoScope() { ++s_depth; }
+-  ~InternalIoScope() { --s_depth; }
+-
+-  InternalIoScope(const InternalIoScope&)            = delete;
+-  InternalIoScope& operator=(const InternalIoScope&) = delete;
+-
+-  static bool isActive() { return s_depth > 0; }
+-
+-private:
+-  static thread_local int s_depth;
+-};
+-
+-thread_local int InternalIoScope::s_depth = 0;
+-
+@@ -557,0 +537,4 @@ void SourceDirectory::read(const DirectoryRecordLayout& layout,
++      // All requested records are cached; skip the irrelevant tail of the directory.
++      if (m_recordPlaces.size() == m_fileNames.size()) {
++        return;
++      }
+diff --git a/src/usvfs_dll/hooks/internal_io.h b/src/usvfs_dll/hooks/internal_io.h
+new file mode 100644
+index 0000000..3dece5c
+--- /dev/null
++++ b/src/usvfs_dll/hooks/internal_io.h
+@@ -0,0 +1,69 @@
++#pragma once
++
++#include <exception>
++#include <new>
++#include <utility>
++#include <Windows.h>
++#include "../hookcontext.h"
++
++// Suppress rerouting of the directory scanner's own opens and closes, per thread.
++class InternalIoScope
++{
++public:
++  InternalIoScope()
++  {
++    PreserveGetLastError preserve;
++    if (s_slot.index == TLS_OUT_OF_INDEXES) {
++      throw std::bad_alloc();
++    }
++    m_previous = ::TlsGetValue(s_slot.index);
++    if (!::TlsSetValue(s_slot.index, reinterpret_cast<void*>(1))) {
++      throw std::bad_alloc();
++    }
++  }
++
++  ~InternalIoScope()
++  {
++    PreserveGetLastError preserve;
++    // Restore an already populated slot: no allocation or thread cleanup is needed.
++    if (!::TlsSetValue(s_slot.index, m_previous)) {
++      std::terminate();
++    }
++  }
++
++  InternalIoScope(const InternalIoScope&)            = delete;
++  InternalIoScope& operator=(const InternalIoScope&) = delete;
++
++  static bool isActive()
++  {
++    PreserveGetLastError preserve;
++    return s_slot.index != TLS_OUT_OF_INDEXES && ::TlsGetValue(s_slot.index) != nullptr;
++  }
++
++private:
++  // Some native threads have no compiler TLS vector; Win32 TLS does not use it.
++  struct Slot
++  {
++    Slot()
++    {
++      PreserveGetLastError preserve;
++      index = ::TlsAlloc();
++    }
++
++    ~Slot()
++    {
++      PreserveGetLastError preserve;
++      if (index != TLS_OUT_OF_INDEXES) {
++        ::TlsFree(std::exchange(index, TLS_OUT_OF_INDEXES));
++      }
++    }
++
++    DWORD index = TLS_OUT_OF_INDEXES;
++  };
++
++  static Slot s_slot;
++  // Each nested scope restores the outer scope's flag.
++  void* m_previous = nullptr;
++};
++
++inline InternalIoScope::Slot InternalIoScope::s_slot;
+diff --git a/test/tvfs_test/CMakeLists.txt b/test/tvfs_test/CMakeLists.txt
+index 8aac638..2b9de11 100644
+--- a/test/tvfs_test/CMakeLists.txt
++++ b/test/tvfs_test/CMakeLists.txt
+@@ -5 +5 @@ find_package(GTest CONFIG REQUIRED)
+-add_executable(tvfs_test main.cpp directory_enumeration.cpp)
++add_executable(tvfs_test main.cpp directory_enumeration.cpp internal_io_test.cpp)
+diff --git a/test/tvfs_test/internal_io_test.cpp b/test/tvfs_test/internal_io_test.cpp
+new file mode 100644
+index 0000000..3fe611b
+--- /dev/null
++++ b/test/tvfs_test/internal_io_test.cpp
+@@ -0,0 +1,112 @@
++#include "pch.h"
++
++#include <thread>
++#include <memory>
++#include <gtest/gtest.h>
++#include <hooks/internal_io.h>
++#include <hookcontext.h>
++#include "tvfs_test.h"
++
++namespace
++{
++
++__declspec(noinline) bool exerciseScope(void* context)
++{
++  const bool initiallyActive = context != nullptr;
++  if (InternalIoScope::isActive() != initiallyActive) {
++    return false;
++  }
++  {
++    const InternalIoScope outer;
++    if (!InternalIoScope::isActive()) {
++      return false;
++    }
++    {
++      const InternalIoScope inner;
++      if (!InternalIoScope::isActive()) {
++        return false;
++      }
++    }
++    if (!InternalIoScope::isActive()) {
++      return false;
++    }
++  }
++  return InternalIoScope::isActive() == initiallyActive;
++}
++
++// Test only: TEB static TLS vector at 0x58 (x64) / 0x2c (x86), restored before CRT use.
++DWORD exerciseWithoutStaticTls(bool (*probe)(void*), void* context, bool* matched)
++{
++  PVOID volatile* storage = reinterpret_cast<PVOID volatile*>(NtCurrentTeb()) + 11;
++  PVOID saved = *storage;
++  DWORD exception = 0;
++  __try {
++    *storage = nullptr;
++    *matched = probe(context);
++  } __except (EXCEPTION_EXECUTE_HANDLER) {
++    exception = GetExceptionCode();
++  }
++  *storage = saved;
++  return exception;
++}
++
++bool closeHookedEvent(void* handle)
++{
++  constexpr DWORD SENTINEL = 0x12345678;
++  ::SetLastError(SENTINEL);
++  const NTSTATUS result = usvfs::hook_NtClose(handle);
++  const DWORD lastError = ::GetLastError();
++  return result == STATUS_SUCCESS && lastError == SENTINEL;
++}
++
++}  // namespace
++
++TEST(InternalIoScopeTest, PreservesNestingAndLastError)
++{
++  constexpr DWORD SENTINEL = 0x12345678;
++  ::SetLastError(SENTINEL);
++  const bool matched = exerciseScope(nullptr);
++  const DWORD lastError = ::GetLastError();
++  EXPECT_TRUE(matched);
++  EXPECT_EQ(SENTINEL, lastError);
++}
++
++TEST(InternalIoScopeTest, IsolatesThreads)
++{
++  const InternalIoScope outer;
++  bool matched = false;
++  std::thread worker([&] { matched = exerciseScope(nullptr); });
++  worker.join();
++  EXPECT_TRUE(matched);
++  EXPECT_TRUE(InternalIoScope::isActive());
++}
++
++TEST(InternalIoScopeTest, WorksWithoutStaticTlsVector)
++{
++  bool matched = false;
++  EXPECT_EQ(0u, exerciseWithoutStaticTls(exerciseScope, nullptr, &matched));
++  EXPECT_TRUE(matched);
++  {
++    const InternalIoScope outer;
++    matched = false;
++    EXPECT_EQ(0u, exerciseWithoutStaticTls(exerciseScope, &matched, &matched));
++    EXPECT_TRUE(matched);
++  }
++  EXPECT_FALSE(InternalIoScope::isActive());
++}
++
++TEST_F(USVFSTest, NtCloseWorksWithoutStaticTlsVector)
++{
++  auto params = defaultUsvfsParams();
++  std::unique_ptr<usvfs::HookContext> ctx(
++      usvfsCreateHookContext(*params, ::GetModuleHandle(nullptr)));
++  HANDLE event = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
++  ASSERT_NE(nullptr, event);
++  bool matched = false;
++  const DWORD exception = exerciseWithoutStaticTls(closeHookedEvent, event, &matched);
++  if (exception != 0) {
++    ::CloseHandle(event);
++  }
++  EXPECT_EQ(0u, exception);
++  EXPECT_TRUE(matched);
++}

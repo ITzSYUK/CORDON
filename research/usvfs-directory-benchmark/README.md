@@ -48,5 +48,16 @@ It measures warm x64 enumeration, not game startup, FPS, native heap usage, or
 asynchronous NT API compatibility. Run `scripts/Test-UsvfsRuntime.ps1` and the
 candidate's native correctness tests separately, sequentially.
 
+For early source-scan completion, `--fixture-sparse <new-directory>` creates four
+source folders with 10,002 files each: two selected names at the beginning and
+10,000 unrelated names after them. Run the built executable with
+`--host <runtime-root> <same-fixture-directory> <result.json>` for each runtime.
+The timed Win32 search uses `FindFirstFileW`/`FindNextFileW` with `a-selected-*`
+(eight files), passing the pattern to USVFS. The normal .NET enumeration filters
+names after reading them and does not isolate this optimization. A complete untimed
+recursive listing, sampled contents and overwrite checks still run. Compare medians on the
+same fixture; this deliberately favorable case measures skipped tail work, not
+expected seconds saved during game startup.
+
 See [the experiment report](../../docs/USVFS_BATCHED_ENUMERATION_RU.md) for results,
 the diagnosis of the original test failures, and the decision about adoption.

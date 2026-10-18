@@ -5,12 +5,21 @@ $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $sourceRoot = Join-Path $repositoryRoot '.external\usvfs-pr99'
 $revision = 'c5f7ef2085bd29a3cca2cd57f3aba84dae030ff5'
 $sourceRepository = 'https://github.com/ModOrganizer2/usvfs'
-$patchPath = Join-Path $PSScriptRoot 'patches\usvfs-pr99-tests.patch'
+$patchPaths = @(
+    (Join-Path $PSScriptRoot 'patches\usvfs-pr99-tests.patch'),
+    (Join-Path $PSScriptRoot 'patches\usvfs-pr99-runtime.patch')
+)
 $outputRoot = Join-Path $sourceRoot 'runtime'
 
 function Invoke-PrTool {
     param([string]$FileName, [string[]]$Arguments)
-    & $FileName @Arguments
+    Get-Command $FileName -ErrorAction Stop | Out-Null
+    $previousErrorPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & $FileName @Arguments
+    }
+    finally { $ErrorActionPreference = $previousErrorPreference }
     if ($LASTEXITCODE -ne 0) {
         throw "$FileName failed with exit code $LASTEXITCODE."
     }
@@ -58,18 +67,31 @@ $extraFiles = & git -C $sourceRoot ls-files --others --exclude-standard -- . ':!
 if ($LASTEXITCODE -ne 0 -or $extraFiles) {
     throw 'PR source contains unexpected untracked files. No files were removed.'
 }
-$diffArguments = @('-C', $sourceRoot, '-c', 'core.autocrlf=false', 'diff', '--unified=0', '--binary', '--ignore-space-at-eol', '--no-ext-diff', 'HEAD')
-$sourceDiff = & git @diffArguments
-if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect PR source changes.' }
-if (-not $sourceDiff) {
-    Invoke-PrTool git @('-C', $sourceRoot, 'apply', '--unidiff-zero', '--check', $patchPath)
-    Invoke-PrTool git @('-C', $sourceRoot, 'apply', '--unidiff-zero', $patchPath)
-    $sourceDiff = & git @diffArguments
-    if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect patched PR source.' }
+$diffArguments = @('-C', $sourceRoot, '-c', 'core.autocrlf=false', '-c', 'core.safecrlf=false', 'diff', '--unified=0', '--binary', '--ignore-space-at-eol', '--no-ext-diff', 'HEAD')
+$allPatchFiles = @()
+$pendingPatches = @()
+foreach ($patchPath in $patchPaths) {
+    $statistics = & git -C $sourceRoot apply --numstat $patchPath
+    if ($LASTEXITCODE -ne 0) { throw "Cannot inspect patch $patchPath" }
+    $patchFiles = @($statistics | ForEach-Object { ($_ -split "`t", 3)[2] })
+    if ($patchFiles.Count -eq 0) { throw "Empty patch: $patchPath" }
+    $allPatchFiles += $patchFiles
+    $sourceDiff = & git @diffArguments -- @patchFiles
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect PR source changes.' }
+    $expectedDiff = [IO.File]::ReadAllText($patchPath).Replace("`r`n", "`n").TrimEnd()
+    if (-not $sourceDiff) {
+        Invoke-PrTool git @('-C', $sourceRoot, 'apply', '--unidiff-zero', '--check', $patchPath)
+        $pendingPatches += $patchPath
+    } elseif (($sourceDiff -join "`n").TrimEnd() -cne $expectedDiff) {
+        throw 'PR source contains changes other than the tracked patches. No changes were overwritten.'
+    }
 }
-$expectedDiff = [IO.File]::ReadAllText($patchPath).Replace("`r`n", "`n").TrimEnd()
-if (($sourceDiff -join "`n").TrimEnd() -cne $expectedDiff) {
-    throw 'PR source contains changes other than the tracked test/build patch. No changes were overwritten.'
+$changedFiles = & git -C $sourceRoot -c core.safecrlf=false diff --name-only HEAD
+if ($LASTEXITCODE -ne 0 -or @($changedFiles | Where-Object { $_ -notin $allPatchFiles }).Count -gt 0) {
+    throw 'PR source contains changes outside the tracked patches. No changes were overwritten.'
+}
+foreach ($patchPath in $pendingPatches) {
+    Invoke-PrTool git @('-C', $sourceRoot, 'apply', '--unidiff-zero', '--index', $patchPath)
 }
 
 $buildDrive = $null
@@ -142,7 +164,9 @@ $hashes = foreach ($file in @('lib\usvfs_x64.dll', 'lib\usvfs_x86.dll', 'bin\usv
 [ordered]@{
     SourceRepository = $sourceRepository
     SourceRevision = $revision
-    PatchSha256 = (Get-FileHash -LiteralPath $patchPath -Algorithm SHA256).Hash
+    Patches = @($patchPaths | ForEach-Object {
+        [ordered]@{ Name = (Split-Path -Leaf $_); Sha256 = (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash }
+    })
     NativeTestEvidence = $testRoot
     Files = @($hashes)
 } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $outputRoot 'build-info.json') -Encoding UTF8
