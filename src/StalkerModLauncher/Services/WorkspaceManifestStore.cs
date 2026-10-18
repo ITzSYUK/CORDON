@@ -41,6 +41,11 @@ internal static class WorkspaceManifestStore
             }
 
             var executablePath = Path.Combine(currentWorkspace, profile.ExecutableRelativePath);
+            if (fileLayerPlan.UsesAnomalyAppDataAlias && new DirectoryInfo(Path.Combine(currentWorkspace, "appdata")).LinkTarget is null)
+            {
+                progress.Report(Strings.WorkspaceManifest_CacheMissing);
+                return null;
+            }
             if (!File.Exists(executablePath))
             {
                 progress.Report(Strings.WorkspaceManifest_ExecutableMissing);
@@ -48,17 +53,20 @@ internal static class WorkspaceManifestStore
             }
 
             var layers = fileLayerPlan.SourceLayers.ToDictionary(layer => layer.Id);
+            var checkedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var checkedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var source in buildFingerprint.Sources)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var missingEntry = source.Directories.FirstOrDefault(relativePath =>
-                    !Directory.Exists(Path.Combine(currentWorkspace, relativePath)));
+                    checkedDirectories.Add(relativePath) && !Directory.Exists(Path.Combine(currentWorkspace, relativePath)));
                 if (missingEntry is null)
                 {
                     foreach (var file in source.Files)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         if (!FileLayerPlan.IsExcluded(layers[source.LayerId], file.RelativePath) &&
+                            checkedFiles.Add(file.RelativePath) &&
                             !File.Exists(Path.Combine(currentWorkspace, file.RelativePath)))
                         {
                             missingEntry = file.RelativePath;

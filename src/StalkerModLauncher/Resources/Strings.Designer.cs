@@ -1089,6 +1089,8 @@ public static class Strings
     public static string Health_StatusError => Get();
     public static string Writable_LocalizationReason => Get();
     public static string Writable_OptionsReason => Get();
+    public static string Error_AppDataAliasFormat => Get();
+    public static string Error_AnomalyFsgameInAppData => Get();
     public static string Log_TrayPanelFailedFormat => Get();
     public static string Log_ReleasePageFailedFormat => Get();
     public static string Error_UsvfsAnomalyRootFormat => Get();

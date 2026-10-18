@@ -1078,6 +1078,8 @@
   <data name="Health_StatusError" xml:space="preserve"><value>Error</value></data>
   <data name="Writable_LocalizationReason" xml:space="preserve"><value>Anomaly and some X-Ray builds write language selection into gamedata.</value></data>
   <data name="Writable_OptionsReason" xml:space="preserve"><value>Anomaly writes launcher and runtime option state into axr_options.ltx.</value></data>
+  <data name="Error_AppDataAliasFormat" xml:space="preserve"><value>Could not redirect AnomalyLauncher appdata to the selected game-data directory: {0}. Clear the profile workspace cache and try again.</value></data>
+  <data name="Error_AnomalyFsgameInAppData" xml:space="preserve"><value>AnomalyLauncher data redirection requires a file-system configuration outside appdata. Select a configuration outside that directory.</value></data>
   <data name="Log_TrayPanelFailedFormat" xml:space="preserve"><value>Tray panel failed: {0}</value></data>
   <data name="Log_ReleasePageFailedFormat" xml:space="preserve"><value>Opening the launcher release page failed: {0}</value></data>
   <data name="Error_UsvfsAnomalyRootFormat" xml:space="preserve"><value>The USVFS Anomaly launcher must be in the game root: {0}</value></data>
