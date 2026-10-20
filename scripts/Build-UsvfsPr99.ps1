@@ -3,12 +3,11 @@
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $sourceRoot = Join-Path $repositoryRoot '.external\usvfs-pr99'
-$revision = 'c5f7ef2085bd29a3cca2cd57f3aba84dae030ff5'
-$sourceRepository = 'https://github.com/ModOrganizer2/usvfs'
-$patchPaths = @(
-    (Join-Path $PSScriptRoot 'patches\usvfs-pr99-tests.patch'),
-    (Join-Path $PSScriptRoot 'patches\usvfs-pr99-runtime.patch')
-)
+. (Join-Path $PSScriptRoot 'ReleaseIntegrity.ps1')
+$manifest = Import-UsvfsRuntimeManifest -Path (Join-Path $PSScriptRoot 'UsvfsPr99Manifest.psd1')
+$revision = $manifest.SourceRevision
+$sourceRepository = $manifest.SourceRepository
+$patchPaths = @($manifest.SourcePatches | ForEach-Object { Join-Path $repositoryRoot $_ })
 $outputRoot = Join-Path $sourceRoot 'runtime'
 
 function Invoke-PrTool {

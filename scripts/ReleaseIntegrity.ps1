@@ -64,6 +64,58 @@ function Test-UsvfsRuntimeIntegrity {
     Write-Host "USVFS runtime components verified: v$($Manifest.RuntimeVersion), revision $($Manifest.SourceRevision)."
 }
 
+function Get-ExperimentalUsvfsRuntime {
+    param([Parameter(Mandatory = $true)][string]$RepositoryRoot)
+
+    $manifest = Import-UsvfsRuntimeManifest -Path (Join-Path $RepositoryRoot 'scripts\UsvfsPr99Manifest.psd1')
+    $sourceRoot = Join-Path $RepositoryRoot '.external\usvfs-pr99'
+    $runtimeRoot = Join-Path $sourceRoot 'runtime'
+    $buildInfoPath = Join-Path $runtimeRoot 'build-info.json'
+    $rebuildMessage = 'Run scripts\Build-UsvfsPr99.ps1 to rebuild the experimental runtime.'
+    if (-not (Test-Path -LiteralPath $buildInfoPath -PathType Leaf)) {
+        throw "Experimental USVFS build record is missing. $rebuildMessage"
+    }
+    $buildInfo = Get-Content -LiteralPath $buildInfoPath -Raw | ConvertFrom-Json
+    if ($buildInfo.SourceRevision -ne $manifest.SourceRevision -or
+        $buildInfo.SourceRepository -ne $manifest.SourceRepository) {
+        throw "Experimental USVFS source revision does not match the manifest. $rebuildMessage"
+    }
+    if (@($buildInfo.Patches).Count -ne @($manifest.SourcePatches).Count) {
+        throw "Experimental USVFS patch list does not match the manifest. $rebuildMessage"
+    }
+    foreach ($patchPath in $manifest.SourcePatches) {
+        $name = Split-Path -Leaf $patchPath
+        $records = @($buildInfo.Patches | Where-Object Name -eq $name)
+        $hash = (Get-FileHash -LiteralPath (Join-Path $RepositoryRoot $patchPath) -Algorithm SHA256).Hash
+        if ($records.Count -ne 1 -or $records[0].Sha256 -ne $hash) {
+            throw "Experimental USVFS patch is outdated: $name. $rebuildMessage"
+        }
+    }
+    if (@($buildInfo.Files).Count -ne @($manifest.Files).Count) {
+        throw "Experimental USVFS component list does not match the manifest. $rebuildMessage"
+    }
+    $files = @{}
+    $hashes = @{}
+    foreach ($file in $manifest.Files) {
+        $records = @($buildInfo.Files | Where-Object { (Split-Path -Leaf $_.Path) -eq $file.Name })
+        if ($records.Count -ne 1 -or $records[0].Hash -notmatch '^[0-9A-Fa-f]{64}$') {
+            throw "Invalid experimental USVFS component record: $($file.Name). $rebuildMessage"
+        }
+        $path = Join-Path $runtimeRoot $file.Name
+        # The smoke test uses lib/bin, so both copies must be the validated build.
+        foreach ($copy in @($path, (Join-Path $sourceRoot $file.RelativePath))) {
+            if (-not (Test-Path -LiteralPath $copy -PathType Leaf) -or
+                (Get-FileHash -LiteralPath $copy -Algorithm SHA256).Hash -ne $records[0].Hash) {
+                throw "Experimental USVFS component is missing or changed: $copy. $rebuildMessage"
+            }
+        }
+        $files[$file.Name] = $path
+        $hashes[$file.Name] = $records[0].Hash
+    }
+    Test-UsvfsRuntimeIntegrity -RuntimeRoot $sourceRoot -Manifest $manifest
+    return @{ SourceRoot = $sourceRoot; Manifest = $manifest; Files = $files; Hashes = $hashes }
+}
+
 function Test-UsvfsSourceProvenance {
     param(
         [Parameter(Mandatory = $true)]
@@ -209,7 +261,8 @@ function Test-ReleasePackage {
         [Parameter(Mandatory = $true)]
         [string]$ExpectedCommit,
         [Parameter(Mandatory = $true)]
-        [hashtable]$UsvfsManifest
+        [hashtable]$UsvfsManifest,
+        [hashtable]$RuntimeHashes = @{}
     )
 
     $requiredFiles = @(
@@ -257,6 +310,12 @@ function Test-ReleasePackage {
         $version = (Get-Item -LiteralPath $runtimePath).VersionInfo.FileVersion
         if ($version -ne $UsvfsManifest.RuntimeVersion) {
             throw "Packaged USVFS component has an unexpected version: $($runtimeFile.Name)"
+        }
+    }
+
+    foreach ($name in $RuntimeHashes.Keys) {
+        if ((Get-FileHash -LiteralPath (Join-Path $PackageDirectory $name) -Algorithm SHA256).Hash -ne $RuntimeHashes[$name]) {
+            throw "Packaged USVFS component differs from the selected build: $name"
         }
     }
 

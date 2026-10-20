@@ -1,5 +1,6 @@
 param(
-    [string]$Version
+    [string]$Version,
+    [switch]$IncludeExperimentalUsvfs
 )
 
 $ErrorActionPreference = "Stop"
@@ -62,9 +63,17 @@ foreach ($entry in $runtimeFiles.GetEnumerator()) {
     }
 }
 
+$experimentalRuntime = $null
+if ($IncludeExperimentalUsvfs) {
+    $experimentalRuntime = Get-ExperimentalUsvfsRuntime -RepositoryRoot $repositoryRoot
+}
+
 & $verificationScript -ExpectedVersion $Version
 if ($LASTEXITCODE -ne 0) {
     throw "Release verification failed."
+}
+if ($IncludeExperimentalUsvfs) {
+    & (Join-Path $PSScriptRoot 'Test-UsvfsRuntime.ps1') -RuntimeRoot $experimentalRuntime.SourceRoot
 }
 
 foreach ($path in @($releaseRoot, $stagingRoot)) {
@@ -83,8 +92,7 @@ function Publish-Package {
     )
 
     $publishDirectory = Join-Path $stagingRoot "$PackageName-publish"
-    $packageDirectory = Join-Path $releaseRoot $PackageName
-    New-Item -ItemType Directory -Path $publishDirectory, $packageDirectory | Out-Null
+    New-Item -ItemType Directory -Path $publishDirectory | Out-Null
 
     $projectLockFile = Join-Path (Split-Path -Parent $project) "packages.lock.json"
     $publishLockFile = Join-Path $publishDirectory "packages.lock.json"
@@ -107,35 +115,47 @@ function Publish-Package {
         throw "dotnet publish failed for $PackageName."
     }
 
-    Copy-Item -LiteralPath (Join-Path $publishDirectory "CORDON.exe") -Destination (Join-Path $packageDirectory $ExecutableName)
-    foreach ($entry in $runtimeFiles.GetEnumerator()) {
-        Copy-Item -LiteralPath $entry.Value -Destination (Join-Path $packageDirectory $entry.Key)
+    $variants = @(@{ Name = $PackageName; Files = $runtimeFiles; Manifest = $usvfsManifest; Hashes = @{} })
+    if ($IncludeExperimentalUsvfs) {
+        $experimentalFiles = $experimentalRuntime.Files.Clone()
+        $experimentalFiles['StalkerModLauncher.UsvfsX86Host.exe'] = $x86Host
+        $variants += @{ Name = "$PackageName-usvfs-experimental"; Files = $experimentalFiles;
+            Manifest = $experimentalRuntime.Manifest; Hashes = $experimentalRuntime.Hashes }
     }
+    foreach ($variant in $variants) {
+        $packageDirectory = Join-Path $releaseRoot $variant.Name
+        New-Item -ItemType Directory -Path $packageDirectory | Out-Null
+        Copy-Item -LiteralPath (Join-Path $publishDirectory "CORDON.exe") -Destination (Join-Path $packageDirectory $ExecutableName)
+        foreach ($entry in $variant.Files.GetEnumerator()) {
+            Copy-Item -LiteralPath $entry.Value -Destination (Join-Path $packageDirectory $entry.Key)
+        }
 
-    Copy-Item -LiteralPath (Join-Path $repositoryRoot "LICENSE.md") -Destination (Join-Path $packageDirectory "LICENSE.txt")
-    Copy-Item -LiteralPath (Join-Path $repositoryRoot "THIRD_PARTY_NOTICES.md") -Destination (Join-Path $packageDirectory "THIRD-PARTY-NOTICES.txt")
+        Copy-Item -LiteralPath (Join-Path $repositoryRoot "LICENSE.md") -Destination (Join-Path $packageDirectory "LICENSE.txt")
+        Copy-Item -LiteralPath (Join-Path $repositoryRoot "THIRD_PARTY_NOTICES.md") -Destination (Join-Path $packageDirectory "THIRD-PARTY-NOTICES.txt")
 
-    $packageFiles = Get-ChildItem -LiteralPath $packageDirectory -Recurse -File |
-        Select-Object -ExpandProperty FullName
-    Write-Sha256ChecksumFile `
-        -Paths $packageFiles `
-        -RelativeTo $packageDirectory `
-        -OutputPath (Join-Path $packageDirectory "checksums.txt")
+        $packageFiles = Get-ChildItem -LiteralPath $packageDirectory -Recurse -File |
+            Select-Object -ExpandProperty FullName
+        Write-Sha256ChecksumFile `
+            -Paths $packageFiles `
+            -RelativeTo $packageDirectory `
+            -OutputPath (Join-Path $packageDirectory "checksums.txt")
 
-    $unexpected = Get-ChildItem -LiteralPath $packageDirectory -File | Where-Object { $_.Extension -in @('.pdb', '.json', '.md') }
-    if ($unexpected) {
-        throw "Unexpected debug/runtime files in ${PackageName}: $($unexpected.Name -join ', ')"
+        $unexpected = Get-ChildItem -LiteralPath $packageDirectory -File | Where-Object { $_.Extension -in @('.pdb', '.json', '.md') }
+        if ($unexpected) {
+            throw "Unexpected debug/runtime files in ${PackageName}: $($unexpected.Name -join ', ')"
+        }
+
+        $archive = Join-Path $releaseRoot "$($variant.Name).zip"
+        Compress-Archive -Path (Join-Path $packageDirectory '*') -DestinationPath $archive -CompressionLevel Optimal
+        Test-ReleasePackage `
+            -PackageDirectory $packageDirectory `
+            -ArchivePath $archive `
+            -ExecutableName $ExecutableName `
+            -ExpectedVersion $Version `
+            -ExpectedCommit $sourceRevision `
+            -UsvfsManifest $variant.Manifest `
+            -RuntimeHashes $variant.Hashes
     }
-
-    $archive = Join-Path $releaseRoot "$PackageName.zip"
-    Compress-Archive -Path (Join-Path $packageDirectory '*') -DestinationPath $archive -CompressionLevel Optimal
-    Test-ReleasePackage `
-        -PackageDirectory $packageDirectory `
-        -ArchivePath $archive `
-        -ExecutableName $ExecutableName `
-        -ExpectedVersion $Version `
-        -ExpectedCommit $sourceRevision `
-        -UsvfsManifest $usvfsManifest
 }
 
 Publish-Package `

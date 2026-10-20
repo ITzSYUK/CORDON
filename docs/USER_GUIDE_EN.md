@@ -42,6 +42,14 @@ The compact version requires .NET 8 Desktop Runtime x64. The Standalone version 
 
 The Standalone launcher package and the Standalone build profile type are different: both launcher packages support both profile types.
 
+### Stable and experimental USVFS
+
+For regular use, choose an archive without `-usvfs-experimental` in its name. If a release includes experimental archives, they are intended for testing optimized USVFS with different game builds. Compact and standalone variants have the same .NET requirements and settings locations as their stable counterparts.
+
+The experimental runtime includes batched directory enumeration from PR #99, early source-directory scan completion adapted from dlunch, and our TLS fix for the observed OGSR CoP crash. Gains depend on the build; faster file enumeration does not imply an equivalent increase in FPS or game loading speed.
+
+The downloaded archive selects the USVFS version; the profile settings still use **USVFS** mode. There is no separate optimization switch. Extract the complete package and do not mix USVFS DLLs and EXEs from stable and experimental sets. See [Discord and update checks](#discord-and-update-checks) for update behavior.
+
 ## What a profile is
 
 You can think of a profile as a saved launch flow:
@@ -311,11 +319,15 @@ When saving the settings, the launcher verifies that the selected file is access
 
 A manually selected file keeps its name and relative path. If its name differs from `fsgame.ltx`, an additional compatible copy named `fsgame.ltx` is created beside it with the same contents. For example, `_bin_olr_\fsolr.ltx` remains in place, while `_bin_olr_\fsgame.ltx` serves as an engine fallback. All other lines, including extra parameters specific to the mod, are preserved.
 
-Because the managed profile folder has the ASCII-only name `profile-<ID>`, iXray and other older engines receive a path to `user.ltx` with no Cyrillic characters. No separate alias folder is created.
+Because the managed profile folder has the ASCII-only name `profile-<ID>`, iXray and other older engines receive a path to `user.ltx` with no Cyrillic characters. No additional folder is needed to avoid Cyrillic characters.
 
 As a result, two profiles using the `same base game` get different saves, settings, logs, and screenshots. The source `fsgame.ltx` in the game or mod folder is not edited.
 
 On the first launch, `user.ltx` is taken from the highest-priority layer (the mod in the profile list) that provides it. After the game or the user changes the profile file, the launcher tries to preserve that version instead of overwriting it at every launch.
+
+When launching through AnomalyLauncher, the launcher and game engine use one active `user.ltx` in the selected user-data directory. This works in Workspace and USVFS: settings changed through AnomalyLauncher or the game affect the same file. With shared game data selected, that file is also shared by profiles using the same directory.
+
+After upgrading from an older version, the first Workspace launch of an AnomalyLauncher profile may rebuild `current` once. Differing legacy internal copies of `user.ltx` are saved as `<workspace>\diagnostics\user.ltx.migrated-<ID>.bak`; they do not replace the active selected settings. There is no need to move them back manually.
 
 ## Status window
 
@@ -343,13 +355,16 @@ The save counter includes the main `.sav` and `.scop` file formats. Auxiliary `.
 
 The log at the bottom of the main window shows check progress, the selected mode, the EXE source, Workspace or USVFS preparation, and the launch result.
 
-The full log is stored at:
+The full log location depends on the launcher package:
 
-```text
-%APPDATA%\StalkerModLauncher\launcher.log
-```
+| Package | Path |
+| --- | --- |
+| `CORDON.exe` | `%APPDATA%\StalkerModLauncher\launcher.log` |
+| `CORDON-Standalone.exe` | `<EXE directory>\Data\StalkerModLauncher\launcher.log` |
 
 When the file reaches approximately 1 MB, it is moved to `launcher.old.log` and logging continues in a new file. The log does not grow indefinitely.
+
+A USVFS session also writes `<workspace>\diagnostics\usvfs.log`. Its size is limited to approximately 2 MiB, with the previous part stored as `usvfs.old.log`. This is the virtual file system diagnostic log; the X-Ray game log is stored separately in the selected user-data directory. **Copy report** in the **Status** window includes the final lines of the USVFS log.
 
 ## Launcher settings
 
@@ -417,6 +432,8 @@ For each profile, you can enable **Show profile status in Discord**. Disable thi
 The launcher compares the installed version with the latest GitHub release. Automatic checking on startup and system notifications can be configured in launcher settings; a manual check is available in settings and the **About** window.
 
 When an update is available, settings offer the release page and package download. Choose the compact or Standalone package and confirm installation. The archive is saved beside the launcher, its checksum and contents are verified, and the launcher closes, replaces its application files, and starts again. Existing `Data`, game/mod sources, workspaces, and saves are preserved. Updates cannot be installed while a game or profile preparation/mod installation is active. Choosing a different package type shows a warning because it changes the .NET requirement and launcher-settings location.
+
+The built-in update installer always downloads the stable package. If you use experimental USVFS, it replaces that runtime with the stable one. To retain the experimental variant, download the matching `-usvfs-experimental.zip` archive from the release page and update the application manually, preserving `Data` and user data. If the new version has no such archive, its experimental variant has not been published.
 
 ## Usage examples
 

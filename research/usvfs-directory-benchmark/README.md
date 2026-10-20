@@ -14,7 +14,17 @@ must contain `lib/usvfs_x64.dll`, `lib/usvfs_x86.dll`, and the corresponding
 `bin/usvfs_proxy_*.exe`. Keep these experimental builds separate from `.external/usvfs`.
 The optional candidate can now be built and validated with
 `scripts/Build-UsvfsPr99.ps1`; use `.external/usvfs-pr99` as its benchmark runtime
-root (the `runtime` subdirectory contains flat files for manual testing only).
+root. Its `runtime` subdirectory contains the validated flat files and
+`build-info.json` used by experimental launcher publishing and release packaging.
+
+After building the native candidate, run `scripts/Build-Usvfs.ps1 -ExperimentalUsvfs`
+to publish a test launcher to `publish/usvfs-experimental`. For release packaging,
+`scripts/Build-Release.ps1 -IncludeExperimentalUsvfs` requires a clean working tree
+and creates the two stable archives plus compact and standalone experimental
+archives with the `-usvfs-experimental` suffix. Without these flags, both scripts
+retain the stable runtime. They verify the experimental build record and hashes
+and run x64/x86 smoke tests. The built-in updater still installs stable packages;
+update experimental packages manually to retain that runtime.
 
 From the repository root, restore/build this project and run:
 
@@ -59,5 +69,6 @@ recursive listing, sampled contents and overwrite checks still run. Compare medi
 same fixture; this deliberately favorable case measures skipped tail work, not
 expected seconds saved during game startup.
 
-See [the experiment report](../../docs/USVFS_BATCHED_ENUMERATION_RU.md) for results,
-the diagnosis of the original test failures, and the decision about adoption.
+See [the release measurements in Russian](../../RELEASE_NOTES.md) for before-and-after
+timings and [the technical documentation](../../docs/TECHNICAL_EN.md) for build
+instructions and compatibility limits.
