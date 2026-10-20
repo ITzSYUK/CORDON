@@ -69,6 +69,5 @@ recursive listing, sampled contents and overwrite checks still run. Compare medi
 same fixture; this deliberately favorable case measures skipped tail work, not
 expected seconds saved during game startup.
 
-See [the release measurements in Russian](../../RELEASE_NOTES.md) for before-and-after
-timings and [the technical documentation](../../docs/TECHNICAL_EN.md) for build
+See [the technical documentation](../../docs/TECHNICAL_EN.md) for build
 instructions and compatibility limits.
