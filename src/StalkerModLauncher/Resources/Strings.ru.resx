@@ -1132,4 +1132,11 @@
   <data name="Fomod_FolderNotFoundFormat" xml:space="preserve"><value>Исходная папка FOMOD не найдена: {0}</value></data>
   <data name="Fomod_ConfigNotFound" xml:space="preserve"><value>В выбранной папке нет установщика FOMOD.</value></data>
   <data name="Fomod_CopyingFormat" xml:space="preserve"><value>Копирование выбранных файлов из {0}...</value></data>
+  <data name="SettingsProfile_LaunchTab" xml:space="preserve"><value>Запуск</value></data>
+  <data name="SettingsProfile_DataModsTab" xml:space="preserve"><value>Данные и моды</value></data>
+  <data name="SettingsProfile_Advanced" xml:space="preserve"><value>Дополнительно</value></data>
+  <data name="SettingsProfile_Mo2Heading" xml:space="preserve"><value>Интеграция с MO2</value></data>
+  <data name="SettingsProfile_SaveClose" xml:space="preserve"><value>Сохранить и закрыть</value></data>
+  <data name="SettingsProfile_CopyImmediateHint" xml:space="preserve"><value>Копирование начинается после подтверждения, без сохранения настроек.</value></data>
+  <data name="SettingsProfile_Mo2ImmediateHint" xml:space="preserve"><value>Применение порядка сразу меняет и сохраняет список модов. Настройки профиля сохраняются отдельно.</value></data>
 </root>

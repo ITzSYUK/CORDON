@@ -12,88 +12,88 @@
         SourceInitialized="Window_OnSourceInitialized"
         WindowStartupLocation="CenterOwner">
     <Window.Resources>
-        <Style x:Key="ProfileFieldBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource FieldBackgroundBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="Padding" Value="8,4"/>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/CORDON;component/Themes/ProfileSettingsStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
 
-        <Style x:Key="ProfileSectionDividerStyle" TargetType="Border">
-            <Setter Property="Height" Value="1"/>
-            <Setter Property="Background" Value="{StaticResource StrokeBrush}"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-        </Style>
+            <Style x:Key="ProfileFieldBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource FieldBackgroundBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="6"/>
+                <Setter Property="Padding" Value="8,4"/>
+            </Style>
 
-        <Style x:Key="ProfileEmbeddedTextBoxStyle"
-               TargetType="TextBox"
-               BasedOn="{StaticResource {x:Type TextBox}}">
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Padding" Value="0,2,0,0"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
+            <Style x:Key="ProfileEmbeddedTextBoxStyle"
+                   TargetType="TextBox"
+                   BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Padding" Value="0,2,0,0"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+            </Style>
 
-        <Style x:Key="ProfilePlaceholderTextBoxStyle"
-               TargetType="TextBox"
-               BasedOn="{StaticResource ProfileEmbeddedTextBoxStyle}">
-            <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="IsReadOnly" Value="True"/>
-            <Setter Property="Focusable" Value="False"/>
-            <Setter Property="IsHitTestVisible" Value="False"/>
-            <Setter Property="Visibility" Value="Collapsed"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding LaunchArguments}" Value="">
-                    <Setter Property="Visibility" Value="Visible"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding LaunchArguments}" Value="{x:Null}">
-                    <Setter Property="Visibility" Value="Visible"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
+            <Style x:Key="ProfilePlaceholderTextBoxStyle"
+                   TargetType="TextBox"
+                   BasedOn="{StaticResource ProfileEmbeddedTextBoxStyle}">
+                <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="IsReadOnly" Value="True"/>
+                <Setter Property="Focusable" Value="False"/>
+                <Setter Property="IsHitTestVisible" Value="False"/>
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding LaunchArguments}" Value="">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding LaunchArguments}" Value="{x:Null}">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
 
-        <Style x:Key="ProfileLaunchRadioButtonStyle" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <BulletDecorator Background="Transparent">
-                            <BulletDecorator.Bullet>
-                                <Grid Width="15" Height="15">
-                                    <Ellipse x:Name="OuterCircle"
-                                             Fill="{StaticResource FieldBackgroundBrush}"
-                                             Stroke="{StaticResource MutedTextBrush}"
-                                             StrokeThickness="1"/>
-                                    <Ellipse x:Name="InnerCircle"
-                                             Width="7" Height="7"
-                                             Fill="{StaticResource AccentBrush}"
-                                             Visibility="Collapsed"/>
-                                </Grid>
-                            </BulletDecorator.Bullet>
-                            <ContentPresenter Margin="4,0,0,0"
-                                              VerticalAlignment="Center"/>
-                        </BulletDecorator>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="OuterCircle" Property="Stroke" Value="{StaticResource AccentBrush}"/>
-                                <Setter TargetName="InnerCircle" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="OuterCircle" Property="Stroke" Value="{StaticResource AccentBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.38"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <Style x:Key="ProfileLaunchRadioButtonStyle" TargetType="RadioButton">
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <BulletDecorator Background="Transparent">
+                                <BulletDecorator.Bullet>
+                                    <Grid Width="15" Height="15">
+                                        <Ellipse x:Name="OuterCircle"
+                                                 Fill="{StaticResource FieldBackgroundBrush}"
+                                                 Stroke="{StaticResource MutedTextBrush}"
+                                                 StrokeThickness="1"/>
+                                        <Ellipse x:Name="InnerCircle"
+                                                 Width="7" Height="7"
+                                                 Fill="{StaticResource AccentBrush}"
+                                                 Visibility="Collapsed"/>
+                                    </Grid>
+                                </BulletDecorator.Bullet>
+                                <ContentPresenter Margin="4,0,0,0"
+                                                  VerticalAlignment="Center"/>
+                            </BulletDecorator>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="OuterCircle" Property="Stroke" Value="{StaticResource AccentBrush}"/>
+                                    <Setter TargetName="InnerCircle" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="OuterCircle" Property="Stroke" Value="{StaticResource AccentBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.38"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid Margin="16">
@@ -108,327 +108,325 @@
                 BorderThickness="1"
                 CornerRadius="6"
                 Padding="16">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <Grid Margin="0,0,8,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0">
-                        <TextBlock Text="{x:Static res:Strings.Creation_ProfileName}"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   FontSize="12"/>
-                        <Border Style="{StaticResource ProfileFieldBorderStyle}"
-                                Height="34"
-                                Margin="0,4,0,0">
-                            <TextBox Text="{Binding ProfileName, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource ProfileEmbeddedTextBoxStyle}"
-                                     Padding="0"/>
-                        </Border>
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="1" Margin="0,12,0,0">
-                        <TextBlock Text="{x:Static res:Strings.Common_Description}"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   FontSize="12"/>
-                        <Border Style="{StaticResource ProfileFieldBorderStyle}"
-                                Height="60"
-                                Margin="0,4,0,0">
-                            <TextBox Text="{Binding ProfileDescription, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource ProfileEmbeddedTextBoxStyle}"
-                                     TextWrapping="Wrap"
-                                     AcceptsReturn="True"
-                                     VerticalContentAlignment="Top"/>
-                        </Border>
-                    </StackPanel>
-
-                    <Border Grid.Row="2"
-                            Style="{StaticResource ProfileSectionDividerStyle}"
-                            Margin="0,14,0,14"/>
-
-                    <CheckBox Grid.Row="3"
-                              IsChecked="{Binding IsStandalone}"
-                              Margin="0,0,0,8">
-                        <TextBlock TextWrapping="Wrap">
-                            <Run Text="{x:Static res:Strings.Profile_Standalone}"/>
-                            <Run Foreground="{StaticResource MutedTextBrush}" FontSize="11"
-                                 Text="{x:Static res:Strings.SettingsProfile_StandaloneHint}"/>
-                        </TextBlock>
-                    </CheckBox>
-
-                    <StackPanel Grid.Row="4" Margin="0,4,0,12">
-                        <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   FontSize="12"
-                                   Margin="0,0,0,6"/>
-                        <WrapPanel>
-                            <RadioButton Content="Workspace"
-                                         Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                         IsChecked="{Binding UseLinkedWorkspace, Mode=TwoWay}"
-                                         Margin="0,0,18,0"/>
-                            <RadioButton Content="USVFS"
-                                         Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                         IsChecked="{Binding UseVirtualFileSystem, Mode=TwoWay}"
-                                         IsEnabled="{Binding CanUseUsvfs}"/>
-                        </WrapPanel>
-                        <TextBlock Text="{Binding UsvfsAvailabilityText}"
-                                   Foreground="{StaticResource DisabledTextBrush}"
-                                   FontSize="11"
-                                   TextWrapping="Wrap"
-                                   Margin="0,4,0,0"/>
-
-                        <StackPanel Margin="0,18,0,0"
-                                    Visibility="{Binding IsAnomalyUsvfsOptionsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_AnomalyEngine}"
-                                       Foreground="{StaticResource MutedTextBrush}"
-                                       FontSize="12"
-                                       Margin="0,0,0,5"/>
-                            <WrapPanel>
-                                <RadioButton Content="{x:Static res:Strings.SettingsProfile_Launcher}"
-                                             Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             IsChecked="{Binding UseAutomaticAnomalyRenderer, Mode=TwoWay}"
-                                             VerticalAlignment="Center"
-                                             Margin="0,0,12,0"/>
-                                <RadioButton Content="DX8"
-                                             Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             IsChecked="{Binding UseAnomalyDx8, Mode=TwoWay}"
-                                             VerticalAlignment="Center"
-                                             Margin="0,0,12,0"/>
-                                <RadioButton Content="DX9"
-                                             Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             IsChecked="{Binding UseAnomalyDx9, Mode=TwoWay}"
-                                             VerticalAlignment="Center"
-                                             Margin="0,0,12,0"/>
-                                <RadioButton Content="DX10"
-                                             Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             IsChecked="{Binding UseAnomalyDx10, Mode=TwoWay}"
-                                             VerticalAlignment="Center"
-                                             Margin="0,0,12,0"/>
-                                <RadioButton Content="DX11"
-                                             Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             IsChecked="{Binding UseAnomalyDx11, Mode=TwoWay}"
-                                             VerticalAlignment="Center"
-                                             Margin="0,0,16,0"/>
-                                <CheckBox Content="AVX"
-                                          IsChecked="{Binding AnomalyUseAvx}"
-                                          IsEnabled="{Binding HasManualAnomalyRenderer}"
-                                          VerticalAlignment="Center"/>
-                            </WrapPanel>
-                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_LauncherHint}"
-                                       Foreground="{StaticResource DisabledTextBrush}"
-                                       FontSize="11"
-                                       TextWrapping="Wrap"
-                                       Margin="0,4,0,0"/>
-                        </StackPanel>
-
-                        <Border Style="{StaticResource ProfileSectionDividerStyle}" Margin="0,14,0,14"/>
-
-                        <StackPanel>
-                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_UserData}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,6"/>
-                            <StackPanel IsEnabled="{Binding CanChooseGameData}">
-                                <RadioButton Content="{x:Static res:Strings.SettingsProfile_UserDataProfile}" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             IsChecked="{Binding UseProfileGameData}" Margin="0,0,0,5"/>
-                                <RadioButton Content="{x:Static res:Strings.SettingsProfile_UserDataGame}" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                             IsChecked="{Binding UseBaseGameData}"/>
+            <TabControl x:Name="SettingsTabs">
+                <TabItem Header="{x:Static res:Strings.Common_Profile}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,8,0">
+                            <StackPanel>
+                                <TextBlock Text="{x:Static res:Strings.Creation_ProfileName}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="12"/>
+                                <Border Style="{StaticResource ProfileFieldBorderStyle}"
+                                        Height="34"
+                                        Margin="0,4,0,0">
+                                    <TextBox Text="{Binding ProfileName, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource ProfileEmbeddedTextBoxStyle}"
+                                             Padding="0"/>
+                                </Border>
                             </StackPanel>
-                            <TextBlock Text="{Binding GameDataDescription}" Foreground="{StaticResource MutedTextBrush}"
-                                       FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
-                            <Button Content="{x:Static res:Strings.SettingsProfile_CopyMissingData}"
-                                    Command="{Binding CopyGameDataCommand}" IsEnabled="{Binding CanChooseGameData}"
-                                    HorizontalAlignment="Left" Margin="0,6,0,0"/>
-                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_FsgameSource}" Foreground="{StaticResource MutedTextBrush}"
-                                       FontSize="12" Margin="0,12,0,4"/>
-                            <TextBlock Text="{Binding FsgameSourceDisplay}" Foreground="{StaticResource MutedTextBrush}"
-                                       FontSize="11" TextWrapping="Wrap"/>
-                            <WrapPanel Margin="0,6,0,0" IsEnabled="{Binding CanChooseFsgame}">
-                                <Button Content="{x:Static res:Strings.SettingsProfile_SelectFile}" Command="{Binding BrowseFsgameCommand}"
-                                        Margin="0,0,8,0"/>
-                                <Button Content="{x:Static res:Strings.SettingsProfile_AutoSelect}" Command="{Binding ClearFsgameSourceCommand}"/>
-                            </WrapPanel>
+
+                            <StackPanel Margin="0,12,0,0">
+                                <TextBlock Text="{x:Static res:Strings.Common_Description}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="12"/>
+                                <Border Style="{StaticResource ProfileFieldBorderStyle}"
+                                        Height="60"
+                                        Margin="0,4,0,0">
+                                    <TextBox Text="{Binding ProfileDescription, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource ProfileEmbeddedTextBoxStyle}"
+                                             TextWrapping="Wrap"
+                                             AcceptsReturn="True"
+                                             VerticalContentAlignment="Top"/>
+                                </Border>
+                            </StackPanel>
+
+                            <ToggleButton HorizontalAlignment="Left" Margin="0,16,0,0"
+                                          Content="{x:Static res:Strings.SettingsProfile_Discord}"
+                                          IsChecked="{Binding IsDiscordStatusEnabled}"
+                                          Style="{StaticResource ProfileToggleButtonStyle}"
+                                          ToolTip="{x:Static res:Strings.SettingsProfile_DiscordTooltip}"/>
                         </StackPanel>
-                    </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
 
-                    <Border Grid.Row="5"
-                            Style="{StaticResource ProfileSectionDividerStyle}"
-                            Margin="0,2,0,14"/>
+                <TabItem Header="{x:Static res:Strings.SettingsProfile_LaunchTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,8,0">
+                            <StackPanel Margin="0,0,0,12">
+                                <CheckBox IsChecked="{Binding IsStandalone}" Content="{x:Static res:Strings.Profile_Standalone}"/>
+                                <TextBlock Text="{x:Static res:Strings.SettingsProfile_StandaloneHint}"
+                                           Foreground="{StaticResource MutedTextBrush}" FontSize="11"
+                                           TextWrapping="Wrap" Margin="20,4,0,0"/>
+                            </StackPanel>
 
-                    <TextBlock Grid.Row="6"
-                               Text="{x:Static res:Strings.SettingsProfile_Executable}"
-                               Foreground="{StaticResource MutedTextBrush}"
-                               FontSize="12"/>
+                            <StackPanel x:Name="LaunchModePanel" Margin="0,0,0,12" Style="{StaticResource ProfileNonStandaloneSectionStyle}">
+                                <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="12"
+                                           Margin="0,0,0,6"/>
+                                <WrapPanel>
+                                    <RadioButton Content="Workspace"
+                                                 Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                                 IsChecked="{Binding UseLinkedWorkspace, Mode=TwoWay}"
+                                                 Margin="0,0,18,0"/>
+                                    <RadioButton Content="USVFS"
+                                                 Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                                 IsChecked="{Binding UseVirtualFileSystem, Mode=TwoWay}"
+                                                 IsEnabled="{Binding CanUseUsvfs}"/>
+                                </WrapPanel>
+                                <TextBlock Text="{Binding UsvfsAvailabilityText}"
+                                           Foreground="{StaticResource DisabledTextBrush}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
 
-                    <Border Grid.Row="7"
-                            Style="{StaticResource ProfileFieldBorderStyle}"
-                            Margin="0,4,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0"
-                                     Text="{Binding ExecutableRelativePath, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource ProfileEmbeddedTextBoxStyle}"/>
-                            <Button Grid.Column="1"
-                                    Content="{x:Static res:Strings.Common_Browse}"
-                                    Command="{Binding BrowseExecutableCommand}"
-                                    Margin="8,0,0,0"
-                                    Width="92"
-                                    VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <Grid Grid.Row="8" Margin="0,2,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_ExePathHint}"
-                                       Foreground="{StaticResource DisabledTextBrush}"
-                                       FontSize="11"/>
-                            <TextBlock Text="{Binding ExecutableSourceDisplay}"
+                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_Executable}"
                                        Foreground="{StaticResource MutedTextBrush}"
-                                       FontSize="11"
-                                       Margin="0,2,0,0"/>
-                        </StackPanel>
-                        <Button Grid.Column="1"
-                                Content="{x:Static res:Strings.SettingsProfile_AutoSelect}"
-                                Command="{Binding ClearExecutableSourceCommand}"
-                                ToolTip="{x:Static res:Strings.SettingsProfile_AutoSelectExeTooltip}"
-                                ToolTipService.ShowOnDisabled="True"
-                                Margin="8,0,0,0"
-                                Padding="10,4"
-                                MinHeight="26"
-                                VerticalAlignment="Center">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasManualExecutableSource}" Value="False">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </Grid>
+                                       FontSize="12"/>
 
-                    <StackPanel Grid.Row="9" Margin="0,12,0,0">
-                        <TextBlock Text="{x:Static res:Strings.Creation_LaunchArguments}"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   FontSize="12"/>
-                        <Border Style="{StaticResource ProfileFieldBorderStyle}"
-                                Height="38"
-                                Margin="0,4,0,0">
-                            <Grid>
-                                <TextBox Text="{Binding LaunchArguments, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource ProfileEmbeddedTextBoxStyle}"
-                                         Padding="0"/>
-                                <TextBox Text="{x:Static res:Strings.SettingsProfile_ArgumentsExample}"
-                                         Style="{StaticResource ProfilePlaceholderTextBoxStyle}"
-                                         Padding="0"/>
-                            </Grid>
-                        </Border>
-                    </StackPanel>
+                            <Border Style="{StaticResource ProfileFieldBorderStyle}"
+                                    Margin="0,4,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding ExecutableRelativePath, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource ProfileEmbeddedTextBoxStyle}"/>
+                                    <Button Grid.Column="1"
+                                            Content="{x:Static res:Strings.Common_Browse}"
+                                            Command="{Binding BrowseExecutableCommand}"
+                                            Margin="8,0,0,0"
+                                            Width="92"
+                                            VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
 
-                    <StackPanel Grid.Row="10" Margin="0,14,0,0">
-                        <TextBlock Text="{x:Static res:Strings.SettingsProfile_InstalledModsFolder}"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   FontSize="12"/>
-                        <Border Style="{StaticResource ProfileFieldBorderStyle}"
-                                Margin="0,4,0,0">
-                            <Grid>
+                            <Grid Margin="0,2,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0"
-                                         Text="{Binding ModInstallPath, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource ProfileEmbeddedTextBoxStyle}"
-                                         ToolTip="{x:Static res:Strings.SettingsProfile_ModFolderTooltip}"/>
+                                <StackPanel>
+                                    <TextBlock Text="{x:Static res:Strings.SettingsProfile_ExePathHint}"
+                                               Foreground="{StaticResource DisabledTextBrush}"
+                                               FontSize="11"/>
+                                    <TextBlock Text="{Binding ExecutableSourceDisplay}"
+                                               TextWrapping="Wrap"
+                                               ToolTip="{Binding ExecutableSourceDisplay}"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="11"
+                                               Margin="0,2,0,0"/>
+                                </StackPanel>
                                 <Button Grid.Column="1"
-                                        Content="{x:Static res:Strings.Common_Browse}"
-                                        Command="{Binding BrowseModInstallPathCommand}"
+                                        Content="{x:Static res:Strings.SettingsProfile_AutoSelect}"
+                                        Command="{Binding ClearExecutableSourceCommand}"
+                                        ToolTip="{x:Static res:Strings.SettingsProfile_AutoSelectExeTooltip}"
+                                        ToolTipService.ShowOnDisabled="True"
                                         Margin="8,0,0,0"
-                                        Width="92"
-                                        VerticalAlignment="Center"/>
-                                <Button Grid.Column="2"
-                                        Content="{x:Static res:Strings.Common_Default}"
-                                        Command="{Binding ResetModInstallPathCommand}"
-                                        Margin="8,0,0,0"
-                                        Width="110"
-                                        VerticalAlignment="Center"/>
+                                        Padding="10,4"
+                                        MinHeight="26"
+                                        VerticalAlignment="Center">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasManualExecutableSource}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </Grid>
-                        </Border>
-                    </StackPanel>
 
-                    <Border Grid.Row="11" Background="{StaticResource FieldBackgroundBrush}"
-                            BorderBrush="{StaticResource StrokeBrush}" BorderThickness="1"
-                            CornerRadius="6" Padding="10" Margin="0,14,0,0"
-                            Visibility="{Binding HasMo2Overwrite, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="{x:Static res:Strings.SettingsProfile_Mo2Overwrite}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding Mo2OverwritePath}" Foreground="{StaticResource MutedTextBrush}"
-                                           FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding Mo2OverwritePath}"/>
+                            <StackPanel Margin="0,12,0,0">
+                                <TextBlock Text="{x:Static res:Strings.Creation_LaunchArguments}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="12"/>
+                                <Border Style="{StaticResource ProfileFieldBorderStyle}"
+                                        Height="38"
+                                        Margin="0,4,0,0">
+                                    <Grid>
+                                        <TextBox Text="{Binding LaunchArguments, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource ProfileEmbeddedTextBoxStyle}"
+                                                 Padding="0"/>
+                                        <TextBox Text="{x:Static res:Strings.SettingsProfile_ArgumentsExample}"
+                                                 Style="{StaticResource ProfilePlaceholderTextBoxStyle}"
+                                                 Padding="0"/>
+                                    </Grid>
+                                </Border>
                             </StackPanel>
-                            <Button Grid.Column="1" Content="{x:Static res:Strings.Common_Disable}" Command="{Binding RemoveMo2OverwriteCommand}"
-                                    Margin="10,0,0,0" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
 
-                    <StackPanel Grid.Row="12" Margin="0,16,0,0">
-                        <TextBlock Text="{x:Static res:Strings.SettingsProfile_Mo2Order}"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   FontSize="12"
-                                   Margin="0,0,0,4"/>
-                        <Button Content="{x:Static res:Strings.SettingsProfile_Mo2Apply}"
-                                Command="{Binding ImportMo2ModListCommand}"
-                                ToolTip="{x:Static res:Strings.SettingsProfile_Mo2ApplyTooltip}"
-                                HorizontalAlignment="Left"/>
-                    </StackPanel>
-                </Grid>
-            </ScrollViewer>
+                            <StackPanel Margin="0,18,0,0"
+                                        Visibility="{Binding IsAnomalyUsvfsOptionsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{x:Static res:Strings.SettingsProfile_AnomalyEngine}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="12"
+                                           Margin="0,0,0,5"/>
+                                <WrapPanel>
+                                    <RadioButton Content="{x:Static res:Strings.SettingsProfile_Launcher}"
+                                                 Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                                 IsChecked="{Binding UseAutomaticAnomalyRenderer, Mode=TwoWay}"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,12,0"/>
+                                    <RadioButton Content="DX8"
+                                                 Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                                 IsChecked="{Binding UseAnomalyDx8, Mode=TwoWay}"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,12,0"/>
+                                    <RadioButton Content="DX9"
+                                                 Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                                 IsChecked="{Binding UseAnomalyDx9, Mode=TwoWay}"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,12,0"/>
+                                    <RadioButton Content="DX10"
+                                                 Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                                 IsChecked="{Binding UseAnomalyDx10, Mode=TwoWay}"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,12,0"/>
+                                    <RadioButton Content="DX11"
+                                                 Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                                 IsChecked="{Binding UseAnomalyDx11, Mode=TwoWay}"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,16,0"/>
+                                    <CheckBox Content="AVX"
+                                              IsChecked="{Binding AnomalyUseAvx}"
+                                              IsEnabled="{Binding HasManualAnomalyRenderer}"
+                                              VerticalAlignment="Center"/>
+                                </WrapPanel>
+                                <TextBlock Text="{x:Static res:Strings.SettingsProfile_LauncherHint}"
+                                           Foreground="{StaticResource DisabledTextBrush}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <Expander Header="{x:Static res:Strings.SettingsProfile_Advanced}" x:Name="AdvancedSettings" Style="{StaticResource ProfileFsgameExpanderStyle}">
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Text="{x:Static res:Strings.SettingsProfile_FsgameSource}" Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="12" Margin="0,0,0,4"/>
+                                    <TextBlock Text="{Binding FsgameSourceDisplay}" Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="11" TextWrapping="Wrap"/>
+                                    <WrapPanel Margin="0,6,0,0" IsEnabled="{Binding CanChooseFsgame}">
+                                        <Button Content="{x:Static res:Strings.SettingsProfile_SelectFile}" Command="{Binding BrowseFsgameCommand}"
+                                                Margin="0,0,8,0"/>
+                                        <Button Content="{x:Static res:Strings.SettingsProfile_AutoSelect}" Command="{Binding ClearFsgameSourceCommand}"/>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Expander>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="{x:Static res:Strings.SettingsProfile_DataModsTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_StandaloneData}"
+                                       Foreground="{DynamicResource MutedTextBrush}" FontSize="11"
+                                       TextWrapping="Wrap" Margin="0,6,0,0" Visibility="{Binding IsStandalone, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                            <StackPanel x:Name="UserDataPanel" Margin="0,0,0,14" Style="{StaticResource ProfileNonStandaloneSectionStyle}">
+                                <TextBlock Text="{x:Static res:Strings.SettingsProfile_UserData}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,6"/>
+                                <StackPanel IsEnabled="{Binding CanChooseGameData}">
+                                    <RadioButton Content="{x:Static res:Strings.SettingsProfile_UserDataProfile}" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                                 IsChecked="{Binding UseProfileGameData}" Margin="0,0,0,5"/>
+                                    <RadioButton Content="{x:Static res:Strings.SettingsProfile_UserDataGame}" Style="{StaticResource ProfileLaunchRadioButtonStyle}"
+                                                 IsChecked="{Binding UseBaseGameData}"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding GameDataDescription}" Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                                <Button Content="{x:Static res:Strings.SettingsProfile_CopyMissingData}"
+                                        Command="{Binding CopyGameDataCommand}" IsEnabled="{Binding CanChooseGameData}"
+                                        HorizontalAlignment="Left" Margin="0,6,0,0"/>
+
+                                <TextBlock Text="{x:Static res:Strings.SettingsProfile_CopyImmediateHint}"
+                                           Foreground="{DynamicResource MutedTextBrush}" FontSize="11"
+                                           TextWrapping="Wrap" Margin="0,6,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Margin="0,14,0,0">
+                                <TextBlock Text="{x:Static res:Strings.SettingsProfile_InstalledModsFolder}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           FontSize="12"/>
+                                <Border Style="{StaticResource ProfileFieldBorderStyle}"
+                                        Margin="0,4,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0"
+                                                 Text="{Binding ModInstallPath, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource ProfileEmbeddedTextBoxStyle}"
+                                                 ToolTip="{x:Static res:Strings.SettingsProfile_ModFolderTooltip}"/>
+                                        <Button Grid.Column="1"
+                                                Content="{x:Static res:Strings.Common_Browse}"
+                                                Command="{Binding BrowseModInstallPathCommand}"
+                                                Margin="8,0,0,0"
+                                                Width="92"
+                                                VerticalAlignment="Center"/>
+                                        <Button Grid.Column="2"
+                                                Content="{x:Static res:Strings.Common_Default}"
+                                                Command="{Binding ResetModInstallPathCommand}"
+                                                Margin="8,0,0,0"
+                                                Width="110"
+                                                VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+
+                            <Expander Header="{x:Static res:Strings.SettingsProfile_Mo2Heading}" x:Name="Mo2Settings">
+                                <StackPanel Margin="0,10,0,0">
+                                    <Border Background="{StaticResource FieldBackgroundBrush}"
+                                            BorderBrush="{StaticResource StrokeBrush}" BorderThickness="1"
+                                            CornerRadius="6" Padding="10" Margin="0,14,0,0"
+                                            Visibility="{Binding HasMo2Overwrite, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{x:Static res:Strings.SettingsProfile_Mo2Overwrite}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Mo2OverwritePath}" Foreground="{StaticResource MutedTextBrush}"
+                                                           FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding Mo2OverwritePath}"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="{x:Static res:Strings.Common_Disable}" Command="{Binding RemoveMo2OverwriteCommand}"
+                                                    Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <StackPanel Margin="0,16,0,0">
+                                        <TextBlock Text="{x:Static res:Strings.SettingsProfile_Mo2Order}"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   FontSize="12"
+                                                   Margin="0,0,0,4"/>
+                                        <Button Content="{x:Static res:Strings.SettingsProfile_Mo2Apply}"
+                                                Command="{Binding ImportMo2ModListCommand}"
+                                                ToolTip="{x:Static res:Strings.SettingsProfile_Mo2ApplyTooltip}"
+                                                HorizontalAlignment="Left"/>
+                                    </StackPanel>
+
+                                    <TextBlock Text="{x:Static res:Strings.SettingsProfile_Mo2ImmediateHint}"
+                                               Foreground="{DynamicResource MutedTextBrush}" FontSize="11"
+                                               TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                </StackPanel>
+                            </Expander>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
         </Border>
 
-        <Grid Grid.Row="1" Margin="0,12,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <ToggleButton Grid.Column="0"
-                          Content="{x:Static res:Strings.SettingsProfile_Discord}"
-                          IsChecked="{Binding IsDiscordStatusEnabled}"
-                          Style="{StaticResource ProfileToggleButtonStyle}"
-                          ToolTip="{x:Static res:Strings.SettingsProfile_DiscordTooltip}"
-                          Margin="0,0,8,0"/>
-            <WrapPanel Grid.Column="2" HorizontalAlignment="Right">
-                <Button Content="{x:Static res:Strings.Common_Save}"
-                        Command="{Binding SaveCommand}"
-                        Margin="0,0,8,0"/>
-                <Button Content="{x:Static res:Strings.Common_Done}"
-                        Click="CloseButton_OnClick"
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        MinWidth="96"/>
-            </WrapPanel>
-        </Grid>
+        <WrapPanel Grid.Row="1" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="{x:Static res:Strings.Common_Save}"
+                    Command="{Binding SaveCommand}" Margin="0,0,8,0"/>
+            <Button Content="{x:Static res:Strings.SettingsProfile_SaveClose}"
+                    Click="CloseButton_OnClick" Style="{StaticResource PrimaryButtonStyle}" MinWidth="96"/>
+        </WrapPanel>
     </Grid>
 </Window>

@@ -332,23 +332,32 @@ public sealed class LauncherShellUiTests
     }
 
     [Fact]
-    public void ProfileSettingsPlaceUserDataBetweenRendererAndExecutableWithLocalRadioGroups()
+    public void ProfileSettingsGroupFieldsByTaskAndKeepSaveActionsOutsideTabs()
     {
         var interfaces = new[]
         {
-            LoadProjectXaml("Views", "ProfileSettingsWindow.xaml").ToString(),
-            LoadProjectXaml("Views", "Controls", "PdaProfileSettingsView.xaml").ToString()
+            LoadProjectXaml("Views", "ProfileSettingsWindow.xaml"),
+            LoadProjectXaml("Views", "Controls", "PdaProfileSettingsView.xaml")
         };
 
-        foreach (var xaml in interfaces)
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        foreach (var document in interfaces)
         {
-            var renderer = xaml.IndexOf("Strings.SettingsProfile_AnomalyEngine", StringComparison.Ordinal);
-            var userData = xaml.IndexOf("Strings.SettingsProfile_UserData", StringComparison.Ordinal);
-            var executable = xaml.IndexOf("Strings.SettingsProfile_Executable", StringComparison.Ordinal);
+            var tabs = document.Descendants(presentation + "TabItem").ToArray();
+            Assert.Equal(3, tabs.Length);
+            Assert.Contains("IsDiscordStatusEnabled", tabs[0].ToString());
+            Assert.Contains("ExecutableRelativePath", tabs[1].ToString());
+            Assert.Contains("LaunchArguments", tabs[1].ToString());
+            Assert.Contains("AnomalyUseAvx", tabs[1].ToString());
+            Assert.Contains("FsgameSourceDisplay", tabs[1].ToString());
+            Assert.Contains("UseBaseGameData", tabs[2].ToString());
+            Assert.Contains("ModInstallPath", tabs[2].ToString());
+            Assert.Contains("ImportMo2ModListCommand", tabs[2].ToString());
 
-            Assert.True(renderer >= 0 && renderer < userData && userData < executable);
-            Assert.DoesNotContain("GroupName=", xaml);
-            Assert.DoesNotContain("Text=\"Данные игры\"", xaml);
+            var save = Assert.Single(document.Descendants(presentation + "Button"), button =>
+                (string?)button.Attribute("Content") == "{x:Static res:Strings.Common_Save}");
+            Assert.DoesNotContain(save.Ancestors(), element => element.Name == presentation + "TabControl");
+            Assert.DoesNotContain("GroupName=", document.ToString());
         }
     }
 

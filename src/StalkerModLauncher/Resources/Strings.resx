@@ -1132,4 +1132,11 @@
   <data name="Fomod_FolderNotFoundFormat" xml:space="preserve"><value>The FOMOD source folder was not found: {0}</value></data>
   <data name="Fomod_ConfigNotFound" xml:space="preserve"><value>The selected folder does not contain a FOMOD installer.</value></data>
   <data name="Fomod_CopyingFormat" xml:space="preserve"><value>Copying selected files from {0}...</value></data>
+  <data name="SettingsProfile_LaunchTab" xml:space="preserve"><value>Launch</value></data>
+  <data name="SettingsProfile_DataModsTab" xml:space="preserve"><value>Data and mods</value></data>
+  <data name="SettingsProfile_Advanced" xml:space="preserve"><value>Advanced</value></data>
+  <data name="SettingsProfile_Mo2Heading" xml:space="preserve"><value>MO2 integration</value></data>
+  <data name="SettingsProfile_SaveClose" xml:space="preserve"><value>Save and close</value></data>
+  <data name="SettingsProfile_CopyImmediateHint" xml:space="preserve"><value>Copying starts after confirmation and does not wait for settings to be saved.</value></data>
+  <data name="SettingsProfile_Mo2ImmediateHint" xml:space="preserve"><value>Applying mod order changes and saves the mod list immediately. Save profile settings separately.</value></data>
 </root>
