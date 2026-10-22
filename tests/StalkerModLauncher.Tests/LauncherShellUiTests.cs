@@ -345,7 +345,13 @@ public sealed class LauncherShellUiTests
         {
             var tabs = document.Descendants(presentation + "TabItem").ToArray();
             Assert.Equal(3, tabs.Length);
+            Assert.Equal("Left", (string?)Assert.Single(document.Descendants(presentation + "TabControl")).Attribute("TabStripPlacement"));
+            Assert.Empty(document.Descendants(presentation + "Expander"));
             Assert.Contains("IsDiscordStatusEnabled", tabs[0].ToString());
+            Assert.Contains("IsStandalone", tabs[0].ToString());
+            var standalone = Assert.Single(tabs[0].Descendants(presentation + "CheckBox"), checkBox =>
+                (string?)checkBox.Attribute("IsChecked") == "{Binding IsStandalone}");
+            Assert.Contains("Strings.SettingsProfile_StandaloneHint", standalone.ToString());
             Assert.Contains("ExecutableRelativePath", tabs[1].ToString());
             Assert.Contains("LaunchArguments", tabs[1].ToString());
             Assert.Contains("AnomalyUseAvx", tabs[1].ToString());
@@ -355,7 +361,7 @@ public sealed class LauncherShellUiTests
             Assert.Contains("ImportMo2ModListCommand", tabs[2].ToString());
 
             var save = Assert.Single(document.Descendants(presentation + "Button"), button =>
-                (string?)button.Attribute("Content") == "{x:Static res:Strings.Common_Save}");
+                (string?)button.Attribute("Content") == "{x:Static res:Strings.SettingsProfile_Apply}");
             Assert.DoesNotContain(save.Ancestors(), element => element.Name == presentation + "TabControl");
             Assert.DoesNotContain("GroupName=", document.ToString());
         }

@@ -4,10 +4,15 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabControl">
-                    <DockPanel KeyboardNavigation.TabNavigation="Local">
-                        <TabPanel DockPanel.Dock="Top" IsItemsHost="True" Margin="0,0,0,12"/>
-                        <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
-                    </DockPanel>
+                    <Grid KeyboardNavigation.TabNavigation="Local">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="164"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="0,0,1,0" Margin="0,0,20,0"/>
+                        <TabPanel IsItemsHost="True" VerticalAlignment="Top" Margin="0,0,32,0"/>
+                        <ContentPresenter Grid.Column="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -15,24 +20,32 @@
 
     <Style TargetType="TabItem">
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="Background" Value="{DynamicResource FieldBackgroundBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
-        <Setter Property="Padding" Value="14,8"/>
-        <Setter Property="Margin" Value="0,0,6,0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="MinHeight" Value="42"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="1" CornerRadius="3" Padding="{TemplateBinding Padding}">
-                        <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
+                            BorderThickness="1" CornerRadius="3">
+                        <Grid>
+                            <Border x:Name="SelectionMark" Background="{DynamicResource AccentBrush}"
+                                    Width="3" HorizontalAlignment="Left" Visibility="Collapsed"/>
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"
+                                              VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                            <Setter Property="Background" Value="{DynamicResource PanelAltBrush}"/>
-                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            <Setter Property="Background" Value="{DynamicResource FieldBackgroundBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource PanelAltBrush}"/>
+                            <Setter TargetName="SelectionMark" Property="Visibility" Value="Visible"/>
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
                             <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
@@ -43,24 +56,37 @@
         </Setter>
     </Style>
 
-    <Style TargetType="Expander">
+    <Style x:Key="ProfileStandaloneCheckBoxStyle" TargetType="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="Margin" Value="0,14,0,0"/>
+        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <BulletDecorator Background="Transparent">
+                        <BulletDecorator.Bullet>
+                            <Image x:Name="StateImage" Source="{DynamicResource RadiationOffImage}"
+                                   Width="20" Height="20"/>
+                        </BulletDecorator.Bullet>
+                        <ContentPresenter RecognizesAccessKey="True" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                    </BulletDecorator>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="StateImage" Property="Source" Value="{DynamicResource RadiationOnImage}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.38"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style x:Key="ProfileNonStandaloneSectionStyle" TargetType="StackPanel">
         <Style.Triggers>
             <DataTrigger Binding="{Binding IsStandalone}" Value="True">
-                <Setter Property="Visibility" Value="Collapsed"/>
-            </DataTrigger>
-        </Style.Triggers>
-    </Style>
-
-    <Style x:Key="ProfileFsgameExpanderStyle" TargetType="Expander" BasedOn="{StaticResource {x:Type Expander}}">
-        <Style.Triggers>
-            <DataTrigger Binding="{Binding IsStandalone}" Value="True">
-                <Setter Property="Visibility" Value="Collapsed"/>
+                <Setter Property="IsEnabled" Value="False"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>

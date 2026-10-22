@@ -240,7 +240,7 @@ public static class Strings
     public static string SettingsProfile_StandaloneHint => Get();
     public static string SettingsProfile_LaunchTab => Get();
     public static string SettingsProfile_DataModsTab => Get();
-    public static string SettingsProfile_Advanced => Get();
+    public static string SettingsProfile_Apply => Get();
     public static string SettingsProfile_Mo2Heading => Get();
     public static string SettingsProfile_SaveClose => Get();
     public static string SettingsProfile_CopyImmediateHint => Get();

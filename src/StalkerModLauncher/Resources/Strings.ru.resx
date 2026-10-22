@@ -1134,7 +1134,7 @@
   <data name="Fomod_CopyingFormat" xml:space="preserve"><value>Копирование выбранных файлов из {0}...</value></data>
   <data name="SettingsProfile_LaunchTab" xml:space="preserve"><value>Запуск</value></data>
   <data name="SettingsProfile_DataModsTab" xml:space="preserve"><value>Данные и моды</value></data>
-  <data name="SettingsProfile_Advanced" xml:space="preserve"><value>Дополнительно</value></data>
+  <data name="SettingsProfile_Apply" xml:space="preserve"><value>Применить</value></data>
   <data name="SettingsProfile_Mo2Heading" xml:space="preserve"><value>Интеграция с MO2</value></data>
   <data name="SettingsProfile_SaveClose" xml:space="preserve"><value>Сохранить и закрыть</value></data>
   <data name="SettingsProfile_CopyImmediateHint" xml:space="preserve"><value>Копирование начинается после подтверждения, без сохранения настроек.</value></data>
