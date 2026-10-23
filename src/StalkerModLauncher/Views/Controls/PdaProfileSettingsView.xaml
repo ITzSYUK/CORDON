@@ -407,8 +407,6 @@
 
                                 <Border x:Name="ModOrderSetting" Style="{StaticResource ProfilePdaSettingPanelStyle}">
                                     <StackPanel>
-                                        <TextBlock Text="{x:Static res:Strings.SettingsProfile_Mo2Order}" Foreground="#929B88" FontSize="11"/>
-
                                         <Button Content="{x:Static res:Strings.SettingsProfile_Mo2Apply}"
                                             Command="{Binding ImportMo2ModListCommand}"
                                             ToolTip="{x:Static res:Strings.SettingsProfile_Mo2ApplyTooltip}"

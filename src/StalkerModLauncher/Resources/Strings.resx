@@ -223,7 +223,6 @@
   <data name="SettingsProfile_ModFolderTooltip" xml:space="preserve"><value>Archives are extracted here, separately from the workspace.</value></data>
   <data name="SettingsProfile_Mo2Apply" xml:space="preserve"><value>Apply mod order from an MO2 profile...</value></data>
   <data name="SettingsProfile_Mo2ApplyTooltip" xml:space="preserve"><value>Select modlist.txt from an MO2 profile. The launcher applies order and enabled state only to mods already added; no new mods or folders are imported.</value></data>
-  <data name="SettingsProfile_Mo2Order" xml:space="preserve"><value>MO2 mod order</value></data>
   <data name="SettingsProfile_Mo2Overwrite" xml:space="preserve"><value>Additional MO2 overwrite layer</value></data>
   <data name="SettingsProfile_SelectFile" xml:space="preserve"><value>Select file...</value></data>
   <data name="SettingsProfile_StandaloneHint" xml:space="preserve"><value> — the mod has its own engine and all game files and runs from its own folder</value></data>

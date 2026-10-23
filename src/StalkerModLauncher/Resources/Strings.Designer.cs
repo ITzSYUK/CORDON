@@ -234,7 +234,6 @@ public static class Strings
     public static string SettingsProfile_ModFolderTooltip => Get();
     public static string SettingsProfile_Mo2Apply => Get();
     public static string SettingsProfile_Mo2ApplyTooltip => Get();
-    public static string SettingsProfile_Mo2Order => Get();
     public static string SettingsProfile_Mo2Overwrite => Get();
     public static string SettingsProfile_SelectFile => Get();
     public static string SettingsProfile_StandaloneHint => Get();

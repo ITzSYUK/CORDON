@@ -223,7 +223,6 @@
   <data name="SettingsProfile_ModFolderTooltip" xml:space="preserve"><value>Архивы распаковываются сюда, отдельно от workspace.</value></data>
   <data name="SettingsProfile_Mo2Apply" xml:space="preserve"><value>Применить порядок модов из профиля MO2...</value></data>
   <data name="SettingsProfile_Mo2ApplyTooltip" xml:space="preserve"><value>Выберите файл modlist.txt из профиля MO2. Лаунчер применит порядок и включённое состояние только к уже добавленным модам; новые моды и папки импортированы не будут.</value></data>
-  <data name="SettingsProfile_Mo2Order" xml:space="preserve"><value>Порядок модов MO2</value></data>
   <data name="SettingsProfile_Mo2Overwrite" xml:space="preserve"><value>Дополнительный слой MO2 overwrite</value></data>
   <data name="SettingsProfile_SelectFile" xml:space="preserve"><value>Выбрать файл...</value></data>
   <data name="SettingsProfile_StandaloneHint" xml:space="preserve"><value> — мод имеет свой движок и все файлы игры, запускается из своей папки</value></data>

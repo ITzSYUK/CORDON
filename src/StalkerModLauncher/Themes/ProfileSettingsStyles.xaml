@@ -42,7 +42,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <Border Background="{TemplateBinding Background}" Cursor="Hand" CornerRadius="3">
+                    <Border Background="{TemplateBinding Background}" Cursor="Hand">
                         <Grid>
                             <Border x:Name="SelectionMark" Background="{DynamicResource AccentBrush}"
                                     Width="3" HorizontalAlignment="Left" Visibility="Collapsed"/>
