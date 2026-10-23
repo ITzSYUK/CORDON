@@ -347,6 +347,11 @@ public sealed class LauncherShellUiTests
             Assert.Equal(3, tabs.Length);
             Assert.Equal("Left", (string?)Assert.Single(document.Descendants(presentation + "TabControl")).Attribute("TabStripPlacement"));
             Assert.Empty(document.Descendants(presentation + "Expander"));
+            var panelStyle = document.Root!.Name.LocalName == "Window"
+                ? "{StaticResource ProfileSettingPanelStyle}"
+                : "{StaticResource ProfilePdaSettingPanelStyle}";
+            Assert.Equal([4, 5, 4], tabs.Select(tab => tab.Descendants(presentation + "Border").Count(border =>
+                (string?)border.Attribute("Style") == panelStyle)));
             Assert.Contains("IsDiscordStatusEnabled", tabs[0].ToString());
             Assert.Contains("IsStandalone", tabs[0].ToString());
             var standalone = Assert.Single(tabs[0].Descendants(presentation + "CheckBox"), checkBox =>
