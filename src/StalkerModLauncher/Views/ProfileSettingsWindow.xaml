@@ -26,7 +26,6 @@
                 <Setter Property="Padding" Value="12,6"/>
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Background" Value="{StaticResource CommandPanelBrush}"/>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
@@ -47,7 +46,7 @@
 
             <Style x:Key="ProfileFieldBorderStyle" TargetType="Border">
                 <Setter Property="Background" Value="{StaticResource FieldBackgroundBrush}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource PanelAltBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="6"/>
                 <Setter Property="Padding" Value="8,4"/>
@@ -261,7 +260,7 @@
                                                        FontSize="11"
                                                        Margin="0,2,0,0"/>
                                         </StackPanel>
-                                        <Button Grid.Column="1" Background="{DynamicResource FieldBackgroundBrush}" BorderThickness="0"
+                                        <Button Grid.Column="1" Background="{DynamicResource FieldBackgroundBrush}"
                                                 Content="{x:Static res:Strings.SettingsProfile_AutoSelect}"
                                                 Command="{Binding ClearExecutableSourceCommand}"
                                                 ToolTip="{x:Static res:Strings.SettingsProfile_AutoSelectExeTooltip}"

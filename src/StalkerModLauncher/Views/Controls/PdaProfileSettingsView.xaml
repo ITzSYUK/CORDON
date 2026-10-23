@@ -201,7 +201,7 @@
                             <Border x:Name="DiscordSetting" Style="{StaticResource ProfilePdaSettingPanelStyle}">
                                 <ToggleButton HorizontalAlignment="Left" MinHeight="36" Padding="12,6" FontSize="12" Content="{x:Static res:Strings.SettingsProfile_Discord}"
                                     IsChecked="{Binding IsDiscordStatusEnabled}"
-                                    Style="{StaticResource ProfileToggleButtonStyle}"
+                                    Style="{DynamicResource ProfileToggleButtonStyle}"
                                     ToolTip="{x:Static res:Strings.SettingsProfile_DiscordTooltip}"/>
                             </Border>
                         </StackPanel>
