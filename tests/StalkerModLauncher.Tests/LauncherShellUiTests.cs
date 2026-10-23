@@ -373,6 +373,95 @@ public sealed class LauncherShellUiTests
     }
 
     [Fact]
+    public void ProfileSettingsNavigationKeepsHandCursorAndFocusInsideHeaders()
+    {
+        static Cursor QueryCursor(UIElement element)
+        {
+            var query = new QueryCursorEventArgs(Mouse.PrimaryDevice, Environment.TickCount)
+            {
+                RoutedEvent = Mouse.QueryCursorEvent
+            };
+            element.RaiseEvent(query);
+            return query.Cursor;
+        }
+
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            Window? window = null;
+            try
+            {
+                var host = CreateThemeHost();
+                host.Cursor = Cursors.Arrow;
+                host.Resources.MergedDictionaries.Add(new ResourceDictionary
+                {
+                    Source = new Uri("/CORDON;component/Themes/ProfileSettingsStyles.xaml", UriKind.Relative)
+                });
+                var tabs = new TabControl { TabStripPlacement = Dock.Left };
+                for (var index = 0; index < 3; index++)
+                {
+                    var page = new StackPanel();
+                    page.Children.Add(new TextBox { Cursor = Cursors.IBeam });
+                    page.Children.Add(new Button { Cursor = Cursors.Hand });
+                    tabs.Items.Add(new TabItem { Header = index.ToString(CultureInfo.InvariantCulture), Content = new ScrollViewer { Content = page } });
+                }
+                host.Children.Add(tabs);
+                window = new Window
+                {
+                    Content = host,
+                    SizeToContent = SizeToContent.WidthAndHeight,
+                    ShowActivated = false,
+                    ShowInTaskbar = false,
+                    Left = -10000,
+                    Top = -10000
+                };
+                window.Show();
+                for (var attempt = 0; attempt < 18; attempt++)
+                {
+                    var item = (TabItem)tabs.Items[attempt % tabs.Items.Count];
+                    for (var click = 0; click < 2; click++)
+                    {
+                        item.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                        {
+                            RoutedEvent = Mouse.MouseDownEvent,
+                            Source = item
+                        });
+                    }
+                    host.UpdateLayout();
+                    Assert.Same(item, tabs.SelectedItem);
+                    var scroll = Assert.IsType<ScrollViewer>(item.Content);
+                    Assert.Null(scroll.FocusVisualStyle);
+                    var page = (StackPanel)scroll.Content;
+                    Assert.Same(Cursors.Arrow, QueryCursor(page));
+                    Assert.Same(Cursors.IBeam, QueryCursor((TextBox)page.Children[0]));
+                    Assert.Same(Cursors.Hand, QueryCursor((Button)page.Children[1]));
+                    var header = Assert.IsType<Border>(VisualTreeHelper.GetChild(item, 0));
+                    Assert.Same(Cursors.Hand, QueryCursor(header));
+                    Assert.Equal(new Thickness(0), header.BorderThickness);
+                    Assert.Null(item.FocusVisualStyle);
+                    Assert.True(item.Focus());
+                    Assert.True(item.IsKeyboardFocused);
+                    var label = Assert.IsType<ContentPresenter>(item.Template.FindName("HeaderContent", item));
+                    Assert.Equal(FontWeights.SemiBold, label.GetValue(System.Windows.Documents.TextElement.FontWeightProperty));
+                    Assert.Equal(FontWeights.SemiBold, Assert.IsType<TextBlock>(VisualTreeHelper.GetChild(label, 0)).FontWeight);
+                    Assert.True(item.MoveFocus(new TraversalRequest(FocusNavigationDirection.Down)));
+                    Assert.Equal(((attempt % tabs.Items.Count) + 1) % tabs.Items.Count, tabs.SelectedIndex);
+                }
+            }
+            catch (Exception ex) { failure = ex; }
+            finally
+            {
+                window?.Close();
+                System.Windows.Threading.Dispatcher.CurrentDispatcher.InvokeShutdown();
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        Assert.True(thread.Join(TimeSpan.FromSeconds(30)), "Profile navigation test timed out.");
+        if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+    }
+
+    [Fact]
     public void ProfileSettingsExposeManualFsgameSelectionInBothInterfaces()
     {
         var interfaces = new[]
