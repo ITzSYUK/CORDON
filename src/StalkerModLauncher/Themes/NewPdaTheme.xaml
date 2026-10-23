@@ -38,6 +38,7 @@
     <SolidColorBrush x:Key="PdaRadioBorderBrush" Color="#74786E"/>
     <SolidColorBrush x:Key="PdaRadioHoverBorderBrush" Color="#A1A49A"/>
     <SolidColorBrush x:Key="PdaCheckedBackgroundBrush" Color="#292C22"/>
+    <SolidColorBrush x:Key="PdaCheckedBorderBrush" Color="#7C865F"/>
     <SolidColorBrush x:Key="PdaPopupBackgroundBrush" Color="#171916"/>
     <SolidColorBrush x:Key="PdaPopupBorderBrush" Color="#50534C"/>
     <SolidColorBrush x:Key="PdaMenuHighlightBrush" Color="#292B27"/>
