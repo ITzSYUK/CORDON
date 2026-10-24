@@ -481,7 +481,7 @@
   <data name="SettingsProfile_Invalid" xml:space="preserve"><value>Некорректные настройки профиля</value></data>
   <data name="SettingsProfile_SaveFailed" xml:space="preserve"><value>Не удалось сохранить настройки профиля</value></data>
   <data name="SettingsProfile_StopGame" xml:space="preserve"><value>Завершите игру перед изменением каталога данных.</value></data>
-  <data name="SettingsProfile_SaveFailedDetailsFormat" xml:space="preserve"><value>Изменения не сохранены. Окно останется открытым.{0}{0}{1}</value></data>
+  <data name="SettingsProfile_SaveFailedDetailsFormat" xml:space="preserve"><value>Не удалось завершить сохранение. Окно останется открытым.{0}{0}{1}</value></data>
   <data name="SettingsProfile_PickFsgame" xml:space="preserve"><value>Выберите конфигурацию fsgame</value></data>
   <data name="SettingsProfile_InvalidFsgame" xml:space="preserve"><value>Некорректный fsgame.ltx</value></data>
   <data name="SettingsProfile_FsgameLocation" xml:space="preserve"><value>Выберите файл .ltx из папки базовой игры или включённого мода.</value></data>
@@ -1133,7 +1133,14 @@
   <data name="Fomod_ConfigNotFound" xml:space="preserve"><value>В выбранной папке нет установщика FOMOD.</value></data>
   <data name="Fomod_CopyingFormat" xml:space="preserve"><value>Копирование выбранных файлов из {0}...</value></data>
   <data name="Settings_ProfileIndexInvalid" xml:space="preserve"><value>Некорректный список профилей или ID профиля. Настройки не будут перезаписаны.</value></data>
-  <data name="Settings_ProfileUnavailableFormat" xml:space="preserve"><value>Не удалось загрузить профиль и его резервную копию: {0}. {1} Настройки не будут перезаписаны.</value></data>
+  <data name="Settings_ProfileUnavailableFormat" xml:space="preserve"><value>Не удалось загрузить профиль и его резервную копию: {0}. {1} Файлы профиля не будут перезаписаны.</value></data>
   <data name="Settings_PendingSaveInvalid" xml:space="preserve"><value>Журнал незавершённого сохранения повреждён. Настройки не будут перезаписаны; сохраните settings.pending.json для восстановления.</value></data>
   <data name="Settings_ImportPending" xml:space="preserve"><value>В источнике есть незавершённое сохранение настроек. Запустите лаунчер с этой папкой настроек для завершения восстановления, затем повторите импорт.</value></data>
+  <data name="Settings_SchemaUnsupportedFormat" xml:space="preserve"><value>Файл настроек {0} использует схему {1}; этот лаунчер поддерживает версии до {2}. Используйте более новый лаунчер. Файл не будет перезаписан.</value></data>
+  <data name="Profile_UnavailableNameFormat" xml:space="preserve"><value>Недоступный профиль: {0}</value></data>
+  <data name="Settings_ProfileFilesMissing" xml:space="preserve"><value>Оба файла профиля отсутствуют.</value></data>
+  <data name="Settings_ProfilesUnavailable" xml:space="preserve"><value>Некоторые профили недоступны</value></data>
+  <data name="Settings_ProfilesUnavailableFormat" xml:space="preserve"><value>Эти профили остаются в списке, но использовать их нельзя. Остальные профили доступны. Восстановите отсутствующие или повреждённые JSON из резервной копии и перезапустите лаунчер либо удалите недоступные записи через лаунчер.{0}{0}{1}</value></data>
+  <data name="Profile_DeleteUnavailableFormat" xml:space="preserve"><value>Удалить недоступный профиль '{0}' и его JSON? Игровые файлы и существующая рабочая папка останутся нетронутыми.</value></data>
+  <data name="Settings_ProfilePlaytimeInvalid" xml:space="preserve"><value>Время игры в профиле должно быть конечным неотрицательным числом в допустимом диапазоне.</value></data>
 </root>

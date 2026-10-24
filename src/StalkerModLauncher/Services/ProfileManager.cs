@@ -90,6 +90,7 @@ public sealed class ProfileManager
     public void EnsureDefaults(ModProfile profile)
     {
         profile.IsRunning = false;
+        if (profile.SettingsLoadError.Length > 0) return;
 
         if (string.IsNullOrWhiteSpace(profile.Id))
         {
@@ -112,7 +113,7 @@ public sealed class ProfileManager
 
     public ModProfile? Delete(ICollection<ModProfile> profiles, ModProfile profile)
     {
-        if (!profile.IsStandalone)
+        if (!profile.IsStandalone && profile.SettingsLoadError.Length == 0)
         {
             var workspacePath = string.IsNullOrWhiteSpace(profile.WorkspacePath)
                 ? CreateWorkspacePath(profile, profile.GameInstallPath)
@@ -131,6 +132,7 @@ public sealed class ProfileManager
 
     public string? GetProfileFolderPath(ModProfile profile)
     {
+        if (profile.SettingsLoadError.Length > 0) return null;
         if (profile.IsStandalone)
         {
             return profile.Mods
@@ -148,6 +150,7 @@ public sealed class ProfileManager
 
     public string EnsureProfileFolderPath(ModProfile profile, IProgress<string>? progress = null)
     {
+        if (profile.SettingsLoadError.Length > 0) throw new InvalidOperationException(profile.SettingsLoadError);
         if (profile.IsStandalone)
         {
             throw new InvalidOperationException(Strings.Profile_StandaloneNoWorkspace);

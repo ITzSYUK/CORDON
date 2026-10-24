@@ -119,23 +119,105 @@ public sealed class SettingsStoreProfileTests : IDisposable
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task MissingOrDamagedProfileWithoutBackupBlocksWritesUntilReload(bool corrupt)
+    public async Task MissingOrDamagedProfileRemainsUnavailableWithoutBlockingHealthyProfiles(bool corrupt)
     {
         var profile = new ModProfile { Name = "Keep" };
-        await _store.SaveAsync(new AppSettings { Profiles = [profile] });
+        var healthy = new ModProfile { Name = "Healthy" };
+        await _store.SaveAsync(new AppSettings { Profiles = [profile, healthy] });
         var path = _paths.GetProfileFile(profile.Id);
         var original = await File.ReadAllTextAsync(path);
         var index = await File.ReadAllTextAsync(_paths.SettingsFile);
         if (corrupt) await File.WriteAllTextAsync(path, "{ broken");
         else File.Delete(path);
 
-        await Assert.ThrowsAsync<SettingsPersistenceException>(() => _store.LoadAsync());
-        await Assert.ThrowsAsync<SettingsPersistenceException>(() => _store.SaveAsync(new AppSettings()));
+        var loaded = await _store.LoadAsync();
+        Assert.Equal([profile.Id, healthy.Id], loaded.Profiles.Select(item => item.Id));
+        Assert.NotEmpty(loaded.Profiles[0].SettingsLoadError);
+        Assert.Empty(loaded.Profiles[1].SettingsLoadError);
         Assert.Equal(index, await File.ReadAllTextAsync(_paths.SettingsFile));
-        Assert.False(File.Exists(_paths.SettingsPendingFile));
+        loaded.Profiles[1].Description = "Changed";
+        await _store.SaveAsync(loaded);
+        Assert.Equal("Changed", (await _store.LoadAsync()).Profiles[1].Description);
+        if (corrupt) Assert.Equal("{ broken", await File.ReadAllTextAsync(path));
+        else Assert.False(File.Exists(path));
+        Assert.DoesNotContain("SettingsLoadError", await File.ReadAllTextAsync(_paths.SettingsFile));
+        Assert.DoesNotContain("UnavailableProfileIds", await File.ReadAllTextAsync(_paths.SettingsFile));
         await File.WriteAllTextAsync(path, original);
-        Assert.Equal("Keep", Assert.Single((await _store.LoadAsync()).Profiles).Name);
+        var restored = (await _store.LoadAsync()).Profiles[0];
+        Assert.Equal("Keep", restored.Name);
+        Assert.Empty(restored.SettingsLoadError);
         await _store.UpdateAsync(settings => { settings.IsLogVisible = false; return settings; });
+    }
+
+    [Fact]
+    public async Task JournalReplayNeverMaterializesUnavailableProfilePlaceholder()
+    {
+        var missing = new ModProfile { Name = "Missing" };
+        var healthy = new ModProfile { Name = "Healthy" };
+        await _store.SaveAsync(new AppSettings { Profiles = [missing, healthy] });
+        File.Delete(_paths.GetProfileFile(missing.Id));
+        var partial = await _store.LoadAsync();
+        partial.Profiles[1].Description = "Pending change";
+        var journal = JsonSerializer.SerializeToNode(partial)!.AsObject();
+        journal["UnavailableProfileIds"] = JsonSerializer.SerializeToNode(new[] { missing.Id });
+        await File.WriteAllTextAsync(_paths.SettingsPendingFile, journal.ToJsonString());
+
+        using var restarted = new SettingsStore(_paths);
+        var loaded = await restarted.LoadAsync();
+
+        Assert.NotEmpty(loaded.Profiles[0].SettingsLoadError);
+        Assert.Equal("Pending change", loaded.Profiles[1].Description);
+        Assert.False(File.Exists(_paths.GetProfileFile(missing.Id)));
+        Assert.False(File.Exists(_paths.SettingsPendingFile));
+    }
+
+    [Fact]
+    public async Task ExplicitDeletionOfUnavailableProfileDoesNotRecreateItsJson()
+    {
+        var missing = new ModProfile { Name = "Missing" };
+        var healthy = new ModProfile { Name = "Healthy" };
+        await _store.SaveAsync(new AppSettings { Profiles = [missing, healthy] });
+        File.Delete(_paths.GetProfileFile(missing.Id));
+
+        await _store.UpdateAsync(settings => { settings.Profiles.RemoveAt(0); return settings; });
+
+        Assert.Equal(healthy.Id, Assert.Single((await _store.LoadAsync()).Profiles).Id);
+        Assert.False(File.Exists(_paths.GetProfileFile(missing.Id)));
+        await File.WriteAllTextAsync(_paths.SettingsFile, "{ broken index");
+        Assert.Equal(healthy.Id, Assert.Single((await _store.LoadAsync()).Profiles).Id);
+    }
+
+    [Theory]
+    [InlineData("[\"unknown\"]")]
+    [InlineData("[null]")]
+    [InlineData("null")]
+    public async Task InvalidUnavailableIdsInJournalCannotChangeFiles(string metadata)
+    {
+        var healthy = new ModProfile { Name = "Healthy" };
+        await _store.SaveAsync(new AppSettings { Profiles = [healthy] });
+        var original = await File.ReadAllTextAsync(_paths.SettingsFile);
+        var journal = JsonSerializer.SerializeToNode(new AppSettings { Profiles = [healthy] })!.AsObject();
+        journal["UnavailableProfileIds"] = System.Text.Json.Nodes.JsonNode.Parse(metadata);
+        await File.WriteAllTextAsync(_paths.SettingsPendingFile, journal.ToJsonString());
+
+        await Assert.ThrowsAsync<SettingsPersistenceException>(() => _store.LoadAsync());
+
+        Assert.Equal(original, await File.ReadAllTextAsync(_paths.SettingsFile));
+    }
+
+    [Fact]
+    public async Task ImportRejectsUnavailableSourceProfileWithoutChangingDestination()
+    {
+        var sourcePaths = new AppPaths(Path.Combine(_root, "source"), Path.Combine(_root, "workspaces"), false);
+        using var source = new SettingsStore(sourcePaths);
+        var missing = new ModProfile { Name = "Missing" };
+        await source.SaveAsync(new AppSettings { Profiles = [missing] });
+        File.Delete(sourcePaths.GetProfileFile(missing.Id));
+        await _store.SaveAsync(new AppSettings { LastBrowsedGamePath = "keep" });
+
+        await Assert.ThrowsAsync<SettingsPersistenceException>(() => _store.ImportAsync(sourcePaths.SettingsFile));
+
+        Assert.Equal("keep", (await _store.LoadAsync()).LastBrowsedGamePath);
     }
 
     [Fact]
@@ -192,6 +274,8 @@ public sealed class SettingsStoreProfileTests : IDisposable
     [InlineData("{\"Profiles\":null}")]
     [InlineData("{\"Profiles\":[]}")]
     [InlineData("{\"ProfileIds\":[]}")]
+    [InlineData("{\"SchemaVersion\":10,\"Profiles\":[{}]}")]
+    [InlineData("{\"SchemaVersion\":10,\"Profiles\":[],\"Profiles\":[]}")]
     public async Task DamagedJournalBlocksWritesAndIsPreserved(string journal)
     {
         await _store.SaveAsync(new AppSettings { LastBrowsedGamePath = "keep" });
@@ -235,17 +319,17 @@ public sealed class SettingsStoreProfileTests : IDisposable
     }
 
     [Fact]
-    public async Task DeletionOnlyChangesIndexAndRetainsFilesForRecovery()
+    public async Task DeletionRemovesFilesAndCannotBeUndoneByIndexRecovery()
     {
         var first = new ModProfile { Name = "Removed" };
         var second = new ModProfile { Name = "Kept" };
         await _store.SaveAsync(new AppSettings { Profiles = [first, second] });
         await _store.SaveAsync(new AppSettings { Profiles = [second] });
         Assert.Equal("Kept", Assert.Single((await _store.LoadAsync()).Profiles).Name);
-        Assert.True(File.Exists(_paths.GetProfileFile(first.Id)));
+        Assert.False(File.Exists(_paths.GetProfileFile(first.Id)));
 
         await File.WriteAllTextAsync(_paths.SettingsFile, "{ broken index");
-        Assert.Equal(["Removed", "Kept"], (await _store.LoadAsync()).Profiles.Select(profile => profile.Name));
+        Assert.Equal("Kept", Assert.Single((await _store.LoadAsync()).Profiles).Name);
     }
 
     [Fact]
@@ -295,6 +379,44 @@ public sealed class SettingsStoreProfileTests : IDisposable
 
         Assert.True(_store.HasSettingsFile);
         Assert.Equal("Backup only", Assert.Single((await _store.LoadAsync()).Profiles).Name);
+    }
+
+    [Fact]
+    public async Task FutureSchemaBlocksWritesWithoutFallingBackToOlderBackup()
+    {
+        var profile = new ModProfile { Name = "Keep" };
+        var settings = new AppSettings { Profiles = [profile] };
+        await _store.SaveAsync(settings);
+        await _store.SaveAsync(settings);
+        var future = System.Text.Json.Nodes.JsonNode.Parse(await File.ReadAllTextAsync(_paths.SettingsFile))!;
+        future["SchemaVersion"] = AppSettings.CurrentSchemaVersion + 1;
+        var original = future.ToJsonString();
+        await File.WriteAllTextAsync(_paths.SettingsFile, original);
+
+        await Assert.ThrowsAsync<SettingsPersistenceException>(() => _store.LoadAsync());
+        await Assert.ThrowsAsync<SettingsPersistenceException>(() => _store.SaveAsync(new AppSettings()));
+        Assert.Equal(original, await File.ReadAllTextAsync(_paths.SettingsFile));
+        Assert.True(File.Exists(_paths.GetProfileFile(profile.Id)));
+        Assert.False(Directory.Exists(Path.Combine(_root, "recovery")));
+    }
+
+    [Theory]
+    [InlineData("{\"SchemaVersion\":10,\"UiLanguage\":\"en\"}")]
+    [InlineData("{\"SchemaVersion\":10,\"ProfileIds\":[\"same\",\"same\"]}")]
+    [InlineData("{\"SchemaVersion\":10,\"ProfileIds\":null}")]
+    public async Task InvalidModernIndexRecoversFromBackupInsteadOfDroppingProfiles(string damaged)
+    {
+        var profile = new ModProfile { Name = "Keep" };
+        var settings = new AppSettings { Profiles = [profile] };
+        await _store.SaveAsync(settings);
+        await _store.SaveAsync(settings);
+        await File.WriteAllTextAsync(_paths.SettingsFile, damaged);
+
+        var loaded = await _store.LoadWithRecoveryAsync();
+
+        Assert.Equal(SettingsRecoveryMode.Backup, loaded.Recovery?.Mode);
+        Assert.Equal(profile.Id, Assert.Single(loaded.Settings.Profiles).Id);
+        Assert.Equal(damaged, await File.ReadAllTextAsync(Assert.Single(loaded.Recovery!.Files).RecoveryPath));
     }
 
     [Fact]

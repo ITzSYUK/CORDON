@@ -107,18 +107,18 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         ChooseGameFolderCommand = new RelayCommand(ChooseGameFolder);
         NewProfileCommand = new RelayCommand(NewProfile);
         ImportSettingsCommand = new AsyncRelayCommand(ImportSettingsAsync, () => CanImportSettings);
-        DuplicateProfileCommand = new RelayCommand(DuplicateProfile, () => SelectedProfile is not null);
+        DuplicateProfileCommand = new RelayCommand(DuplicateProfile, () => SelectedProfile is { SettingsLoadError.Length: 0 });
         DeleteProfileCommand = new RelayCommand(DeleteProfile, () => SelectedProfile is not null);
         InlineDuplicateProfileCommand = new RelayCommand(
             parameter => DuplicateProfile(parameter as ModProfile),
-            parameter => parameter is ModProfile);
+            parameter => parameter is ModProfile { SettingsLoadError.Length: 0 });
         InlineExportProfileCommand = new RelayCommand(
             parameter => ExportProfile(parameter as ModProfile),
-            parameter => parameter is ModProfile);
+            parameter => parameter is ModProfile { SettingsLoadError.Length: 0 });
         InlineDeleteProfileCommand = new RelayCommand(
             parameter => DeleteProfile(parameter as ModProfile),
             parameter => parameter is ModProfile { IsRunning: false });
-        BrowseExecutableCommand = new RelayCommand(BrowseExecutable, () => SelectedProfile is not null);
+        BrowseExecutableCommand = new RelayCommand(BrowseExecutable, () => SelectedProfile is { SettingsLoadError.Length: 0 });
         AddModCommand = new AsyncRelayCommand(AddModAsync, CanAddMod);
         InstallModArchiveCommand = new AsyncRelayCommand(InstallModArchiveAsync, CanInstallModArchive);
         DismissModArchiveInstallCompletedCommand = new RelayCommand(() => IsModArchiveInstallCompleted = false);
@@ -141,9 +141,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             parameter => parameter is ModEntry mod && Directory.Exists(mod.SourcePath));
         LaunchCommand = new AsyncRelayCommand(LaunchAsync, CanLaunch);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
-        OpenProfileFolderCommand = new RelayCommand(OpenProfileFolder, () => SelectedProfile is not null);
+        OpenProfileFolderCommand = new RelayCommand(OpenProfileFolder, () => SelectedProfile is { SettingsLoadError.Length: 0 });
         OpenSelectedModFolderCommand = new RelayCommand(OpenSelectedModFolder, () => SelectedMod is not null);
-        ExportProfileCommand = new RelayCommand(ExportProfile, () => SelectedProfile is not null);
+        ExportProfileCommand = new RelayCommand(ExportProfile, () => SelectedProfile is { SettingsLoadError.Length: 0 });
         ImportProfileCommand = new RelayCommand(ImportProfile);
         ImportMo2CollectionCommand = new RelayCommand(() => Mo2ImportRequested?.Invoke(this, EventArgs.Empty));
         ShowSelectedModConflictsCommand = new RelayCommand(
@@ -349,7 +349,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         private set => SetProperty(ref _isBuilding, value);
     }
 
-    public bool CanEditSelectedProfile => SelectedProfile is { IsRunning: false };
+    public bool CanEditSelectedProfile => SelectedProfile is { IsRunning: false, SettingsLoadError.Length: 0 };
 
     public string BuildProgressText
     {

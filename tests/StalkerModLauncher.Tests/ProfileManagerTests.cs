@@ -94,6 +94,18 @@ public sealed class ProfileManagerTests
     }
 
     [Fact]
+    public void DeleteUnavailableProfileDoesNotGuessOrDeleteWorkspace()
+    {
+        var profile = new ModProfile { SettingsLoadError = "missing settings", WorkspacePath = @"D:\unknown-workspace" };
+        var profiles = new List<ModProfile> { profile };
+
+        _manager.Delete(profiles, profile);
+
+        Assert.Empty(profiles);
+        Assert.Empty(_workspaceManager.DeletedProfiles);
+    }
+
+    [Fact]
     public void DeleteOverlayProfileDeletesOnlyItsWorkspaceThenSelectsRemainder()
     {
         var removed = new ModProfile { Name = "Removed", GameInstallPath = @"D:\Game" };

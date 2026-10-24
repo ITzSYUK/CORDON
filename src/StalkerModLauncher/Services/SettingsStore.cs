@@ -64,7 +64,7 @@ public sealed partial class SettingsStore : IDisposable
             _writeBlockReason = null;
             return result;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
         {
             _writeBlockReason = ex.Message;
             throw new SettingsPersistenceException(ex.Message, ex);
@@ -106,10 +106,10 @@ public sealed partial class SettingsStore : IDisposable
             var sourcePaths = GetImportPaths(sourcePath);
             if (File.Exists(sourcePaths.SettingsPendingFile))
                 throw new SettingsPersistenceException(Strings.Settings_ImportPending);
-            var imported = await TryLoadFileAsync<AppSettings>(sourcePath);
+            var imported = await TryLoadSettingsFileAsync(sourcePath);
             if (imported.Settings is null)
             {
-                if (imported.Kind == SettingsFileLoadKind.Unavailable)
+                if (imported.Kind is SettingsFileLoadKind.Unavailable or SettingsFileLoadKind.Unsupported)
                 {
                     throw new SettingsPersistenceException(imported.Error ?? Strings.Settings_FileUnavailable);
                 }
@@ -140,7 +140,7 @@ public sealed partial class SettingsStore : IDisposable
             updated = update(current.Settings);
             await SaveSnapshotCoreAsync(SerializeSettings(updated));
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
         {
             _writeBlockReason = ex.Message;
             throw new SettingsPersistenceException(ex.Message, ex);
@@ -162,7 +162,7 @@ public sealed partial class SettingsStore : IDisposable
     {
         Directory.CreateDirectory(_paths.ConfigDirectory);
         await RecoverPendingSaveAsync();
-        var primary = await TryLoadFileAsync<AppSettings>(_paths.SettingsFile);
+        var primary = await TryLoadSettingsFileAsync(_paths.SettingsFile);
         if (primary.Settings is not null)
         {
             var legacy = primary.Settings.ProfileIds is null;
@@ -175,21 +175,23 @@ public sealed partial class SettingsStore : IDisposable
             return loaded;
         }
 
-        var backup = await TryLoadFileAsync<AppSettings>(_paths.SettingsBackupFile);
+        var backup = await TryLoadSettingsFileAsync(_paths.SettingsBackupFile);
         ThrowIfUnavailable(primary, backup);
         if (backup.Settings is not null)
         {
             var legacy = backup.Settings.ProfileIds is null;
             var loaded = await LoadProfilesAsync(backup.Settings, _paths);
             if (legacy) PreserveLegacySettings(_paths.SettingsBackupFile);
-            var damagedFiles = PreserveInvalidFiles(primary, backup);
+            var damagedFiles = PreserveInvalidFiles([primary, backup]);
             await ApplySnapshotCoreAsync(SerializeSettings(loaded.Settings), preserveSettingsBackup: true);
             return new SettingsLoadResult(loaded.Settings, new SettingsRecoveryInfo(
                 SettingsRecoveryMode.Backup, damagedFiles.Concat(loaded.Recovery?.Files ?? []).ToArray()));
         }
 
-        var defaults = await RecoverUnindexedProfilesAsync();
-        var damaged = PreserveInvalidFiles(primary, backup);
+        var recoveredProfiles = await RecoverUnindexedProfilesAsync();
+        var defaults = recoveredProfiles.Settings;
+        var damaged = PreserveInvalidFiles([primary, backup]);
+        damaged.AddRange(recoveredProfiles.Recovery?.Files ?? []);
         if (damaged.Count == 0 && defaults.Profiles.Count == 0)
             return new SettingsLoadResult(defaults, null);
 
@@ -228,7 +230,7 @@ public sealed partial class SettingsStore : IDisposable
     }
 
     private List<RecoveredSettingsFile> PreserveInvalidFiles<T>(
-        params SettingsFileLoadResult<T>[] results) where T : class
+        SettingsFileLoadResult<T>[] results, bool removeOriginals = true) where T : class
     {
         var invalidFiles = results
             .Where(result => result.Kind == SettingsFileLoadKind.Corrupted)
@@ -255,7 +257,7 @@ public sealed partial class SettingsStore : IDisposable
                 preserved.Add(new RecoveredSettingsFile(result.Path, recoveryPath, result.Error!));
             }
 
-            foreach (var result in invalidFiles)
+            foreach (var result in removeOriginals ? invalidFiles : [])
             {
                 File.Delete(result.Path);
             }
@@ -272,6 +274,8 @@ public sealed partial class SettingsStore : IDisposable
 
     private static void ThrowIfUnavailable<T>(params SettingsFileLoadResult<T>[] results) where T : class
     {
+        var unsupported = results.FirstOrDefault(result => result.Kind == SettingsFileLoadKind.Unsupported);
+        if (unsupported is not null) throw new SettingsPersistenceException(unsupported.Error!);
         var unavailable = results.FirstOrDefault(result => result.Kind == SettingsFileLoadKind.Unavailable);
         if (unavailable is null)
         {
@@ -318,7 +322,12 @@ public sealed partial class SettingsStore : IDisposable
         snapshot.ProfileIds = null;
         AppSettingsNormalizer.Normalize(snapshot);
         if (_paths.IsPortable) TransformPaths(snapshot, _paths.ToStoredPath);
-        return JsonSerializer.SerializeToUtf8Bytes(snapshot, JsonOptions);
+        var unavailableIds = (settings.Profiles ?? []).Where(profile => profile is not null && profile.SettingsLoadError.Length > 0)
+            .Select(profile => profile.Id).ToArray();
+        if (unavailableIds.Length == 0) return JsonSerializer.SerializeToUtf8Bytes(snapshot, JsonOptions);
+        var document = JsonSerializer.SerializeToNode(snapshot, JsonOptions)!.AsObject();
+        document[UnavailableProfileIdsKey] = JsonSerializer.SerializeToNode(unavailableIds);
+        return System.Text.Encoding.UTF8.GetBytes(document.ToJsonString(JsonOptions));
     }
 
     private static void TransformPaths(AppSettings settings, Func<string, string> transform)
@@ -328,13 +337,21 @@ public sealed partial class SettingsStore : IDisposable
         if (settings.LegacyGameInstallPath is not null) settings.LegacyGameInstallPath = transform(settings.LegacyGameInstallPath);
         foreach (var profile in settings.Profiles ?? [])
         {
-            profile.GameInstallPath = transform(profile.GameInstallPath ?? string.Empty);
-            profile.ExecutableSourcePath = transform(profile.ExecutableSourcePath ?? string.Empty);
-            profile.FsgameSourcePath = transform(profile.FsgameSourcePath ?? string.Empty);
-            profile.WorkspacePath = transform(profile.WorkspacePath ?? string.Empty);
-            profile.ModInstallPath = transform(profile.ModInstallPath ?? string.Empty);
-            profile.Mo2OverwritePath = transform(profile.Mo2OverwritePath ?? string.Empty);
-            foreach (var mod in profile.Mods ?? []) mod.SourcePath = transform(mod.SourcePath ?? string.Empty);
+            if (profile is not null) TransformProfilePaths(profile, transform);
+        }
+    }
+
+    private static void TransformProfilePaths(ModProfile profile, Func<string, string> transform)
+    {
+        profile.GameInstallPath = transform(profile.GameInstallPath ?? string.Empty);
+        profile.ExecutableSourcePath = transform(profile.ExecutableSourcePath ?? string.Empty);
+        profile.FsgameSourcePath = transform(profile.FsgameSourcePath ?? string.Empty);
+        profile.WorkspacePath = transform(profile.WorkspacePath ?? string.Empty);
+        profile.ModInstallPath = transform(profile.ModInstallPath ?? string.Empty);
+        profile.Mo2OverwritePath = transform(profile.Mo2OverwritePath ?? string.Empty);
+        foreach (var mod in profile.Mods ?? [])
+        {
+            if (mod is not null) mod.SourcePath = transform(mod.SourcePath ?? string.Empty);
         }
     }
 
@@ -361,7 +378,8 @@ public sealed partial class SettingsStore : IDisposable
         Missing,
         Loaded,
         Corrupted,
-        Unavailable
+        Unavailable,
+        Unsupported
     }
 }
 

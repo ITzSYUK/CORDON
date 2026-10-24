@@ -63,10 +63,12 @@ public static class UiLanguage
         {
             using var document = JsonDocument.Parse(File.ReadAllBytes(path));
             var root = document.RootElement;
-            var schemaVersion = root.TryGetProperty(nameof(Models.AppSettings.SchemaVersion), out var schemaElement) &&
-                                schemaElement.TryGetInt32(out var parsedSchema)
-                ? parsedSchema
-                : 0;
+            value = System;
+            if (root.ValueKind != JsonValueKind.Object || !root.EnumerateObject().Any()) return false;
+            var schemaVersion = 0;
+            if (root.TryGetProperty(nameof(Models.AppSettings.SchemaVersion), out var schemaElement) &&
+                (schemaElement.ValueKind != JsonValueKind.Number || !schemaElement.TryGetInt32(out schemaVersion)))
+                return false;
             if (schemaVersion < 9)
             {
                 value = Russian;

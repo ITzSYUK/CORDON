@@ -13,6 +13,16 @@ public sealed class ProfileReadinessServiceTests : IDisposable
         Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void ValidateRejectsUnavailableProfileWithItsOriginalError()
+    {
+        var result = ProfileReadinessService.Validate(new ModProfile { SettingsLoadError = "missing settings" });
+
+        Assert.False(result.IsValid);
+        Assert.Equal("missing settings", result.Summary);
+        Assert.Equal(["missing settings"], result.Messages);
+    }
+
+    [Fact]
     public void ValidateAcceptsConfiguredOverlayProfile()
     {
         CreateFile("game/fsgame.ltx", ValidFsgame);

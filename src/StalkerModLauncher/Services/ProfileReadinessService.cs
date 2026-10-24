@@ -11,6 +11,8 @@ public static class ProfileReadinessService
         {
             return GameInstallationValidator.Validate(string.Empty);
         }
+        if (profile.SettingsLoadError.Length > 0)
+            return new ValidationResult { IsValid = false, Summary = profile.SettingsLoadError, Messages = [profile.SettingsLoadError] };
 
         return profile.IsStandalone
             ? ValidateStandalone(profile)
