@@ -9,6 +9,10 @@ Revisions used on 2026-10-18:
 - candidate: [PR #99](https://github.com/ModOrganizer2/usvfs/pull/99),
   `Illustar0/usvfs@c5f7ef2085bd29a3cca2cd57f3aba84dae030ff5`.
 
+The current main runtime pins `93fcf7af42523d8da8d1436e88920f900e766596`; the
+revisions above describe the original experiment. The current source manifest
+and both local patches remain authoritative.
+
 Build both with identical Release toolchains and dependencies. Each runtime root
 must contain `lib/usvfs_x64.dll`, `lib/usvfs_x86.dll`, and the corresponding
 `bin/usvfs_proxy_*.exe`. The original baseline is retained as legacy in
@@ -70,3 +74,26 @@ expected seconds saved during game startup.
 
 See [the technical documentation](../../docs/TECHNICAL_EN.md) for build
 instructions and compatibility limits.
+
+## PR #99 follow-up comparison, 2026-10-24
+
+Compared `c5f7ef2085bd29a3cca2cd57f3aba84dae030ff5` with
+`93fcf7af42523d8da8d1436e88920f900e766596`, retaining the same Win32 TLS and early
+source-scan completion fixes. Both were built with MSVC v143 19.44.35228,
+Windows SDK 10.0.26100.0 and the same dependencies.
+
+The initial baseline-only pass, before updating the native source, measured
+83.9406 ms median enumeration across 21 scans. The final paired AB/BA/AB series
+used that same fixture of 40 overlapping mods and 10,253 final files, with 21 scans
+and three session preparations per runtime:
+
+| Median | Before (`c5f7ef2`) | After (`93fcf7a`) |
+| --- | ---: | ---: |
+| Recursive enumeration | 84.6716 ms | 84.4214 ms |
+| Session preparation | 233.8871 ms | 234.3290 ms |
+
+The approximately 0.3% enumeration difference does not establish a meaningful
+speed-up. File/provider checks and overwrite operations passed; source fingerprints
+were unchanged. These warm x64 measurements do not measure game startup or FPS.
+The x64/x86 native correctness suites, including the new matcher/context tests and
+our TLS/early-stop regressions, and five smoke sessions per architecture passed.

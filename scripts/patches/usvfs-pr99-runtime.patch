@@ -1,5 +1,5 @@
 diff --git a/src/usvfs_dll/hooks/directory_scan.cpp b/src/usvfs_dll/hooks/directory_scan.cpp
-index ca5f107..5e8a556 100644
+index 7728125..d12e9e0 100644
 --- a/src/usvfs_dll/hooks/directory_scan.cpp
 +++ b/src/usvfs_dll/hooks/directory_scan.cpp
 @@ -31,0 +32 @@

@@ -2,7 +2,7 @@
     SchemaVersion = 2
     SourceDirectory = '.external\usvfs-pr99'
     SourceRepository = 'https://github.com/ModOrganizer2/usvfs'
-    SourceRevision = 'c5f7ef2085bd29a3cca2cd57f3aba84dae030ff5'
+    SourceRevision = '93fcf7af42523d8da8d1436e88920f900e766596'
     RuntimeVersion = '0.5.7.2'
     SourcePatches = @(
         'scripts\patches\usvfs-pr99-tests.patch'

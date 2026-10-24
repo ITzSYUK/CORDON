@@ -9,7 +9,7 @@ CORDON includes or uses the following third-party components. Their original lic
 - License: GNU General Public License v3.0 or later
 - Use: stable virtual filesystem backend for x64 and x86 game processes
 - Runtime version: 0.5.7.2
-- Main source revision: `c5f7ef2085bd29a3cca2cd57f3aba84dae030ff5` ([PR #99](https://github.com/ModOrganizer2/usvfs/pull/99), batched directory enumeration)
+- Main source revision: `93fcf7af42523d8da8d1436e88920f900e766596` ([PR #99](https://github.com/ModOrganizer2/usvfs/pull/99), batched directory enumeration)
 - Main patches: `scripts/patches/usvfs-pr99-tests.patch`, `scripts/patches/usvfs-pr99-runtime.patch` (test compatibility, Win32 TLS fix and early source-scan completion)
 - Early source-scan completion adapted from [dlunch/usvfs](https://github.com/dlunch/usvfs)
 - Optional legacy revision: `57f1ea5e6ad13f7435a7af184748e6c1312c5637`, with `scripts/patches/usvfs-msvc-pch.patch`
