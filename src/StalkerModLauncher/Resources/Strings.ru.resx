@@ -223,7 +223,6 @@
   <data name="SettingsProfile_ModFolderTooltip" xml:space="preserve"><value>Архивы распаковываются сюда, отдельно от workspace.</value></data>
   <data name="SettingsProfile_Mo2Apply" xml:space="preserve"><value>Применить порядок модов из профиля MO2...</value></data>
   <data name="SettingsProfile_Mo2ApplyTooltip" xml:space="preserve"><value>Выберите файл modlist.txt из профиля MO2. Лаунчер применит порядок и включённое состояние только к уже добавленным модам; новые моды и папки импортированы не будут.</value></data>
-  <data name="SettingsProfile_Mo2Order" xml:space="preserve"><value>Порядок модов MO2</value></data>
   <data name="SettingsProfile_Mo2Overwrite" xml:space="preserve"><value>Дополнительный слой MO2 overwrite</value></data>
   <data name="SettingsProfile_SelectFile" xml:space="preserve"><value>Выбрать файл...</value></data>
   <data name="SettingsProfile_StandaloneHint" xml:space="preserve"><value> — мод имеет свой движок и все файлы игры, запускается из своей папки</value></data>
@@ -1132,4 +1131,11 @@
   <data name="Fomod_FolderNotFoundFormat" xml:space="preserve"><value>Исходная папка FOMOD не найдена: {0}</value></data>
   <data name="Fomod_ConfigNotFound" xml:space="preserve"><value>В выбранной папке нет установщика FOMOD.</value></data>
   <data name="Fomod_CopyingFormat" xml:space="preserve"><value>Копирование выбранных файлов из {0}...</value></data>
+  <data name="SettingsProfile_LaunchTab" xml:space="preserve"><value>Запуск</value></data>
+  <data name="SettingsProfile_DataModsTab" xml:space="preserve"><value>Данные и моды</value></data>
+  <data name="SettingsProfile_Apply" xml:space="preserve"><value>Применить</value></data>
+  <data name="SettingsProfile_Mo2Heading" xml:space="preserve"><value>Интеграция с MO2</value></data>
+  <data name="SettingsProfile_SaveClose" xml:space="preserve"><value>Сохранить и закрыть</value></data>
+  <data name="SettingsProfile_CopyImmediateHint" xml:space="preserve"><value>Копирование начинается после подтверждения, без сохранения настроек.</value></data>
+  <data name="SettingsProfile_Mo2ImmediateHint" xml:space="preserve"><value>Применение порядка сразу меняет и сохраняет список модов. Настройки профиля сохраняются отдельно.</value></data>
 </root>

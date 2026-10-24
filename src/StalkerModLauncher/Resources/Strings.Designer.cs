@@ -234,10 +234,16 @@ public static class Strings
     public static string SettingsProfile_ModFolderTooltip => Get();
     public static string SettingsProfile_Mo2Apply => Get();
     public static string SettingsProfile_Mo2ApplyTooltip => Get();
-    public static string SettingsProfile_Mo2Order => Get();
     public static string SettingsProfile_Mo2Overwrite => Get();
     public static string SettingsProfile_SelectFile => Get();
     public static string SettingsProfile_StandaloneHint => Get();
+    public static string SettingsProfile_LaunchTab => Get();
+    public static string SettingsProfile_DataModsTab => Get();
+    public static string SettingsProfile_Apply => Get();
+    public static string SettingsProfile_Mo2Heading => Get();
+    public static string SettingsProfile_SaveClose => Get();
+    public static string SettingsProfile_CopyImmediateHint => Get();
+    public static string SettingsProfile_Mo2ImmediateHint => Get();
     public static string SettingsProfile_Title => Get();
     public static string SettingsProfile_UserData => Get();
     public static string SettingsProfile_UserDataGame => Get();

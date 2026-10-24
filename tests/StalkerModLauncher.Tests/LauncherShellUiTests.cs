@@ -332,24 +332,133 @@ public sealed class LauncherShellUiTests
     }
 
     [Fact]
-    public void ProfileSettingsPlaceUserDataBetweenRendererAndExecutableWithLocalRadioGroups()
+    public void ProfileSettingsGroupFieldsByTaskAndKeepSaveActionsOutsideTabs()
     {
         var interfaces = new[]
         {
-            LoadProjectXaml("Views", "ProfileSettingsWindow.xaml").ToString(),
-            LoadProjectXaml("Views", "Controls", "PdaProfileSettingsView.xaml").ToString()
+            LoadProjectXaml("Views", "ProfileSettingsWindow.xaml"),
+            LoadProjectXaml("Views", "Controls", "PdaProfileSettingsView.xaml")
         };
 
-        foreach (var xaml in interfaces)
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        foreach (var document in interfaces)
         {
-            var renderer = xaml.IndexOf("Strings.SettingsProfile_AnomalyEngine", StringComparison.Ordinal);
-            var userData = xaml.IndexOf("Strings.SettingsProfile_UserData", StringComparison.Ordinal);
-            var executable = xaml.IndexOf("Strings.SettingsProfile_Executable", StringComparison.Ordinal);
+            var tabs = document.Descendants(presentation + "TabItem").ToArray();
+            Assert.Equal(3, tabs.Length);
+            Assert.Equal("Left", (string?)Assert.Single(document.Descendants(presentation + "TabControl")).Attribute("TabStripPlacement"));
+            Assert.Empty(document.Descendants(presentation + "Expander"));
+            var panelStyle = document.Root!.Name.LocalName == "Window"
+                ? "{StaticResource ProfileSettingPanelStyle}"
+                : "{StaticResource ProfilePdaSettingPanelStyle}";
+            Assert.Equal([4, 5, 4], tabs.Select(tab => tab.Descendants(presentation + "Border").Count(border =>
+                (string?)border.Attribute("Style") == panelStyle)));
+            Assert.Contains("IsDiscordStatusEnabled", tabs[0].ToString());
+            Assert.Contains("IsStandalone", tabs[0].ToString());
+            var standalone = Assert.Single(tabs[0].Descendants(presentation + "CheckBox"), checkBox =>
+                (string?)checkBox.Attribute("IsChecked") == "{Binding IsStandalone}");
+            Assert.Contains("Strings.SettingsProfile_StandaloneHint", standalone.ToString());
+            Assert.Contains("ExecutableRelativePath", tabs[1].ToString());
+            Assert.Contains("LaunchArguments", tabs[1].ToString());
+            Assert.Contains("AnomalyUseAvx", tabs[1].ToString());
+            Assert.Contains("FsgameSourceDisplay", tabs[1].ToString());
+            Assert.Contains("UseBaseGameData", tabs[2].ToString());
+            Assert.Contains("ModInstallPath", tabs[2].ToString());
+            Assert.Contains("ImportMo2ModListCommand", tabs[2].ToString());
 
-            Assert.True(renderer >= 0 && renderer < userData && userData < executable);
-            Assert.DoesNotContain("GroupName=", xaml);
-            Assert.DoesNotContain("Text=\"Данные игры\"", xaml);
+            var save = Assert.Single(document.Descendants(presentation + "Button"), button =>
+                (string?)button.Attribute("Content") == "{x:Static res:Strings.SettingsProfile_Apply}");
+            Assert.DoesNotContain(save.Ancestors(), element => element.Name == presentation + "TabControl");
+            Assert.DoesNotContain("GroupName=", document.ToString());
         }
+    }
+
+    [Fact]
+    public void ProfileSettingsNavigationKeepsHandCursorAndFocusInsideHeaders()
+    {
+        static Cursor QueryCursor(UIElement element)
+        {
+            var query = new QueryCursorEventArgs(Mouse.PrimaryDevice, Environment.TickCount)
+            {
+                RoutedEvent = Mouse.QueryCursorEvent
+            };
+            element.RaiseEvent(query);
+            return query.Cursor;
+        }
+
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            Window? window = null;
+            try
+            {
+                var host = CreateThemeHost();
+                host.Cursor = Cursors.Arrow;
+                host.Resources.MergedDictionaries.Add(new ResourceDictionary
+                {
+                    Source = new Uri("/CORDON;component/Themes/ProfileSettingsStyles.xaml", UriKind.Relative)
+                });
+                var tabs = new TabControl { TabStripPlacement = Dock.Left };
+                for (var index = 0; index < 3; index++)
+                {
+                    var page = new StackPanel();
+                    page.Children.Add(new TextBox { Cursor = Cursors.IBeam });
+                    page.Children.Add(new Button { Cursor = Cursors.Hand });
+                    tabs.Items.Add(new TabItem { Header = index.ToString(CultureInfo.InvariantCulture), Content = new ScrollViewer { Content = page } });
+                }
+                host.Children.Add(tabs);
+                window = new Window
+                {
+                    Content = host,
+                    SizeToContent = SizeToContent.WidthAndHeight,
+                    ShowActivated = false,
+                    ShowInTaskbar = false,
+                    Left = -10000,
+                    Top = -10000
+                };
+                window.Show();
+                for (var attempt = 0; attempt < 18; attempt++)
+                {
+                    var item = (TabItem)tabs.Items[attempt % tabs.Items.Count];
+                    for (var click = 0; click < 2; click++)
+                    {
+                        item.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                        {
+                            RoutedEvent = Mouse.MouseDownEvent,
+                            Source = item
+                        });
+                    }
+                    host.UpdateLayout();
+                    Assert.Same(item, tabs.SelectedItem);
+                    var scroll = Assert.IsType<ScrollViewer>(item.Content);
+                    Assert.Null(scroll.FocusVisualStyle);
+                    var page = (StackPanel)scroll.Content;
+                    Assert.Same(Cursors.Arrow, QueryCursor(page));
+                    Assert.Same(Cursors.IBeam, QueryCursor((TextBox)page.Children[0]));
+                    Assert.Same(Cursors.Hand, QueryCursor((Button)page.Children[1]));
+                    var header = Assert.IsType<Border>(VisualTreeHelper.GetChild(item, 0));
+                    Assert.Same(Cursors.Hand, QueryCursor(header));
+                    Assert.Equal(new Thickness(0), header.BorderThickness);
+                    Assert.Null(item.FocusVisualStyle);
+                    Assert.True(item.Focus());
+                    Assert.True(item.IsKeyboardFocused);
+                    var label = Assert.IsType<ContentPresenter>(item.Template.FindName("HeaderContent", item));
+                    Assert.Equal(FontWeights.SemiBold, label.GetValue(System.Windows.Documents.TextElement.FontWeightProperty));
+                    Assert.Equal(FontWeights.SemiBold, Assert.IsType<TextBlock>(VisualTreeHelper.GetChild(label, 0)).FontWeight);
+                    Assert.True(item.MoveFocus(new TraversalRequest(FocusNavigationDirection.Down)));
+                    Assert.Equal(((attempt % tabs.Items.Count) + 1) % tabs.Items.Count, tabs.SelectedIndex);
+                }
+            }
+            catch (Exception ex) { failure = ex; }
+            finally
+            {
+                window?.Close();
+                System.Windows.Threading.Dispatcher.CurrentDispatcher.InvokeShutdown();
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        Assert.True(thread.Join(TimeSpan.FromSeconds(30)), "Profile navigation test timed out.");
+        if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
     }
 
     [Fact]
