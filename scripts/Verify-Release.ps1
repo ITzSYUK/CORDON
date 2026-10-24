@@ -9,13 +9,8 @@ $solution = Join-Path $repositoryRoot "StalkerModLauncher.sln"
 $project = Join-Path $repositoryRoot "src\StalkerModLauncher\StalkerModLauncher.csproj"
 $tests = Join-Path $repositoryRoot "tests\StalkerModLauncher.Tests\StalkerModLauncher.Tests.csproj"
 $usvfsSmokeScript = Join-Path $PSScriptRoot "Test-UsvfsRuntime.ps1"
-$usvfsRoot = Join-Path $repositoryRoot ".external\usvfs"
-$integrityScript = Join-Path $PSScriptRoot "ReleaseIntegrity.ps1"
-$usvfsManifestPath = Join-Path $PSScriptRoot "UsvfsRuntimeManifest.psd1"
-$usvfsPatchPath = Join-Path $repositoryRoot "scripts\patches\usvfs-msvc-pch.patch"
-
-. $integrityScript
-$usvfsManifest = Import-UsvfsRuntimeManifest -Path $usvfsManifestPath
+. (Join-Path $PSScriptRoot 'ReleaseIntegrity.ps1')
+$runtime = Get-UsvfsRuntime -RepositoryRoot $repositoryRoot
 
 [xml]$projectFile = Get-Content -LiteralPath $project -Raw
 $versionPropertyGroup = @($projectFile.Project.PropertyGroup) |
@@ -45,8 +40,7 @@ function Invoke-DotNet {
 }
 
 Write-Host "Verifying CORDON v$projectVersion..."
-Test-UsvfsSourceProvenance -SourceRoot $usvfsRoot -Manifest $usvfsManifest -PatchPath $usvfsPatchPath
-Test-UsvfsRuntimeIntegrity -RuntimeRoot $usvfsRoot -Manifest $usvfsManifest
+Test-UsvfsSourceProvenance -SourceRoot $runtime.SourceRoot -Manifest $runtime.Manifest
 Invoke-DotNet -Arguments @("restore", $solution) -FailureMessage "dotnet restore failed."
 Invoke-DotNet `
     -Arguments @("format", $solution, "--verify-no-changes", "--no-restore") `
@@ -64,6 +58,6 @@ Invoke-DotNet `
     -Arguments @("test", $tests, "-c", "Release", "--no-build", "--no-restore") `
     -FailureMessage "Release tests failed."
 
-& $usvfsSmokeScript
+& $usvfsSmokeScript -RuntimeRoot $runtime.SourceRoot
 
 Write-Host "Automated release verification passed."

@@ -1,6 +1,6 @@
 param(
     [string]$Version,
-    [switch]$IncludeExperimentalUsvfs
+    [switch]$IncludeLegacyUsvfs
 )
 
 $ErrorActionPreference = "Stop"
@@ -9,10 +9,8 @@ $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $project = Join-Path $repositoryRoot "src\StalkerModLauncher\StalkerModLauncher.csproj"
 $verificationScript = Join-Path $PSScriptRoot "Verify-Release.ps1"
 $integrityScript = Join-Path $PSScriptRoot "ReleaseIntegrity.ps1"
-$usvfsManifestPath = Join-Path $PSScriptRoot "UsvfsRuntimeManifest.psd1"
 
 . $integrityScript
-$usvfsManifest = Import-UsvfsRuntimeManifest -Path $usvfsManifestPath
 
 $gitStatus = Invoke-RepositoryGit `
     -SourceRoot $repositoryRoot `
@@ -46,34 +44,27 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 
 $releaseRoot = Join-Path $repositoryRoot "publish\release\v$Version"
 $stagingRoot = Join-Path $repositoryRoot "publish\release\.staging-v$Version"
-$usvfsRoot = Join-Path $repositoryRoot ".external\usvfs"
 $x86Host = Join-Path $repositoryRoot "native\StalkerModLauncher.UsvfsX86Host\build32\StalkerModLauncher.UsvfsX86Host.exe"
 
-$runtimeFiles = @{
-    "usvfs_x64.dll" = Join-Path $usvfsRoot "lib\usvfs_x64.dll"
-    "usvfs_proxy_x64.exe" = Join-Path $usvfsRoot "bin\usvfs_proxy_x64.exe"
-    "usvfs_x86.dll" = Join-Path $usvfsRoot "lib\usvfs_x86.dll"
-    "usvfs_proxy_x86.exe" = Join-Path $usvfsRoot "bin\usvfs_proxy_x86.exe"
-    "StalkerModLauncher.UsvfsX86Host.exe" = $x86Host
-}
-
+$runtime = Get-UsvfsRuntime -RepositoryRoot $repositoryRoot
+$runtimeFiles = $runtime.Files.Clone()
+$runtimeFiles['StalkerModLauncher.UsvfsX86Host.exe'] = $x86Host
 foreach ($entry in $runtimeFiles.GetEnumerator()) {
     if (-not (Test-Path -LiteralPath $entry.Value -PathType Leaf)) {
         throw "Missing release dependency '$($entry.Key)': $($entry.Value)"
     }
 }
-
-$experimentalRuntime = $null
-if ($IncludeExperimentalUsvfs) {
-    $experimentalRuntime = Get-ExperimentalUsvfsRuntime -RepositoryRoot $repositoryRoot
+$legacyRuntime = $null
+if ($IncludeLegacyUsvfs) {
+    $legacyRuntime = Get-UsvfsRuntime -RepositoryRoot $repositoryRoot -LegacyUsvfs
 }
 
 & $verificationScript -ExpectedVersion $Version
 if ($LASTEXITCODE -ne 0) {
     throw "Release verification failed."
 }
-if ($IncludeExperimentalUsvfs) {
-    & (Join-Path $PSScriptRoot 'Test-UsvfsRuntime.ps1') -RuntimeRoot $experimentalRuntime.SourceRoot
+if ($IncludeLegacyUsvfs) {
+    & (Join-Path $PSScriptRoot 'Test-UsvfsRuntime.ps1') -RuntimeRoot $legacyRuntime.SourceRoot
 }
 
 foreach ($path in @($releaseRoot, $stagingRoot)) {
@@ -115,12 +106,12 @@ function Publish-Package {
         throw "dotnet publish failed for $PackageName."
     }
 
-    $variants = @(@{ Name = $PackageName; Files = $runtimeFiles; Manifest = $usvfsManifest; Hashes = @{} })
-    if ($IncludeExperimentalUsvfs) {
-        $experimentalFiles = $experimentalRuntime.Files.Clone()
-        $experimentalFiles['StalkerModLauncher.UsvfsX86Host.exe'] = $x86Host
-        $variants += @{ Name = "$PackageName-usvfs-experimental"; Files = $experimentalFiles;
-            Manifest = $experimentalRuntime.Manifest; Hashes = $experimentalRuntime.Hashes }
+    $variants = @(@{ Name = $PackageName; Files = $runtimeFiles; Manifest = $runtime.Manifest; Hashes = $runtime.Hashes })
+    if ($IncludeLegacyUsvfs) {
+        $legacyFiles = $legacyRuntime.Files.Clone()
+        $legacyFiles['StalkerModLauncher.UsvfsX86Host.exe'] = $x86Host
+        $variants += @{ Name = "$PackageName-usvfs-legacy"; Files = $legacyFiles;
+            Manifest = $legacyRuntime.Manifest; Hashes = $legacyRuntime.Hashes }
     }
     foreach ($variant in $variants) {
         $packageDirectory = Join-Path $releaseRoot $variant.Name

@@ -85,10 +85,10 @@ CORDON помогает держать несколько модификаций
 | --- | --- |
 | `CORDON-...-win-x64-standalone.zip` | Стабильный USVFS, содержит .NET Runtime. `CORDON-Standalone.exe` хранит настройки лаунчера рядом с EXE, в `Data\StalkerModLauncher`. |
 | `CORDON-...-win-x64.zip` | Стабильный USVFS, компактная версия для системы с установленным .NET 8 Desktop Runtime x64; настройки лаунчера находятся в AppData. |
-| `CORDON-...-win-x64-standalone-usvfs-experimental.zip` | Экспериментальный оптимизированный USVFS и встроенный .NET; настройки хранятся рядом с EXE. |
-| `CORDON-...-win-x64-usvfs-experimental.zip` | Экспериментальный оптимизированный USVFS; нужен .NET 8 Desktop Runtime x64, настройки хранятся в AppData. |
+| `CORDON-...-win-x64-standalone-usvfs-legacy.zip` | Прежний USVFS (legacy) и встроенный .NET; настройки хранятся рядом с EXE. |
+| `CORDON-...-win-x64-usvfs-legacy.zip` | Прежний USVFS (legacy); нужен .NET 8 Desktop Runtime x64, настройки хранятся в AppData. |
 
-Экспериментальные архивы могут прилагаться к релизу для проверки совместимости с игровыми сборками; они присутствуют не в каждом релизе. Для обычного использования рекомендуется стабильный пакет. Оптимизированный USVFS выбирается архивом, режим профиля остаётся **USVFS**. Встроенное обновление скачивает стабильный пакет и заменит экспериментальный runtime; для его сохранения обновляйте лаунчер вручную из соответствующего экспериментального архива.
+Основные пакеты включают проверенный оптимизированный USVFS: PR #99, исправление TLS для OGSR и раннюю остановку обхода. Прежний runtime доступен только в дополнительных архивах с суффиксом `-usvfs-legacy` для ручного отката; они создаются по запросу и есть не в каждом релизе. Режим профиля остаётся **USVFS**. Встроенное обновление устанавливает основной оптимизированный вариант, в том числе поверх legacy.
 
 Требуется Windows 10/11 x64. Для USVFS может потребоваться Microsoft Visual C++ 2015–2022 Redistributable x64 и x86.
 
@@ -189,10 +189,10 @@ Downloads are available on the [latest release](https://github.com/ITzSYUK/CORDO
 | --- | --- |
 | `CORDON-...-win-x64-standalone.zip` | Stable USVFS, includes the .NET Runtime. `CORDON-Standalone.exe` stores launcher settings beside the EXE in `Data\StalkerModLauncher`. |
 | `CORDON-...-win-x64.zip` | Stable USVFS, compact version for systems with .NET 8 Desktop Runtime x64 installed; launcher settings are stored in AppData. |
-| `CORDON-...-win-x64-standalone-usvfs-experimental.zip` | Experimental optimized USVFS with .NET included; settings are stored beside the EXE. |
-| `CORDON-...-win-x64-usvfs-experimental.zip` | Experimental optimized USVFS; requires .NET 8 Desktop Runtime x64, settings are stored in AppData. |
+| `CORDON-...-win-x64-standalone-usvfs-legacy.zip` | Previous USVFS (legacy) with .NET included; settings are stored beside the EXE. |
+| `CORDON-...-win-x64-usvfs-legacy.zip` | Previous USVFS (legacy); requires .NET 8 Desktop Runtime x64, settings are stored in AppData. |
 
-Experimental archives may accompany a release for compatibility testing with game builds; they are not included in every release. The stable package is recommended for regular use. The archive selects the optimized USVFS runtime; the profile mode remains **USVFS**. The built-in updater downloads the stable package and replaces the experimental runtime; update manually from the matching experimental archive to retain it.
+Main packages include the validated optimized USVFS: PR #99, the OGSR TLS fix, and early source-scan completion. The previous runtime is available only in optional `-usvfs-legacy` archives for manual rollback; they are built on request and are not included in every release. The profile mode remains **USVFS**. The built-in updater installs the main optimized variant, including over legacy.
 
 Windows 10/11 x64 is required. USVFS may also require Microsoft Visual C++ 2015–2022 Redistributable for x64 and x86.
 

@@ -1,6 +1,6 @@
 param(
     [switch]$CleanPublishRoot,
-    [switch]$ExperimentalUsvfs
+    [switch]$LegacyUsvfs
 )
 
 $ErrorActionPreference = "Stop"
@@ -9,44 +9,17 @@ $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $project = Join-Path $repositoryRoot "src\StalkerModLauncher\StalkerModLauncher.csproj"
 $publishRoot = Join-Path $repositoryRoot "publish"
 $outputDirectory = Join-Path $publishRoot "usvfs"
-$usvfsRoot = Join-Path $repositoryRoot ".external\usvfs"
 $x86Host = Join-Path $repositoryRoot "native\StalkerModLauncher.UsvfsX86Host\build32\StalkerModLauncher.UsvfsX86Host.exe"
-$integrityScript = Join-Path $PSScriptRoot "ReleaseIntegrity.ps1"
-$usvfsManifestPath = Join-Path $PSScriptRoot "UsvfsRuntimeManifest.psd1"
-$usvfsPatchPath = Join-Path $repositoryRoot "scripts\patches\usvfs-msvc-pch.patch"
-
-. $integrityScript
-$usvfsManifest = Import-UsvfsRuntimeManifest -Path $usvfsManifestPath
-
-if ($ExperimentalUsvfs) {
-    $experimentalRuntime = Get-ExperimentalUsvfsRuntime -RepositoryRoot $repositoryRoot
-    $usvfsRoot = $experimentalRuntime.SourceRoot
-    $outputDirectory = Join-Path $publishRoot 'usvfs-experimental'
-}
-
-$runtimeFiles = @{
-    "usvfs_x64.dll" = Join-Path $usvfsRoot "lib\usvfs_x64.dll"
-    "usvfs_proxy_x64.exe" = Join-Path $usvfsRoot "bin\usvfs_proxy_x64.exe"
-    "usvfs_x86.dll" = Join-Path $usvfsRoot "lib\usvfs_x86.dll"
-    "usvfs_proxy_x86.exe" = Join-Path $usvfsRoot "bin\usvfs_proxy_x86.exe"
-    "StalkerModLauncher.UsvfsX86Host.exe" = $x86Host
-}
-
-if ($ExperimentalUsvfs) {
-    foreach ($name in $experimentalRuntime.Files.Keys) {
-        $runtimeFiles[$name] = $experimentalRuntime.Files[$name]
-    }
-}
-
+. (Join-Path $PSScriptRoot 'ReleaseIntegrity.ps1')
+$runtime = Get-UsvfsRuntime -RepositoryRoot $repositoryRoot -LegacyUsvfs:$LegacyUsvfs
+$usvfsRoot = $runtime.SourceRoot
+if ($LegacyUsvfs) { $outputDirectory = Join-Path $publishRoot 'usvfs-legacy' }
+$runtimeFiles = $runtime.Files.Clone()
+$runtimeFiles['StalkerModLauncher.UsvfsX86Host.exe'] = $x86Host
 foreach ($entry in $runtimeFiles.GetEnumerator()) {
     if (-not (Test-Path -LiteralPath $entry.Value -PathType Leaf)) {
         throw "Missing USVFS dependency '$($entry.Key)': $($entry.Value)"
     }
-}
-
-if (-not $ExperimentalUsvfs) {
-    Test-UsvfsSourceProvenance -SourceRoot $usvfsRoot -Manifest $usvfsManifest -PatchPath $usvfsPatchPath
-    Test-UsvfsRuntimeIntegrity -RuntimeRoot $usvfsRoot -Manifest $usvfsManifest
 }
 
 $resolvedRepositoryRoot = [System.IO.Path]::GetFullPath($repositoryRoot)
@@ -55,7 +28,7 @@ if (-not $resolvedPublishRoot.StartsWith($resolvedRepositoryRoot, [System.String
     throw "Refusing to clean publish directory outside the repository: $resolvedPublishRoot"
 }
 
-$runningRoot = if ($ExperimentalUsvfs -and -not $CleanPublishRoot) {
+$runningRoot = if (-not $CleanPublishRoot) {
     [IO.Path]::GetFullPath($outputDirectory)
 } else { $resolvedPublishRoot }
 $runningRoot = $runningRoot.TrimEnd('\') + '\'
@@ -99,11 +72,9 @@ foreach ($entry in $runtimeFiles.GetEnumerator()) {
     Copy-Item -LiteralPath $entry.Value -Destination (Join-Path $outputDirectory $entry.Key)
 }
 
-if ($ExperimentalUsvfs) {
-    foreach ($name in $experimentalRuntime.Hashes.Keys) {
-        if ((Get-FileHash -LiteralPath (Join-Path $outputDirectory $name) -Algorithm SHA256).Hash -ne $experimentalRuntime.Hashes[$name]) {
-            throw "Published USVFS component differs from the selected build: $name"
-        }
+foreach ($name in $runtime.Hashes.Keys) {
+    if ((Get-FileHash -LiteralPath (Join-Path $outputDirectory $name) -Algorithm SHA256).Hash -ne $runtime.Hashes[$name]) {
+        throw "Published USVFS component differs from the selected build: $name"
     }
 }
 

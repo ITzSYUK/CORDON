@@ -22,7 +22,7 @@ function git {
     if ($args -contains 'status' -or $args -contains 'apply') { return }
     if ($args -contains 'diff') { return 'src/shared/CMakeLists.txt' }
     if ($args -contains 'rev-parse') {
-        if ($args -contains (Join-Path $fixtureRoot '.external\usvfs')) { return $stable.SourceRevision }
+        if ($args -contains (Join-Path $fixtureRoot '.external\usvfs')) { return $legacy.SourceRevision }
         return ('1' * 40)
     }
     throw 'Unexpected Git command.'
@@ -44,19 +44,18 @@ function Get-Process {
     return @()
 }
 
-function Assert-ExperimentalStops([string]$Message) {
+function Assert-DefaultStops([string]$Message) {
     $state.Publishes = 0
     foreach ($script in @('Build-Usvfs.ps1', 'Build-Release.ps1')) {
-        $options = if ($script -eq 'Build-Usvfs.ps1') { @{ ExperimentalUsvfs = $true } } else { @{ IncludeExperimentalUsvfs = $true } }
         $failed = $false
-        try { & (Join-Path $fixtureRoot "scripts\$script") @options | Out-Null }
+        try { & (Join-Path $fixtureRoot "scripts\$script") | Out-Null }
         catch {
             if ($_.Exception.Message -notlike "*$Message*") { throw }
             $failed = $true
         }
         if (-not $failed -or $state.Publishes -ne 0) { throw 'Invalid runtime reached publishing.' }
     }
-    if ([IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\usvfs\keep.txt')) -ne 'stable output' -or
+    if ([IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\usvfs\keep.txt')) -ne 'main output' -or
         [IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\release\v1.0.0\keep.txt')) -ne 'release output') {
         throw 'Invalid runtime modified existing outputs.'
     }
@@ -64,7 +63,7 @@ function Assert-ExperimentalStops([string]$Message) {
 
 try {
     New-Item -ItemType Directory -Path (Join-Path $fixtureRoot 'scripts') -Force | Out-Null
-    foreach ($name in @('Build-Usvfs.ps1', 'Build-Release.ps1', 'ReleaseIntegrity.ps1', 'UsvfsRuntimeManifest.psd1', 'UsvfsPr99Manifest.psd1')) {
+    foreach ($name in @('Build-Usvfs.ps1', 'Build-Release.ps1', 'ReleaseIntegrity.ps1', 'UsvfsRuntimeManifest.psd1', 'UsvfsLegacyManifest.psd1')) {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination (Join-Path $fixtureRoot "scripts\$name")
     }
     Write-FixtureFile 'scripts\Verify-Release.ps1' 'param($ExpectedVersion) $global:LASTEXITCODE = 0'
@@ -76,85 +75,94 @@ try {
     Write-FixtureFile 'scripts\patches\usvfs-msvc-pch.patch' 'stable fixture patch'
     Write-FixtureFile 'native\StalkerModLauncher.UsvfsX86Host\build32\StalkerModLauncher.UsvfsX86Host.exe' 'host'
     New-Item -ItemType Directory -Path (Join-Path $fixtureRoot '.external\usvfs\.git') -Force | Out-Null
-    $stable = Import-PowerShellDataFile (Join-Path $fixtureRoot 'scripts\UsvfsRuntimeManifest.psd1')
-    $experimental = Import-PowerShellDataFile (Join-Path $fixtureRoot 'scripts\UsvfsPr99Manifest.psd1')
-    foreach ($file in $stable.Files) {
-        Write-FixtureFile ('.external\usvfs\' + $file.RelativePath) ('stable-' + $file.Name)
-        Write-FixtureFile ('.external\usvfs-pr99\' + $file.RelativePath) ('experimental-' + $file.Name)
-        Write-FixtureFile ('.external\usvfs-pr99\runtime\' + $file.Name) ('experimental-' + $file.Name)
+    $legacy = Import-PowerShellDataFile (Join-Path $fixtureRoot 'scripts\UsvfsLegacyManifest.psd1')
+    $primary = Import-PowerShellDataFile (Join-Path $fixtureRoot 'scripts\UsvfsRuntimeManifest.psd1')
+    foreach ($file in $legacy.Files) {
+        Write-FixtureFile ('.external\usvfs\' + $file.RelativePath) ('legacy-' + $file.Name)
+        Write-FixtureFile ('.external\usvfs-pr99\' + $file.RelativePath) ('primary-' + $file.Name)
+        Write-FixtureFile ('.external\usvfs-pr99\runtime\' + $file.Name) ('primary-' + $file.Name)
     }
-    $patches = foreach ($path in $experimental.SourcePatches) {
+    $patches = foreach ($path in $primary.SourcePatches) {
         Write-FixtureFile $path 'fixture patch'
         @{ Name = Split-Path -Leaf $path; Sha256 = (Get-FileHash (Join-Path $fixtureRoot $path)).Hash }
     }
-    $records = foreach ($file in $experimental.Files) {
+    $records = foreach ($file in $primary.Files) {
         $path = Join-Path $fixtureRoot ('.external\usvfs-pr99\runtime\' + $file.Name)
         @{ Path = $path; Hash = (Get-FileHash $path).Hash }
     }
     $buildInfoPath = Join-Path $fixtureRoot '.external\usvfs-pr99\runtime\build-info.json'
-    $buildInfo = @{ SourceRepository = $experimental.SourceRepository; SourceRevision = $experimental.SourceRevision; Patches = @($patches); Files = @($records) }
-    Write-FixtureFile 'publish\usvfs\keep.txt' 'stable output'
+    $buildInfo = @{ SourceRepository = $primary.SourceRepository; SourceRevision = $primary.SourceRevision; Patches = @($patches); Files = @($records) }
+    Write-FixtureFile 'publish\usvfs\keep.txt' 'main output'
     Write-FixtureFile 'publish\release\v1.0.0\keep.txt' 'release output'
-    Assert-ExperimentalStops 'build record is missing'
+    Assert-DefaultStops 'build record is missing'
     $buildInfo | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $buildInfoPath -Encoding UTF8
     $buildInfo.SourceRevision = '2' * 40
     $buildInfo | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $buildInfoPath -Encoding UTF8
-    Assert-ExperimentalStops 'source revision does not match'
-    $buildInfo.SourceRevision = $experimental.SourceRevision
+    Assert-DefaultStops 'source revision does not match'
+    $buildInfo.SourceRevision = $primary.SourceRevision
     $buildInfo | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $buildInfoPath -Encoding UTF8
-    $patch = Join-Path $fixtureRoot $experimental.SourcePatches[0]
+    $patch = Join-Path $fixtureRoot $primary.SourcePatches[0]
     [IO.File]::AppendAllText($patch, 'changed')
-    Assert-ExperimentalStops 'patch is outdated'
+    Assert-DefaultStops 'patch is outdated'
     [IO.File]::WriteAllText($patch, 'fixture patch')
-    $binary = Join-Path $fixtureRoot ('.external\usvfs-pr99\runtime\' + $experimental.Files[0].Name)
+    $binary = Join-Path $fixtureRoot ('.external\usvfs-pr99\runtime\' + $primary.Files[0].Name)
     [IO.File]::AppendAllText($binary, 'changed')
-    Assert-ExperimentalStops 'component is missing or changed'
-    [IO.File]::WriteAllText($binary, 'experimental-' + $experimental.Files[0].Name)
-    $library = Join-Path $fixtureRoot ('.external\usvfs-pr99\' + $experimental.Files[0].RelativePath)
+    Assert-DefaultStops 'component is missing or changed'
+    [IO.File]::WriteAllText($binary, 'primary-' + $primary.Files[0].Name)
+    $library = Join-Path $fixtureRoot ('.external\usvfs-pr99\' + $primary.Files[0].RelativePath)
     [IO.File]::AppendAllText($library, 'changed')
-    Assert-ExperimentalStops 'component is missing or changed'
-    [IO.File]::WriteAllText($library, 'experimental-' + $experimental.Files[0].Name)
+    Assert-DefaultStops 'component is missing or changed'
+    [IO.File]::WriteAllText($library, 'primary-' + $primary.Files[0].Name)
 
     foreach ($include in @($false, $true)) {
         $state.Publishes = 0
-        if (-not $include) { Remove-Item -LiteralPath $buildInfoPath }
-        & (Join-Path $fixtureRoot 'scripts\Build-Release.ps1') -IncludeExperimentalUsvfs:$include | Out-Null
+        $legacyLibrary = Join-Path $fixtureRoot '.external\usvfs\lib\usvfs_x64.dll'
+        if (-not $include) { Remove-Item -LiteralPath $legacyLibrary }
+        & (Join-Path $fixtureRoot 'scripts\Build-Release.ps1') -IncludeLegacyUsvfs:$include | Out-Null
         if ($state.Publishes -ne 2) { throw 'Launcher should only be published twice.' }
         $release = Join-Path $fixtureRoot 'publish\release\v1.0.0'
         $archives = @(Get-ChildItem -LiteralPath $release -Filter '*.zip')
         if ($archives.Count -ne $(if ($include) { 4 } else { 2 })) { throw 'Wrong release archive count.' }
         foreach ($standalone in @('', '-standalone')) {
             $name = "CORDON-v1.0.0-win-x64$standalone"
-            $stableBinary = Join-Path $release "$name\usvfs_x64.dll"
-            if ([IO.File]::ReadAllText($stableBinary) -ne 'stable-usvfs_x64.dll') { throw 'Stable package was changed.' }
+            $primaryBinary = Join-Path $release "$name\usvfs_x64.dll"
+            if ([IO.File]::ReadAllText($primaryBinary) -ne 'primary-usvfs_x64.dll') { throw 'Default package must contain optimized USVFS.' }
             if ($include) {
-                $candidate = Join-Path $release "$name-usvfs-experimental\usvfs_x64.dll"
-                if ([IO.File]::ReadAllText($candidate) -ne 'experimental-usvfs_x64.dll') { throw 'Wrong experimental runtime.' }
+                $candidate = Join-Path $release "$name-usvfs-legacy\usvfs_x64.dll"
+                if ([IO.File]::ReadAllText($candidate) -ne 'legacy-usvfs_x64.dll') { throw 'Wrong legacy runtime.' }
             }
         }
-        if (-not $include) { $buildInfo | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $buildInfoPath -Encoding UTF8 }
+        if (-not $include) { [IO.File]::WriteAllText($legacyLibrary, 'legacy-usvfs_x64.dll') }
     }
     $state.Running = Join-Path $fixtureRoot 'publish\usvfs\CORDON.exe'
-    & (Join-Path $fixtureRoot 'scripts\Build-Usvfs.ps1') -ExperimentalUsvfs | Out-Null
-    if ([IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\usvfs\keep.txt')) -ne 'stable output' -or
-        [IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\usvfs-experimental\usvfs_x64.dll')) -ne 'experimental-usvfs_x64.dll' -or
-        $state.Smokes[-1] -ne (Join-Path $fixtureRoot '.external\usvfs-pr99')) {
-        throw 'Experimental publish did not preserve/select the expected output and smoke runtime.'
+    & (Join-Path $fixtureRoot 'scripts\Build-Usvfs.ps1') -LegacyUsvfs | Out-Null
+    if ([IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\usvfs\keep.txt')) -ne 'main output' -or
+        [IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\usvfs-legacy\usvfs_x64.dll')) -ne 'legacy-usvfs_x64.dll' -or
+        $state.Smokes[-1] -ne (Join-Path $fixtureRoot '.external\usvfs')) {
+        throw 'Legacy publish did not preserve/select the expected output and smoke runtime.'
     }
-    $state.Running = Join-Path $fixtureRoot 'publish\usvfs-experimental\CORDON.exe'
+    $state.Running = Join-Path $fixtureRoot 'publish\usvfs-legacy\CORDON.exe'
     $state.Publishes = 0
     $failed = $false
-    try { & (Join-Path $fixtureRoot 'scripts\Build-Usvfs.ps1') -ExperimentalUsvfs | Out-Null }
+    try { & (Join-Path $fixtureRoot 'scripts\Build-Usvfs.ps1') -LegacyUsvfs | Out-Null }
     catch {
         if ($_.Exception.Message -notlike 'Close the launcher*') { throw }
         $failed = $true
     }
     if (-not $failed -or $state.Publishes -ne 0) { throw 'Running target launcher did not block publishing.' }
-    $state.Running = $null
-    Remove-Item -LiteralPath $buildInfoPath
+    $state.Running = Join-Path $fixtureRoot 'publish\usvfs-legacy\CORDON.exe'
     & (Join-Path $fixtureRoot 'scripts\Build-Usvfs.ps1') | Out-Null
-    if ([IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\usvfs\usvfs_x64.dll')) -ne 'stable-usvfs_x64.dll' -or
-        $state.Smokes[-1] -ne (Join-Path $fixtureRoot '.external\usvfs')) { throw 'Default runtime changed.' }
+    if ([IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\usvfs\usvfs_x64.dll')) -ne 'primary-usvfs_x64.dll' -or
+        $state.Smokes[-1] -ne (Join-Path $fixtureRoot '.external\usvfs-pr99')) { throw 'Wrong default runtime.' }
+    $state.Running = Join-Path $fixtureRoot 'publish\usvfs\CORDON.exe'
+    $state.Publishes = 0
+    $failed = $false
+    try { & (Join-Path $fixtureRoot 'scripts\Build-Usvfs.ps1') | Out-Null }
+    catch {
+        if ($_.Exception.Message -notlike 'Close the launcher*') { throw }
+        $failed = $true
+    }
+    if (-not $failed -or $state.Publishes -ne 0) { throw 'Running main launcher did not block publishing.' }
     Write-Host 'USVFS packaging tests passed: 2/4 archives, shared launcher publishes, runtime isolation, missing/stale/tampered build guards.'
 }
 finally {

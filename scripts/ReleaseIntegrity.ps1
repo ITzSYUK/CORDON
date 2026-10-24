@@ -8,6 +8,7 @@ function Import-UsvfsRuntimeManifest {
     if ($manifest.SchemaVersion -ne 2 -or
         [string]::IsNullOrWhiteSpace([string]$manifest.RuntimeVersion) -or
         [string]::IsNullOrWhiteSpace([string]$manifest.SourceRevision) -or
+        [string]::IsNullOrWhiteSpace([string]$manifest.SourceDirectory) -or
         @($manifest.Files).Count -eq 0) {
         throw "Invalid USVFS runtime manifest: $Path"
     }
@@ -64,49 +65,58 @@ function Test-UsvfsRuntimeIntegrity {
     Write-Host "USVFS runtime components verified: v$($Manifest.RuntimeVersion), revision $($Manifest.SourceRevision)."
 }
 
-function Get-ExperimentalUsvfsRuntime {
-    param([Parameter(Mandatory = $true)][string]$RepositoryRoot)
+function Get-UsvfsRuntime {
+    param([Parameter(Mandatory = $true)][string]$RepositoryRoot, [switch]$LegacyUsvfs)
 
-    $manifest = Import-UsvfsRuntimeManifest -Path (Join-Path $RepositoryRoot 'scripts\UsvfsPr99Manifest.psd1')
-    $sourceRoot = Join-Path $RepositoryRoot '.external\usvfs-pr99'
+    $manifestName = if ($LegacyUsvfs) { 'UsvfsLegacyManifest.psd1' } else { 'UsvfsRuntimeManifest.psd1' }
+    $manifest = Import-UsvfsRuntimeManifest -Path (Join-Path $RepositoryRoot "scripts\$manifestName")
+    $sourceRoot = Join-Path $RepositoryRoot $manifest.SourceDirectory
+    if ($LegacyUsvfs) {
+        Test-UsvfsSourceProvenance -SourceRoot $sourceRoot -Manifest $manifest `
+            -PatchPath (Join-Path $RepositoryRoot $manifest.SourcePatch)
+        Test-UsvfsRuntimeIntegrity -RuntimeRoot $sourceRoot -Manifest $manifest
+        $files = @{}
+        foreach ($file in $manifest.Files) { $files[$file.Name] = Join-Path $sourceRoot $file.RelativePath }
+        return @{ SourceRoot = $sourceRoot; Manifest = $manifest; Files = $files; Hashes = @{} }
+    }
     $runtimeRoot = Join-Path $sourceRoot 'runtime'
     $buildInfoPath = Join-Path $runtimeRoot 'build-info.json'
-    $rebuildMessage = 'Run scripts\Build-UsvfsPr99.ps1 to rebuild the experimental runtime.'
+    $rebuildMessage = 'Run scripts\Build-UsvfsDependencies.ps1 to rebuild the USVFS runtime.'
     if (-not (Test-Path -LiteralPath $buildInfoPath -PathType Leaf)) {
-        throw "Experimental USVFS build record is missing. $rebuildMessage"
+        throw "USVFS build record is missing. $rebuildMessage"
     }
     $buildInfo = Get-Content -LiteralPath $buildInfoPath -Raw | ConvertFrom-Json
     if ($buildInfo.SourceRevision -ne $manifest.SourceRevision -or
         $buildInfo.SourceRepository -ne $manifest.SourceRepository) {
-        throw "Experimental USVFS source revision does not match the manifest. $rebuildMessage"
+        throw "USVFS source revision does not match the manifest. $rebuildMessage"
     }
     if (@($buildInfo.Patches).Count -ne @($manifest.SourcePatches).Count) {
-        throw "Experimental USVFS patch list does not match the manifest. $rebuildMessage"
+        throw "USVFS patch list does not match the manifest. $rebuildMessage"
     }
     foreach ($patchPath in $manifest.SourcePatches) {
         $name = Split-Path -Leaf $patchPath
         $records = @($buildInfo.Patches | Where-Object Name -eq $name)
         $hash = (Get-FileHash -LiteralPath (Join-Path $RepositoryRoot $patchPath) -Algorithm SHA256).Hash
         if ($records.Count -ne 1 -or $records[0].Sha256 -ne $hash) {
-            throw "Experimental USVFS patch is outdated: $name. $rebuildMessage"
+            throw "USVFS patch is outdated: $name. $rebuildMessage"
         }
     }
     if (@($buildInfo.Files).Count -ne @($manifest.Files).Count) {
-        throw "Experimental USVFS component list does not match the manifest. $rebuildMessage"
+        throw "USVFS component list does not match the manifest. $rebuildMessage"
     }
     $files = @{}
     $hashes = @{}
     foreach ($file in $manifest.Files) {
         $records = @($buildInfo.Files | Where-Object { (Split-Path -Leaf $_.Path) -eq $file.Name })
         if ($records.Count -ne 1 -or $records[0].Hash -notmatch '^[0-9A-Fa-f]{64}$') {
-            throw "Invalid experimental USVFS component record: $($file.Name). $rebuildMessage"
+            throw "Invalid USVFS component record: $($file.Name). $rebuildMessage"
         }
         $path = Join-Path $runtimeRoot $file.Name
         # The smoke test uses lib/bin, so both copies must be the validated build.
         foreach ($copy in @($path, (Join-Path $sourceRoot $file.RelativePath))) {
             if (-not (Test-Path -LiteralPath $copy -PathType Leaf) -or
                 (Get-FileHash -LiteralPath $copy -Algorithm SHA256).Hash -ne $records[0].Hash) {
-                throw "Experimental USVFS component is missing or changed: $copy. $rebuildMessage"
+                throw "USVFS component is missing or changed: $copy. $rebuildMessage"
             }
         }
         $files[$file.Name] = $path
@@ -116,15 +126,61 @@ function Get-ExperimentalUsvfsRuntime {
     return @{ SourceRoot = $sourceRoot; Manifest = $manifest; Files = $files; Hashes = $hashes }
 }
 
+function Get-UsvfsPendingPatches {
+    param([string]$SourceRoot, [hashtable]$Manifest)
+
+    $repositoryRoot = Split-Path -Parent $PSScriptRoot
+    $patchPaths = @($Manifest.SourcePatches | ForEach-Object { Join-Path $repositoryRoot $_ })
+    $actualRevision = & git -C $SourceRoot rev-parse HEAD
+    if ($LASTEXITCODE -ne 0 -or $actualRevision -ne $Manifest.SourceRevision) {
+        throw "Expected USVFS revision $($Manifest.SourceRevision) in $SourceRoot. No existing source was reset."
+    }
+    $extraFiles = & git -C $SourceRoot ls-files --others --exclude-standard -- . ':!runtime/'
+    if ($LASTEXITCODE -ne 0 -or $extraFiles) {
+        throw 'USVFS source contains unexpected untracked files. No files were removed.'
+    }
+    $diffArguments = @('-C', $SourceRoot, '-c', 'core.autocrlf=false', '-c', 'core.safecrlf=false', 'diff', '--unified=0', '--binary', '--ignore-space-at-eol', '--no-ext-diff', 'HEAD')
+    $allPatchFiles = @()
+    $pendingPatches = @()
+    foreach ($patchPath in $patchPaths) {
+        $statistics = & git -C $SourceRoot apply --numstat $patchPath
+        if ($LASTEXITCODE -ne 0) { throw "Cannot inspect patch $patchPath" }
+        $patchFiles = @($statistics | ForEach-Object { ($_ -split "`t", 3)[2] })
+        if ($patchFiles.Count -eq 0) { throw "Empty patch: $patchPath" }
+        $allPatchFiles += $patchFiles
+        $sourceDiff = & git @diffArguments -- @patchFiles
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect USVFS source changes.' }
+        $expectedDiff = [IO.File]::ReadAllText($patchPath).Replace("`r`n", "`n").TrimEnd()
+        if (-not $sourceDiff) {
+            $check = Invoke-RepositoryGit -SourceRoot $SourceRoot -CommandArguments @('apply', '--unidiff-zero', '--check', $patchPath)
+            if ($check.ExitCode -ne 0) { throw "Cannot apply tracked USVFS patch: $patchPath" }
+            $pendingPatches += $patchPath
+        } elseif (($sourceDiff -join "`n").TrimEnd() -cne $expectedDiff) {
+            throw 'USVFS source contains changes other than the tracked patches. No changes were overwritten.'
+        }
+    }
+    $changedFiles = & git -C $SourceRoot -c core.safecrlf=false diff --name-only HEAD
+    if ($LASTEXITCODE -ne 0 -or @($changedFiles | Where-Object { $_ -notin $allPatchFiles }).Count -gt 0) {
+        throw 'USVFS source contains changes outside the tracked patches. No changes were overwritten.'
+    }
+    return $pendingPatches
+}
+
 function Test-UsvfsSourceProvenance {
     param(
         [Parameter(Mandatory = $true)]
         [string]$SourceRoot,
         [Parameter(Mandatory = $true)]
         [hashtable]$Manifest,
-        [Parameter(Mandatory = $true)]
         [string]$PatchPath
     )
+
+    if ($Manifest.SourcePatches) {
+        if (@(Get-UsvfsPendingPatches -SourceRoot $SourceRoot -Manifest $Manifest).Count -ne 0) {
+            throw 'USVFS source is missing tracked patches. Run scripts\Prepare-UsvfsSource.ps1.'
+        }
+        return
+    }
 
     $resolvedSourceRoot = [System.IO.Path]::GetFullPath($SourceRoot)
     if (-not (Test-Path -LiteralPath (Join-Path $resolvedSourceRoot ".git"))) {

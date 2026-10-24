@@ -8,7 +8,9 @@ $ErrorActionPreference = "Stop"
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($RuntimeRoot)) {
-    $RuntimeRoot = Join-Path $repositoryRoot ".external\usvfs"
+    . (Join-Path $PSScriptRoot 'ReleaseIntegrity.ps1')
+    $manifest = Import-UsvfsRuntimeManifest -Path (Join-Path $PSScriptRoot 'UsvfsRuntimeManifest.psd1')
+    $RuntimeRoot = Join-Path $repositoryRoot $manifest.SourceDirectory
 }
 
 $RuntimeRoot = [System.IO.Path]::GetFullPath($RuntimeRoot)

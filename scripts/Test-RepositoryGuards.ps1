@@ -40,7 +40,7 @@ try {
     Invoke-FixtureGit -Arguments @("-c", "user.name=Guard Test", "-c", "user.email=guard@example.invalid", "commit", "--quiet", "-m", "fixture")
 
     # Missing native dependencies stop the clean fixture before any packaging can begin.
-    $dependencyFailure = "Missing release dependency"
+    $dependencyFailure = "USVFS build record is missing"
     Assert-ReleaseStops -ExpectedMessage $dependencyFailure
     foreach ($directory in @("bin", "obj", "publish")) {
         $path = Join-Path $fixtureRoot $directory
@@ -78,6 +78,7 @@ try {
 
 $workflow = [IO.File]::ReadAllText((Join-Path $repositoryRoot ".github\workflows\usvfs.yml"))
 $runtimePaths = @(
+    ".gitattributes"
     Get-ChildItem -LiteralPath (Join-Path $repositoryRoot "src\StalkerModLauncher\Services") -Filter '*Usvfs*.cs' -File |
         ForEach-Object { "src/StalkerModLauncher/Services/$($_.Name)" }
     Get-ChildItem -LiteralPath (Join-Path $repositoryRoot "src\StalkerModLauncher\Models") -Filter 'Usvfs*.cs' -File |
@@ -88,8 +89,14 @@ $runtimePaths = @(
     "scripts/Build-UsvfsDependencies.ps1"
     "scripts/Prepare-UsvfsSource.ps1"
     "scripts/Test-UsvfsRuntime.ps1"
+    "scripts/Test-UsvfsNative.ps1"
+    "scripts/Build-Usvfs.ps1"
+    "scripts/Build-Release.ps1"
+    "scripts/Verify-Release.ps1"
+    "scripts/Test-UsvfsPackaging.ps1"
+    "scripts/ReleaseIntegrity.ps1"
     "scripts/UsvfsRuntimeManifest.psd1"
-    "scripts/UsvfsPr99Manifest.psd1"
+    "scripts/UsvfsLegacyManifest.psd1"
 )
 foreach ($path in $runtimePaths) {
     if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $path) -PathType Leaf)) {

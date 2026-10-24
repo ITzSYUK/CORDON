@@ -11,20 +11,19 @@ Revisions used on 2026-10-18:
 
 Build both with identical Release toolchains and dependencies. Each runtime root
 must contain `lib/usvfs_x64.dll`, `lib/usvfs_x86.dll`, and the corresponding
-`bin/usvfs_proxy_*.exe`. Keep these experimental builds separate from `.external/usvfs`.
-The optional candidate can now be built and validated with
-`scripts/Build-UsvfsPr99.ps1`; use `.external/usvfs-pr99` as its benchmark runtime
-root. Its `runtime` subdirectory contains the validated flat files and
-`build-info.json` used by experimental launcher publishing and release packaging.
+`bin/usvfs_proxy_*.exe`. The original baseline is retained as legacy in
+`.external/usvfs`; the validated candidate is now the main runtime in
+`.external/usvfs-pr99`. Build the main runtime with
+`scripts/Build-UsvfsDependencies.ps1`; add `-LegacyUsvfs` to build the baseline.
+The main runtime's `runtime` subdirectory contains validated flat files and
+`build-info.json` used by launcher publishing and release packaging.
 
-After building the native candidate, run `scripts/Build-Usvfs.ps1 -ExperimentalUsvfs`
-to publish a test launcher to `publish/usvfs-experimental`. For release packaging,
-`scripts/Build-Release.ps1 -IncludeExperimentalUsvfs` requires a clean working tree
-and creates the two stable archives plus compact and standalone experimental
-archives with the `-usvfs-experimental` suffix. Without these flags, both scripts
-retain the stable runtime. They verify the experimental build record and hashes
-and run x64/x86 smoke tests. The built-in updater still installs stable packages;
-update experimental packages manually to retain that runtime.
+Run `scripts/Build-Usvfs.ps1` to publish the main test launcher to `publish/usvfs`;
+add `-LegacyUsvfs` for `publish/usvfs-legacy`. Release packaging through
+`scripts/Build-Release.ps1` requires a clean working tree and creates two standard
+archives with the optimized runtime. `-IncludeLegacyUsvfs` adds compact and
+standalone legacy archives with the `-usvfs-legacy` suffix. The built-in updater
+installs the main optimized runtime, including over legacy installations.
 
 From the repository root, restore/build this project and run:
 
