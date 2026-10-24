@@ -1,5 +1,5 @@
 diff --git a/src/usvfs_dll/hooks/directory_scan.cpp b/src/usvfs_dll/hooks/directory_scan.cpp
-index ca5f107..5e8a556 100644
+index 7728125..d12e9e0 100644
 --- a/src/usvfs_dll/hooks/directory_scan.cpp
 +++ b/src/usvfs_dll/hooks/directory_scan.cpp
 @@ -31,0 +32 @@
@@ -34,17 +34,17 @@ index ca5f107..5e8a556 100644
 +      }
 diff --git a/src/usvfs_dll/hooks/internal_io.h b/src/usvfs_dll/hooks/internal_io.h
 new file mode 100644
-index 0000000..3dece5c
+index 0000000..08772cd
 --- /dev/null
 +++ b/src/usvfs_dll/hooks/internal_io.h
 @@ -0,0 +1,69 @@
 +#pragma once
 +
++#include "../hookcontext.h"
++#include <Windows.h>
 +#include <exception>
 +#include <new>
 +#include <utility>
-+#include <Windows.h>
-+#include "../hookcontext.h"
 +
 +// Suppress rerouting of the directory scanner's own opens and closes, per thread.
 +class InternalIoScope
@@ -116,18 +116,18 @@ index 8aac638..2b9de11 100644
 +add_executable(tvfs_test main.cpp directory_enumeration.cpp internal_io_test.cpp)
 diff --git a/test/tvfs_test/internal_io_test.cpp b/test/tvfs_test/internal_io_test.cpp
 new file mode 100644
-index 0000000..3fe611b
+index 0000000..62c6a48
 --- /dev/null
 +++ b/test/tvfs_test/internal_io_test.cpp
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,114 @@
 +#include "pch.h"
 +
-+#include <thread>
-+#include <memory>
-+#include <gtest/gtest.h>
-+#include <hooks/internal_io.h>
-+#include <hookcontext.h>
 +#include "tvfs_test.h"
++#include <gtest/gtest.h>
++#include <hookcontext.h>
++#include <hooks/internal_io.h>
++#include <memory>
++#include <thread>
 +
 +namespace
 +{
@@ -160,8 +160,8 @@ index 0000000..3fe611b
 +DWORD exerciseWithoutStaticTls(bool (*probe)(void*), void* context, bool* matched)
 +{
 +  PVOID volatile* storage = reinterpret_cast<PVOID volatile*>(NtCurrentTeb()) + 11;
-+  PVOID saved = *storage;
-+  DWORD exception = 0;
++  PVOID saved             = *storage;
++  DWORD exception         = 0;
 +  __try {
 +    *storage = nullptr;
 +    *matched = probe(context);
@@ -187,7 +187,7 @@ index 0000000..3fe611b
 +{
 +  constexpr DWORD SENTINEL = 0x12345678;
 +  ::SetLastError(SENTINEL);
-+  const bool matched = exerciseScope(nullptr);
++  const bool matched    = exerciseScope(nullptr);
 +  const DWORD lastError = ::GetLastError();
 +  EXPECT_TRUE(matched);
 +  EXPECT_EQ(SENTINEL, lastError);
@@ -197,7 +197,9 @@ index 0000000..3fe611b
 +{
 +  const InternalIoScope outer;
 +  bool matched = false;
-+  std::thread worker([&] { matched = exerciseScope(nullptr); });
++  std::thread worker([&] {
++    matched = exerciseScope(nullptr);
++  });
 +  worker.join();
 +  EXPECT_TRUE(matched);
 +  EXPECT_TRUE(InternalIoScope::isActive());
@@ -224,7 +226,7 @@ index 0000000..3fe611b
 +      usvfsCreateHookContext(*params, ::GetModuleHandle(nullptr)));
 +  HANDLE event = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
 +  ASSERT_NE(nullptr, event);
-+  bool matched = false;
++  bool matched          = false;
 +  const DWORD exception = exerciseWithoutStaticTls(closeHookedEvent, event, &matched);
 +  if (exception != 0) {
 +    ::CloseHandle(event);

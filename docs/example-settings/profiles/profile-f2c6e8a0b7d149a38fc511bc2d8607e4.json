@@ -1,0 +1,21 @@
+{
+  "Id": "f2c6e8a0b7d149a38fc511bc2d8607e4",
+  "Name": "Anomaly with mods",
+  "GameInstallPath": "D:\\Games\\Anomaly",
+  "IsEnabled": true,
+  "IsStandalone": false,
+  "UseBaseGameData": false,
+  "LaunchBackendKind": 1,
+  "LaunchArguments": "-nointro",
+  "ExecutableRelativePath": "AnomalyLauncher.exe",
+  "WorkspacePath": "D:\\StalkerModLauncher\\Workspaces\\profile-f2c6e8a0b7d149a38fc511bc2d8607e4",
+  "Mods": [
+    {
+      "Id": "b72897006d2d47ce8ad4ef9f57b0e952",
+      "Name": "Example mod",
+      "SourcePath": "D:\\Games\\Mods\\ExampleMod",
+      "IsEnabled": true,
+      "Order": 1
+    }
+  ]
+}

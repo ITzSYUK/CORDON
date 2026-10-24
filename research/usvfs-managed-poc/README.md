@@ -15,7 +15,7 @@ Run from the repository root after building dependencies with
 .\scripts\Test-UsvfsRuntime.ps1
 ```
 
-The script uses `.external\usvfs` by default, runs five sessions for each
+The script uses the main runtime in `.external\usvfs-pr99` by default, runs five sessions for each
 architecture, and checks changed overlay contents, child lifetime and writable
 directory behavior. See the [technical documentation](../../docs/TECHNICAL_EN.md)
 for dependency preparation and release checks.

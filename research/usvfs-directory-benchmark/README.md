@@ -9,22 +9,25 @@ Revisions used on 2026-10-18:
 - candidate: [PR #99](https://github.com/ModOrganizer2/usvfs/pull/99),
   `Illustar0/usvfs@c5f7ef2085bd29a3cca2cd57f3aba84dae030ff5`.
 
+The current main runtime pins `93fcf7af42523d8da8d1436e88920f900e766596`; the
+revisions above describe the original experiment. The current source manifest
+and both local patches remain authoritative.
+
 Build both with identical Release toolchains and dependencies. Each runtime root
 must contain `lib/usvfs_x64.dll`, `lib/usvfs_x86.dll`, and the corresponding
-`bin/usvfs_proxy_*.exe`. Keep these experimental builds separate from `.external/usvfs`.
-The optional candidate can now be built and validated with
-`scripts/Build-UsvfsPr99.ps1`; use `.external/usvfs-pr99` as its benchmark runtime
-root. Its `runtime` subdirectory contains the validated flat files and
-`build-info.json` used by experimental launcher publishing and release packaging.
+`bin/usvfs_proxy_*.exe`. The original baseline is retained as legacy in
+`.external/usvfs`; the validated candidate is now the main runtime in
+`.external/usvfs-pr99`. Build the main runtime with
+`scripts/Build-UsvfsDependencies.ps1`; add `-LegacyUsvfs` to build the baseline.
+The main runtime's `runtime` subdirectory contains validated flat files and
+`build-info.json` used by launcher publishing and release packaging.
 
-After building the native candidate, run `scripts/Build-Usvfs.ps1 -ExperimentalUsvfs`
-to publish a test launcher to `publish/usvfs-experimental`. For release packaging,
-`scripts/Build-Release.ps1 -IncludeExperimentalUsvfs` requires a clean working tree
-and creates the two stable archives plus compact and standalone experimental
-archives with the `-usvfs-experimental` suffix. Without these flags, both scripts
-retain the stable runtime. They verify the experimental build record and hashes
-and run x64/x86 smoke tests. The built-in updater still installs stable packages;
-update experimental packages manually to retain that runtime.
+Run `scripts/Build-Usvfs.ps1` to publish the main test launcher to `publish/usvfs`;
+add `-LegacyUsvfs` for `publish/usvfs-legacy`. Release packaging through
+`scripts/Build-Release.ps1` requires a clean working tree and creates two standard
+archives with the optimized runtime. `-IncludeLegacyUsvfs` adds compact and
+standalone legacy archives with the `-usvfs-legacy` suffix. The built-in updater
+installs the main optimized runtime, including over legacy installations.
 
 From the repository root, restore/build this project and run:
 
@@ -71,3 +74,26 @@ expected seconds saved during game startup.
 
 See [the technical documentation](../../docs/TECHNICAL_EN.md) for build
 instructions and compatibility limits.
+
+## PR #99 follow-up comparison, 2026-10-24
+
+Compared `c5f7ef2085bd29a3cca2cd57f3aba84dae030ff5` with
+`93fcf7af42523d8da8d1436e88920f900e766596`, retaining the same Win32 TLS and early
+source-scan completion fixes. Both were built with MSVC v143 19.44.35228,
+Windows SDK 10.0.26100.0 and the same dependencies.
+
+The initial baseline-only pass, before updating the native source, measured
+83.9406 ms median enumeration across 21 scans. The final paired AB/BA/AB series
+used that same fixture of 40 overlapping mods and 10,253 final files, with 21 scans
+and three session preparations per runtime:
+
+| Median | Before (`c5f7ef2`) | After (`93fcf7a`) |
+| --- | ---: | ---: |
+| Recursive enumeration | 84.6716 ms | 84.4214 ms |
+| Session preparation | 233.8871 ms | 234.3290 ms |
+
+The approximately 0.3% enumeration difference does not establish a meaningful
+speed-up. File/provider checks and overwrite operations passed; source fingerprints
+were unchanged. These warm x64 measurements do not measure game startup or FPS.
+The x64/x86 native correctness suites, including the new matcher/context tests and
+our TLS/early-stop regressions, and five smoke sessions per architecture passed.

@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/usvfs.yml'
+      - '.gitattributes'
       - 'native/**'
       - 'research/usvfs-poc/**'
       - 'research/usvfs-managed-poc/**'
@@ -14,13 +15,21 @@ on:
       - 'scripts/Prepare-UsvfsSource.ps1'
       - 'scripts/ReleaseIntegrity.ps1'
       - 'scripts/Test-UsvfsRuntime.ps1'
+      - 'scripts/Test-UsvfsNative.ps1'
+      - 'scripts/Test-UsvfsNativeDiagnostics.ps1'
+      - 'scripts/Test-UsvfsPackaging.ps1'
+      - 'scripts/Test-RepositoryGuards.ps1'
+      - 'scripts/Build-Usvfs.ps1'
+      - 'scripts/Build-Release.ps1'
+      - 'scripts/Verify-Release.ps1'
       - 'scripts/UsvfsRuntimeManifest.psd1'
-      - 'scripts/UsvfsPr99Manifest.psd1'
+      - 'scripts/UsvfsLegacyManifest.psd1'
       - 'scripts/patches/**'
   push:
     branches: [main]
     paths:
       - '.github/workflows/usvfs.yml'
+      - '.gitattributes'
       - 'native/**'
       - 'research/usvfs-poc/**'
       - 'research/usvfs-managed-poc/**'
@@ -30,8 +39,15 @@ on:
       - 'scripts/Prepare-UsvfsSource.ps1'
       - 'scripts/ReleaseIntegrity.ps1'
       - 'scripts/Test-UsvfsRuntime.ps1'
+      - 'scripts/Test-UsvfsNative.ps1'
+      - 'scripts/Test-UsvfsNativeDiagnostics.ps1'
+      - 'scripts/Test-UsvfsPackaging.ps1'
+      - 'scripts/Test-RepositoryGuards.ps1'
+      - 'scripts/Build-Usvfs.ps1'
+      - 'scripts/Build-Release.ps1'
+      - 'scripts/Verify-Release.ps1'
       - 'scripts/UsvfsRuntimeManifest.psd1'
-      - 'scripts/UsvfsPr99Manifest.psd1'
+      - 'scripts/UsvfsLegacyManifest.psd1'
       - 'scripts/patches/**'
 
 permissions:
@@ -58,3 +74,14 @@ jobs:
           -BootstrapUsvfs
           -CleanUsvfsBuild
           -VcpkgRoot $env:VCPKG_INSTALLATION_ROOT
+
+      - name: Upload native USVFS test diagnostics
+        if: ${{ always() && env.USVFS_NATIVE_TEST_RESULTS != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: usvfs-native-test-diagnostics
+          path: |
+            ${{ env.USVFS_NATIVE_TEST_RESULTS }}/**/*.log
+            ${{ env.USVFS_NATIVE_TEST_RESULTS }}/*.xml
+          if-no-files-found: warn
+          retention-days: 14

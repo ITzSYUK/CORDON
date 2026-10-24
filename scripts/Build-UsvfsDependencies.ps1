@@ -2,19 +2,19 @@ param(
     [switch]$BootstrapUsvfs,
     [switch]$SkipSmokeTest,
     [string]$VcpkgRoot,
-    [switch]$CleanUsvfsBuild
+    [switch]$CleanUsvfsBuild,
+    [switch]$LegacyUsvfs
 )
 
 $ErrorActionPreference = "Stop"
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
-$usvfsRoot = Join-Path $repositoryRoot ".external\usvfs"
-$usvfsParent = Split-Path -Parent $usvfsRoot
 $hostSource = Join-Path $repositoryRoot "native\StalkerModLauncher.UsvfsX86Host"
 $hostBuild = Join-Path $hostSource "build32"
 $pocSource = Join-Path $repositoryRoot "research\usvfs-poc"
 $pocBuild = Join-Path $pocSource "build32"
-$manifestPath = Join-Path $PSScriptRoot "UsvfsRuntimeManifest.psd1"
+$manifestName = if ($LegacyUsvfs) { 'UsvfsLegacyManifest.psd1' } else { 'UsvfsRuntimeManifest.psd1' }
+$manifestPath = Join-Path $PSScriptRoot $manifestName
 $integrityScript = Join-Path $PSScriptRoot "ReleaseIntegrity.ps1"
 $prepareScript = Join-Path $PSScriptRoot "Prepare-UsvfsSource.ps1"
 $smokeScript = Join-Path $PSScriptRoot "Test-UsvfsRuntime.ps1"
@@ -22,6 +22,8 @@ $patchPath = Join-Path $repositoryRoot "scripts\patches\usvfs-msvc-pch.patch"
 
 . $integrityScript
 $manifest = Import-UsvfsRuntimeManifest -Path $manifestPath
+$usvfsRoot = Join-Path $repositoryRoot $manifest.SourceDirectory
+$usvfsParent = Split-Path -Parent $usvfsRoot
 
 function Invoke-Tool {
     param(
@@ -142,11 +144,15 @@ if (-not (Test-Path -LiteralPath $usvfsRoot -PathType Container)) {
     New-Item -ItemType Directory -Path $usvfsParent -Force | Out-Null
     Invoke-Tool `
         -FileName "git" `
-        -Arguments @("clone", $manifest.SourceRepository, $usvfsRoot) `
+        -Arguments @("clone", "--no-checkout", $manifest.SourceRepository, $usvfsRoot) `
         -FailureMessage "Failed to clone the USVFS source repository."
     Invoke-Tool `
         -FileName "git" `
-        -Arguments @("-C", $usvfsRoot, "checkout", $manifest.SourceRevision) `
+        -Arguments @("-C", $usvfsRoot, "fetch", "--depth", "1", "origin", $manifest.SourceRevision) `
+        -FailureMessage "Failed to fetch the pinned USVFS revision."
+    Invoke-Tool `
+        -FileName "git" `
+        -Arguments @("-C", $usvfsRoot, "checkout", "--detach", $manifest.SourceRevision) `
         -FailureMessage "Failed to checkout the pinned USVFS revision."
 }
 
@@ -167,7 +173,7 @@ $VcpkgRoot = [System.IO.Path]::GetFullPath($VcpkgRoot)
 $cmake = Resolve-CmakeExecutable -ResolvedVcpkgRoot $VcpkgRoot
 $visualStudioPath = Resolve-VisualStudio2022Path
 
-& $prepareScript -SourceRoot $usvfsRoot
+& $prepareScript -SourceRoot $usvfsRoot -LegacyUsvfs:$LegacyUsvfs
 
 if ($CleanUsvfsBuild) {
     Clear-UsvfsBuildDirectories -SourceRoot $usvfsRoot
@@ -182,7 +188,7 @@ try {
     $buildDrive = New-AsciiRepositoryDrive -TargetPath $repositoryRoot
 
     $buildRepositoryRoot = "$buildDrive\"
-    $buildUsvfsRoot = Join-Path $buildRepositoryRoot ".external\usvfs"
+    $buildUsvfsRoot = Join-Path $buildRepositoryRoot $manifest.SourceDirectory
     $buildHostSource = Join-Path $buildRepositoryRoot "native\StalkerModLauncher.UsvfsX86Host"
     $buildHostOutput = Join-Path $buildHostSource "build32"
     $buildPocSource = Join-Path $buildRepositoryRoot "research\usvfs-poc"
@@ -192,7 +198,7 @@ try {
     try {
         Invoke-Tool `
             -FileName $cmake `
-            -Arguments @("--preset", "vs2022-windows-x64") `
+            -Arguments @("--fresh", "--preset", "vs2022-windows-x64") `
             -FailureMessage "USVFS x64 CMake configuration failed."
         Invoke-Tool `
             -FileName $cmake `
@@ -200,7 +206,7 @@ try {
             -FailureMessage "USVFS x64 build failed."
         Invoke-Tool `
             -FileName $cmake `
-            -Arguments @("--preset", "vs2022-windows-x86") `
+            -Arguments @("--fresh", "--preset", "vs2022-windows-x86") `
             -FailureMessage "USVFS x86 CMake configuration failed."
         Invoke-Tool `
             -FileName $cmake `
@@ -274,8 +280,31 @@ foreach ($path in $requiredFiles) {
     }
 }
 
+if (-not $LegacyUsvfs) {
+    & (Join-Path $PSScriptRoot 'Test-UsvfsNative.ps1') -RuntimeRoot $usvfsRoot
+}
+
 if (-not $SkipSmokeTest) {
     & $smokeScript -RuntimeRoot $usvfsRoot
 }
 
-Write-Host "USVFS dependencies are ready for Build-Usvfs.ps1."
+if (-not $LegacyUsvfs) {
+    $patchPaths = @($manifest.SourcePatches | ForEach-Object { Join-Path $repositoryRoot $_ })
+    $outputRoot = Join-Path $usvfsRoot 'runtime'
+    New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
+    $hashes = foreach ($file in @('lib\usvfs_x64.dll', 'lib\usvfs_x86.dll', 'bin\usvfs_proxy_x64.exe', 'bin\usvfs_proxy_x86.exe')) {
+        $source = Join-Path $usvfsRoot $file
+        Copy-Item -LiteralPath $source -Destination $outputRoot -Force
+        Get-FileHash -LiteralPath (Join-Path $outputRoot (Split-Path -Leaf $file)) -Algorithm SHA256 | Select-Object Path, Hash
+    }
+    [ordered]@{
+        SourceRepository = $manifest.SourceRepository
+        SourceRevision = $manifest.SourceRevision
+        Patches = @($patchPaths | ForEach-Object {
+            [ordered]@{ Name = (Split-Path -Leaf $_); Sha256 = (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash }
+        })
+        Files = @($hashes)
+    } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $outputRoot 'build-info.json') -Encoding UTF8
+}
+
+Write-Host "USVFS dependencies are ready for Build-Usvfs.ps1 (legacy: $LegacyUsvfs)."
