@@ -406,6 +406,10 @@ After process creation the launcher watches actual readiness for up to 30 second
 
 The internal USVFS message queue is drained continuously outside the game logs into the bounded `<workspace>\diagnostics\usvfs.log` file, rotating to `usvfs.old.log`. This prevents queue saturation from blocking the engine and prevents third-party addons from mistaking the service file for an X-Ray log. The final 30 lines are included in the Status-window report. Legacy `userdata\logs\usvfs*.log` files are moved automatically on the next launch.
 
+The x64 collector increases its wait after empty reads through 25, 50, 75 and 100 ms. Any message resets the wait to zero, so active batches are drained without intervening sleeps; shutdown interrupts the wait and performs a final drain. The x86 host keeps its existing process polling intervals, but writes the PID file only when the normalized set changes. The first empty set is also published. Failed queries preserve the published file; failed writes invalidate the cached set, allowing the next poll to retry even if the PID set reverts.
+
+On 18 October 2026, Release fixtures were measured before and after these changes, with three runs per variant. Over three idle seconds, x64 native log calls decreased from 118 to 32. Median time to flush 20,000 short queued messages after that idle period decreased from 118.19 ms to 74.49 ms. These log measurements use an in-memory native-API substitute, without queue capacity limits. For 5,000 unchanged x86 process-list checks after an initial publication, measured file write operations decreased from 5,000 to zero and median elapsed time from 1,451.05 ms to 0.34 ms; process enumeration was stubbed with the fixed set `{123, 456}`. These fixtures measure collector and publication overhead, not game loading, FPS or native queue overflow under a real game's workload. New messages after silence may wait up to the 100 ms polling interval, plus scheduling and processing time.
+
 ## 12. Mod management
 
 Scanning searches recursively for mod roots, but stops treating nested folders as separate mods after a valid root is found. It recognizes unpacked files and X-Ray archives, including `db` and `patches` directories.
@@ -527,6 +531,8 @@ The script creates two ZIP archives:
 
 Both packages contain the official x64/x86 USVFS runtime, x86 host, `LICENSE.txt`, and `THIRD-PARTY-NOTICES.txt`. PDB, JSON, Markdown, and intermediate files are excluded from user ZIP files.
 
+To also create experimental USVFS packages, first run `.\scripts\Build-UsvfsPr99.ps1`, then `.\scripts\Build-Release.ps1 -IncludeExperimentalUsvfs`. This keeps both stable archives and adds `CORDON-v<version>-win-x64-usvfs-experimental.zip` and `CORDON-v<version>-win-x64-standalone-usvfs-experimental.zip`. The launcher is published only twice; each publication is reused for both USVFS variants. The experimental revision and patches are pinned in `scripts\UsvfsPr99Manifest.psd1`. Packaging checks the existing build record against that manifest, current patch hashes and all four binaries, runs the experimental x64/x86 smoke tests before replacing release outputs, and checks packaged binary hashes and all four ZIPs. Missing, outdated or modified experimental builds fail before packaging; rebuild them with `Build-UsvfsPr99.ps1`. Without the flag only the two stable archives are produced. The built-in updater still downloads stable packages; update experimental packages manually to retain that runtime.
+
 Before packaging, the USVFS source is checked against its pinned revision and tracked patch; `scripts\Prepare-UsvfsSource.ps1` prepares that state. The names, paths, and version of the four upstream components are checked against `scripts\UsvfsRuntimeManifest.psd1`. Source builds and CI do not compare binary hashes: output bytes may differ between Windows SDK and vcpkg versions. Every package contains a `checksums.txt`, and the release directory contains another checksum file for the ZIP archives. After packaging, both ZIP files are extracted to a temporary directory and compared completely with their prepared packages, including EXE version, source commit, and absence of unexpected files.
 
 USVFS publish:
@@ -540,11 +546,13 @@ USVFS publish:
 
 After changing Visual Studio or vcpkg, use `-CleanUsvfsBuild`: it removes only `.external\usvfs\vsbuild64` and `vsbuild32` before configuring again.
 
-Without `-CleanPublishRoot`, the script recreates only `publish\usvfs`; the switch deletes all of `publish`. Compiled third-party binaries are not stored in Git.
+Use `.\scripts\Build-Usvfs.ps1 -ExperimentalUsvfs` to publish a separate launcher with the validated experimental runtime to `publish\usvfs-experimental`; prepare its native files with `Build-UsvfsPr99.ps1` first. This flag does not build the native runtime itself. Without the flag the output remains `publish\usvfs`. Both variants run x64/x86 smoke tests against the selected runtime. Without `-CleanPublishRoot`, the script recreates only the selected output directory; the switch deletes all of `publish`. Compiled third-party binaries are not stored in Git.
 
 The `.github\workflows\usvfs.yml` workflow repeats the complete build and smoke test on Windows 2022 when USVFS, the native helper, or related scripts change.
 
 ## 17. Known limitations
+
+Experimental PR #99 can be compiled separately with `.\scripts\Build-UsvfsPr99.ps1` after the normal native dependencies have been prepared. It pins commit `c5f7ef2085bd29a3cca2cd57f3aba84dae030ff5`, applies `scripts\patches\usvfs-pr99-tests.patch` and `scripts\patches\usvfs-pr99-runtime.patch`, runs all native correctness suites and `Test-UsvfsRuntime.ps1` for x64/x86, and writes four runtime files plus `build-info.json` to `.external\usvfs-pr99\runtime`. It reuses the normal vcpkg dependency installations and x86 smoke tools; it does not change the normal source, runtime manifest or publish folders. Visual Studio 2022/2026 with MSVC v143, CMake, Git and an ASCII TEMP path are required. The test patch corrects batch-boundary and 8.3-name assumptions, covers early source-scan completion and fixes the test build. The runtime patch replaces the internal I/O guard's compiler `thread_local` storage with Win32 TLS, preserves nesting and `GetLastError`, and adds regressions for threads without a static TLS vector. It also stops a source-directory scan once every requested name has a cached record; missing names and case/8.3 fallbacks retain their full-scan behavior. This version remains experimental: asynchronous directory enumeration sees only physical entries. Use these four files only in a separate test copy of the launcher.
 
 - USVFS and Workspace are both considered stable. Use the other backend for builds that are incompatible with one of them.
 - USVFS requires the Microsoft Visual C++ 2015-2022 Redistributable matching the target game's architecture.
