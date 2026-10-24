@@ -443,9 +443,9 @@
   <data name="Settings_ImportAppDataFailed" xml:space="preserve"><value>Не удалось импортировать настройки из AppData</value></data>
   <data name="Settings_Unavailable" xml:space="preserve"><value>Настройки недоступны</value></data>
   <data name="Settings_WriteBlocked" xml:space="preserve"><value>Файл не изменён. Закройте программу, которая может удерживать его, и перезапустите лаунчер.</value></data>
-  <data name="Settings_PrimaryRecoveredDamaged" xml:space="preserve"><value>Основной файл настроек повреждён. Настройки восстановлены из резервной копии.</value></data>
-  <data name="Settings_PrimaryRecoveredMissing" xml:space="preserve"><value>Основной файл настроек отсутствовал. Настройки восстановлены из резервной копии.</value></data>
-  <data name="Settings_RecoveryFailed" xml:space="preserve"><value>Файлы настроек повреждены и не читаются. Создана новая конфигурация; профили автоматически восстановить не удалось.</value></data>
+  <data name="Settings_PrimaryRecoveredDamaged" xml:space="preserve"><value>Файлы настроек или профилей повреждены. Данные восстановлены из резервных копий.</value></data>
+  <data name="Settings_PrimaryRecoveredMissing" xml:space="preserve"><value>Файлы настроек или профилей отсутствовали. Данные восстановлены из резервных копий.</value></data>
+  <data name="Settings_RecoveryFailed" xml:space="preserve"><value>Общие настройки восстановить не удалось. Применены настройки лаунчера по умолчанию; доступные профили восстановлены из отдельных файлов.</value></data>
   <data name="Settings_DamagedFilesFormat" xml:space="preserve"><value>{0}{0}Повреждённые файлы сохранены:{0}{1}</value></data>
   <data name="Settings_RecoveryTitle" xml:space="preserve"><value>Восстановление настроек</value></data>
   <data name="Mo2_SelectSource" xml:space="preserve"><value>Выберите папку MO2, папку профиля или modlist.txt.</value></data>
@@ -1132,4 +1132,8 @@
   <data name="Fomod_FolderNotFoundFormat" xml:space="preserve"><value>Исходная папка FOMOD не найдена: {0}</value></data>
   <data name="Fomod_ConfigNotFound" xml:space="preserve"><value>В выбранной папке нет установщика FOMOD.</value></data>
   <data name="Fomod_CopyingFormat" xml:space="preserve"><value>Копирование выбранных файлов из {0}...</value></data>
+  <data name="Settings_ProfileIndexInvalid" xml:space="preserve"><value>Некорректный список профилей или ID профиля. Настройки не будут перезаписаны.</value></data>
+  <data name="Settings_ProfileUnavailableFormat" xml:space="preserve"><value>Не удалось загрузить профиль и его резервную копию: {0}. {1} Настройки не будут перезаписаны.</value></data>
+  <data name="Settings_PendingSaveInvalid" xml:space="preserve"><value>Журнал незавершённого сохранения повреждён. Настройки не будут перезаписаны; сохраните settings.pending.json для восстановления.</value></data>
+  <data name="Settings_ImportPending" xml:space="preserve"><value>В источнике есть незавершённое сохранение настроек. Запустите лаунчер с этой папкой настроек для завершения восстановления, затем повторите импорт.</value></data>
 </root>

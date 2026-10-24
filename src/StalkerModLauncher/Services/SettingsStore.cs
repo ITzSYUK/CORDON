@@ -5,7 +5,7 @@ using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
-public sealed class SettingsStore : IDisposable
+public sealed partial class SettingsStore : IDisposable
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -26,7 +26,9 @@ public sealed class SettingsStore : IDisposable
     }
 
     public bool HasSettingsFile =>
-        File.Exists(_paths.SettingsFile) || File.Exists(_paths.SettingsBackupFile);
+        File.Exists(_paths.SettingsFile) || File.Exists(_paths.SettingsBackupFile) ||
+        File.Exists(_paths.SettingsPendingFile) || Directory.Exists(_paths.ProfilesDirectory) &&
+        Directory.EnumerateFiles(_paths.ProfilesDirectory, "profile-*.json").Any();
 
     public event EventHandler<SettingsRecoveryInfo>? RecoveryCompleted;
 
@@ -62,10 +64,10 @@ public sealed class SettingsStore : IDisposable
             _writeBlockReason = null;
             return result;
         }
-        catch (SettingsPersistenceException ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _writeBlockReason = ex.Message;
-            throw;
+            throw new SettingsPersistenceException(ex.Message, ex);
         }
         finally
         {
@@ -101,7 +103,10 @@ public sealed class SettingsStore : IDisposable
         try
         {
             EnsureWritesAllowed();
-            var imported = await TryLoadFileAsync(sourcePath);
+            var sourcePaths = GetImportPaths(sourcePath);
+            if (File.Exists(sourcePaths.SettingsPendingFile))
+                throw new SettingsPersistenceException(Strings.Settings_ImportPending);
+            var imported = await TryLoadFileAsync<AppSettings>(sourcePath);
             if (imported.Settings is null)
             {
                 if (imported.Kind == SettingsFileLoadKind.Unavailable)
@@ -112,7 +117,8 @@ public sealed class SettingsStore : IDisposable
                 throw new InvalidDataException(imported.Error ?? Strings.Settings_FileInvalid);
             }
 
-            await SaveSnapshotCoreAsync(SerializeSettings(imported.Settings));
+            var loaded = await LoadProfilesAsync(imported.Settings, sourcePaths, restore: false);
+            await SaveSnapshotCoreAsync(SerializeSettings(loaded.Settings));
         }
         finally
         {
@@ -134,10 +140,10 @@ public sealed class SettingsStore : IDisposable
             updated = update(current.Settings);
             await SaveSnapshotCoreAsync(SerializeSettings(updated));
         }
-        catch (SettingsPersistenceException ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _writeBlockReason = ex.Message;
-            throw;
+            throw new SettingsPersistenceException(ex.Message, ex);
         }
         finally
         {
@@ -155,96 +161,74 @@ public sealed class SettingsStore : IDisposable
     private async Task<SettingsLoadResult> LoadCoreAsync()
     {
         Directory.CreateDirectory(_paths.ConfigDirectory);
-        var primary = await TryLoadFileAsync(_paths.SettingsFile);
+        await RecoverPendingSaveAsync();
+        var primary = await TryLoadFileAsync<AppSettings>(_paths.SettingsFile);
         if (primary.Settings is not null)
         {
-            return new SettingsLoadResult(primary.Settings, null);
+            var legacy = primary.Settings.ProfileIds is null;
+            var loaded = await LoadProfilesAsync(primary.Settings, _paths);
+            if (legacy)
+            {
+                PreserveLegacySettings(_paths.SettingsFile);
+                await SaveSnapshotCoreAsync(SerializeSettings(loaded.Settings));
+            }
+            return loaded;
         }
 
-        var backup = await TryLoadFileAsync(_paths.SettingsBackupFile);
+        var backup = await TryLoadFileAsync<AppSettings>(_paths.SettingsBackupFile);
         ThrowIfUnavailable(primary, backup);
-        var damagedFiles = PreserveInvalidFiles(primary, backup);
-
         if (backup.Settings is not null)
         {
-            await RestorePrimaryAsync(backup.Settings);
-            return new SettingsLoadResult(
-                backup.Settings,
-                new SettingsRecoveryInfo(
-                    SettingsRecoveryMode.Backup,
-                    damagedFiles));
+            var legacy = backup.Settings.ProfileIds is null;
+            var loaded = await LoadProfilesAsync(backup.Settings, _paths);
+            if (legacy) PreserveLegacySettings(_paths.SettingsBackupFile);
+            var damagedFiles = PreserveInvalidFiles(primary, backup);
+            await ApplySnapshotCoreAsync(SerializeSettings(loaded.Settings), preserveSettingsBackup: true);
+            return new SettingsLoadResult(loaded.Settings, new SettingsRecoveryInfo(
+                SettingsRecoveryMode.Backup, damagedFiles.Concat(loaded.Recovery?.Files ?? []).ToArray()));
         }
 
-        if (damagedFiles.Count == 0)
-        {
-            return new SettingsLoadResult(new AppSettings(), null);
-        }
+        var defaults = await RecoverUnindexedProfilesAsync();
+        var damaged = PreserveInvalidFiles(primary, backup);
+        if (damaged.Count == 0 && defaults.Profiles.Count == 0)
+            return new SettingsLoadResult(defaults, null);
 
-        var defaults = new AppSettings();
-        await SaveSnapshotCoreAsync(JsonSerializer.SerializeToUtf8Bytes(defaults, JsonOptions));
-        return new SettingsLoadResult(
-            defaults,
-            new SettingsRecoveryInfo(
-                SettingsRecoveryMode.Defaults,
-                damagedFiles));
+        await SaveSnapshotCoreAsync(SerializeSettings(defaults));
+        return new SettingsLoadResult(defaults, new SettingsRecoveryInfo(SettingsRecoveryMode.Defaults, damaged));
     }
 
-    private async Task<SettingsFileLoadResult> TryLoadFileAsync(string path)
+    private static async Task<SettingsFileLoadResult<T>> TryLoadFileAsync<T>(string path) where T : class
     {
         if (!File.Exists(path))
-        {
-            return new SettingsFileLoadResult(path, null, null);
-        }
+            return new SettingsFileLoadResult<T>(path, null, null);
 
         try
         {
             await using var stream = File.OpenRead(path);
-            var settings = await JsonSerializer.DeserializeAsync<AppSettings>(stream, JsonOptions);
-            if (settings is not null) settings = AppSettingsNormalizer.Normalize(settings);
-            if (settings is not null && _paths.IsPortable)
-            {
-                TransformPaths(settings, _paths.FromStoredPath);
-            }
-            return settings is null
-                ? new SettingsFileLoadResult(
-                    path,
-                    null,
-                Strings.Settings_EmptyJson,
-                    SettingsFileLoadKind.Corrupted)
-                : new SettingsFileLoadResult(
-                    path,
-                    settings,
-                    null,
-                    SettingsFileLoadKind.Loaded);
+            var value = await JsonSerializer.DeserializeAsync<T>(stream, JsonOptions);
+            return value is null
+                ? new SettingsFileLoadResult<T>(path, null, Strings.Settings_EmptyJson, SettingsFileLoadKind.Corrupted)
+                : new SettingsFileLoadResult<T>(path, value, null, SettingsFileLoadKind.Loaded);
         }
         catch (JsonException ex)
         {
-            return new SettingsFileLoadResult(
-                path,
-                null,
-                LocalizedText.Format(Strings.Settings_InvalidJsonFormat, ex.Message),
-                SettingsFileLoadKind.Corrupted);
+            return new SettingsFileLoadResult<T>(path, null,
+                LocalizedText.Format(Strings.Settings_InvalidJsonFormat, ex.Message), SettingsFileLoadKind.Corrupted);
         }
         catch (IOException ex)
         {
-            return new SettingsFileLoadResult(
-                path,
-                null,
-                LocalizedText.Format(Strings.Settings_ReadErrorFormat, ex.Message),
-                SettingsFileLoadKind.Unavailable);
+            return new SettingsFileLoadResult<T>(path, null,
+                LocalizedText.Format(Strings.Settings_ReadErrorFormat, ex.Message), SettingsFileLoadKind.Unavailable);
         }
         catch (UnauthorizedAccessException ex)
         {
-            return new SettingsFileLoadResult(
-                path,
-                null,
-                LocalizedText.Format(Strings.Settings_AccessDeniedFormat, ex.Message),
-                SettingsFileLoadKind.Unavailable);
+            return new SettingsFileLoadResult<T>(path, null,
+                LocalizedText.Format(Strings.Settings_AccessDeniedFormat, ex.Message), SettingsFileLoadKind.Unavailable);
         }
     }
 
-    private List<RecoveredSettingsFile> PreserveInvalidFiles(
-        params SettingsFileLoadResult[] results)
+    private List<RecoveredSettingsFile> PreserveInvalidFiles<T>(
+        params SettingsFileLoadResult<T>[] results) where T : class
     {
         var invalidFiles = results
             .Where(result => result.Kind == SettingsFileLoadKind.Corrupted)
@@ -286,7 +270,7 @@ public sealed class SettingsStore : IDisposable
         return preserved;
     }
 
-    private static void ThrowIfUnavailable(params SettingsFileLoadResult[] results)
+    private static void ThrowIfUnavailable<T>(params SettingsFileLoadResult<T>[] results) where T : class
     {
         var unavailable = results.FirstOrDefault(result => result.Kind == SettingsFileLoadKind.Unavailable);
         if (unavailable is null)
@@ -304,24 +288,6 @@ public sealed class SettingsStore : IDisposable
         {
             throw new SettingsPersistenceException(
             LocalizedText.Format(Strings.Settings_WriteBlockedFormat, _writeBlockReason));
-        }
-    }
-
-    private async Task RestorePrimaryAsync(AppSettings settings)
-    {
-        var snapshot = SerializeSettings(settings);
-        var tempPath = _paths.SettingsFile + ".recovery.tmp";
-        try
-        {
-            await File.WriteAllBytesAsync(tempPath, snapshot);
-            File.Move(tempPath, _paths.SettingsFile, overwrite: true);
-        }
-        finally
-        {
-            if (File.Exists(tempPath))
-            {
-                File.Delete(tempPath);
-            }
         }
     }
 
@@ -347,10 +313,11 @@ public sealed class SettingsStore : IDisposable
 
     private byte[] SerializeSettings(AppSettings settings)
     {
-        if (!_paths.IsPortable) return JsonSerializer.SerializeToUtf8Bytes(settings, JsonOptions);
-        // Snapshot only: never replace the absolute paths observed by WPF with relative ones.
+        // Snapshot only: never mutate the IDs or absolute paths observed by WPF.
         var snapshot = JsonSerializer.Deserialize<AppSettings>(JsonSerializer.SerializeToUtf8Bytes(settings, JsonOptions), JsonOptions)!;
-        TransformPaths(snapshot, _paths.ToStoredPath);
+        snapshot.ProfileIds = null;
+        AppSettingsNormalizer.Normalize(snapshot);
+        if (_paths.IsPortable) TransformPaths(snapshot, _paths.ToStoredPath);
         return JsonSerializer.SerializeToUtf8Bytes(snapshot, JsonOptions);
     }
 
@@ -371,32 +338,6 @@ public sealed class SettingsStore : IDisposable
         }
     }
 
-    private async Task SaveSnapshotCoreAsync(byte[] snapshot)
-    {
-        Directory.CreateDirectory(_paths.ConfigDirectory);
-        var tempPath = _paths.SettingsFile + ".tmp";
-        try
-        {
-            await File.WriteAllBytesAsync(tempPath, snapshot);
-
-            if (File.Exists(_paths.SettingsFile))
-            {
-                File.Replace(tempPath, _paths.SettingsFile, _paths.SettingsBackupFile);
-            }
-            else
-            {
-                File.Move(tempPath, _paths.SettingsFile);
-            }
-        }
-        finally
-        {
-            if (File.Exists(tempPath))
-            {
-                File.Delete(tempPath);
-            }
-        }
-    }
-
     public void Dispose()
     {
         if (_disposed)
@@ -409,9 +350,9 @@ public sealed class SettingsStore : IDisposable
         _ioLock.Dispose();
     }
 
-    private sealed record SettingsFileLoadResult(
+    private sealed record SettingsFileLoadResult<T>(
         string Path,
-        AppSettings? Settings,
+        T? Settings,
         string? Error,
         SettingsFileLoadKind Kind = SettingsFileLoadKind.Missing);
 

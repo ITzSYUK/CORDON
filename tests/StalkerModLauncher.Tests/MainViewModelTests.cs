@@ -15,6 +15,26 @@ public sealed class MainViewModelTests
     private static readonly string[] BoundaryTestModNames = ["First", "Second", "Third", "Fourth"];
     private static readonly string[] GroupBoundaryTestModNames = [.. BoundaryTestModNames, "Fifth"];
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task LoadsSplitProfilesForEachInterface(bool pda, bool newPda)
+    {
+        var first = new ModProfile { Name = "Workspace", LaunchArguments = "-workspace", LaunchBackendKind = LaunchBackendKind.LinkedWorkspace };
+        var second = new ModProfile { Name = "USVFS", LaunchArguments = "-virtual", LaunchBackendKind = LaunchBackendKind.VirtualFileSystem };
+        await RunWithViewModelAsync((viewModel, _) =>
+        {
+            Assert.Equal(pda, viewModel.IsPdaInterfaceEnabled);
+            Assert.Equal(newPda, viewModel.UseNewPdaInterface);
+            Assert.Equal([first.Id, second.Id], viewModel.Profiles.Select(profile => profile.Id));
+            Assert.Equal(first.Id, viewModel.SelectedProfile?.Id);
+            Assert.Equal(LaunchBackendKind.VirtualFileSystem, viewModel.Profiles[1].LaunchBackendKind);
+            Assert.Equal("-virtual", viewModel.Profiles[1].LaunchArguments);
+            return Task.CompletedTask;
+        }, initialSettings: new AppSettings { Profiles = [first, second], IsPdaInterfaceEnabled = pda, UseNewPdaInterface = newPda });
+    }
+
     [Fact]
     public async Task LaunchProfileDoesNotChangeSelectedProfile()
     {

@@ -876,6 +876,10 @@ public static class Strings
     public static string LaunchPlan_ManualSourceUnavailable => Get();
     public static string LaunchPlan_SelectedManually => Get();
     public static string LaunchPlan_ManualFileMissing => Get();
+    public static string Settings_ProfileIndexInvalid => Get();
+    public static string Settings_ImportPending => Get();
+    public static string Settings_ProfileUnavailableFormat => Get();
+    public static string Settings_PendingSaveInvalid => Get();
     public static string Settings_JsonRequired => Get();
     public static string Settings_FileUnavailable => Get();
     public static string Settings_FileInvalid => Get();

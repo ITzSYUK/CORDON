@@ -368,11 +368,13 @@ In PDA UI and PDA UI 2, errors appear inside the current interface and are accom
 ```text
 %APPDATA%\StalkerModLauncher\settings.json
 %APPDATA%\StalkerModLauncher\settings.backup.json
+%APPDATA%\StalkerModLauncher\profiles\profile-<ID>.json
+%APPDATA%\StalkerModLauncher\profiles\profile-<ID>.backup.json
 ```
 
 These paths apply to `CORDON.exe`. For `CORDON-Standalone.exe`, the same settings and backup filenames are stored in `<EXE directory>\Data\StalkerModLauncher`; launcher logs, cache, and temporary files are local too. Use **Open settings folder** in launcher settings to open the active location.
 
-The files contain profile descriptions and source paths. The Standalone launcher stores paths inside its own directory relatively; external paths stay absolute. Game files are not copied into settings. Mods and profile workspaces keep their separate storage locations.
+`settings.json` contains general launcher settings and profile order. Each JSON in `profiles` contains its profile's Workspace/USVFS and standalone modes, launch arguments, paths, statistics, and mod list. Legacy settings migrate automatically, preserving the original as `settings.legacy.json`. Importing a new-format `settings.json` requires its sibling `profiles` directory. The Standalone launcher stores paths inside its own directory relatively; external paths stay absolute. Game files are not copied into settings. Mods and profile workspaces keep their separate storage locations.
 
 If a game or mod has been moved to another drive, correct the path in the profile. Do not edit the JSON while the launcher is running: the application saves all settings at once and may overwrite manual changes.
 
@@ -380,7 +382,7 @@ If a game or mod has been moved to another drive, correct the path in the profil
 
 For reliable recovery, save:
 
-1. `settings.json` and `settings.backup.json`;
+1. `settings.json`, `settings.backup.json`, and the entire `profiles` directory; include `settings.pending.json` and `settings.legacy.json` if present;
 2. the `userdata` folders of the required regular profiles;
 3. exported profile files.
 

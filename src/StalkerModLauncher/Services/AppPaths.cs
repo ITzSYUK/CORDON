@@ -40,6 +40,11 @@ public sealed class AppPaths
     public string ConfigDirectory { get; }
     public string SettingsFile { get; }
     public string SettingsBackupFile { get; }
+    public string ProfilesDirectory => Path.Combine(ConfigDirectory, "profiles");
+    internal string SettingsPendingFile => Path.Combine(ConfigDirectory, "settings.pending.json");
+    internal string GetProfileFile(string profileId) => Path.Combine(
+        ProfilesDirectory,
+        ProfileManager.CreateWorkspaceDirectoryName(new Models.ModProfile { Id = profileId }) + ".json");
     internal string RoamingSettingsFile { get; }
     public string WorkspaceRoot { get; }
     public string ExecutableDirectory { get; } = AppContext.BaseDirectory;
