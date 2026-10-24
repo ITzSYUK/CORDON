@@ -22,3 +22,13 @@ target_link_libraries(
   StalkerModLauncher.UsvfsX86Host
   PRIVATE "${USVFS_SOURCE_DIR}/lib/usvfs_x86.lib")
 
+include(CTest)
+if(BUILD_TESTING)
+  add_executable(process_list_tests process_list_tests.cpp)
+  target_include_directories(process_list_tests PRIVATE "${USVFS_SOURCE_DIR}/include/usvfs")
+  target_link_libraries(process_list_tests PRIVATE "${USVFS_SOURCE_DIR}/lib/usvfs_x86.lib")
+  add_test(NAME process_list_tests COMMAND process_list_tests)
+  set_tests_properties(process_list_tests PROPERTIES
+    ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:${USVFS_SOURCE_DIR}/lib")
+endif()
+

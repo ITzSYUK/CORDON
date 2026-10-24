@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Services;
@@ -222,6 +223,43 @@ public sealed class UsvfsRuntimeTests
     }
 
     [Fact]
+    public async Task LogCollectorBacksOffWhileIdleAndDrainsBurstAndShutdownTail()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "StalkerModLauncherUsvfsLogTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var native = new FakeUsvfsNativeApi();
+            var logPath = Path.Combine(root, "usvfs.log");
+            using var collector = new UsvfsLogCollector(native, logPath);
+            Assert.True(SpinWait.SpinUntil(() => native.LogPollCount > 0, TimeSpan.FromSeconds(5)));
+            var initialPollCount = native.LogPollCount;
+            var idleWatch = Stopwatch.StartNew();
+            await Task.Delay(750);
+            Assert.InRange(native.LogPollCount - initialPollCount, 1, 6 + (int)(idleWatch.ElapsedMilliseconds / 100));
+
+            var messages = Enumerable.Range(0, 20000).Select(index => $"message-{index}").ToArray();
+            foreach (var message in messages)
+            {
+                native.LogMessages.Enqueue(message);
+            }
+
+            Assert.True(SpinWait.SpinUntil(() => native.LogMessages.IsEmpty, TimeSpan.FromSeconds(5)));
+            await Task.Delay(300);
+            native.LogMessages.Enqueue("shutdown tail");
+            collector.Dispose();
+
+            Assert.Equal(messages.Append("shutdown tail"), await File.ReadAllLinesAsync(logPath));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void X86HostProcessListIgnoresInvalidEntries()
     {
         var path = Path.Combine(Path.GetTempPath(), $"stalker-usvfs-pids-{Guid.NewGuid():N}");
@@ -240,6 +278,7 @@ public sealed class UsvfsRuntimeTests
     private sealed class FakeUsvfsNativeApi : IUsvfsNativeApi
     {
         private static readonly IntPtr Parameters = new(42);
+        private int _logPollCount;
 
         public List<string> Calls { get; } = [];
         public List<MappingCall> Mappings { get; } = [];
@@ -250,6 +289,7 @@ public sealed class UsvfsRuntimeTests
         public bool? DebugMode { get; private set; }
         public UsvfsLogLevel? LogLevel { get; private set; }
         public ConcurrentQueue<string> LogMessages { get; } = new();
+        public int LogPollCount => Volatile.Read(ref _logPollCount);
 
         public IntPtr CreateParameters()
         {
@@ -297,7 +337,11 @@ public sealed class UsvfsRuntimeTests
         public void DisconnectVfs() => Calls.Add("disconnect");
         public void ClearVirtualMappings() => Calls.Add("clear-mappings");
         public IReadOnlyList<int> GetVfsProcessIds() => [];
-        public bool TryGetLogMessage(out string message) => LogMessages.TryDequeue(out message!);
+        public bool TryGetLogMessage(out string message)
+        {
+            Interlocked.Increment(ref _logPollCount);
+            return LogMessages.TryDequeue(out message!);
+        }
 
         public bool LinkDirectoryStatic(string sourcePath, string destinationPath, UsvfsLinkOptions flags)
         {

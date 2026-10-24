@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -44,6 +45,12 @@ struct DiagnosticLog
 {
   fs::path path;
   std::ofstream output;
+};
+
+struct ProcessList
+{
+  fs::path configurationPath;
+  std::optional<std::vector<DWORD>> published;
 };
 
 std::uint32_t readUInt32(std::ifstream& input)
@@ -207,7 +214,7 @@ fs::path processListPath(const fs::path& configurationPath)
   return result;
 }
 
-void publishProcessIds(const fs::path& configurationPath)
+void publishProcessIds(ProcessList& processList)
 {
   std::size_t count = 0;
   if (!usvfsGetVFSProcessList(&count, nullptr)) {
@@ -223,16 +230,28 @@ void publishProcessIds(const fs::path& configurationPath)
     processIds.resize((std::min)(count, capacity));
   }
 
-  std::ofstream output(processListPath(configurationPath), std::ios::binary | std::ios::trunc);
+  std::sort(processIds.begin(), processIds.end());
+  processIds.erase(std::unique(processIds.begin(), processIds.end()), processIds.end());
+  if (processList.published && *processList.published == processIds) {
+    return;
+  }
+
+  // A failed write may truncate the file, invalidating the previous snapshot.
+  processList.published.reset();
+  std::ofstream output(processListPath(processList.configurationPath), std::ios::binary | std::ios::trunc);
   for (const DWORD processId : processIds) {
     output << processId << '\n';
+  }
+  output.close();
+  if (output) {
+    processList.published = std::move(processIds);
   }
 }
 
 void waitForProcess(
     HANDLE process,
     DiagnosticLog* diagnosticLog,
-    const fs::path* configurationPath = nullptr)
+    ProcessList* processList = nullptr)
 {
   int processListPolls = 0;
   while (true) {
@@ -246,15 +265,15 @@ void waitForProcess(
     }
 
     drainLogs(diagnosticLog);
-    if (configurationPath != nullptr && ++processListPolls == 20) {
-      publishProcessIds(*configurationPath);
+    if (processList != nullptr && ++processListPolls == 20) {
+      publishProcessIds(*processList);
       processListPolls = 0;
     }
   }
   drainLogs(diagnosticLog);
 }
 
-void waitForVfsProcessTree(DiagnosticLog* diagnosticLog, const fs::path& configurationPath)
+void waitForVfsProcessTree(DiagnosticLog* diagnosticLog, ProcessList& processList)
 {
   // Launchers such as Gunslinger Play.exe exit immediately after spawning the
   // actual game. Keep the controller alive until every hooked descendant exits.
@@ -270,7 +289,7 @@ void waitForVfsProcessTree(DiagnosticLog* diagnosticLog, const fs::path& configu
 
     emptyPolls = processCount == 0 ? emptyPolls + 1 : 0;
     if (++processListPolls == 5 || processCount == 0) {
-      publishProcessIds(configurationPath);
+      publishProcessIds(processList);
       processListPolls = 0;
     }
     drainLogs(diagnosticLog);
@@ -378,19 +397,19 @@ int wmain(int argc, wchar_t* argv[])
       throw std::runtime_error("usvfsCreateProcessHooked failed: " + std::to_string(error));
     }
 
-    const fs::path configurationPath(argv[1]);
-    publishProcessIds(configurationPath);
+    ProcessList processList{fs::path(argv[1])};
+    publishProcessIds(processList);
     waitForProcess(
         process.hProcess,
         diagnosticLog.output.is_open() ? &diagnosticLog : nullptr,
-        &configurationPath);
+        &processList);
     DWORD exitCode = 1;
     GetExitCodeProcess(process.hProcess, &exitCode);
     CloseHandle(process.hThread);
     CloseHandle(process.hProcess);
     waitForVfsProcessTree(
         diagnosticLog.output.is_open() ? &diagnosticLog : nullptr,
-        configurationPath);
+        processList);
     usvfsDisconnectVFS();
     drainLogs(diagnosticLog.output.is_open() ? &diagnosticLog : nullptr);
     return static_cast<int>(exitCode);

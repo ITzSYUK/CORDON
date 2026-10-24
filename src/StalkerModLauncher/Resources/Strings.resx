@@ -223,7 +223,6 @@
   <data name="SettingsProfile_ModFolderTooltip" xml:space="preserve"><value>Archives are extracted here, separately from the workspace.</value></data>
   <data name="SettingsProfile_Mo2Apply" xml:space="preserve"><value>Apply mod order from an MO2 profile...</value></data>
   <data name="SettingsProfile_Mo2ApplyTooltip" xml:space="preserve"><value>Select modlist.txt from an MO2 profile. The launcher applies order and enabled state only to mods already added; no new mods or folders are imported.</value></data>
-  <data name="SettingsProfile_Mo2Order" xml:space="preserve"><value>MO2 mod order</value></data>
   <data name="SettingsProfile_Mo2Overwrite" xml:space="preserve"><value>Additional MO2 overwrite layer</value></data>
   <data name="SettingsProfile_SelectFile" xml:space="preserve"><value>Select file...</value></data>
   <data name="SettingsProfile_StandaloneHint" xml:space="preserve"><value> — the mod has its own engine and all game files and runs from its own folder</value></data>
@@ -1143,4 +1142,11 @@
   <data name="Settings_ProfilesUnavailableFormat" xml:space="preserve"><value>These profiles remain in the list but cannot be used. Other profiles are available. Restore the missing or damaged JSON files from a backup, then restart the launcher, or delete the unavailable entries in the launcher.{0}{0}{1}</value></data>
   <data name="Profile_DeleteUnavailableFormat" xml:space="preserve"><value>Remove unavailable profile '{0}' and its JSON files? Game files and any existing workspace will remain untouched.</value></data>
   <data name="Settings_ProfilePlaytimeInvalid" xml:space="preserve"><value>Profile playtime must be a finite, non-negative duration within the supported range.</value></data>
+  <data name="SettingsProfile_LaunchTab" xml:space="preserve"><value>Launch</value></data>
+  <data name="SettingsProfile_DataModsTab" xml:space="preserve"><value>Data and mods</value></data>
+  <data name="SettingsProfile_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="SettingsProfile_Mo2Heading" xml:space="preserve"><value>MO2 integration</value></data>
+  <data name="SettingsProfile_SaveClose" xml:space="preserve"><value>Save and close</value></data>
+  <data name="SettingsProfile_CopyImmediateHint" xml:space="preserve"><value>Copying starts after confirmation and does not wait for settings to be saved.</value></data>
+  <data name="SettingsProfile_Mo2ImmediateHint" xml:space="preserve"><value>Applying mod order changes and saves the mod list immediately. Save profile settings separately.</value></data>
 </root>

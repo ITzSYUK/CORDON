@@ -44,12 +44,14 @@ internal sealed class UsvfsLogCollector : IDisposable
         try
         {
             writer = OpenWriter();
+            var pollDelayMilliseconds = 0;
 
             do
             {
-                Drain(ref writer);
+                var messagesRead = Drain(ref writer);
+                pollDelayMilliseconds = messagesRead > 0 ? 0 : Math.Min(100, pollDelayMilliseconds + 25);
             }
-            while (!_stop.Wait(TimeSpan.FromMilliseconds(25)));
+            while (!_stop.Wait(pollDelayMilliseconds));
 
             Drain(ref writer);
         }
@@ -63,10 +65,11 @@ internal sealed class UsvfsLogCollector : IDisposable
         }
     }
 
-    private void Drain(ref StreamWriter writer)
+    private int Drain(ref StreamWriter writer)
     {
         const int maxMessagesPerPass = 4096;
-        for (var index = 0; index < maxMessagesPerPass; index++)
+        var messagesRead = 0;
+        for (; messagesRead < maxMessagesPerPass; messagesRead++)
         {
             if (!_nativeApi.TryGetLogMessage(out var message))
             {
@@ -90,6 +93,7 @@ internal sealed class UsvfsLogCollector : IDisposable
         }
 
         writer.Flush();
+        return messagesRead;
     }
 
     private StreamWriter OpenWriter()

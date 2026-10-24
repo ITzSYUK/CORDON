@@ -33,7 +33,8 @@
     <SolidColorBrush x:Key="PdaRadioBackgroundBrush" Color="#0A1018"/>
     <SolidColorBrush x:Key="PdaRadioBorderBrush" Color="#71808C"/>
     <SolidColorBrush x:Key="PdaRadioHoverBorderBrush" Color="#A6B0B8"/>
-    <SolidColorBrush x:Key="PdaCheckedBackgroundBrush" Color="#26311F"/>
+    <SolidColorBrush x:Key="PdaCheckedBackgroundBrush" Color="#202B38"/>
+    <SolidColorBrush x:Key="PdaCheckedBorderBrush" Color="#657583"/>
     <SolidColorBrush x:Key="PdaPopupBackgroundBrush" Color="#101722"/>
     <SolidColorBrush x:Key="PdaPopupBorderBrush" Color="#4D5965"/>
     <SolidColorBrush x:Key="PdaMenuHighlightBrush" Color="#263442"/>
@@ -275,7 +276,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PdaCheckedBackgroundBrush}"/>
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentGreenBrush}"/>
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PdaCheckedBorderBrush}"/>
                             <Setter TargetName="StateImage" Property="Source" Value="{StaticResource RadiationOnImage}"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource PdaControlHoverBorderBrush}"/></Trigger>
