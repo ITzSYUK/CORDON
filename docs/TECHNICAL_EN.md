@@ -565,7 +565,7 @@ After changing Visual Studio or vcpkg, use `-CleanUsvfsBuild`: it removes only `
 
 Use `.\scripts\Build-Usvfs.ps1` to publish a launcher with the validated main runtime to `publish\usvfs`; prepare its native files with `Build-UsvfsDependencies.ps1` first. The `-LegacyUsvfs` flag selects the previous runtime and a separate `publish\usvfs-legacy` directory. Publishing does not compile the native runtime itself. Both variants run x64/x86 smoke tests against the selected runtime. Without `-CleanPublishRoot`, the script recreates only the selected output directory; the switch deletes all of `publish`. Compiled third-party binaries are not stored in Git.
 
-The `.github\workflows\usvfs.yml` workflow repeats the complete build and smoke test on Windows 2022 when USVFS, the native helper, or related scripts change.
+The `.github\workflows\usvfs.yml` workflow repeats the complete build and smoke test on Windows 2022 when USVFS, the native helper, or related scripts change. Failed native suites print their stdout and stderr in the job log. Once the native test directory has been created, CI uploads its `.log` and XML files as `usvfs-native-test-diagnostics`, including on failure, and retains the artifact for 14 days.
 
 ## 17. Known limitations
 

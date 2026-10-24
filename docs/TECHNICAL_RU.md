@@ -565,7 +565,7 @@ dotnet run --project .\src\StalkerModLauncher\StalkerModLauncher.csproj
 
 Команда `.\scripts\Build-Usvfs.ps1` публикует лаунчер с проверенным основным runtime в `publish\usvfs`; предварительно подготовьте нативные файлы через `Build-UsvfsDependencies.ps1`. Флаг `-LegacyUsvfs` выбирает прежний runtime и отдельную папку `publish\usvfs-legacy`. Публикация сама не компилирует нативный runtime. Оба варианта запускают x64/x86 smoke-тесты выбранного runtime. Без `-CleanPublishRoot` скрипт пересоздаёт только выбранную выходную папку; параметр удаляет весь `publish`. Скомпилированные сторонние бинарники в Git не хранятся.
 
-Workflow `.github\workflows\usvfs.yml` повторяет полную сборку и smoke-тест на Windows 2022 при изменениях USVFS, native helper или связанных сценариев.
+Workflow `.github\workflows\usvfs.yml` повторяет полную сборку и smoke-тест на Windows 2022 при изменениях USVFS, native helper или связанных сценариев. stdout и stderr упавших нативных наборов выводятся в журнал задания. После создания каталога нативных тестов CI сохраняет его `.log` и XML-файлы в артефакт `usvfs-native-test-diagnostics`, в том числе при падении, со сроком хранения 14 дней.
 
 ## 17. Известные ограничения
 

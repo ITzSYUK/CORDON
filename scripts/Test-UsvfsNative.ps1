@@ -7,6 +7,10 @@ $sourceRoot = [IO.Path]::GetFullPath($RuntimeRoot)
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ('cordon-usvfs-native-' + [Guid]::NewGuid().ToString('N'))
 if ($testRoot -match '[^\x00-\x7f]') { throw 'Native tests require TEMP to be an ASCII path.' }
 New-Item -ItemType Directory -Path $testRoot | Out-Null
+Write-Host "Native test evidence: $testRoot"
+if ($env:GITHUB_ENV) {
+    Add-Content -LiteralPath $env:GITHUB_ENV -Value "USVFS_NATIVE_TEST_RESULTS=$testRoot" -Encoding utf8
+}
 foreach ($folder in @('lib', 'bin', 'test\bin')) {
     $destination = Join-Path $testRoot $folder
     New-Item -ItemType Directory -Path $destination -Force | Out-Null
@@ -28,7 +32,15 @@ try {
                 -WorkingDirectory $testRoot -WindowStyle Hidden -Wait -PassThru `
                 -RedirectStandardOutput (Join-Path $testRoot "$name.log") `
                 -RedirectStandardError (Join-Path $testRoot "$name.stderr.log")
-            if ($process.ExitCode -ne 0) { $failed += $name }
+            if ($process.ExitCode -ne 0) {
+                $failed += $name
+                Write-Host "::group::$name failed (exit code $($process.ExitCode))"
+                foreach ($log in @("$name.log", "$name.stderr.log")) {
+                    Write-Host "--- $log ---"
+                    Get-Content -LiteralPath (Join-Path $testRoot $log) | ForEach-Object { Write-Host $_ }
+                }
+                Write-Host '::endgroup::'
+            }
         }
     }
 }
@@ -39,5 +51,4 @@ finally {
         $testLock.Dispose()
     }
 }
-Write-Host "Native test evidence: $testRoot"
 if ($failed.Count -gt 0) { throw "Native tests failed: $($failed -join ', '). See $testRoot" }

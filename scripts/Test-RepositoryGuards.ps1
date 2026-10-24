@@ -118,6 +118,7 @@ $runtimePaths = @(
     "scripts/Prepare-UsvfsSource.ps1"
     "scripts/Test-UsvfsRuntime.ps1"
     "scripts/Test-UsvfsNative.ps1"
+    "scripts/Test-UsvfsNativeDiagnostics.ps1"
     "scripts/Build-Usvfs.ps1"
     "scripts/Build-Release.ps1"
     "scripts/Verify-Release.ps1"
@@ -149,4 +150,5 @@ foreach ($event in @("pull_request", "push")) {
 }
 Write-Host "USVFS CI guards passed: both events cover runtime sources, models, smoke tests and build dependencies."
 
+& (Join-Path $PSScriptRoot 'Test-UsvfsNativeDiagnostics.ps1')
 & (Join-Path $PSScriptRoot 'Test-UsvfsPackaging.ps1')
