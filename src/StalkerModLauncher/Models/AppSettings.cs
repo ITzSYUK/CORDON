@@ -4,7 +4,7 @@ namespace StalkerModLauncher.Models;
 
 public sealed class AppSettings
 {
-    public const int CurrentSchemaVersion = 9;
+    public const int CurrentSchemaVersion = 10;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public string LastBrowsedGamePath { get; set; } = string.Empty;
@@ -15,6 +15,9 @@ public sealed class AppSettings
     public string? LegacyGameInstallPath { get; set; }
 
     public List<ModProfile> Profiles { get; set; } = new();
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? ProfileIds { get; set; }
     public bool DontShowAboutOnStartup { get; set; }
     public bool IsLogVisible { get; set; } = true;
     public bool IsPdaInterfaceEnabled { get; set; }

@@ -32,6 +32,19 @@ public sealed class UiLanguageTests : IDisposable
     }
 
     [Fact]
+    public void ReadPreferenceDoesNotCrashOnMalformedJsonTypes()
+    {
+        var paths = CreatePaths();
+        Directory.CreateDirectory(paths.ConfigDirectory);
+        File.WriteAllText(paths.SettingsBackupFile, """{"SchemaVersion":9,"UiLanguage":"en"}""");
+        foreach (var damaged in new[] { "{}", "[]", "null", "\"text\"", "{\"SchemaVersion\":\"10\"}", "{\"SchemaVersion\":null}", "{\"SchemaVersion\":true}" })
+        {
+            File.WriteAllText(paths.SettingsFile, damaged);
+            Assert.Equal(UiLanguage.English, UiLanguage.ReadPreference(paths));
+        }
+    }
+
+    [Fact]
     public void ReadPreferenceKeepsRussianForOldSettings()
     {
         var paths = CreatePaths();

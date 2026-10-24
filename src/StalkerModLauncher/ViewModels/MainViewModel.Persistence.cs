@@ -80,13 +80,22 @@ public sealed partial class MainViewModel
                 Profiles.Add(profile);
             }
 
-            SelectedProfile = Profiles.FirstOrDefault();
+            SelectedProfile = Profiles.FirstOrDefault(profile => profile.SettingsLoadError.Length == 0) ?? Profiles.FirstOrDefault();
             RefreshValidation();
             Log(Strings.Log_SettingsLoaded);
 
             if (loadResult.Recovery is not null)
             {
                 ReportSettingsRecovery(loadResult.Recovery);
+            }
+            var unavailable = Profiles.Where(profile => profile.SettingsLoadError.Length > 0).ToArray();
+            if (unavailable.Length > 0)
+            {
+                var details = string.Join(Environment.NewLine + Environment.NewLine,
+                    unavailable.Select(profile => profile.Name + Environment.NewLine + profile.SettingsLoadError));
+                Log(details, LauncherLogLevel.ErrorsOnly);
+                _dialogService.ShowError(Strings.Settings_ProfilesUnavailable,
+                    LocalizedText.Format(Strings.Settings_ProfilesUnavailableFormat, Environment.NewLine, details));
             }
         }
         catch (SettingsPersistenceException ex)

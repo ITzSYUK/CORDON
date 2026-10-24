@@ -297,7 +297,7 @@ public sealed class SettingsStoreTests : IDisposable
         profile.Mods.Add(new ModEntry { HasOverlapsAbove = true });
 
         await _store.SaveAsync(new AppSettings { Profiles = [profile] });
-        var json = await File.ReadAllTextAsync(_paths.SettingsFile);
+        var json = await File.ReadAllTextAsync(_paths.GetProfileFile(profile.Id));
 
         Assert.DoesNotContain("\"IsRunning\"", json);
         Assert.DoesNotContain("\"HasOverlapsAbove\"", json);

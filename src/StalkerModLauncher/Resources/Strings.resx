@@ -442,9 +442,9 @@
   <data name="Settings_ImportAppDataFailed" xml:space="preserve"><value>Could not import settings from AppData</value></data>
   <data name="Settings_Unavailable" xml:space="preserve"><value>Settings unavailable</value></data>
   <data name="Settings_WriteBlocked" xml:space="preserve"><value>The file was not changed. Close the program that may be holding it, then restart the launcher.</value></data>
-  <data name="Settings_PrimaryRecoveredDamaged" xml:space="preserve"><value>The main settings file was damaged. Settings were restored from the backup.</value></data>
-  <data name="Settings_PrimaryRecoveredMissing" xml:space="preserve"><value>The main settings file was missing. Settings were restored from the backup.</value></data>
-  <data name="Settings_RecoveryFailed" xml:space="preserve"><value>Settings files are damaged and cannot be read. A new configuration was created; profiles could not be restored automatically.</value></data>
+  <data name="Settings_PrimaryRecoveredDamaged" xml:space="preserve"><value>Settings or profile files were damaged. Data was restored from backups.</value></data>
+  <data name="Settings_PrimaryRecoveredMissing" xml:space="preserve"><value>Settings or profile files were missing. Data was restored from backups.</value></data>
+  <data name="Settings_RecoveryFailed" xml:space="preserve"><value>General settings could not be restored. Launcher defaults were applied; available profiles were recovered from their files.</value></data>
   <data name="Settings_DamagedFilesFormat" xml:space="preserve"><value>{0}{0}Damaged files were saved:{0}{1}</value></data>
   <data name="Settings_RecoveryTitle" xml:space="preserve"><value>Settings recovery</value></data>
   <data name="Mo2_SelectSource" xml:space="preserve"><value>Select an MO2 folder, profile folder, or modlist.txt.</value></data>
@@ -480,7 +480,7 @@
   <data name="SettingsProfile_Invalid" xml:space="preserve"><value>Invalid profile settings</value></data>
   <data name="SettingsProfile_SaveFailed" xml:space="preserve"><value>Could not save profile settings</value></data>
   <data name="SettingsProfile_StopGame" xml:space="preserve"><value>Close the game before changing the data folder.</value></data>
-  <data name="SettingsProfile_SaveFailedDetailsFormat" xml:space="preserve"><value>Changes were not saved. The window will remain open.{0}{0}{1}</value></data>
+  <data name="SettingsProfile_SaveFailedDetailsFormat" xml:space="preserve"><value>Saving could not be completed. The window will remain open.{0}{0}{1}</value></data>
   <data name="SettingsProfile_PickFsgame" xml:space="preserve"><value>Select fsgame configuration</value></data>
   <data name="SettingsProfile_InvalidFsgame" xml:space="preserve"><value>Invalid fsgame.ltx</value></data>
   <data name="SettingsProfile_FsgameLocation" xml:space="preserve"><value>Select an .ltx file from the base-game folder or an enabled mod.</value></data>
@@ -1131,6 +1131,17 @@
   <data name="Fomod_FolderNotFoundFormat" xml:space="preserve"><value>The FOMOD source folder was not found: {0}</value></data>
   <data name="Fomod_ConfigNotFound" xml:space="preserve"><value>The selected folder does not contain a FOMOD installer.</value></data>
   <data name="Fomod_CopyingFormat" xml:space="preserve"><value>Copying selected files from {0}...</value></data>
+  <data name="Settings_ProfileIndexInvalid" xml:space="preserve"><value>The profile index or profile ID is invalid. Settings will not be overwritten.</value></data>
+  <data name="Settings_ProfileUnavailableFormat" xml:space="preserve"><value>The profile and its backup could not be loaded: {0}. {1} The profile files will not be overwritten.</value></data>
+  <data name="Settings_PendingSaveInvalid" xml:space="preserve"><value>The unfinished settings save is damaged. Settings will not be overwritten; preserve settings.pending.json for recovery.</value></data>
+  <data name="Settings_ImportPending" xml:space="preserve"><value>The source has an unfinished settings save. Start the launcher using that settings folder to complete recovery, then retry the import.</value></data>
+  <data name="Settings_SchemaUnsupportedFormat" xml:space="preserve"><value>Settings file {0} uses schema {1}; this launcher supports up to {2}. Use a newer launcher. The file will not be overwritten.</value></data>
+  <data name="Profile_UnavailableNameFormat" xml:space="preserve"><value>Unavailable profile: {0}</value></data>
+  <data name="Settings_ProfileFilesMissing" xml:space="preserve"><value>Both profile files are missing.</value></data>
+  <data name="Settings_ProfilesUnavailable" xml:space="preserve"><value>Some profiles are unavailable</value></data>
+  <data name="Settings_ProfilesUnavailableFormat" xml:space="preserve"><value>These profiles remain in the list but cannot be used. Other profiles are available. Restore the missing or damaged JSON files from a backup, then restart the launcher, or delete the unavailable entries in the launcher.{0}{0}{1}</value></data>
+  <data name="Profile_DeleteUnavailableFormat" xml:space="preserve"><value>Remove unavailable profile '{0}' and its JSON files? Game files and any existing workspace will remain untouched.</value></data>
+  <data name="Settings_ProfilePlaytimeInvalid" xml:space="preserve"><value>Profile playtime must be a finite, non-negative duration within the supported range.</value></data>
   <data name="SettingsProfile_LaunchTab" xml:space="preserve"><value>Launch</value></data>
   <data name="SettingsProfile_DataModsTab" xml:space="preserve"><value>Data and mods</value></data>
   <data name="SettingsProfile_Apply" xml:space="preserve"><value>Apply</value></data>

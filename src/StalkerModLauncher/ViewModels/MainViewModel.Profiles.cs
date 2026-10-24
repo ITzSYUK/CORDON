@@ -25,7 +25,7 @@ public sealed partial class MainViewModel
 
     private void ExportProfile(ModProfile? profile)
     {
-        if (profile is null)
+        if (profile is null || profile.SettingsLoadError.Length > 0)
         {
             return;
         }
@@ -182,7 +182,7 @@ public sealed partial class MainViewModel
 
     private void DuplicateProfile(ModProfile? sourceProfile)
     {
-        if (sourceProfile is null)
+        if (sourceProfile is null || sourceProfile.SettingsLoadError.Length > 0)
         {
             return;
         }
@@ -206,7 +206,9 @@ public sealed partial class MainViewModel
             return;
         }
 
-        var deleteMessage = profile.IsStandalone
+        var deleteMessage = profile.SettingsLoadError.Length > 0
+            ? LocalizedText.Format(Strings.Profile_DeleteUnavailableFormat, profile.Name)
+            : profile.IsStandalone
             ? LocalizedText.Format(Strings.Profile_DeleteStandaloneFormat, profile.Name)
             : LocalizedText.Format(Strings.Profile_DeleteRegularFormat, profile.Name);
         if (!DialogService.Confirm(Strings.Profile_DeleteTitle, deleteMessage))
@@ -214,13 +216,19 @@ public sealed partial class MainViewModel
             return;
         }
 
+        _ = DeleteConfirmedProfileAsync(profile);
+    }
+
+    internal async Task DeleteConfirmedProfileAsync(ModProfile profile)
+    {
+        if (!Profiles.Contains(profile)) return;
         try
         {
             SelectedProfile = _profileManager.Delete(Profiles, profile);
+            await SaveOrThrowAsync();
             Log(LocalizedText.Format(
-                profile.IsStandalone ? Strings.Log_ProfileDeletedFormat : Strings.Log_ProfileWorkspaceDeletedFormat,
+                profile.IsStandalone || profile.SettingsLoadError.Length > 0 ? Strings.Log_ProfileDeletedFormat : Strings.Log_ProfileWorkspaceDeletedFormat,
                 profile.Name));
-            _ = SaveAsync();
         }
         catch (Exception ex)
         {
@@ -231,7 +239,7 @@ public sealed partial class MainViewModel
 
     private void OpenProfileFolder()
     {
-        if (SelectedProfile is null)
+        if (SelectedProfile is null || SelectedProfile.SettingsLoadError.Length > 0)
         {
             return;
         }
@@ -265,7 +273,7 @@ public sealed partial class MainViewModel
 
     public ProfileSettingsViewModel? CreateProfileSettingsViewModel()
     {
-        if (SelectedProfile is null)
+        if (SelectedProfile is null || SelectedProfile.SettingsLoadError.Length > 0)
         {
             return null;
         }

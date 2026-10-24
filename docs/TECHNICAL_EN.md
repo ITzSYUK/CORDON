@@ -338,7 +338,7 @@ Deleting a standard profile removes only its validated managed workspace. Deleti
 
 The portable launcher's local Data, cache, temporary and workspace directories must not overlap game/mod source folders. Source folders containing these managed directories, or contained inside them, are rejected before building layers. USVFS requires an ASCII-only workspace/bootstrap path; this is separate from the launcher's installation path.
 
-Paths inside the EXE directory are stored relative to it; external game, mod, and workspace paths stay absolute. On the first launch without a local `settings.json` or backup, the primary AppData settings file is imported automatically. The standalone store is independent after that import; manual `settings.json` import is also available while the profile list is empty. Profile `userdata`, `Mods`, and `Workspaces` remain under `<game drive>\StalkerModLauncher`.
+Paths inside the EXE directory are stored relative to it; external game, mod, and workspace paths stay absolute. On the first launch without local settings, a backup, a save journal, or profile files, AppData settings are imported automatically along with their separate profile JSON files. The standalone store is independent after that import; manual `settings.json` import is also available while the profile list is empty. The new format requires the sibling `profiles` directory beside the imported file. When importing another standalone store, relative paths resolve against its EXE directory. Import never changes the source; any pending save must first be recovered by the source launcher. Profile `userdata`, `Mods`, and `Workspaces` remain under `<game drive>\StalkerModLauncher`.
 
 The paths below describe ordinary mode.
 
@@ -347,9 +347,13 @@ Settings files are stored at:
 ```text
 %APPDATA%\StalkerModLauncher\settings.json
 %APPDATA%\StalkerModLauncher\settings.backup.json
+%APPDATA%\StalkerModLauncher\profiles\profile-<ID>.json
+%APPDATA%\StalkerModLauncher\profiles\profile-<ID>.backup.json
 ```
 
-The JSON file contains a settings-structure version number. Its current value is `9`. While loading the file, the launcher:
+`settings.json` contains general launcher settings and `ProfileIds`, the profile IDs in display order. Each separate JSON stores the complete `ModProfile`: name, description, Workspace/USVFS, standalone mode, launch arguments and sources, paths, statistics, groups, and mods with priorities and exclusions. Transient UI properties are omitted. File names use a safe representation of the existing ID; renaming a profile does not rename its file. In memory, callers still use `AppSettings.Profiles`.
+
+The settings schema version is `10`. Legacy JSON with embedded `Profiles` migrates automatically on load. The original is copied to `settings.legacy.json` before writing the new format; subsequent saves never replace this copy. While loading, the launcher:
 
 - upgrades the schema version;
 - creates missing collections;
@@ -358,14 +362,25 @@ The JSON file contains a settings-structure version number. Its current value is
 - resets the temporary running-state marker;
 - migrates supported legacy fields.
 
-Saving is atomic as far as the file system permits:
+Multi-file saves use a recovery journal:
 
-1. a complete snapshot is serialized;
-2. it is written to `.tmp`;
-3. the main file is replaced;
-4. the previous version becomes the backup.
+1. a complete settings and profile snapshot, including the IDs of profiles being deleted, is written to `settings.pending.json` through a temporary file;
+2. changed profile JSON files are replaced through `.tmp`, retaining their previous versions as backups;
+3. `settings.json`, including the ordered IDs and its own backup, is updated last;
+4. when deleting profiles, the backup index is brought up to date before deleting only those profiles' JSON files and backups;
+5. the journal is removed after saving and file deletion complete.
 
-If the primary JSON is damaged, it is first copied with a timestamp to `%APPDATA%\StalkerModLauncher\recovery` and is replaced with a readable backup only after the copy succeeds. If neither file can be read, both originals are preserved in `recovery`, a new configuration is created, and the user receives an explicit notification. A temporarily locked or inaccessible file is not treated as damaged: the launcher leaves it unchanged and blocks further writes until a successful reload. The complete failure reason is written to the launcher log.
+After interruption, the launcher finishes the journaled save before loading settings. Replay skips files already written and does not rotate their backups again. A damaged journal blocks writes and remains available for recovery. This recovers interrupted processes; it is not a filesystem-wide transaction.
+
+If a primary settings or profile JSON is damaged, it is first copied with a timestamp to `%APPDATA%\StalkerModLauncher\recovery` and replaced with a readable backup only after the copy succeeds. Recovering one profile does not roll back other profiles or general settings. If both copies of a profile are missing or damaged, its ID and display position remain, and an unavailable entry shows the error. Its name is read from the migration archive when possible, without restoring outdated settings. Startup shows one message listing unavailable profiles; the About window's settings read no longer aborts startup. Healthy profiles and general preferences can still be saved. Unavailable profiles cannot be launched, edited, duplicated, or exported; saving skips their JSON files. The journal carries `UnavailableProfileIds` so replay cannot replace lost data with empty profiles. Manually restored JSON files are picked up after restarting. Importing settings with unavailable profiles fails without changing the destination.
+
+If both general settings files are lost, profiles are recovered from their own files and general preferences revert to defaults; the original display order cannot be recovered. Damaged general JSON files are preserved in `recovery` and the user is notified. A temporarily locked or unreadable file is not treated as damaged: the launcher leaves it unchanged and blocks further writes until a successful reload. The complete failure reason is written to the launcher log.
+
+Deleting a profile removes its ID from both indexes and deletes its primary JSON and `.backup.json`. Unrelated files and orphan JSON files left by the previous implementation are not deleted. If a file is locked, the operation reports an error; the journal remains and finishes deletion on the next successful load. `settings.legacy.json` remains an unchanged migration archive; only an unavailable profile's name is read automatically from it. JSON operations do not touch game or mod source directories; workspace cleanup is performed separately by the existing manager and is outside the settings transaction. When deleting an unavailable profile, its unknown workspace is preserved.
+
+A damaged ID list is treated as damaged settings, not an empty profile list. Files with a newer unsupported schema block loading and writing without falling back to an older backup. Journals are validated before application: every profile must have an explicit ID, and deleted IDs cannot overlap active IDs.
+
+An empty object `{}` is not a configuration: the backup index or recovery from individual files is used instead. Startup language detection checks the JSON root and `SchemaVersion` types before reading values, so invalid types cannot abort startup before recovery. Playtime must be finite, non-negative, and within the `TimeSpan` range. Portable paths are validated before choosing a file: an invalid profile path allows fallback to that profile's backup, while an invalid general path uses the settings backup. When both indexes are lost, an unreadable profile does not prevent healthy profiles from loading; its original remains in place and is copied to `recovery`. If its ID cannot be recovered, it is not added to the new index automatically. Resolved file-name uniqueness and snapshot data are checked before creating the journal, and journal replay validates them before any writes.
 
 Settings reads and writes are performed one at a time, so two operations cannot edit the file concurrently. A second launcher instance is also blocked.
 

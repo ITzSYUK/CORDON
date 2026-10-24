@@ -882,6 +882,17 @@ public static class Strings
     public static string LaunchPlan_ManualSourceUnavailable => Get();
     public static string LaunchPlan_SelectedManually => Get();
     public static string LaunchPlan_ManualFileMissing => Get();
+    public static string Settings_ProfileIndexInvalid => Get();
+    public static string Settings_ImportPending => Get();
+    public static string Settings_SchemaUnsupportedFormat => Get();
+    public static string Settings_ProfilePlaytimeInvalid => Get();
+    public static string Profile_UnavailableNameFormat => Get();
+    public static string Settings_ProfileFilesMissing => Get();
+    public static string Settings_ProfilesUnavailable => Get();
+    public static string Settings_ProfilesUnavailableFormat => Get();
+    public static string Profile_DeleteUnavailableFormat => Get();
+    public static string Settings_ProfileUnavailableFormat => Get();
+    public static string Settings_PendingSaveInvalid => Get();
     public static string Settings_JsonRequired => Get();
     public static string Settings_FileUnavailable => Get();
     public static string Settings_FileInvalid => Get();

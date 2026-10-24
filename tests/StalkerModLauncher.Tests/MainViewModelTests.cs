@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Globalization;
+using System.Text.Json;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
@@ -14,6 +15,138 @@ public sealed class MainViewModelTests
 {
     private static readonly string[] BoundaryTestModNames = ["First", "Second", "Third", "Fourth"];
     private static readonly string[] GroupBoundaryTestModNames = [.. BoundaryTestModNames, "Fifth"];
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(true, false, false)]
+    [InlineData(true, true, false)]
+    [InlineData(false, false, true)]
+    [InlineData(true, false, true)]
+    [InlineData(true, true, true)]
+    public async Task MissingProfileDoesNotAbortStartupOrAboutRead(bool pda, bool newPda, bool corrupt)
+    {
+        var missing = new ModProfile { Name = "ОЛР ОГСР" };
+        var healthy = new ModProfile { Name = "Working" };
+        var dialogs = new CapturingDialogService();
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            Assert.Equal(pda, viewModel.IsPdaInterfaceEnabled);
+            Assert.Equal(newPda, viewModel.UseNewPdaInterface);
+            Assert.True(viewModel.HasProfiles);
+            Assert.Equal([missing.Id, healthy.Id], viewModel.Profiles.Select(profile => profile.Id));
+            var unavailable = viewModel.Profiles[0];
+            Assert.Contains(missing.Name, unavailable.Name, StringComparison.Ordinal);
+            Assert.NotEmpty(unavailable.SettingsLoadError);
+            Assert.True(unavailable.HasLaunchError);
+            Assert.False(viewModel.CanLaunchProfile(unavailable));
+            Assert.True(viewModel.CanLaunchProfile(viewModel.Profiles[1]));
+            Assert.Equal(healthy.Id, viewModel.SelectedProfile?.Id);
+            viewModel.SelectedProfile = unavailable;
+            Assert.False(viewModel.CanEditSelectedProfile);
+            Assert.False(viewModel.DuplicateProfileCommand.CanExecute(null));
+            Assert.False(viewModel.ExportProfileCommand.CanExecute(null));
+            Assert.Null(viewModel.CreateProfileSettingsViewModel());
+            viewModel.SelectedProfile = viewModel.Profiles[1];
+            var paths = new AppPaths(Path.Combine(root, "config"), Path.Combine(root, "workspaces"), false);
+            using var store = new SettingsStore(paths);
+            var manager = new ProfileManager(paths, new FakeProfileWorkspaceManager());
+            using var catalog = new ApProCatalogService();
+            var navigation = new WindowNavigationService(dialogs, store, new ProfileHealthService(manager),
+                new WorkspaceManagementService(new WorkspaceBuilder(paths)), new ScreenshotClipboardService(),
+                catalog, new LauncherUpdateService());
+
+            await navigation.ShowAboutAsync(onlyIfNeeded: true);
+            await viewModel.SaveAboutPreferenceAsync(true);
+
+            Assert.Equal(1, dialogs.ErrorCount);
+            Assert.Contains(Strings.Settings_ProfilesUnavailable, dialogs.LastError, StringComparison.Ordinal);
+            var missingPath = paths.GetProfileFile(missing.Id);
+            if (corrupt) Assert.Equal("{ broken profile", await File.ReadAllTextAsync(missingPath));
+            else Assert.False(File.Exists(missingPath));
+            Assert.Equal([missing.Id, healthy.Id], (await store.LoadAsync()).Profiles.Select(profile => profile.Id));
+        }, dialogs, initialSettings: new AppSettings
+        {
+            Profiles = [missing, healthy],
+            IsPdaInterfaceEnabled = pda,
+            UseNewPdaInterface = newPda,
+            DontShowAboutOnStartup = true
+        }, prepareStorage: paths =>
+        {
+            healthy.GameInstallPath = CreateValidGameRoot(Path.GetDirectoryName(paths.ConfigDirectory)!);
+            File.WriteAllText(paths.GetProfileFile(healthy.Id), JsonSerializer.Serialize(healthy));
+            File.WriteAllText(Path.Combine(paths.ConfigDirectory, "settings.legacy.json"),
+                JsonSerializer.Serialize(new AppSettings { SchemaVersion = 9, Profiles = [missing, healthy] }));
+            if (corrupt) File.WriteAllText(paths.GetProfileFile(missing.Id), "{ broken profile");
+            else File.Delete(paths.GetProfileFile(missing.Id));
+        });
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task LoadsSplitProfilesForEachInterface(bool pda, bool newPda)
+    {
+        var first = new ModProfile { Name = "Workspace", LaunchArguments = "-workspace", LaunchBackendKind = LaunchBackendKind.LinkedWorkspace };
+        var second = new ModProfile { Name = "USVFS", LaunchArguments = "-virtual", LaunchBackendKind = LaunchBackendKind.VirtualFileSystem };
+        await RunWithViewModelAsync((viewModel, _) =>
+        {
+            Assert.Equal(pda, viewModel.IsPdaInterfaceEnabled);
+            Assert.Equal(newPda, viewModel.UseNewPdaInterface);
+            Assert.Equal([first.Id, second.Id], viewModel.Profiles.Select(profile => profile.Id));
+            Assert.Equal(first.Id, viewModel.SelectedProfile?.Id);
+            Assert.Equal(LaunchBackendKind.VirtualFileSystem, viewModel.Profiles[1].LaunchBackendKind);
+            Assert.Equal("-virtual", viewModel.Profiles[1].LaunchArguments);
+            return Task.CompletedTask;
+        }, initialSettings: new AppSettings { Profiles = [first, second], IsPdaInterfaceEnabled = pda, UseNewPdaInterface = newPda });
+    }
+
+    [Fact]
+    public async Task ConfirmedProfileDeletionWaitsForPersistenceAndKeepsStandaloneSource()
+    {
+        var profile = new ModProfile { Name = "Standalone", IsStandalone = true };
+        profile.Mods.Add(new ModEntry { Order = 1 });
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            var source = Path.Combine(root, "standalone-source");
+            var sourceFile = Path.Combine(source, "game.bin");
+            var loaded = Assert.Single(viewModel.Profiles);
+
+            await viewModel.DeleteConfirmedProfileAsync(loaded);
+
+            Assert.Empty(viewModel.Profiles);
+            var paths = new AppPaths(Path.Combine(root, "config"), Path.Combine(root, "workspaces"), false);
+            Assert.False(File.Exists(paths.GetProfileFile(profile.Id)));
+            Assert.Equal("keep", await File.ReadAllTextAsync(sourceFile));
+            Assert.Contains(viewModel.ActivityLog.Entries, entry => entry.Contains(
+                LocalizedText.Format(Strings.Log_ProfileDeletedFormat, loaded.Name), StringComparison.Ordinal));
+        }, initialSettings: new AppSettings { Profiles = [profile] }, prepareStorage: paths =>
+        {
+            var source = Path.Combine(Path.GetDirectoryName(paths.ConfigDirectory)!, "standalone-source");
+            Directory.CreateDirectory(source);
+            File.WriteAllText(Path.Combine(source, "game.bin"), "keep");
+            profile.Mods[0].SourcePath = source;
+            File.WriteAllText(paths.GetProfileFile(profile.Id), JsonSerializer.Serialize(profile));
+        });
+    }
+
+    [Fact]
+    public async Task ConfirmedProfileDeletionReportsPersistenceFailureWithoutSuccessLog()
+    {
+        var dialogs = new CapturingDialogService();
+        var profile = new ModProfile { Name = "Standalone", IsStandalone = true };
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            var paths = new AppPaths(Path.Combine(root, "config"), Path.Combine(root, "workspaces"), false);
+            await using var locked = new FileStream(paths.GetProfileFile(profile.Id), FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+            await viewModel.DeleteConfirmedProfileAsync(Assert.Single(viewModel.Profiles));
+
+            Assert.Contains(Strings.Profile_DeleteFailed, dialogs.LastError, StringComparison.Ordinal);
+            Assert.DoesNotContain(viewModel.ActivityLog.Entries, entry => entry.Contains(
+                LocalizedText.Format(Strings.Log_ProfileDeletedFormat, profile.Name), StringComparison.Ordinal));
+        }, dialogs, initialSettings: new AppSettings { Profiles = [profile] });
+    }
 
     [Fact]
     public async Task LaunchProfileDoesNotChangeSelectedProfile()
@@ -755,7 +888,8 @@ public sealed class MainViewModelTests
         Func<MainViewModel, string, Task> test,
         DialogService? dialogService = null,
         IStartupRegistrationService? startupRegistrationService = null,
-        AppSettings? initialSettings = null)
+        AppSettings? initialSettings = null,
+        Action<AppPaths>? prepareStorage = null)
     {
         var root = Path.Combine(Path.GetTempPath(), "StalkerModLauncherTests", Guid.NewGuid().ToString("N"));
         MainViewModel? viewModel = null;
@@ -770,6 +904,7 @@ public sealed class MainViewModelTests
                 await initialStore.SaveAsync(initialSettings);
             }
 
+            prepareStorage?.Invoke(new AppPaths(Path.Combine(root, "config"), Path.Combine(root, "workspaces"), false));
             viewModel = CreateViewModel(root, dialogService, startupRegistrationService);
             await WaitForSettingsLoadedAsync(viewModel);
             await test(viewModel, root);
@@ -925,9 +1060,11 @@ public sealed class MainViewModelTests
     private sealed class CapturingDialogService : DialogService
     {
         public string LastError { get; private set; } = string.Empty;
+        public int ErrorCount { get; private set; }
 
         public override void ShowError(string title, string message)
         {
+            ErrorCount++;
             LastError = $"{title}: {message}";
         }
     }

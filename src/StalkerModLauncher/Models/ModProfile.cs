@@ -34,6 +34,9 @@ public sealed class ModProfile : ObservableObject
     private List<string> _collapsedModGroups = [];
     private ObservableCollection<ModEntry> _mods = new();
 
+    [JsonIgnore]
+    public string SettingsLoadError { get; init; } = string.Empty;
+
     public string Id
     {
         get => _id;
