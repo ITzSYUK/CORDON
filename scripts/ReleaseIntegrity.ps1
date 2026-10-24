@@ -1,3 +1,20 @@
+function Enter-UsvfsTestLock {
+    # Upstream logging uses one shared queue even for different VFS instances.
+    $mutex = [Threading.Mutex]::new($false, 'Local\CORDON.UsvfsTests')
+    try {
+        try { $acquired = $mutex.WaitOne(0) }
+        catch [Threading.AbandonedMutexException] { $acquired = $true }
+        if (-not $acquired) {
+            throw 'Another USVFS test is running. Run native and smoke tests sequentially: upstream uses a shared log queue.'
+        }
+        return $mutex
+    }
+    catch {
+        $mutex.Dispose()
+        throw
+    }
+}
+
 function Import-UsvfsRuntimeManifest {
     param(
         [Parameter(Mandatory = $true)]

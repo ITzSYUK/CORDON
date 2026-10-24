@@ -76,6 +76,34 @@ try {
     Remove-Item -LiteralPath $resolvedFixture -Recurse -Force
 }
 
+$testLock = Enter-UsvfsTestLock
+$lockJob = $null
+try {
+    $lockJob = Start-Job -ArgumentList (Join-Path $PSScriptRoot 'ReleaseIntegrity.ps1') -ScriptBlock {
+        param($integrityPath)
+        . $integrityPath
+        try { $otherLock = Enter-UsvfsTestLock }
+        catch {
+            if ($_.Exception.Message -like 'Another USVFS test is running.*') { return 'blocked' }
+            throw
+        }
+        $otherLock.ReleaseMutex()
+        $otherLock.Dispose()
+        throw 'Concurrent USVFS test was accepted.'
+    }
+    if (-not ($lockJob | Wait-Job -Timeout 30)) { throw 'USVFS test lock check timed out.' }
+    if (($lockJob | Receive-Job -ErrorAction Stop) -cne 'blocked') { throw 'USVFS test lock check failed.' }
+}
+finally {
+    if ($lockJob) { $lockJob | Stop-Job; $lockJob | Remove-Job }
+    $testLock.ReleaseMutex()
+    $testLock.Dispose()
+}
+$testLock = Enter-UsvfsTestLock
+$testLock.ReleaseMutex()
+$testLock.Dispose()
+Write-Host 'USVFS test isolation passed: concurrent process rejected, lock released.'
+
 $workflow = [IO.File]::ReadAllText((Join-Path $repositoryRoot ".github\workflows\usvfs.yml"))
 $runtimePaths = @(
     ".gitattributes"
