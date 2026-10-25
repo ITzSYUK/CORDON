@@ -17,33 +17,118 @@ index c87a961..c5ae3a6 100644
 +    return()
 +endif()
 diff --git a/test/tvfs_test/directory_enumeration.cpp b/test/tvfs_test/directory_enumeration.cpp
-index 7290b52..889db2f 100644
+index 0697f41..3658852 100644
 --- a/test/tvfs_test/directory_enumeration.cpp
 +++ b/test/tvfs_test/directory_enumeration.cpp
-@@ -1213 +1213,2 @@ ListedQuery queryOnce(NtQueryDirectoryFile_type query, HANDLE directory,
+@@ -11,0 +12 @@
++#include <iostream>
+@@ -573,0 +575,38 @@ const FILE_INFORMATION_CLASS DIRECTORY_INFORMATION_CLASSES[] = {
++const std::vector<FILE_INFORMATION_CLASS>& supportedDirectoryInformationClasses()
++{
++  static const auto supported = [] {
++    std::vector<FILE_INFORMATION_CLASS> classes;
++    const auto path = test::path_of_test_temp(L"directory_class_support");
++    std::filesystem::create_directories(path);
++    std::ofstream(path / L"probe.txt");
++    const HANDLE directory = ::CreateFileW(
++        path.c_str(), FILE_LIST_DIRECTORY, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
++        OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
++    if (directory == INVALID_HANDLE_VALUE) {
++      ADD_FAILURE() << "cannot open the native directory-class probe";
++      return classes;
++    }
++    alignas(8) std::array<std::byte, 0x1000> buffer;
++    for (const auto informationClass : DIRECTORY_INFORMATION_CLASSES) {
++      IO_STATUS_BLOCK status;
++      const NTSTATUS result = nativeQueryDirectoryFile()(
++          directory, nullptr, nullptr, nullptr, &status, buffer.data(),
++          static_cast<ULONG>(buffer.size()), informationClass, FALSE, nullptr, TRUE);
++      if (result == STATUS_INVALID_INFO_CLASS || result == STATUS_NOT_IMPLEMENTED) {
++        std::cout << "Native directory class " << static_cast<int>(informationClass)
++                  << " is unavailable on this system\n";
++        continue;
++      }
++      EXPECT_EQ(STATUS_SUCCESS, result)
++          << "class " << static_cast<int>(informationClass);
++      if (result == STATUS_SUCCESS) {
++        classes.push_back(informationClass);
++      }
++    }
++    ::CloseHandle(directory);
++    EXPECT_GE(classes.size(), 6u) << "basic native directory classes are unavailable";
++    return classes;
++  }();
++  return supported;
++}
++
+@@ -862,0 +902,4 @@ TYPED_TEST(DirectoryRecordTest, ReadsTheNamesNtdllWrites)
++  const auto& supported = supportedDirectoryInformationClasses();
++  if (std::ranges::find(supported, TypeParam::informationClass) == supported.end()) {
++    GTEST_SKIP() << "the kernel does not support this native directory record class";
++  }
+@@ -925,0 +969,4 @@ TYPED_TEST(DirectoryRecordTest, LaysOutRecordsLikeNtdll)
++  const auto& supported = supportedDirectoryInformationClasses();
++  if (std::ranges::find(supported, TypeParam::informationClass) == supported.end()) {
++    GTEST_SKIP() << "the kernel does not support this native directory record class";
++  }
+@@ -1111 +1158,2 @@ ListedQuery queryOnce(NtQueryDirectoryFile_type query, HANDLE directory,
 -  std::vector<std::byte> buffer(listing.length);
 +  constexpr std::byte CANARY{0x5a};
 +  std::vector<std::byte> buffer(listing.length + 32, CANARY);
-@@ -1220,0 +1222,2 @@ ListedQuery queryOnce(NtQueryDirectoryFile_type query, HANDLE directory,
+@@ -1118,0 +1167,2 @@ ListedQuery queryOnce(NtQueryDirectoryFile_type query, HANDLE directory,
 +  EXPECT_TRUE(std::ranges::all_of(std::span(buffer).subspan(listing.length),
 +                                [](std::byte value) { return value == CANARY; }));
-@@ -1222,0 +1226,4 @@ ListedQuery queryOnce(NtQueryDirectoryFile_type query, HANDLE directory,
+@@ -1120,0 +1171,4 @@ ListedQuery queryOnce(NtQueryDirectoryFile_type query, HANDLE directory,
 +    EXPECT_LE(listed.outcome.statusBlock.Information, listing.length);
 +    if (listed.outcome.statusBlock.Information > listing.length) {
 +      return listed;
 +    }
-@@ -1923,0 +1931,62 @@ std::vector<std::wstring> recordNames(const DirectoryRecordLayout& layout,
+@@ -1269,0 +1324,4 @@ TYPED_TEST(DirectoryRecordTest, CutsARecordThatDoesNotFitLikeNtdll)
++  const auto& supported = supportedDirectoryInformationClasses();
++  if (std::ranges::find(supported, TypeParam::informationClass) == supported.end()) {
++    GTEST_SKIP() << "the kernel does not support this native directory record class";
++  }
+@@ -1355 +1413 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsRegularEntriesLikeNtdll)
+-         DIRECTORY_INFORMATION_CLASSES) {
++         supportedDirectoryInformationClasses()) {
+@@ -1411 +1469 @@ TEST_F(USVFSTest, NtQueryDirectoryFileEndsWithTheLastRegularEntryLikeNtdll)
+-         DIRECTORY_INFORMATION_CLASSES) {
++         supportedDirectoryInformationClasses()) {
+@@ -1483 +1541,2 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsAVirtualEntryLikeNtdllListsItsFile)
+-  for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
++  for (const FILE_INFORMATION_CLASS informationClass :
++       supportedDirectoryInformationClasses()) {
+@@ -1535 +1594,2 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsVirtualEntriesWithoutShortNames)
+-  for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
++  for (const FILE_INFORMATION_CLASS informationClass :
++       supportedDirectoryInformationClasses()) {
+@@ -1591 +1651,2 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsAVirtualEntryThatFitsWhereItsFileWoul
+-  for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
++  for (const FILE_INFORMATION_CLASS informationClass :
++       supportedDirectoryInformationClasses()) {
+@@ -1635 +1696 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsPastAPartialRecordLikeNtdll)
+-         DIRECTORY_INFORMATION_CLASSES) {
++         supportedDirectoryInformationClasses()) {
+@@ -1698 +1759,2 @@ TEST_F(USVFSTest, NtQueryDirectoryFileCutsAVirtualEntryThatDoesNotFitLikeNtdll)
+-  for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
++  for (const FILE_INFORMATION_CLASS informationClass :
++       supportedDirectoryInformationClasses()) {
+@@ -1761 +1823,2 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsPastAVirtualPartialRecordLikeNtdll)
+-  for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
++  for (const FILE_INFORMATION_CLASS informationClass :
++       supportedDirectoryInformationClasses()) {
+@@ -1821,0 +1885,62 @@ std::vector<std::wstring> recordNames(const DirectoryRecordLayout& layout,
 +// Compare the complete stream; NTFS may split the same names into different batches.
 +void listCheckedNames(NtQueryDirectoryFile_type query, HANDLE directory,
 +                      ListingQuery listing, size_t entryCount,
 +                      std::vector<std::wstring>& names, bool changeClass = false)
 +{
++  const auto& classes = supportedDirectoryInformationClasses();
 +  size_t classIndex =
-+      std::ranges::find(DIRECTORY_INFORMATION_CLASSES, listing.informationClass) -
-+      std::begin(DIRECTORY_INFORMATION_CLASSES);
++      std::ranges::find(classes, listing.informationClass) - classes.begin();
 +  for (size_t call = 0; call <= entryCount; ++call) {
 +    SCOPED_TRACE(call);
-+    listing.informationClass = DIRECTORY_INFORMATION_CLASSES[classIndex];
++    listing.informationClass = classes[classIndex];
 +    ListingQuery current = listing;
 +    const DirectoryRecordLayout layout =
 +        findDirectoryRecordLayout(current.informationClass).value();
@@ -89,40 +174,17 @@ index 7290b52..889db2f 100644
 +      ASSERT_EQ(1u, count);
 +    }
 +    if (changeClass) {
-+      classIndex = (classIndex + 1) % std::size(DIRECTORY_INFORMATION_CLASSES);
++      classIndex = (classIndex + 1) % classes.size();
 +    }
 +  }
 +  FAIL() << "listing did not terminate";
 +}
 +
-@@ -1926,4 +1995 @@ std::vector<std::wstring> recordNames(const DirectoryRecordLayout& layout,
--// ntdll is the reference for how many virtual entries a query returns, as it lists
--// files of the virtual names: as many as the buffer holds, the first that does not fit
--// starting the next query. The pattern leaves out "." and "..", so the regular entries
--// end before the first query writes any.
-+// The full ordered listing must match ntdll, with valid records in every batch.
-@@ -1974,14 +2040,6 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsSeveralVirtualEntriesPerQueryLikeNtdl
--        const std::vector<ListedQuery> expected =
--            listQueries(nativeQueryDirectoryFile(), namesakeHandle, listing);
--        const std::vector<ListedQuery> actual =
--            listQueries(&usvfs::hook_NtQueryDirectoryFile, hookedHandle, listing);
--
--        ASSERT_EQ(expected.size(), actual.size());
--        for (size_t query = 0; query < expected.size(); ++query) {
--          SCOPED_TRACE(query);
--          expectSameOutcome(expected[query].outcome, actual[query].outcome);
--          EXPECT_EQ(recordOffsets(layout, expected[query].data),
--                    recordOffsets(layout, actual[query].data));
--          EXPECT_EQ(recordNames(layout, expected[query].data),
--                    recordNames(layout, actual[query].data));
--        }
-+        std::vector<std::wstring> expected, actual;
-+        listCheckedNames(nativeQueryDirectoryFile(), namesakeHandle, listing,
-+                         ENTRY_COUNT, expected);
-+        listCheckedNames(&usvfs::hook_NtQueryDirectoryFile, hookedHandle, listing,
-+                         ENTRY_COUNT, actual);
-+        EXPECT_EQ(expected, actual);
-@@ -2081,27 +2139,7 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
+@@ -1887 +2012,2 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
+-  for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
++  for (const FILE_INFORMATION_CLASS informationClass :
++       supportedDirectoryInformationClasses()) {
+@@ -1921,27 +2047,7 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
 -      size_t classIndex =
 -          std::ranges::find(DIRECTORY_INFORMATION_CLASSES, informationClass) -
 -          std::begin(DIRECTORY_INFORMATION_CLASSES);
@@ -130,7 +192,7 @@ index 7290b52..889db2f 100644
 -        SCOPED_TRACE(query);
 -        const FILE_INFORMATION_CLASS queryClass =
 -            DIRECTORY_INFORMATION_CLASSES[classIndex];
--        const ListingQuery listing{queryClass, length, false, PATTERN};
+-        const ListingQuery listing{queryClass, length, isSingleEntry, PATTERN};
 -        const ListedQuery expected =
 -            queryOnce(nativeQueryDirectoryFile(), namesakeHandle, listing);
 -        const ListedQuery actual =
@@ -150,14 +212,14 @@ index 7290b52..889db2f 100644
 -          classIndex = (classIndex + 1) % std::size(DIRECTORY_INFORMATION_CLASSES);
 -        }
 -      }
-+      const ListingQuery listing{informationClass, length, false, PATTERN};
++      const ListingQuery listing{informationClass, length, isSingleEntry, PATTERN};
 +      std::vector<std::wstring> expected, actual;
 +      listCheckedNames(nativeQueryDirectoryFile(), namesakeHandle, listing,
 +                       LISTED_COUNT, expected, isClassChanging);
 +      listCheckedNames(&usvfs::hook_NtQueryDirectoryFile, hookedHandle, listing,
 +                       LISTED_COUNT, actual, isClassChanging);
 +      EXPECT_EQ(expected, actual);
-@@ -2114,0 +2153,48 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
+@@ -1954,0 +2061,49 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
 +TEST_F(USVFSTest, NtQueryDirectoryFileKeepsAllMappedRecordsWhenSourceScanStopsEarly)
 +{
 +  const std::filesystem::path root = test::path_of_test_temp(L"source_scan_early_stop");
@@ -189,7 +251,8 @@ index 7290b52..889db2f 100644
 +          (target / name).c_str(),
 +          usvfs::RedirectionDataLocal((source / sourceName).string()));
 +    }
-+    for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
++    for (const FILE_INFORMATION_CLASS informationClass :
++         supportedDirectoryInformationClasses()) {
 +      for (const bool singleEntry : {false, true}) {
 +        SCOPED_TRACE(std::format("class {}, single {}",
 +                                 static_cast<int>(informationClass), singleEntry));
@@ -206,7 +269,68 @@ index 7290b52..889db2f 100644
 +  }
 +}
 +
-@@ -2162,0 +2249,15 @@ TEST_F(USVFSTest, NtQueryDirectoryFileMatchesVirtualEntriesLikeNtdll)
+@@ -1975,0 +2131,60 @@ std::vector<std::wstring> sortedNames(const std::vector<ListedQuery>& queries)
++TEST_F(USVFSTest, NtQueryDirectoryFilePreservesUnavailableClassesAndScanState)
++{
++  auto params = defaultUsvfsParams();
++  std::unique_ptr<usvfs::HookContext> ctx(
++      usvfsCreateHookContext(*params, ::GetModuleHandle(nullptr)));
++  addVirtualEntries(ctx->redirectionTable());
++  std::vector<FILE_INFORMATION_CLASS> unavailable{FileStandardInformation};
++  const auto& supported = supportedDirectoryInformationClasses();
++  for (const auto informationClass : DIRECTORY_INFORMATION_CLASSES) {
++    if (std::ranges::find(supported, informationClass) == supported.end()) {
++      unavailable.push_back(informationClass);
++    }
++  }
++  usvfs::UnicodeString rejectedPattern(L"usvfs_must_not_latch_*");
++  for (const auto informationClass : unavailable) {
++    for (const bool isEx : {false, true}) {
++      SCOPED_TRACE(
++          std::format("class {}, Ex {}", static_cast<int>(informationClass), isEx));
++      HANDLE native  = openRootDirectory(true);
++      HANDLE hooked  = openRootDirectory(true);
++      HANDLE control = openRootDirectory(true);
++      ASSERT_NE(INVALID_HANDLE_VALUE, native);
++      ASSERT_NE(INVALID_HANDLE_VALUE, hooked);
++      ASSERT_NE(INVALID_HANDLE_VALUE, control);
++      const BufferQuery rejected{informationClass, isEx, 0, 0x1000};
++      const QueryOutcome expected = queryBuffer(
++          true, native, rejected, static_cast<PUNICODE_STRING>(rejectedPattern));
++      ASSERT_LT(expected.result, 0);
++      expectSameOutcome(expected,
++                        queryBuffer(false, hooked, rejected,
++                                    static_cast<PUNICODE_STRING>(rejectedPattern)));
++
++      const ListingQuery first{FileDirectoryInformation, 0x1000, true,
++                               L"usvfs_notified_*"};
++      const ListedQuery actualFirst =
++          queryOnce(&usvfs::hook_NtQueryDirectoryFile, hooked, first);
++      const ListedQuery controlFirst =
++          queryOnce(&usvfs::hook_NtQueryDirectoryFile, control, first);
++      ASSERT_EQ(STATUS_SUCCESS, actualFirst.outcome.result);
++      expectSameOutcome(controlFirst.outcome, actualFirst.outcome);
++      EXPECT_EQ(sortedNames({controlFirst}), sortedNames({actualFirst}));
++
++      // A rejected restart must not rewind the virtual cursor or replace its pattern.
++      expectSameOutcome(expected,
++                        queryBuffer(false, hooked, rejected,
++                                    static_cast<PUNICODE_STRING>(rejectedPattern)));
++      const ListingQuery rest{FileDirectoryInformation, 0x1000, false, std::nullopt};
++      const auto actualRest =
++          listQueries(&usvfs::hook_NtQueryDirectoryFile, hooked, rest);
++      const auto controlRest =
++          listQueries(&usvfs::hook_NtQueryDirectoryFile, control, rest);
++      EXPECT_EQ(sortedNames(controlRest), sortedNames(actualRest));
++      EXPECT_EQ(STATUS_NO_MORE_FILES, actualRest.back().outcome.result);
++      usvfs::hook_NtClose(native);
++      usvfs::hook_NtClose(hooked);
++      usvfs::hook_NtClose(control);
++    }
++  }
++}
++
+@@ -2002,0 +2218,15 @@ TEST_F(USVFSTest, NtQueryDirectoryFileMatchesVirtualEntriesLikeNtdll)
 +    // Virtual names have no source 8.3 aliases; give the reference the same namespace.
 +    WIN32_FIND_DATAW found{};
 +    HANDLE search = ::FindFirstFileW((namesakeDirectory / names[index]).c_str(), &found);
@@ -222,3 +346,7 @@ index 7290b52..889db2f 100644
 +      ::CloseHandle(file);
 +      ASSERT_TRUE(removed) << "SetFileShortNameW: " << error;
 +    }
+@@ -2637 +2867,2 @@ void expectListedLikeNamesake(const std::filesystem::path& directory,
+-  for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
++  for (const FILE_INFORMATION_CLASS informationClass :
++       supportedDirectoryInformationClasses()) {

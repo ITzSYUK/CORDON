@@ -42,13 +42,13 @@ The compact version requires .NET 8 Desktop Runtime x64. The Standalone version 
 
 The Standalone launcher package and the Standalone build profile type are different: both launcher packages support both profile types.
 
-### Stable and experimental USVFS
+### Main and legacy USVFS
 
-For regular use, choose an archive without `-usvfs-experimental` in its name. If a release includes experimental archives, they are intended for testing optimized USVFS with different game builds. Compact and standalone variants have the same .NET requirements and settings locations as their stable counterparts.
+For regular use, choose a standard archive: it includes the validated optimized USVFS. Optional `-usvfs-legacy` archives contain the previous runtime for manual rollback if compatibility problems arise. They are not included in every release; .NET requirements and settings locations match the compact and standalone variants.
 
-The experimental runtime includes batched directory enumeration from PR #99, early source-directory scan completion adapted from dlunch, and our TLS fix for the observed OGSR CoP crash. Gains depend on the build; faster file enumeration does not imply an equivalent increase in FPS or game loading speed.
+The main runtime includes batched directory enumeration from PR #99, early source-directory scan completion adapted from dlunch, and our TLS fix for the observed OGSR CoP crash. Gains depend on the build; faster file enumeration does not imply an equivalent increase in FPS or game loading speed. Known limitation: asynchronous directory enumeration sees only physical entries.
 
-The downloaded archive selects the USVFS version; the profile settings still use **USVFS** mode. There is no separate optimization switch. Extract the complete package and do not mix USVFS DLLs and EXEs from stable and experimental sets. See [Discord and update checks](#discord-and-update-checks) for update behavior.
+The downloaded archive selects the USVFS version; the profile settings still use **USVFS** mode. There is no separate optimization switch. Extract the complete package and do not mix USVFS DLLs and EXEs from main and legacy sets. See [Discord and update checks](#discord-and-update-checks) for update behavior.
 
 ## What a profile is
 
@@ -259,7 +259,7 @@ In USVFS mode, the profile folder and `userdata` remain, but `current` is not us
 
 `current` is the rebuildable final game structure used in stable Workspace mode. It contains links to base-game and mod files, plus a small number of local service files.
 
-You can clear or rebuild `current`. Saves and settings must not be stored there, so it is not considered valuable user data.
+Clear or rebuild `current` with **Status → Clear cache** or **Rebuild**. Before deleting files, the launcher collects known writable configs, such as `gamedata\configs\axr_options.ltx` and `localization.ltx`, into `userdata\writable-game-files`. Until then, the latest changes may exist only in `current`. Deleting the directory manually bypasses that collection and can lose settings.
 
 ### userdata
 
@@ -391,9 +391,13 @@ These paths apply to `CORDON.exe`. For `CORDON-Standalone.exe`, the same setting
 
 `settings.json` contains general launcher settings and profile order. Each JSON in `profiles` contains its profile's Workspace/USVFS and standalone modes, launch arguments, paths, statistics, and mod list. Legacy settings migrate automatically, preserving the original as `settings.legacy.json`. Importing a new-format `settings.json` requires its sibling `profiles` directory. The Standalone launcher stores paths inside its own directory relatively; external paths stay absolute. Game files are not copied into settings. Mods and profile workspaces keep their separate storage locations.
 
+Current schema `10` example: [settings.json](example-settings/settings.json) and [the profile file in profiles](example-settings/profiles/profile-f2c6e8a0b7d149a38fc511bc2d8607e4.json). Replace the example game and mod paths with your own; when importing, keep the profile file in the `profiles` directory beside `settings.json`.
+
 If a game or mod has been moved to another drive, correct the path in the profile. Do not edit the JSON while the launcher is running: the application saves all settings at once and may overwrite manual changes.
 
 ## What to back up
+
+Close the game before backing up. For a Workspace profile, use **Status → Clear cache** so the latest known game-config changes are collected from `current` into `userdata`. If cleanup has not completed successfully, also back up the changed configs from `current`. Back up any custom files and configs unknown to the launcher separately as well.
 
 For reliable recovery, save:
 
@@ -403,7 +407,7 @@ For reliable recovery, save:
 
 For profiles using shared game data and for standalone builds, also back up the actual data directory shown in profile settings or Status. Keep game/mod source folders and original archives separately: profile exports contain no game or mod files. In the Standalone launcher, include `Data\StalkerModLauncher` in the backup.
 
-You do not need to back up `current`: the launcher can rebuild it from the base game and mod folders.
+Once changed configs have been collected successfully, you do not need to back up `current`: the launcher can rebuild it from the base game, mod folders, and profile writable-file store.
 
 ## Screenshots
 
@@ -435,7 +439,7 @@ The launcher compares the installed version with the latest GitHub release. Auto
 
 When an update is available, settings offer the release page and package download. Choose the compact or Standalone package and confirm installation. The archive is saved beside the launcher, its checksum and contents are verified, and the launcher closes, replaces its application files, and starts again. Existing `Data`, game/mod sources, workspaces, and saves are preserved. Updates cannot be installed while a game or profile preparation/mod installation is active. Choosing a different package type shows a warning because it changes the .NET requirement and launcher-settings location.
 
-The built-in update installer always downloads the stable package. If you use experimental USVFS, it replaces that runtime with the stable one. To retain the experimental variant, download the matching `-usvfs-experimental.zip` archive from the release page and update the application manually, preserving `Data` and user data. If the new version has no such archive, its experimental variant has not been published.
+The built-in update installer downloads the main package with optimized USVFS. Updating a legacy package also replaces its previous runtime with the main one. To retain legacy, download the matching `-usvfs-legacy.zip` archive from the release page and update manually, preserving `Data` and user data. If the new version has no such archive, its legacy variant has not been published.
 
 ## Usage examples
 

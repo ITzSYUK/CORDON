@@ -1,5 +1,12 @@
+diff --git a/src/shared/ntdll_declarations.h b/src/shared/ntdll_declarations.h
+index c60feb2..25299d7 100644
+--- a/src/shared/ntdll_declarations.h
++++ b/src/shared/ntdll_declarations.h
+@@ -358,0 +359,2 @@ typedef struct _FILE_REPARSE_POINT_INFORMATION
++#define STATUS_NOT_IMPLEMENTED ((NTSTATUS)0xC0000002L)
++#define STATUS_INVALID_INFO_CLASS ((NTSTATUS)0xC0000003L)
 diff --git a/src/usvfs_dll/hooks/directory_scan.cpp b/src/usvfs_dll/hooks/directory_scan.cpp
-index ca5f107..5e8a556 100644
+index 7728125..e7b917c 100644
 --- a/src/usvfs_dll/hooks/directory_scan.cpp
 +++ b/src/usvfs_dll/hooks/directory_scan.cpp
 @@ -31,0 +32 @@
@@ -27,24 +34,93 @@ index ca5f107..5e8a556 100644
 -
 -thread_local int InternalIoScope::s_depth = 0;
 -
-@@ -557,0 +537,4 @@ void SourceDirectory::read(const DirectoryRecordLayout& layout,
+@@ -463,0 +443,37 @@ std::optional<DirectoryRecord> NativeDirectoryReader::next()
++std::once_flag directoryClassProbeOnce;
++std::array<bool, 4> unavailableDirectoryClasses{};
++
++bool isDirectoryClassUnavailable(FILE_INFORMATION_CLASS informationClass)
++{
++  if (informationClass < FileId64ExtdDirectoryInformation ||
++      informationClass > FileIdAllExtdBothDirectoryInformation) {
++    return false;
++  }
++  // Probe only the newer kernel classes, once, using handles independent of callers.
++  std::call_once(directoryClassProbeOnce, [] {
++    WCHAR systemDirectory[MAX_PATH];
++    const UINT length = ::GetSystemDirectoryW(systemDirectory, MAX_PATH);
++    if (length == 0 || length >= MAX_PATH) {
++      return;
++    }
++    std::vector<std::byte> buffer;
++    for (size_t index = 0; index < unavailableDirectoryClasses.size(); ++index) {
++      OpenedDirectory directory = openScanDirectory(systemDirectory);
++      if (!directory.handle.isValid()) {
++        break;
++      }
++      const auto probeClass =
++          static_cast<FILE_INFORMATION_CLASS>(FileId64ExtdDirectoryInformation + index);
++      NativeDirectoryReader reader(std::move(directory.handle),
++                                   *findDirectoryRecordLayout(probeClass), std::nullopt,
++                                   buffer);
++      reader.next();
++      unavailableDirectoryClasses[index] =
++          reader.endStatus() == STATUS_INVALID_INFO_CLASS ||
++          reader.endStatus() == STATUS_NOT_IMPLEMENTED;
++    }
++  });
++  return unavailableDirectoryClasses[informationClass -
++                                     FileId64ExtdDirectoryInformation];
++}
++
+@@ -557,0 +574,4 @@ void SourceDirectory::read(const DirectoryRecordLayout& layout,
 +      // All requested records are cached; skip the irrelevant tail of the directory.
 +      if (m_recordPlaces.size() == m_fileNames.size()) {
 +        return;
 +      }
+@@ -1179,0 +1200,3 @@ std::optional<std::string_view> findForwardingReason(const DirectoryQuery& query
++  if (isDirectoryClassUnavailable(query.informationClass)) {
++    return "the kernel does not support the information class";
++  }
+@@ -1194,23 +1216,0 @@ std::optional<std::string_view> findForwardingReason(const DirectoryQuery& query
+-// Logs a query on a directory of the redirection tree that goes straight to ntdll, as
+-// the caller then lists none of its virtual entries. Logged as debug, once per query,
+-// since FindNextFile repeats the query flags of FindFirstFileEx on every query; only
+-// looks the directory up when that level is logged, as the lookup takes the hook
+-// context.
+-void logForwardedQuery(const DirectoryQuery& query, std::string_view reason)
+-{
+-  if (!spdlog::get("hooks")->should_log(spdlog::level::debug)) {
+-    return;
+-  }
+-  const UnicodeString virtualPath = ntdllHandleTracker.lookup(query.handle);
+-  if (!isInRedirectionTree(virtualPath)) {
+-    return;
+-  }
+-  ulog::CallLogger(hookNameOf(query))
+-      .addParam("path", virtualPath)
+-      .addParam("handle", query.handle)
+-      .addParam("informationClass", query.informationClass)
+-      .addParam("flags", query.flags, static_cast<uint8_t>(ulog::DisplayStyle::Hex))
+-      .addParam("length", query.length)
+-      .addParam("forwarded", reason);
+-}
+-
+@@ -1260 +1260 @@ NTSTATUS queryDirectory(const DirectoryQuery& query)
+-    logForwardedQuery(query, *reason);
++    // Logging uses compiler TLS; forwarded queries must also work without it.
 diff --git a/src/usvfs_dll/hooks/internal_io.h b/src/usvfs_dll/hooks/internal_io.h
 new file mode 100644
-index 0000000..3dece5c
+index 0000000..08772cd
 --- /dev/null
 +++ b/src/usvfs_dll/hooks/internal_io.h
 @@ -0,0 +1,69 @@
 +#pragma once
 +
++#include "../hookcontext.h"
++#include <Windows.h>
 +#include <exception>
 +#include <new>
 +#include <utility>
-+#include <Windows.h>
-+#include "../hookcontext.h"
 +
 +// Suppress rerouting of the directory scanner's own opens and closes, per thread.
 +class InternalIoScope
@@ -116,18 +192,18 @@ index 8aac638..2b9de11 100644
 +add_executable(tvfs_test main.cpp directory_enumeration.cpp internal_io_test.cpp)
 diff --git a/test/tvfs_test/internal_io_test.cpp b/test/tvfs_test/internal_io_test.cpp
 new file mode 100644
-index 0000000..3fe611b
+index 0000000..4c5a3ac
 --- /dev/null
 +++ b/test/tvfs_test/internal_io_test.cpp
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,173 @@
 +#include "pch.h"
 +
-+#include <thread>
-+#include <memory>
-+#include <gtest/gtest.h>
-+#include <hooks/internal_io.h>
-+#include <hookcontext.h>
 +#include "tvfs_test.h"
++#include <gtest/gtest.h>
++#include <hookcontext.h>
++#include <hooks/internal_io.h>
++#include <memory>
++#include <thread>
 +
 +namespace
 +{
@@ -160,8 +236,8 @@ index 0000000..3fe611b
 +DWORD exerciseWithoutStaticTls(bool (*probe)(void*), void* context, bool* matched)
 +{
 +  PVOID volatile* storage = reinterpret_cast<PVOID volatile*>(NtCurrentTeb()) + 11;
-+  PVOID saved = *storage;
-+  DWORD exception = 0;
++  PVOID saved             = *storage;
++  DWORD exception         = 0;
 +  __try {
 +    *storage = nullptr;
 +    *matched = probe(context);
@@ -181,13 +257,38 @@ index 0000000..3fe611b
 +  return result == STATUS_SUCCESS && lastError == SENTINEL;
 +}
 +
++struct DirectoryProbe
++{
++  HANDLE handle;
++  NTSTATUS expected;
++  FILE_INFORMATION_CLASS informationClass;
++  bool isEx;
++};
++
++bool queryNewDirectoryClass(void* context)
++{
++  const auto& probe = *static_cast<DirectoryProbe*>(context);
++  alignas(8) std::byte buffer[0x1000];
++  IO_STATUS_BLOCK status;
++  constexpr DWORD SENTINEL = 0x12345678;
++  ::SetLastError(SENTINEL);
++  const NTSTATUS result =
++      probe.isEx ? usvfs::hook_NtQueryDirectoryFileEx(
++                       probe.handle, nullptr, nullptr, nullptr, &status, buffer,
++                       sizeof(buffer), probe.informationClass, SL_RESTART_SCAN, nullptr)
++                 : usvfs::hook_NtQueryDirectoryFile(
++                       probe.handle, nullptr, nullptr, nullptr, &status, buffer,
++                       sizeof(buffer), probe.informationClass, FALSE, nullptr, TRUE);
++  return result == probe.expected && ::GetLastError() == SENTINEL;
++}
++
 +}  // namespace
 +
 +TEST(InternalIoScopeTest, PreservesNestingAndLastError)
 +{
 +  constexpr DWORD SENTINEL = 0x12345678;
 +  ::SetLastError(SENTINEL);
-+  const bool matched = exerciseScope(nullptr);
++  const bool matched    = exerciseScope(nullptr);
 +  const DWORD lastError = ::GetLastError();
 +  EXPECT_TRUE(matched);
 +  EXPECT_EQ(SENTINEL, lastError);
@@ -197,7 +298,9 @@ index 0000000..3fe611b
 +{
 +  const InternalIoScope outer;
 +  bool matched = false;
-+  std::thread worker([&] { matched = exerciseScope(nullptr); });
++  std::thread worker([&] {
++    matched = exerciseScope(nullptr);
++  });
 +  worker.join();
 +  EXPECT_TRUE(matched);
 +  EXPECT_TRUE(InternalIoScope::isActive());
@@ -224,11 +327,45 @@ index 0000000..3fe611b
 +      usvfsCreateHookContext(*params, ::GetModuleHandle(nullptr)));
 +  HANDLE event = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
 +  ASSERT_NE(nullptr, event);
-+  bool matched = false;
++  bool matched          = false;
 +  const DWORD exception = exerciseWithoutStaticTls(closeHookedEvent, event, &matched);
 +  if (exception != 0) {
 +    ::CloseHandle(event);
 +  }
 +  EXPECT_EQ(0u, exception);
 +  EXPECT_TRUE(matched);
++}
++
++TEST_F(USVFSTest, NewDirectoryClassProbeWorksWithoutStaticTlsVector)
++{
++  auto params = defaultUsvfsParams();
++  std::unique_ptr<usvfs::HookContext> ctx(
++      usvfsCreateHookContext(*params, ::GetModuleHandle(nullptr)));
++  HANDLE directory = ::CreateFileW(L"C:\\Windows", FILE_LIST_DIRECTORY,
++                                   FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
++                                   OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
++  ASSERT_NE(INVALID_HANDLE_VALUE, directory);
++  alignas(8) std::byte buffer[0x1000];
++  IO_STATUS_BLOCK status;
++  for (const auto informationClass :
++       {FileId64ExtdDirectoryInformation, FileStandardInformation}) {
++    for (const bool isEx : {false, true}) {
++      SCOPED_TRACE(testing::Message() << "class " << static_cast<int>(informationClass)
++                                      << ", Ex " << isEx);
++      const NTSTATUS expected =
++          isEx ? ::NtQueryDirectoryFileEx(directory, nullptr, nullptr, nullptr, &status,
++                                          buffer, sizeof(buffer), informationClass,
++                                          SL_RESTART_SCAN, nullptr)
++               : ::NtQueryDirectoryFile(directory, nullptr, nullptr, nullptr, &status,
++                                        buffer, sizeof(buffer), informationClass, FALSE,
++                                        nullptr, TRUE);
++      DirectoryProbe probe{directory, expected, informationClass, isEx};
++      bool matched = false;
++      const DWORD exception =
++          exerciseWithoutStaticTls(queryNewDirectoryClass, &probe, &matched);
++      EXPECT_EQ(0u, exception);
++      EXPECT_TRUE(matched);
++    }
++  }
++  ::CloseHandle(directory);
 +}

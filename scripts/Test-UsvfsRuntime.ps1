@@ -7,8 +7,10 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'ReleaseIntegrity.ps1')
 if ([string]::IsNullOrWhiteSpace($RuntimeRoot)) {
-    $RuntimeRoot = Join-Path $repositoryRoot ".external\usvfs"
+    $manifest = Import-UsvfsRuntimeManifest -Path (Join-Path $PSScriptRoot 'UsvfsRuntimeManifest.psd1')
+    $RuntimeRoot = Join-Path $repositoryRoot $manifest.SourceDirectory
 }
 
 $RuntimeRoot = [System.IO.Path]::GetFullPath($RuntimeRoot)
@@ -46,8 +48,10 @@ function Invoke-DotNet {
     }
 }
 
+$testLock = $null
 Push-Location $repositoryRoot
 try {
+    $testLock = Enter-UsvfsTestLock
     Write-Host "Building managed USVFS smoke test..."
     Invoke-DotNet `
         -Arguments @("build", $managedPoc, "-c", "Release") `
@@ -75,6 +79,10 @@ try {
 }
 finally {
     Pop-Location
+    if ($testLock) {
+        $testLock.ReleaseMutex()
+        $testLock.Dispose()
+    }
 }
 
 Write-Host "USVFS native smoke tests passed ($Iterations iteration(s) per architecture)."

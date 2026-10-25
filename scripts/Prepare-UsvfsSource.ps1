@@ -1,20 +1,28 @@
 param(
-    [string]$SourceRoot
+    [string]$SourceRoot,
+    [switch]$LegacyUsvfs
 )
 
 $ErrorActionPreference = "Stop"
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
+$manifestName = if ($LegacyUsvfs) { 'UsvfsLegacyManifest.psd1' } else { 'UsvfsRuntimeManifest.psd1' }
+. (Join-Path $PSScriptRoot 'ReleaseIntegrity.ps1')
+$manifest = Import-UsvfsRuntimeManifest -Path (Join-Path $PSScriptRoot $manifestName)
 if ([string]::IsNullOrWhiteSpace($SourceRoot)) {
-    $SourceRoot = Join-Path $repositoryRoot ".external\usvfs"
+    $SourceRoot = Join-Path $repositoryRoot $manifest.SourceDirectory
 }
-
-$manifestPath = Join-Path $PSScriptRoot "UsvfsRuntimeManifest.psd1"
-$integrityScript = Join-Path $PSScriptRoot "ReleaseIntegrity.ps1"
-$patchPath = Join-Path $repositoryRoot "scripts\patches\usvfs-msvc-pch.patch"
-
-. $integrityScript
-$manifest = Import-UsvfsRuntimeManifest -Path $manifestPath
+if (-not $LegacyUsvfs) {
+    $pending = @(Get-UsvfsPendingPatches -SourceRoot $SourceRoot -Manifest $manifest)
+    foreach ($patch in $pending) {
+        $result = Invoke-RepositoryGit -SourceRoot $SourceRoot -CommandArguments @('apply', '--unidiff-zero', '--index', $patch)
+        if ($result.ExitCode -ne 0) { throw "Failed to apply tracked USVFS patch: $patch" }
+    }
+    Test-UsvfsSourceProvenance -SourceRoot $SourceRoot -Manifest $manifest
+    Write-Host 'USVFS source is prepared reproducibly.'
+    return
+}
+$patchPath = Join-Path $repositoryRoot $manifest.SourcePatch
 
 $resolvedSourceRoot = [System.IO.Path]::GetFullPath($SourceRoot)
 $revisionResult = Invoke-RepositoryGit -SourceRoot $resolvedSourceRoot -CommandArguments @("rev-parse", "HEAD")

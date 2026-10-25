@@ -9,10 +9,12 @@ CORDON includes or uses the following third-party components. Their original lic
 - License: GNU General Public License v3.0 or later
 - Use: stable virtual filesystem backend for x64 and x86 game processes
 - Runtime version: 0.5.7.2
-- Source revision: `57f1ea5e6ad13f7435a7af184748e6c1312c5637`
-- Build compatibility patch: `scripts/patches/usvfs-msvc-pch.patch`
+- Main source revision: `93fcf7af42523d8da8d1436e88920f900e766596` ([PR #99](https://github.com/ModOrganizer2/usvfs/pull/99), batched directory enumeration)
+- Main patches: `scripts/patches/usvfs-pr99-tests.patch`, `scripts/patches/usvfs-pr99-runtime.patch` (test compatibility, Win32 TLS fix, native directory-class compatibility and early source-scan completion)
+- Early source-scan completion adapted from [dlunch/usvfs](https://github.com/dlunch/usvfs)
+- Optional legacy revision: `57f1ea5e6ad13f7435a7af184748e6c1312c5637`, with `scripts/patches/usvfs-msvc-pch.patch`
 
-The release package contains runtime binaries built from the pinned upstream revision with the tracked MSVC build compatibility patch. The corresponding upstream source is available from the linked repository; the patch and build manifest are included in this launcher's source repository. The launcher itself is distributed under GNU GPLv3.
+Standard release packages contain the main optimized runtime. Optional packages with the `-usvfs-legacy` suffix contain the previous runtime. The corresponding upstream sources are available from the linked repositories; tracked patches and build manifests (`scripts/UsvfsRuntimeManifest.psd1` and `scripts/UsvfsLegacyManifest.psd1`) are included in this launcher's source repository. The launcher itself is distributed under GNU GPLv3.
 
 ## Managed libraries
 
