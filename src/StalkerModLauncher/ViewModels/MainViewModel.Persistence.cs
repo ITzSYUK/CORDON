@@ -17,7 +17,7 @@ public sealed partial class MainViewModel
             {
                 if (await _settingsStore.TryImportRoamingSettingsAsync())
                 {
-                    Log(LocalizedText.Format(Strings.Log_SettingsImportedAutomaticallyFormat, _paths.RoamingSettingsFile));
+                    Log(LocalizedText.Format(Strings.Log_SettingsImportedAutomaticallyFormat, _paths.SettingsImportFile));
                 }
             }
             catch (Exception ex)

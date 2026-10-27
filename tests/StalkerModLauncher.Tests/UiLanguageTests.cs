@@ -76,6 +76,61 @@ public sealed class UiLanguageTests : IDisposable
         Assert.Equal(UiLanguage.Russian, UiLanguage.ReadPreference(paths));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ReadPreferenceUsesValidatedPendingLanguageWithoutWriting(bool portable)
+    {
+        var paths = portable ? new AppPaths(_root, useLocalSettings: true) : CreatePaths();
+        Directory.CreateDirectory(paths.ConfigDirectory);
+        const string index = """{"SchemaVersion":10,"UiLanguage":"en","ProfileIds":[]}""";
+        const string journal = """{"SchemaVersion":10,"UiLanguage":"ru","Profiles":[]}""";
+        File.WriteAllText(paths.SettingsFile, index);
+        File.WriteAllText(paths.SettingsPendingFile, journal);
+
+        Assert.Equal(UiLanguage.Russian, UiLanguage.ReadPreference(paths));
+        Assert.Equal(index, File.ReadAllText(paths.SettingsFile));
+        Assert.Equal(journal, File.ReadAllText(paths.SettingsPendingFile));
+        Assert.False(Directory.Exists(paths.ProfilesDirectory));
+        using var store = new SettingsStore(paths);
+        Assert.Equal(UiLanguage.Russian, (await store.LoadAsync()).UiLanguage);
+    }
+
+    [Theory]
+    [InlineData("{broken")]
+    [InlineData("[]")]
+    [InlineData("""{"SchemaVersion":11,"UiLanguage":"ru","Profiles":[]}""")]
+    [InlineData("""{"SchemaVersion":10,"UiLanguage":"ru","Profiles":[{}]}""")]
+    [InlineData("""{"SchemaVersion":10,"UiLanguage":"ru","Profiles":[{"Id":"same"},{"Id":"same"}]}""")]
+    [InlineData("""{"SchemaVersion":10,"UiLanguage":"ru","Profiles":[{"Id":"same"}],"DeletedProfileIds":["same"]}""")]
+    [InlineData("""{"SchemaVersion":10,"UiLanguage":"ru","Profiles":[],"UnavailableProfileIds":["unknown"]}""")]
+    [InlineData("""{"SchemaVersion":10,"UiLanguage":"ru","Profiles":[{"Id":"test","TotalPlaytimeSeconds":-1}]}""")]
+    public void ReadPreferenceIgnoresInvalidJournalWithoutChangingIt(string journal)
+    {
+        var paths = CreatePaths();
+        Directory.CreateDirectory(paths.ConfigDirectory);
+        File.WriteAllText(paths.SettingsFile, """{"SchemaVersion":10,"UiLanguage":"en","ProfileIds":[]}""");
+        File.WriteAllText(paths.SettingsPendingFile, journal);
+
+        Assert.Equal(UiLanguage.English, UiLanguage.ReadPreference(paths));
+        Assert.Equal(journal, File.ReadAllText(paths.SettingsPendingFile));
+        Assert.False(Directory.Exists(paths.ProfilesDirectory));
+    }
+
+    [Fact]
+    public void ReadPreferenceIgnoresJournalWithEscapingPortablePath()
+    {
+        var paths = new AppPaths(_root, useLocalSettings: true);
+        Directory.CreateDirectory(paths.ConfigDirectory);
+        File.WriteAllText(paths.SettingsFile, """{"SchemaVersion":10,"UiLanguage":"en","ProfileIds":[]}""");
+        const string journal = """{"SchemaVersion":10,"UiLanguage":"ru","Profiles":[{"Id":"test","GameInstallPath":"../outside"}]}""";
+        File.WriteAllText(paths.SettingsPendingFile, journal);
+
+        Assert.Equal(UiLanguage.English, UiLanguage.ReadPreference(paths));
+        Assert.Equal(journal, File.ReadAllText(paths.SettingsPendingFile));
+        Assert.False(Directory.Exists(paths.ProfilesDirectory));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))

@@ -69,7 +69,7 @@ internal static class ProfileWritableGameFileStore
         }
     }
 
-    public static void PrepareForVirtualFileSystem(
+    public static void Prepare(
         FileLayerPlan layerPlan,
         string profileWorkspace,
         IProgress<string>? progress = null)
@@ -85,7 +85,8 @@ internal static class ProfileWritableGameFileStore
                 rule.RelativePath);
             if (File.Exists(overwriteFile))
             {
-                CopyThroughTemporaryFile(overwriteFile, storedFile);
+                if (!File.Exists(storedFile) || File.GetLastWriteTimeUtc(overwriteFile) >= File.GetLastWriteTimeUtc(storedFile))
+                    CopyThroughTemporaryFile(overwriteFile, storedFile);
                 File.Delete(overwriteFile);
                 migrated++;
                 continue;
@@ -116,6 +117,10 @@ internal static class ProfileWritableGameFileStore
         {
             progress?.Report(LocalizedText.Format(Strings.Writable_UsvfsMigratedFormat, migrated));
         }
+
+        CaptureFromWorkspace(Path.Combine(profileWorkspace, "current"), profileWorkspace, progress);
+        // The bootstrap is recreated on launch; collect files replaced there before discarding it.
+        CaptureFromWorkspace(Path.Combine(profileWorkspace, ".usvfs-bootstrap"), profileWorkspace, progress);
     }
 
     public static void RestoreToCachedWorkspace(
@@ -180,7 +185,7 @@ internal static class ProfileWritableGameFileStore
         }
     }
 
-    private static string GetStoredFilePath(string profileWorkspace, string relativePath)
+    internal static string GetStoredFilePath(string profileWorkspace, string relativePath)
     {
         FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_ProfileWritableFile);
         return Path.Combine(profileWorkspace, "userdata", StoreDirectoryName, relativePath);

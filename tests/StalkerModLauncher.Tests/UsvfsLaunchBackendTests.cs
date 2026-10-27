@@ -410,7 +410,9 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
 
         var bootstrapConfiguration = Path.Combine(bootstrapRoot, "AnomalyLauncher.cfg");
         File.WriteAllText(bootstrapConfiguration, "DX9\nNOAVX\n1");
+        File.WriteAllText(Path.Combine(bootstrapRoot, "commandline.txt"), "-smap4096");
         Assert.Equal(["DX11", "AVX", "1"], File.ReadAllLines(Path.Combine(game, "AnomalyLauncher.cfg")));
+        Assert.Equal("-smap2048", File.ReadAllText(Path.Combine(game, "commandline.txt")));
 
         profile.UsvfsExecutableOverrideRelativePath = @"bin\AnomalyDX9AVX.exe";
         var overridePlan = await backend.PrepareAsync(
@@ -424,7 +426,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         Assert.False(File.Exists(Path.Combine(Path.GetDirectoryName(overridePlan.ExecutablePath)!, "AnomalyDX11AVX.exe")));
         Assert.Equal(
             "DX9\nNOAVX\n1",
-            File.ReadAllText(Path.Combine(workspace, "userdata", "overwrite", "AnomalyLauncher.cfg")));
+            File.ReadAllText(Path.Combine(workspace, "userdata", "writable-game-files", "AnomalyLauncher.cfg")));
+        Assert.Equal("-smap4096 -dbg", overridePlan.Arguments);
         Assert.DoesNotContain(runtime.MappingPlan!.Operations, operation => operation.SourceName == "shared game data");
     }
 

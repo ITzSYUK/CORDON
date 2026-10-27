@@ -359,7 +359,7 @@ userdata\overwrite
 
 | Пакет | Путь |
 | --- | --- |
-| `CORDON.exe` | `%APPDATA%\StalkerModLauncher\launcher.log` |
+| `CORDON.exe` | `%APPDATA%\CordonModLauncher\launcher.log` |
 | `CORDON-Standalone.exe` | `<папка EXE>\Data\StalkerModLauncher\launcher.log` |
 
 Когда файл достигает примерно 1 МБ, он переносится в `launcher.old.log`, а запись продолжается в новом файле. Журнал не растёт бесконечно.
@@ -380,11 +380,13 @@ userdata\overwrite
 
 ## Где хранятся настройки лаунчера
 
+При первом запуске обычный лаунчер автоматически копирует существующие настройки и профили из `%APPDATA%\StalkerModLauncher` в `%APPDATA%\CordonModLauncher`. Старая папка сохраняется. Старые лаунчеры продолжают использовать её и не могут перезаписать новую конфигурацию. Изменения между версиями не синхронизируются; игры, моды и workspace профилей сохраняют прежние пути.
+
 ```text
-%APPDATA%\StalkerModLauncher\settings.json
-%APPDATA%\StalkerModLauncher\settings.backup.json
-%APPDATA%\StalkerModLauncher\profiles\profile-<ID>.json
-%APPDATA%\StalkerModLauncher\profiles\profile-<ID>.backup.json
+%APPDATA%\CordonModLauncher\settings.json
+%APPDATA%\CordonModLauncher\settings.backup.json
+%APPDATA%\CordonModLauncher\profiles\profile-<ID>.json
+%APPDATA%\CordonModLauncher\profiles\profile-<ID>.backup.json
 ```
 
 Эти пути относятся к `CORDON.exe`. У `CORDON-Standalone.exe` файлы настроек и резервной копии находятся в `<папка EXE>\Data\StalkerModLauncher`; журналы лаунчера, кэш и временные файлы тоже локальные. Кнопка **Открыть папку настроек** в настройках лаунчера открывает действующее расположение.

@@ -140,7 +140,6 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                     layerPlan,
                     launchTarget,
                     bootstrapRoot,
-                    manifest.WriteOverlayRoot,
                     progress,
                     cancellationToken)
                 : UsvfsExecutableBootstrapper.Prepare(
