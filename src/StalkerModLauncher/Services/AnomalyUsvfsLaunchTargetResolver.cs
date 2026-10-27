@@ -74,10 +74,14 @@ internal static class AnomalyUsvfsLaunchTargetResolver
         FileLayerFile engine,
         bool BypassedLauncher)
     {
-        var commandLine = layerPlan.FindFinalFile("commandline.txt");
+        var storedCommandLine = ProfileWritableGameFileStore.GetStoredFilePath(
+            Path.GetDirectoryName(layerPlan.UserData.RootPath)!, "commandline.txt");
+        var commandLine = File.Exists(storedCommandLine)
+            ? storedCommandLine
+            : layerPlan.FindFinalFile("commandline.txt")?.FullPath;
         var launcherArguments = commandLine is null
             ? string.Empty
-            : File.ReadAllText(commandLine.FullPath).Trim();
+            : File.ReadAllText(commandLine).Trim();
 
         return new UsvfsLaunchTarget(
             engine.FullPath,

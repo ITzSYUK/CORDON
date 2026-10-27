@@ -359,7 +359,7 @@ The full log location depends on the launcher package:
 
 | Package | Path |
 | --- | --- |
-| `CORDON.exe` | `%APPDATA%\StalkerModLauncher\launcher.log` |
+| `CORDON.exe` | `%APPDATA%\CordonModLauncher\launcher.log` |
 | `CORDON-Standalone.exe` | `<EXE directory>\Data\StalkerModLauncher\launcher.log` |
 
 When the file reaches approximately 1 MB, it is moved to `launcher.old.log` and logging continues in a new file. The log does not grow indefinitely.
@@ -380,11 +380,13 @@ In PDA UI and PDA UI 2, errors appear inside the current interface and are accom
 
 ## Where launcher settings are stored
 
+On the first launch, the regular launcher automatically copies existing settings and profiles from `%APPDATA%\StalkerModLauncher` into `%APPDATA%\CordonModLauncher`. The old folder is preserved. Older launchers continue using it and cannot overwrite the new configuration. Changes are not synchronized between versions; games, mods, and profile workspaces retain their existing paths.
+
 ```text
-%APPDATA%\StalkerModLauncher\settings.json
-%APPDATA%\StalkerModLauncher\settings.backup.json
-%APPDATA%\StalkerModLauncher\profiles\profile-<ID>.json
-%APPDATA%\StalkerModLauncher\profiles\profile-<ID>.backup.json
+%APPDATA%\CordonModLauncher\settings.json
+%APPDATA%\CordonModLauncher\settings.backup.json
+%APPDATA%\CordonModLauncher\profiles\profile-<ID>.json
+%APPDATA%\CordonModLauncher\profiles\profile-<ID>.backup.json
 ```
 
 These paths apply to `CORDON.exe`. For `CORDON-Standalone.exe`, the same settings and backup filenames are stored in `<EXE directory>\Data\StalkerModLauncher`; launcher logs, cache, and temporary files are local too. Use **Open settings folder** in launcher settings to open the active location.

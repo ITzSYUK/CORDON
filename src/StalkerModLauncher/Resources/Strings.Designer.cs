@@ -1106,6 +1106,7 @@ public static class Strings
     public static string Health_StatusError => Get();
     public static string Writable_LocalizationReason => Get();
     public static string Writable_OptionsReason => Get();
+    public static string Writable_LauncherSettingsReason => Get();
     public static string Error_AppDataAliasFormat => Get();
     public static string Error_AnomalyFsgameInAppData => Get();
     public static string Log_TrayPanelFailedFormat => Get();
@@ -1130,7 +1131,6 @@ public static class Strings
     public static string Safety_ProfileWritableFile => Get();
     public static string Safety_UsvfsExecutable => Get();
     public static string Safety_UsvfsAnomalyLauncher => Get();
-    public static string Safety_AnomalyLauncherProfileFile => Get();
     public static string Safety_BootstrapFsgame => Get();
     public static string Safety_UsvfsWorkingDirectory => Get();
     public static string Safety_UsvfsWritableFile => Get();

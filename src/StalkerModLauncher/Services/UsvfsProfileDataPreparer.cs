@@ -24,14 +24,7 @@ internal static class UsvfsProfileDataPreparer
             source.RelativePath,
             Strings.Safety_ProfileFsgame);
         ProfileDataConfigurator.MigrateLegacyManualData(layerPlan, manifest.WriteOverlayRoot, progress);
-        ProfileWritableGameFileStore.CaptureFromWorkspace(
-            Path.Combine(profileWorkspace, "current"),
-            profileWorkspace,
-            progress);
-        ProfileWritableGameFileStore.PrepareForVirtualFileSystem(
-            layerPlan,
-            profileWorkspace,
-            progress);
+        ProfileWritableGameFileStore.Prepare(layerPlan, profileWorkspace, progress);
         ProfileDataConfigurator.WriteProfileFsgame(source.FullPath, destination, profileDataPath);
         var launchDestination = layerPlan.UsesFsgameLaunchArgument
             ? FileSystemSafety.ResolvePathInside(

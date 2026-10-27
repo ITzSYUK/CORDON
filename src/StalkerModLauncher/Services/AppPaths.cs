@@ -12,12 +12,15 @@ public sealed class AppPaths
     {
     }
 
-    internal AppPaths(string? executableDirectory, bool useLocalSettings, string? roamingConfigDirectory = null)
+    internal AppPaths(string? executableDirectory, bool useLocalSettings, string? roamingConfigDirectory = null,
+        string? legacyConfigDirectory = null)
         : this(
-            roamingConfigDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StalkerModLauncher"),
+            roamingConfigDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CordonModLauncher"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StalkerModLauncher", "Workspaces"))
     {
         ExecutableDirectory = Path.GetFullPath(executableDirectory ?? AppContext.BaseDirectory);
+        LegacyConfigDirectory = legacyConfigDirectory ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StalkerModLauncher");
         IsPortable = useLocalSettings;
         if (IsPortable)
         {
@@ -46,6 +49,15 @@ public sealed class AppPaths
         ProfilesDirectory,
         ProfileManager.CreateWorkspaceDirectoryName(new Models.ModProfile { Id = profileId }) + ".json");
     internal string RoamingSettingsFile { get; }
+    internal string? LegacyConfigDirectory { get; }
+    internal string? SettingsImportFile => IsPortable && HasSettingsFiles(Path.GetDirectoryName(RoamingSettingsFile)!)
+        ? RoamingSettingsFile
+        : LegacyConfigDirectory is { } legacy ? Path.Combine(legacy, "settings.json") : null;
+    internal static bool HasSettingsFiles(string directory) =>
+        File.Exists(Path.Combine(directory, "settings.json")) || File.Exists(Path.Combine(directory, "settings.backup.json")) ||
+        File.Exists(Path.Combine(directory, "settings.pending.json")) ||
+        Directory.Exists(Path.Combine(directory, "profiles")) &&
+        Directory.EnumerateFiles(Path.Combine(directory, "profiles"), "profile-*.json").Any();
     public string WorkspaceRoot { get; }
     public string ExecutableDirectory { get; } = AppContext.BaseDirectory;
     public bool IsPortable { get; }

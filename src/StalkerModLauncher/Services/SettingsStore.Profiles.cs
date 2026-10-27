@@ -228,26 +228,38 @@ public sealed partial class SettingsStore
         var pending = await TryLoadFileAsync<JsonObject>(_paths.SettingsPendingFile);
         if (pending.Kind == SettingsFileLoadKind.Missing) return;
         ThrowIfUnavailable(pending);
+        ValidatePendingSave(pending.Settings);
+
+        await ApplySnapshotCoreAsync(Encoding.UTF8.GetBytes(pending.Settings!.ToJsonString(JsonOptions)), replay: true);
+        File.Delete(_paths.SettingsPendingFile);
+    }
+
+    internal string? ReadPendingUiLanguage()
+    {
+        if (!File.Exists(_paths.SettingsPendingFile)) return null;
+        var pending = JsonNode.Parse(File.ReadAllBytes(_paths.SettingsPendingFile)) as JsonObject;
+        return UiLanguage.Normalize(ValidatePendingSave(pending).UiLanguage);
+    }
+
+    private AppSettings ValidatePendingSave(JsonObject? pending)
+    {
         try
         {
-            if (pending.Settings is null || pending.Settings[nameof(AppSettings.Profiles)] is not JsonArray profiles ||
+            if (pending is null || pending[nameof(AppSettings.Profiles)] is not JsonArray profiles ||
                 profiles.Any(profile => profile is not JsonObject item || item[nameof(ModProfile.Id)] is not JsonValue id ||
                     !id.TryGetValue<string>(out var text) || string.IsNullOrWhiteSpace(text)) ||
-                pending.Settings[nameof(AppSettings.SchemaVersion)] is not JsonValue version ||
+                pending[nameof(AppSettings.SchemaVersion)] is not JsonValue version ||
                 !version.TryGetValue<int>(out var schemaVersion) || schemaVersion != AppSettings.CurrentSchemaVersion)
                 throw new SettingsPersistenceException(Strings.Settings_PendingSaveInvalid);
-            var settings = pending.Settings.Deserialize<AppSettings>(JsonOptions)!;
+            var settings = pending.Deserialize<AppSettings>(JsonOptions)!;
             if (settings.ProfileIds is not null) throw new SettingsPersistenceException(Strings.Settings_PendingSaveInvalid);
-            ReadProfileIds(pending.Settings, DeletedProfileIdsKey);
-            ReadProfileIds(pending.Settings, UnavailableProfileIdsKey);
+            ValidateSnapshot(settings, pending);
+            return settings;
         }
         catch (Exception ex) when (ex is JsonException or ArgumentException or InvalidOperationException)
         {
             throw new SettingsPersistenceException(Strings.Settings_PendingSaveInvalid, ex);
         }
-
-        await ApplySnapshotCoreAsync(Encoding.UTF8.GetBytes(pending.Settings!.ToJsonString(JsonOptions)), replay: true);
-        File.Delete(_paths.SettingsPendingFile);
     }
 
     private async Task ApplySnapshotCoreAsync(byte[] snapshot, bool preserveSettingsBackup = false, bool replay = false)

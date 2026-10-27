@@ -845,7 +845,7 @@
   <data name="Launch_BackendUnavailableFormat" xml:space="preserve"><value>Profile launch backend is unavailable: {0}.</value></data>
   <data name="Writable_CapturedFormat" xml:space="preserve"><value>Profile game settings captured from workspace: {0:N0}.</value></data>
   <data name="Writable_StaleSkippedFormat" xml:space="preserve"><value>A newer profile version was kept; stale current files skipped: {0:N0}.</value></data>
-  <data name="Writable_UsvfsPreparedFormat" xml:space="preserve"><value>Profile writable files prepared for USVFS: {0:N0}.</value></data>
+  <data name="Writable_UsvfsPreparedFormat" xml:space="preserve"><value>Profile writable files prepared: {0:N0}.</value></data>
   <data name="Writable_UsvfsMigratedFormat" xml:space="preserve"><value>Writable files moved from USVFS overwrite to profile storage: {0:N0}.</value></data>
   <data name="Writable_LaunchPreparedFormat" xml:space="preserve"><value>Profile game settings prepared for launch: {0:N0}.</value></data>
   <data name="Writable_WorkspaceRestoredFormat" xml:space="preserve"><value>Profile game settings restored to workspace: {0:N0}.</value></data>
@@ -1077,6 +1077,7 @@
   <data name="Health_StatusError" xml:space="preserve"><value>Error</value></data>
   <data name="Writable_LocalizationReason" xml:space="preserve"><value>Anomaly and some X-Ray builds write language selection into gamedata.</value></data>
   <data name="Writable_OptionsReason" xml:space="preserve"><value>Anomaly writes launcher and runtime option state into axr_options.ltx.</value></data>
+  <data name="Writable_LauncherSettingsReason" xml:space="preserve"><value>AnomalyLauncher saves its settings and launch arguments in these files.</value></data>
   <data name="Error_AppDataAliasFormat" xml:space="preserve"><value>Could not redirect AnomalyLauncher appdata to the selected game-data directory: {0}. Clear the profile workspace cache and try again.</value></data>
   <data name="Error_AnomalyFsgameInAppData" xml:space="preserve"><value>AnomalyLauncher data redirection requires a file-system configuration outside appdata. Select a configuration outside that directory.</value></data>
   <data name="Log_TrayPanelFailedFormat" xml:space="preserve"><value>Tray panel failed: {0}</value></data>
@@ -1101,7 +1102,6 @@
   <data name="Safety_ProfileWritableFile" xml:space="preserve"><value>Profile writable game file</value></data>
   <data name="Safety_UsvfsExecutable" xml:space="preserve"><value>USVFS executable</value></data>
   <data name="Safety_UsvfsAnomalyLauncher" xml:space="preserve"><value>USVFS Anomaly launcher</value></data>
-  <data name="Safety_AnomalyLauncherProfileFile" xml:space="preserve"><value>Anomaly launcher profile file</value></data>
   <data name="Safety_BootstrapFsgame" xml:space="preserve"><value>Bootstrap fsgame.ltx</value></data>
   <data name="Safety_UsvfsWorkingDirectory" xml:space="preserve"><value>USVFS working directory</value></data>
   <data name="Safety_UsvfsWritableFile" xml:space="preserve"><value>USVFS writable file</value></data>

@@ -232,7 +232,7 @@ The directory is created only for launch layouts where Windows and the engine mu
 - profile `fsgame.ltx`;
 - the smallest required set of neighboring files.
 
-For Anomaly automatic mode, the bootstrap also contains the final top-level `bin` files from the active layers. That physical `bin` level is not mapped over again, so a child engine and its loader-time DLLs resolve from one consistent directory; nested folders and the remaining game/mod data stay virtual. `AnomalyLauncher.cfg` and `commandline.txt` are profile-owned files stored in `userdata\overwrite`, so launcher changes persist without modifying the base game.
+For Anomaly automatic mode, the bootstrap also contains the final top-level `bin` files from the active layers. That physical `bin` level is not mapped over again, so a child engine and its loader-time DLLs resolve from one consistent directory; nested folders and the remaining game/mod data stay virtual. `AnomalyLauncher.cfg`, `commandline.txt` and `launcherconfig.toml` share profile storage under `userdata\writable-game-files` in Workspace and USVFS. Both runtime directories use independent copies; USVFS maps the profile store, and the next preparation collects newer physical replacements before recreating the runtime directories. Legacy `userdata\overwrite` copies are migrated without replacing a newer stored or runtime version. These launcher files remain profile-local in both user-data storage modes. Direct Anomaly engine launches also read the profile's `commandline.txt`. Source game/mod files are never written through runtime links, and switching backends does not require rebuilding a valid Workspace.
 
 This directory is a service cache, not a full game copy. It is not created when an unmodified physical base-game EXE can be launched directly. The cache is regenerated instead of being preserved during a workspace move and is removed with the workspace when the profile is deleted.
 
@@ -342,13 +342,17 @@ Paths inside the EXE directory are stored relative to it; external game, mod, an
 
 The paths below describe ordinary mode.
 
+The initial Standalone import uses `settings.backup.json` when the primary index is missing. A pending save or an unusable source blocks loading and saving instead of initializing an empty destination. Startup language selection checks the pending snapshot before the indexes, including the source or completed staging copy during migration. It reuses save-journal validation and never replays the journal or changes files during language selection.
+
+Regular `CORDON.exe` uses `%APPDATA%\CordonModLauncher`. On first load without settings, backups, a save journal, or profile files there, it copies the configuration from `%APPDATA%\StalkerModLauncher`: the index, backup, migration archive, pending save, profile JSON files, and recovery JSON files. A staged copy lets an interrupted migration resume before normal loading or saving. Recovery and schema migration then run only in the destination; the source is never changed. Logs and caches are not imported. Later launches never synchronize the stores, even if the new profile list is empty. Existing game/mod/workspace paths remain unchanged, so this isolates launcher configuration only. Standalone keeps its local directory and prefers the new roaming store for its initial import, falling back to the old one when the new store has no configuration.
+
 Settings files are stored at:
 
 ```text
-%APPDATA%\StalkerModLauncher\settings.json
-%APPDATA%\StalkerModLauncher\settings.backup.json
-%APPDATA%\StalkerModLauncher\profiles\profile-<ID>.json
-%APPDATA%\StalkerModLauncher\profiles\profile-<ID>.backup.json
+%APPDATA%\CordonModLauncher\settings.json
+%APPDATA%\CordonModLauncher\settings.backup.json
+%APPDATA%\CordonModLauncher\profiles\profile-<ID>.json
+%APPDATA%\CordonModLauncher\profiles\profile-<ID>.backup.json
 ```
 
 `settings.json` contains general launcher settings and `ProfileIds`, the profile IDs in display order. Each separate JSON stores the complete `ModProfile`: name, description, Workspace/USVFS, standalone mode, launch arguments and sources, paths, statistics, groups, and mods with priorities and exclusions. Transient UI properties are omitted. File names use a safe representation of the existing ID; renaming a profile does not rename its file. In memory, callers still use `AppSettings.Profiles`.
@@ -372,7 +376,7 @@ Multi-file saves use a recovery journal:
 
 After interruption, the launcher finishes the journaled save before loading settings. Replay skips files already written and does not rotate their backups again. A damaged journal blocks writes and remains available for recovery. This recovers interrupted processes; it is not a filesystem-wide transaction.
 
-If a primary settings or profile JSON is damaged, it is first copied with a timestamp to `%APPDATA%\StalkerModLauncher\recovery` and replaced with a readable backup only after the copy succeeds. Recovering one profile does not roll back other profiles or general settings. If both copies of a profile are missing or damaged, its ID and display position remain, and an unavailable entry shows the error. Its name is read from the migration archive when possible, without restoring outdated settings. Startup shows one message listing unavailable profiles; the About window's settings read no longer aborts startup. Healthy profiles and general preferences can still be saved. Unavailable profiles cannot be launched, edited, duplicated, or exported; saving skips their JSON files. The journal carries `UnavailableProfileIds` so replay cannot replace lost data with empty profiles. Manually restored JSON files are picked up after restarting. Importing settings with unavailable profiles fails without changing the destination.
+If a primary settings or profile JSON is damaged, it is first copied with a timestamp to `%APPDATA%\CordonModLauncher\recovery` and replaced with a readable backup only after the copy succeeds. Recovering one profile does not roll back other profiles or general settings. If both copies of a profile are missing or damaged, its ID and display position remain, and an unavailable entry shows the error. Its name is read from the migration archive when possible, without restoring outdated settings. Startup shows one message listing unavailable profiles; the About window's settings read no longer aborts startup. Healthy profiles and general preferences can still be saved. Unavailable profiles cannot be launched, edited, duplicated, or exported; saving skips their JSON files. The journal carries `UnavailableProfileIds` so replay cannot replace lost data with empty profiles. Manually restored JSON files are picked up after restarting. Importing settings with unavailable profiles fails without changing the destination.
 
 If both general settings files are lost, profiles are recovered from their own files and general preferences revert to defaults; the original display order cannot be recovered. Damaged general JSON files are preserved in `recovery` and the user is notified. A temporarily locked or unreadable file is not treated as damaged: the launcher leaves it unchanged and blocks further writes until a successful reload. The complete failure reason is written to the launcher log.
 
@@ -409,8 +413,8 @@ The **fsgame.ltx source** check reports whether the file was found automatically
 Application logs are stored at:
 
 ```text
-%APPDATA%\StalkerModLauncher\launcher.log
-%APPDATA%\StalkerModLauncher\launcher.old.log
+%APPDATA%\CordonModLauncher\launcher.log
+%APPDATA%\CordonModLauncher\launcher.old.log
 ```
 
 The current log rotates at 1 MB, replacing `launcher.old.log` with the previous log.

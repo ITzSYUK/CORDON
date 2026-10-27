@@ -83,7 +83,6 @@ internal static class UsvfsExecutableBootstrapper
         FileLayerPlan layerPlan,
         UsvfsLaunchTarget launchTarget,
         string bootstrapRoot,
-        string writeOverlayRoot,
         IProgress<string>? progress = null,
         CancellationToken cancellationToken = default)
     {
@@ -124,8 +123,9 @@ internal static class UsvfsExecutableBootstrapper
 
         foreach (var mutableFile in AnomalyLauncherMutableFiles)
         {
-            var profileFile = EnsureProfileLauncherFile(layerPlan, writeOverlayRoot, mutableFile);
-            if (profileFile is not null)
+            var profileFile = ProfileWritableGameFileStore.GetStoredFilePath(
+                Path.GetDirectoryName(layerPlan.UserData.RootPath)!, mutableFile);
+            if (File.Exists(profileFile))
             {
                 WorkspaceMaterializer.ReplaceFile(profileFile, bootstrapRoot, mutableFile, stats);
             }
@@ -157,38 +157,6 @@ internal static class UsvfsExecutableBootstrapper
                 : Path.Combine(directoryRelative, file.Key);
             WorkspaceMaterializer.ReplaceFile(file.Value, bootstrapRoot, relativePath, stats);
         }
-    }
-
-    private static string? EnsureProfileLauncherFile(
-        FileLayerPlan layerPlan,
-        string writeOverlayRoot,
-        string relativePath)
-    {
-        FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_AnomalyLauncherProfileFile);
-        var profileFile = FileSystemSafety.ResolvePathInside(
-            writeOverlayRoot,
-            relativePath,
-            Strings.Safety_AnomalyLauncherProfileFile);
-        if (File.Exists(profileFile))
-        {
-            return profileFile;
-        }
-
-        var source = layerPlan.FindFinalFile(relativePath);
-        if (source is null)
-        {
-            return null;
-        }
-
-        Directory.CreateDirectory(Path.GetDirectoryName(profileFile)!);
-        File.Copy(source.FullPath, profileFile, overwrite: false);
-        var attributes = File.GetAttributes(profileFile);
-        if ((attributes & FileAttributes.ReadOnly) != 0)
-        {
-            File.SetAttributes(profileFile, attributes & ~FileAttributes.ReadOnly);
-        }
-
-        return profileFile;
     }
 
     private static Dictionary<string, string> CollectFinalDirectoryFiles(
@@ -231,7 +199,8 @@ internal static class UsvfsExecutableBootstrapper
     private static IReadOnlyList<string> AnomalyLauncherMutableFiles { get; } =
     [
         "AnomalyLauncher.cfg",
-        "commandline.txt"
+        "commandline.txt",
+        "launcherconfig.toml"
     ];
 
     private static IReadOnlyList<string> AnomalyLauncherExcludedRootFiles { get; } =

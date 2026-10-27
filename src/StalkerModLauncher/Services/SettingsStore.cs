@@ -25,21 +25,32 @@ public sealed partial class SettingsStore : IDisposable
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
-    public bool HasSettingsFile =>
-        File.Exists(_paths.SettingsFile) || File.Exists(_paths.SettingsBackupFile) ||
-        File.Exists(_paths.SettingsPendingFile) || Directory.Exists(_paths.ProfilesDirectory) &&
-        Directory.EnumerateFiles(_paths.ProfilesDirectory, "profile-*.json").Any();
+    public bool HasSettingsFile => AppPaths.HasSettingsFiles(_paths.ConfigDirectory);
 
     public event EventHandler<SettingsRecoveryInfo>? RecoveryCompleted;
 
     internal async Task<bool> TryImportRoamingSettingsAsync()
     {
-        if (!_paths.IsPortable || HasSettingsFile || !File.Exists(_paths.RoamingSettingsFile))
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        await _ioLock.WaitAsync();
+        try { return await TryImportRoamingSettingsCoreAsync(); }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
         {
-            return false;
+            _writeBlockReason = ex.Message;
+            throw new SettingsPersistenceException(ex.Message, ex);
         }
+        finally { _ioLock.Release(); }
+    }
 
-        await ImportAsync(_paths.RoamingSettingsFile);
+    private async Task<bool> TryImportRoamingSettingsCoreAsync()
+    {
+        if (!_paths.IsPortable) return TryMigrateLegacySettings();
+        if (HasSettingsFile) return false;
+        var source = _paths.SettingsImportFile;
+        if (source is null || !AppPaths.HasSettingsFiles(Path.GetDirectoryName(source)!)) return false;
+        if (!File.Exists(source)) source = Path.ChangeExtension(source, ".backup.json");
+
+        await ImportCoreAsync(source);
         return true;
     }
 
@@ -103,27 +114,29 @@ public sealed partial class SettingsStore : IDisposable
         try
         {
             EnsureWritesAllowed();
-            var sourcePaths = GetImportPaths(sourcePath);
-            if (File.Exists(sourcePaths.SettingsPendingFile))
-                throw new SettingsPersistenceException(Strings.Settings_ImportPending);
-            var imported = await TryLoadSettingsFileAsync(sourcePath);
-            if (imported.Settings is null)
-            {
-                if (imported.Kind is SettingsFileLoadKind.Unavailable or SettingsFileLoadKind.Unsupported)
-                {
-                    throw new SettingsPersistenceException(imported.Error ?? Strings.Settings_FileUnavailable);
-                }
-
-                throw new InvalidDataException(imported.Error ?? Strings.Settings_FileInvalid);
-            }
-
-            var loaded = await LoadProfilesAsync(imported.Settings, sourcePaths, restore: false);
-            await SaveSnapshotCoreAsync(SerializeSettings(loaded.Settings));
+            await ImportCoreAsync(sourcePath);
         }
         finally
         {
             _ioLock.Release();
         }
+    }
+
+    private async Task ImportCoreAsync(string sourcePath)
+    {
+        var sourcePaths = GetImportPaths(sourcePath);
+        if (File.Exists(sourcePaths.SettingsPendingFile))
+            throw new SettingsPersistenceException(Strings.Settings_ImportPending);
+        var imported = await TryLoadSettingsFileAsync(sourcePath);
+        if (imported.Settings is null)
+        {
+            if (imported.Kind is SettingsFileLoadKind.Unavailable or SettingsFileLoadKind.Unsupported)
+                throw new SettingsPersistenceException(imported.Error ?? Strings.Settings_FileUnavailable);
+            throw new InvalidDataException(imported.Error ?? Strings.Settings_FileInvalid);
+        }
+
+        var loaded = await LoadProfilesAsync(imported.Settings, sourcePaths, restore: false);
+        await SaveSnapshotCoreAsync(SerializeSettings(loaded.Settings));
     }
 
     public async Task<AppSettings> UpdateAsync(Func<AppSettings, AppSettings> update)
@@ -160,6 +173,7 @@ public sealed partial class SettingsStore : IDisposable
 
     private async Task<SettingsLoadResult> LoadCoreAsync()
     {
+        await TryImportRoamingSettingsCoreAsync();
         Directory.CreateDirectory(_paths.ConfigDirectory);
         await RecoverPendingSaveAsync();
         var primary = await TryLoadSettingsFileAsync(_paths.SettingsFile);

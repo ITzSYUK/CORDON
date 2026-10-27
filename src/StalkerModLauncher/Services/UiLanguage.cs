@@ -25,6 +25,19 @@ public static class UiLanguage
 
     internal static string ReadPreference(AppPaths paths)
     {
+        var staging = Path.Combine(paths.ConfigDirectory, "settings-migration");
+        if (!paths.IsPortable && File.Exists(Path.Combine(staging, ".ready")))
+            return ReadPreference(new AppPaths(staging, paths.WorkspaceRoot));
+        try
+        {
+            using var store = new SettingsStore(paths);
+            if (store.ReadPendingUiLanguage() is { } pendingLanguage) return pendingLanguage;
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or JsonException or NotSupportedException)
+        {
+            // Invalid journals are reported and block writes during normal loading.
+        }
+
         var hasLocalSettings = false;
         foreach (var path in new[] { paths.SettingsFile, paths.SettingsBackupFile })
         {
@@ -40,11 +53,17 @@ public static class UiLanguage
             }
         }
 
-        if (!hasLocalSettings && paths.IsPortable &&
-            File.Exists(paths.RoamingSettingsFile) &&
-            TryReadPreference(paths.RoamingSettingsFile, out var roamingValue))
+        try
         {
-            return roamingValue;
+            if (!hasLocalSettings && !AppPaths.HasSettingsFiles(paths.ConfigDirectory) &&
+                paths.SettingsImportFile is { } source)
+            {
+                return ReadPreference(new AppPaths(Path.GetDirectoryName(source)!, paths.WorkspaceRoot));
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Normal loading reports inaccessible configuration after startup localization.
         }
 
         return System;

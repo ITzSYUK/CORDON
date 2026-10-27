@@ -77,6 +77,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         var formatVersion = fileLayerPlan.UsesAnomalyAppDataAlias ? WorkspaceFormatVersion + "-anomaly-appdata-v1" : WorkspaceFormatVersion;
         var buildFingerprint = WorkspaceSourceScanner.CreateBuildFingerprint(formatVersion, profile, sourceSnapshot, fileLayerPlan);
         scanTimer.Stop();
+        ProfileWritableGameFileStore.Prepare(fileLayerPlan, workspaceRoot, progress);
         var cachedExecutable = WorkspaceManifestStore.TryGetCachedExecutable(
             workspaceRoot,
             currentWorkspace,
@@ -87,8 +88,6 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
             cancellationToken);
         if (cachedExecutable is not null)
         {
-            ProfileWritableGameFileStore.EnsureWorkspaceDirectories(currentWorkspace);
-            ProfileWritableGameFileStore.CaptureFromWorkspace(currentWorkspace, workspaceRoot, progress);
             ProfileWritableGameFileStore.RestoreToCachedWorkspace(currentWorkspace, workspaceRoot, progress);
             var cachedWorkingDirectoryRelative = ProfileDataConfigurator.Configure(
                 gamePath,
@@ -112,7 +111,6 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         var cleanupTimer = Stopwatch.StartNew();
         if (fileLayerPlan.UsesAnomalyAppDataAlias)
             AnomalyAppDataAlias.ArchiveLegacyUserFiles(workspaceRoot, fileLayerPlan.GameDataRoot, includeCurrent: true);
-        ProfileWritableGameFileStore.CaptureFromWorkspace(currentWorkspace, workspaceRoot, progress);
         WorkspaceMaterializer.DeleteWorkspaceContents(currentWorkspace, workspaceRoot,
             () => fileLayerPlan.UsesAnomalyAppDataAlias ? WorkspaceSourceScanner.Capture(gamePath, profile, CancellationToken.None) : sourceSnapshot, progress);
         Directory.CreateDirectory(currentWorkspace);
