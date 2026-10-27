@@ -17,7 +17,7 @@ index c87a961..c5ae3a6 100644
 +    return()
 +endif()
 diff --git a/test/tvfs_test/directory_enumeration.cpp b/test/tvfs_test/directory_enumeration.cpp
-index 0697f41..3658852 100644
+index 0697f41..e76a655 100644
 --- a/test/tvfs_test/directory_enumeration.cpp
 +++ b/test/tvfs_test/directory_enumeration.cpp
 @@ -11,0 +12 @@
@@ -117,11 +117,12 @@ index 0697f41..3658852 100644
 -  for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
 +  for (const FILE_INFORMATION_CLASS informationClass :
 +       supportedDirectoryInformationClasses()) {
-@@ -1821,0 +1885,62 @@ std::vector<std::wstring> recordNames(const DirectoryRecordLayout& layout,
-+// Compare the complete stream; NTFS may split the same names into different batches.
+@@ -1821,0 +1885,76 @@ std::vector<std::wstring> recordNames(const DirectoryRecordLayout& layout,
++// Native batches can be shorter than the records permit; check virtual packing separately.
 +void listCheckedNames(NtQueryDirectoryFile_type query, HANDLE directory,
 +                      ListingQuery listing, size_t entryCount,
-+                      std::vector<std::wstring>& names, bool changeClass = false)
++                      std::vector<std::wstring>& names, bool changeClass = false,
++                      std::span<const std::wstring> packedNames = {})
 +{
 +  const auto& classes = supportedDirectoryInformationClasses();
 +  size_t classIndex =
@@ -159,6 +160,10 @@ index 0697f41..3658852 100644
 +      const DirectoryRecord record(layout, std::span(result.data).subspan(offset));
 +      ASSERT_FALSE(record.isTruncated());
 +      ASSERT_EQ(0u, record.fileNameLength() % sizeof(WCHAR));
++      if (!packedNames.empty()) {
++        ASSERT_LT(names.size(), packedNames.size());
++        ASSERT_EQ(packedNames[names.size()], record.fileName());
++      }
 +      names.push_back(record.fileName());
 +      ++count;
 +      if (record.nextEntryOffset() == 0) {
@@ -167,11 +172,20 @@ index 0697f41..3658852 100644
 +      }
 +      ASSERT_EQ(0u, record.nextEntryOffset() % 8);
 +      ASSERT_GE(record.nextEntryOffset(), record.size());
++      if (!packedNames.empty()) {
++        ASSERT_EQ((record.size() + 7u) / 8u * 8u, record.nextEntryOffset());
++      }
 +      ASSERT_LT(record.nextEntryOffset(), result.data.size() - offset);
 +      offset += record.nextEntryOffset();
 +    }
 +    if (listing.isSingleEntry) {
 +      ASSERT_EQ(1u, count);
++    } else if (names.size() < packedNames.size()) {
++      const size_t nextOffset = (result.data.size() + 7u) / 8u * 8u;
++      const size_t nextSize = layout.fileNameOffset +
++                              packedNames[names.size()].size() * sizeof(WCHAR);
++      ASSERT_GT(nextOffset + nextSize, current.length)
++          << "virtual query left room for the next matching entry";
 +    }
 +    if (changeClass) {
 +      classIndex = (classIndex + 1) % classes.size();
@@ -180,11 +194,11 @@ index 0697f41..3658852 100644
 +  FAIL() << "listing did not terminate";
 +}
 +
-@@ -1887 +2012,2 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
+@@ -1887 +2026,2 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
 -  for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
 +  for (const FILE_INFORMATION_CLASS informationClass :
 +       supportedDirectoryInformationClasses()) {
-@@ -1921,27 +2047,7 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
+@@ -1921,27 +2061,7 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
 -      size_t classIndex =
 -          std::ranges::find(DIRECTORY_INFORMATION_CLASSES, informationClass) -
 -          std::begin(DIRECTORY_INFORMATION_CLASSES);
@@ -217,9 +231,9 @@ index 0697f41..3658852 100644
 +      listCheckedNames(nativeQueryDirectoryFile(), namesakeHandle, listing,
 +                       LISTED_COUNT, expected, isClassChanging);
 +      listCheckedNames(&usvfs::hook_NtQueryDirectoryFile, hookedHandle, listing,
-+                       LISTED_COUNT, actual, isClassChanging);
++                       LISTED_COUNT, actual, isClassChanging, expected);
 +      EXPECT_EQ(expected, actual);
-@@ -1954,0 +2061,49 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
+@@ -1954,0 +2075,49 @@ TEST_F(USVFSTest, NtQueryDirectoryFileListsEntriesOfSeveralSourcesLikeNtdll)
 +TEST_F(USVFSTest, NtQueryDirectoryFileKeepsAllMappedRecordsWhenSourceScanStopsEarly)
 +{
 +  const std::filesystem::path root = test::path_of_test_temp(L"source_scan_early_stop");
@@ -261,7 +275,7 @@ index 0697f41..3658852 100644
 +        std::vector<std::wstring> actual;
 +        listCheckedNames(&usvfs::hook_NtQueryDirectoryFile, handle,
 +                         {informationClass, 0x1000, singleEntry, L"wanted_*"},
-+                         expected.size(), actual, singleEntry);
++                         expected.size(), actual, singleEntry, expected);
 +        EXPECT_EQ(expected, actual);
 +        usvfs::hook_NtClose(handle);
 +      }
@@ -269,7 +283,7 @@ index 0697f41..3658852 100644
 +  }
 +}
 +
-@@ -1975,0 +2131,60 @@ std::vector<std::wstring> sortedNames(const std::vector<ListedQuery>& queries)
+@@ -1975,0 +2145,60 @@ std::vector<std::wstring> sortedNames(const std::vector<ListedQuery>& queries)
 +TEST_F(USVFSTest, NtQueryDirectoryFilePreservesUnavailableClassesAndScanState)
 +{
 +  auto params = defaultUsvfsParams();
@@ -330,7 +344,7 @@ index 0697f41..3658852 100644
 +  }
 +}
 +
-@@ -2002,0 +2218,15 @@ TEST_F(USVFSTest, NtQueryDirectoryFileMatchesVirtualEntriesLikeNtdll)
+@@ -2002,0 +2232,15 @@ TEST_F(USVFSTest, NtQueryDirectoryFileMatchesVirtualEntriesLikeNtdll)
 +    // Virtual names have no source 8.3 aliases; give the reference the same namespace.
 +    WIN32_FIND_DATAW found{};
 +    HANDLE search = ::FindFirstFileW((namesakeDirectory / names[index]).c_str(), &found);
@@ -346,7 +360,7 @@ index 0697f41..3658852 100644
 +      ::CloseHandle(file);
 +      ASSERT_TRUE(removed) << "SetFileShortNameW: " << error;
 +    }
-@@ -2637 +2867,2 @@ void expectListedLikeNamesake(const std::filesystem::path& directory,
+@@ -2637 +2881,2 @@ void expectListedLikeNamesake(const std::filesystem::path& directory,
 -  for (const FILE_INFORMATION_CLASS informationClass : DIRECTORY_INFORMATION_CLASSES) {
 +  for (const FILE_INFORMATION_CLASS informationClass :
 +       supportedDirectoryInformationClasses()) {
