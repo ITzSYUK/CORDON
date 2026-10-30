@@ -90,7 +90,7 @@ public sealed partial class MainViewModel
         var workspaceRoot = string.IsNullOrWhiteSpace(profile.WorkspacePath)
             ? Path.Combine(AppPaths.Current.TempDirectory, "analysis", profile.Id)
             : profile.WorkspacePath;
-        return FileLayerPlan.CreateLinkedWorkspace(profile.GameInstallPath, profile, workspaceRoot);
+        return FileLayerPlan.CreateForProfile(profile.GameInstallPath, profile, workspaceRoot);
     }
 
     private static void ApplyConflictState(ModEntry mod, ModConflictState? state, string executableRelativePath)

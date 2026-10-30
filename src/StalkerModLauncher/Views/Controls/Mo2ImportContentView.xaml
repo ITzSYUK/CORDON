@@ -164,8 +164,6 @@
                 <CheckBox Grid.Row="1" Content="{x:Static res:Strings.Mo2_ShowOnlyProblems}" IsChecked="{Binding ShowOnlyProblems}" Margin="{DynamicResource Mo2ProblemFilterMargin}" VerticalAlignment="Center" FontSize="10" Style="{DynamicResource Mo2ContentCheckBoxStyle}" />
                 <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="{DynamicResource Mo2LaunchModeMargin}" VerticalAlignment="Center">
                     <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}" Foreground="{DynamicResource MutedTextBrush}" Margin="{DynamicResource Mo2LaunchModeLabelMargin}" VerticalAlignment="Center" ToolTip="{x:Static res:Strings.Mo2_LaunchModeHint}" FontSize="{DynamicResource Mo2LaunchModeFontSize}" />
-                    <RadioButton Content="Workspace" IsChecked="{Binding UseLinkedWorkspace}" Margin="{DynamicResource Mo2WorkspaceOptionMargin}" VerticalAlignment="Center" Style="{StaticResource Mo2LaunchRadioButtonStyle}" FontSize="{DynamicResource Mo2LaunchModeFontSize}" />
-                    <RadioButton Content="USVFS" IsChecked="{Binding UseVirtualFileSystem}" VerticalAlignment="Center" Style="{StaticResource Mo2LaunchRadioButtonStyle}" FontSize="{DynamicResource Mo2LaunchModeFontSize}" />
                     <TextBlock Text="?" Foreground="{DynamicResource MutedTextBrush}" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip="{x:Static res:Strings.Mo2_LaunchModeHint}" FontWeight="Bold" FontSize="{DynamicResource Mo2LaunchHelpFontSize}" />
                 </StackPanel>
             </Grid>

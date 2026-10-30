@@ -137,7 +137,6 @@ public sealed class LaunchPreflightService
         if (!profile.IsStandalone)
         {
             AddWorkspaceChecks(checks, profile);
-            AddLinkSupportCheck(checks, profile, fileLayerPlan, enabledMods, cancellationToken);
         }
 
         return new LaunchPreflightReport(checks, launchPlan?.Plan, overlayManifest);
@@ -164,9 +163,7 @@ public sealed class LaunchPreflightService
             return null;
         }
 
-        return profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem
-            ? ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, fileLayerPlan)
-            : ProfileLaunchPlanResolver.PreviewLinkedWorkspace(profile, fileLayerPlan, workspace);
+        return ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, fileLayerPlan);
     }
 
     private OverlayManifest? TryCreateOverlayManifest(
@@ -185,13 +182,7 @@ public sealed class LaunchPreflightService
             return null;
         }
 
-        return profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem
-            ? OverlayManifestBuilder.BuildVirtualFileSystem(
-                profile,
-                fileLayerPlan,
-                workspace,
-                cancellationToken: cancellationToken)
-            : OverlayManifestBuilder.BuildLinkedWorkspace(
+        return OverlayManifestBuilder.BuildVirtualFileSystem(
                 profile,
                 fileLayerPlan,
                 workspace,
@@ -211,7 +202,7 @@ public sealed class LaunchPreflightService
             return null;
         }
 
-        return FileLayerPlan.CreateLinkedWorkspace(profile.GameInstallPath, profile, workspace);
+        return FileLayerPlan.CreateForProfile(profile.GameInstallPath, profile, workspace);
     }
 
     private void AddWorkspaceChecks(List<ProfileHealthCheck> checks, ModProfile profile)
@@ -249,11 +240,7 @@ public sealed class LaunchPreflightService
             return;
         }
 
-        if (profile.IsStandalone)
-        {
-            checks.Add(Error("USVFS", Strings.Preflight_UsvfsLayeredOnly));
-            return;
-        }
+        if (profile.IsStandalone) return;
 
         var runtimeFiles = UsvfsRuntimeFiles.Check(_usvfsRuntimeDirectory);
         if (!runtimeFiles.IsReady)
@@ -289,59 +276,6 @@ public sealed class LaunchPreflightService
         catch (Exception ex)
         {
             checks.Add(Error("USVFS runtime", ex.Message));
-        }
-    }
-
-    private void AddLinkSupportCheck(
-        List<ProfileHealthCheck> checks,
-        ModProfile profile,
-        FileLayerPlan? fileLayerPlan,
-        IReadOnlyList<ModEntry> enabledMods,
-        CancellationToken cancellationToken)
-    {
-        var workspace = _profileManager.GetProfileFolderPath(profile);
-        if (string.IsNullOrWhiteSpace(workspace))
-        {
-            return;
-        }
-
-        try
-        {
-            var workspaceVolume = Path.GetPathRoot(Path.GetFullPath(workspace));
-            var sourcePaths = fileLayerPlan is null
-                ? enabledMods.Select(mod => mod.SourcePath)
-                : fileLayerPlan.Mods.Select(layer => layer.RootPath);
-            var source = sourcePaths
-                .Where(Directory.Exists)
-                .Where(path => !string.Equals(Path.GetPathRoot(Path.GetFullPath(path)), workspaceVolume, StringComparison.OrdinalIgnoreCase))
-                .SelectMany(path => Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories).Take(1))
-                .FirstOrDefault();
-            if (source is null)
-            {
-                return;
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
-            Directory.CreateDirectory(workspace);
-            var testLink = Path.Combine(workspace, $".preflight-link-{Guid.NewGuid():N}");
-            try
-            {
-                File.CreateSymbolicLink(testLink, source);
-                checks.Add(new ProfileHealthCheck(
-                    ProfileHealthStatus.Healthy,
-                    Strings.Preflight_CrossDriveLinks,
-                    LocalizedText.Format(Strings.Preflight_CrossDriveAllowedFormat, Path.GetPathRoot(source))));
-            }
-            finally
-            {
-                File.Delete(testLink);
-            }
-        }
-        catch (Exception ex)
-        {
-            checks.Add(Error(
-                Strings.Preflight_CrossDriveLinks,
-                LocalizedText.Format(Strings.Preflight_CrossDriveDeniedFormat, ex.Message)));
         }
     }
 

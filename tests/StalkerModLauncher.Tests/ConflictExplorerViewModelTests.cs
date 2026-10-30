@@ -41,8 +41,8 @@ public sealed class ConflictExplorerViewModelTests : IDisposable
     }
 
     [Theory]
-    [InlineData(LaunchBackendKind.LinkedWorkspace, true)]
-    [InlineData(LaunchBackendKind.LinkedWorkspace, false)]
+    [InlineData(LaunchBackendKind.LegacyWorkspace, true)]
+    [InlineData(LaunchBackendKind.LegacyWorkspace, false)]
     [InlineData(LaunchBackendKind.VirtualFileSystem, true)]
     [InlineData(LaunchBackendKind.VirtualFileSystem, false)]
     public async Task FinalTreeUsesPinnedExecutableFromLaunchPlan(LaunchBackendKind backend, bool pinBaseGame)
@@ -63,10 +63,8 @@ public sealed class ConflictExplorerViewModelTests : IDisposable
         };
         profile.Mods.Add(lower);
         profile.Mods.Add(higher);
-        var plan = FileLayerPlan.CreateLinkedWorkspace(game, profile, profile.WorkspacePath);
-        var launch = backend == LaunchBackendKind.VirtualFileSystem
-            ? ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, plan)
-            : ProfileLaunchPlanResolver.PreviewLinkedWorkspace(profile, plan, profile.WorkspacePath);
+        var plan = FileLayerPlan.CreateForProfile(game, profile, profile.WorkspacePath);
+        var launch = ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, plan);
         Assert.Equal(Path.Combine(profile.ExecutableSourcePath, relative), launch.Executable?.FullPath);
         using var viewModel = new ConflictExplorerViewModel(
             profile, lower, new ModConflictAnalyzer(), new DialogService(), () => Task.CompletedTask, () => { });

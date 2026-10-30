@@ -113,6 +113,7 @@ public sealed class ProfileManager
 
     public ModProfile? Delete(ICollection<ModProfile> profiles, ModProfile profile)
     {
+        if (profile.IsRunning || profile.IsPreparing) throw new InvalidOperationException(Strings.ProfileStorage_Busy);
         if (!profile.IsStandalone && profile.SettingsLoadError.Length == 0)
         {
             var workspacePath = string.IsNullOrWhiteSpace(profile.WorkspacePath)

@@ -205,9 +205,7 @@ public sealed class ProfileHealthService
             return null;
         }
 
-        return profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem
-            ? ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, fileLayerPlan)
-            : ProfileLaunchPlanResolver.PreviewLinkedWorkspace(profile, fileLayerPlan, profileFolderPath);
+        return ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, fileLayerPlan);
     }
 
     private static OverlayManifest? TryCreateOverlayManifest(
@@ -221,13 +219,7 @@ public sealed class ProfileHealthService
             return null;
         }
 
-        return profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem
-            ? OverlayManifestBuilder.BuildVirtualFileSystem(
-                profile,
-                fileLayerPlan,
-                profileFolderPath,
-                cancellationToken: cancellationToken)
-            : OverlayManifestBuilder.BuildLinkedWorkspace(
+        return OverlayManifestBuilder.BuildVirtualFileSystem(
                 profile,
                 fileLayerPlan,
                 profileFolderPath,
@@ -237,16 +229,13 @@ public sealed class ProfileHealthService
     private static void AddProfileStorageChecks(List<ProfileHealthCheck> checks, ModProfile profile)
     {
         var workspacePath = profile.WorkspacePath;
-        var usesVirtualFileSystem = profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem;
-        var checkTitle = usesVirtualFileSystem ? "USVFS" : "Workspace";
+        const string checkTitle = "USVFS";
         if (string.IsNullOrWhiteSpace(workspacePath))
         {
             checks.Add(new ProfileHealthCheck(
                 ProfileHealthStatus.Warning,
                 checkTitle,
-                usesVirtualFileSystem
-                    ? Strings.Check_ProfilePathPendingUsvfs
-                    : Strings.Check_PathPending));
+                Strings.Check_ProfilePathPendingUsvfs));
             return;
         }
 
@@ -264,22 +253,9 @@ public sealed class ProfileHealthService
             markerExists ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Error,
             checkTitle,
             markerExists
-                ? usesVirtualFileSystem
-                    ? LocalizedText.Format(Strings.Check_ProfileDataSeparateFormat, workspacePath)
-                    : LocalizedText.Format(Strings.Check_ManagedFolderFormat, workspacePath)
+                ? LocalizedText.Format(Strings.Check_ProfileDataSeparateFormat, workspacePath)
                 : LocalizedText.Format(Strings.Check_MarkerMissingFormat, workspacePath)));
 
-        if (usesVirtualFileSystem)
-        {
-            return;
-        }
-
-        var currentExists = Directory.Exists(Path.Combine(workspacePath, "current"));
-        var manifestExists = File.Exists(Path.Combine(workspacePath, "build-manifest.json"));
-        checks.Add(new ProfileHealthCheck(
-            currentExists && manifestExists ? ProfileHealthStatus.Healthy : ProfileHealthStatus.Warning,
-            Strings.Check_WorkspaceCache,
-            currentExists && manifestExists ? Strings.Check_WorkspacePresent : Strings.Check_WorkspacePending));
     }
 
     private static FileLayerPlan? TryCreateLinkedFileLayerPlan(ModProfile profile, string profileFolderPath)
@@ -291,7 +267,7 @@ public sealed class ProfileHealthService
             return null;
         }
 
-        return FileLayerPlan.CreateLinkedWorkspace(profile.GameInstallPath, profile, profileFolderPath);
+        return FileLayerPlan.CreateForProfile(profile.GameInstallPath, profile, profileFolderPath);
     }
 
     private static LaunchExecutableResolution? FindExecutableSource(

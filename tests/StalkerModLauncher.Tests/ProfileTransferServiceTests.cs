@@ -79,7 +79,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
     }
 
     [Theory]
-    [InlineData(LaunchBackendKind.LinkedWorkspace)]
+    [InlineData(LaunchBackendKind.LegacyWorkspace)]
     [InlineData(LaunchBackendKind.VirtualFileSystem)]
     public void ExportThenImportPreservesLaunchBackend(LaunchBackendKind backend)
     {
@@ -108,7 +108,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
 
         var imported = ProfileTransferService.Import(filePath);
 
-        Assert.Equal(LaunchBackendKind.LinkedWorkspace, imported.LaunchBackendKind);
+        Assert.Equal(LaunchBackendKind.LegacyWorkspace, imported.LaunchBackendKind);
         Assert.Empty(imported.Mods);
     }
 
@@ -125,7 +125,6 @@ public sealed class ProfileTransferServiceTests : IDisposable
     [InlineData("{\"Name\":\"Profile\",\"Mods\":[{\"ExcludedFiles\":[null]}]}")]
     [InlineData("{\"Name\":\"Profile\",\"LaunchBackendKind\":42}")]
     [InlineData("{\"Name\":\"Profile\",\"LaunchBackendKind\":null}")]
-    [InlineData("{\"Name\":\"Profile\",\"IsStandalone\":true,\"LaunchBackendKind\":1}")]
     public void ImportRejectsInvalidProfileWithLocalizedError(string json)
     {
         Directory.CreateDirectory(_root);

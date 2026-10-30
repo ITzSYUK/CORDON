@@ -76,6 +76,7 @@ internal static class UsvfsExecutableBootstrapper
         }
 
         progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsBootstrapFormat, files.Count, bootstrapDirectory));
+        ProfileWritableGameFileStore.RecordBootstrapState(bootstrapRoot);
         return new UsvfsBootstrapResult(executablePath, bootstrapRoot, bootstrapDirectory, files.Count);
     }
 
@@ -139,6 +140,7 @@ internal static class UsvfsExecutableBootstrapper
 
         AnomalyAppDataAlias.Prepare(bootstrapRoot, layerPlan);
         progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsAnomalyBootstrapFormat, stats.FileCount, bootstrapRoot));
+        ProfileWritableGameFileStore.RecordBootstrapState(bootstrapRoot);
         return new UsvfsBootstrapResult(executablePath, bootstrapRoot, bootstrapRoot, stats.FileCount);
     }
 
@@ -180,6 +182,8 @@ internal static class UsvfsExecutableBootstrapper
             foreach (var sourceFile in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.TopDirectoryOnly))
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                var relativePath = Path.GetRelativePath(layer.RootPath, sourceFile);
+                if (FileLayerPlan.IsExcluded(layer, relativePath)) continue;
                 var extension = Path.GetExtension(sourceFile);
                 if (extension.Equals(".pdb", StringComparison.OrdinalIgnoreCase) ||
                     !includeAllExecutables &&

@@ -18,9 +18,9 @@ public sealed class SettingsStoreProfileTests : IDisposable
     }
 
     [Theory]
-    [InlineData(LaunchBackendKind.LinkedWorkspace, false)]
+    [InlineData(LaunchBackendKind.LegacyWorkspace, false)]
     [InlineData(LaunchBackendKind.VirtualFileSystem, false)]
-    [InlineData(LaunchBackendKind.LinkedWorkspace, true)]
+    [InlineData(LaunchBackendKind.LegacyWorkspace, true)]
     public async Task StoresAllProfileSettingsSeparately(LaunchBackendKind backend, bool standalone)
     {
         var profile = new ModProfile

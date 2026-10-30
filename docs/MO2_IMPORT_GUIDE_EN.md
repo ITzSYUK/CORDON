@@ -68,7 +68,7 @@ If there are problems, the wizard initially shows only missing and ambiguous mod
 
 ## Step 5. Create and check the profile
 
-Before creating the profile, select **Workspace** or **USVFS**. USVFS is selected by default.
+The imported profile launches through **USVFS**.
 
 Click **Create profile**. The operation is transactional: if settings cannot be saved, the incomplete profile is removed and the wizard stays open.
 
@@ -76,7 +76,7 @@ After creation:
 
 1. Check the base game path and selected executable.
 2. Review mod order and enabled states.
-3. Launch the build and check that it works; switch the backend in profile settings if it is incompatible.
+3. Launch the build and check its compatibility with USVFS.
 4. Transfer saves and `user.ltx` only after a successful launch.
 
 ## Reading conflict icons
@@ -108,7 +108,7 @@ Check that the selected `mods` folder belongs to the MO2 installation containing
 
 ### The imported build does not launch
 
-Check the executable, launch arguments, selected backend and whether `overwrite` is required. Saves and `user.ltx` do not affect profile creation, but some prepared builds expect their own settings.
+Check the executable, launch arguments and whether `overwrite` is required. Saves and `user.ltx` do not affect profile creation, but some prepared builds expect their own settings.
 
 ### Can I delete MO2 after importing?
 

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Resources;
 
@@ -18,46 +17,34 @@ public sealed class WorkspaceManagementService
         return Task.Run(() => Inspect(profile, cancellationToken), cancellationToken);
     }
 
-    public void ClearCache(ModProfile profile, IProgress<string>? progress = null)
-    {
-        _workspaceBuilder.ClearProfileWorkspaceCache(profile, profile.GameInstallPath, progress);
-    }
-
-    public async Task RebuildAsync(ModProfile profile, IProgress<string> progress, CancellationToken cancellationToken = default)
-    {
-        ClearCache(profile, progress);
-        var result = await _workspaceBuilder.BuildAsync(
-            profile.GameInstallPath,
-            profile,
-            progress,
-            cancellationToken: cancellationToken);
-        profile.WorkspacePath = result.ProfileWorkspacePath;
-        profile.ExecutableRelativePath = result.ExecutableRelativePath;
-        profile.WorkingDirectoryRelative = result.WorkingDirectoryRelative;
-    }
-
     public async Task<WorkspaceMoveResult> MoveAsync(
         ModProfile profile,
         string destinationRoot,
         IProgress<string> progress,
         CancellationToken cancellationToken = default)
     {
-        var result = await Task.Run(
-            () => PrepareMove(profile, destinationRoot, progress, cancellationToken),
-            cancellationToken);
-        if (!result.WasMoved)
+        EnsureIdle(profile);
+        profile.IsPreparing = true;
+        try
         {
-            return result;
+            var result = await Task.Run(
+                () => PrepareMove(profile, destinationRoot, progress, cancellationToken),
+                cancellationToken);
+            if (!result.WasMoved)
+            {
+                return result;
+            }
+
+            // ModProfile is observed by WPF. Change it only after returning to the
+            // caller's synchronization context, never from the Task.Run worker.
+            profile.WorkspacePath = result.DestinationPath;
+
+            var cleanupFailure = await Task.Run(
+                () => TryCleanupOldWorkspace(profile, result.PreviousWorkspacePath),
+                CancellationToken.None);
+            return result with { CleanupFailure = cleanupFailure };
         }
-
-        // ModProfile is observed by WPF. Change it only after returning to the
-        // caller's synchronization context, never from the Task.Run worker.
-        profile.WorkspacePath = result.DestinationPath;
-
-        var cleanupFailure = await Task.Run(
-            () => TryCleanupOldWorkspace(profile, result.PreviousWorkspacePath),
-            CancellationToken.None);
-        return result with { CleanupFailure = cleanupFailure };
+        finally { profile.IsPreparing = false; }
     }
 
     public Task<Exception?> RetryOldWorkspaceCleanupAsync(
@@ -65,6 +52,7 @@ public sealed class WorkspaceManagementService
         string oldWorkspace,
         CancellationToken cancellationToken = default)
     {
+        EnsureIdle(profile);
         if (string.IsNullOrWhiteSpace(oldWorkspace) || !Directory.Exists(oldWorkspace))
         {
             return Task.FromResult<Exception?>(null);
@@ -97,6 +85,15 @@ public sealed class WorkspaceManagementService
         {
             throw new InvalidOperationException(Strings.Workspace_DriveRootForbidden);
         }
+
+        var finalDestination = Path.Combine(destinationRoot, ProfileManager.CreateWorkspaceDirectoryName(profile));
+        WorkspaceBuilder.ValidateProfileLocation(profile, finalDestination, profile.GameInstallPath);
+        var sourceRoots = new[] { profile.GameInstallPath, profile.Mo2OverwritePath }
+            .Concat(profile.Mods.Select(mod => mod.SourcePath));
+        if (sourceRoots.Where(path => !string.IsNullOrWhiteSpace(path)).Any(source =>
+                FileSystemSafety.IsDirectoryInside(destinationRoot, source) ||
+                FileSystemSafety.IsDirectoryInside(source, destinationRoot)))
+            throw new InvalidOperationException(Strings.ProfileStorage_SourceOverlap);
 
         Directory.CreateDirectory(destinationRoot);
         File.WriteAllText(
@@ -132,7 +129,7 @@ public sealed class WorkspaceManagementService
             if (!string.IsNullOrWhiteSpace(oldWorkspace))
             {
                 ProfileWritableGameFileStore.CaptureFromWorkspace(
-                    Path.Combine(oldWorkspace, "current"),
+                    Path.Combine(oldWorkspace, ".usvfs-bootstrap"),
                     oldWorkspace,
                     progress);
             }
@@ -145,11 +142,13 @@ public sealed class WorkspaceManagementService
                 CopyDirectory(
                     sourceUserData,
                     targetUserData,
-                    profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem
-                        ? "usvfs-bootstrap"
-                        : null,
+                    "usvfs-bootstrap",
                     cancellationToken);
             }
+
+            var diagnostics = string.IsNullOrWhiteSpace(oldWorkspace) ? string.Empty : Path.Combine(oldWorkspace, "diagnostics");
+            if (Directory.Exists(diagnostics))
+                CopyDirectory(diagnostics, Path.Combine(temporary, "diagnostics"), null, cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
             Directory.Move(temporary, destination);
@@ -196,7 +195,8 @@ public sealed class WorkspaceManagementService
             Id = source.Id,
             Name = source.Name,
             WorkspacePath = workspacePath,
-            GameInstallPath = source.GameInstallPath
+            GameInstallPath = source.GameInstallPath,
+            Mo2OverwritePath = source.Mo2OverwritePath
         };
 
         foreach (var mod in source.Mods)
@@ -219,31 +219,20 @@ public sealed class WorkspaceManagementService
         string? excludedTopLevelDirectory,
         CancellationToken cancellationToken)
     {
-        foreach (var directory in Directory.EnumerateDirectories(source, "*", SearchOption.AllDirectories))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var relative = Path.GetRelativePath(source, directory);
-            if (IsExcluded(relative, excludedTopLevelDirectory))
-            {
-                continue;
-            }
-
-            Directory.CreateDirectory(Path.Combine(destination, relative));
-        }
-
+        if ((File.GetAttributes(source) & FileAttributes.ReparsePoint) != 0)
+            throw new IOException(LocalizedText.Format(Strings.Copy_ThroughLinkForbiddenFormat, source));
         Directory.CreateDirectory(destination);
-        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
+        foreach (var entry in new DirectoryInfo(source).EnumerateFileSystemInfos())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var relative = Path.GetRelativePath(source, file);
-            if (IsExcluded(relative, excludedTopLevelDirectory))
-            {
-                continue;
-            }
-
-            var target = Path.Combine(destination, relative);
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(file, target, overwrite: false);
+            if (IsExcluded(entry.Name, excludedTopLevelDirectory)) continue;
+            if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
+                throw new IOException(LocalizedText.Format(Strings.Copy_ThroughLinkForbiddenFormat, entry.FullName));
+            var target = Path.Combine(destination, entry.Name);
+            if (entry is DirectoryInfo)
+                CopyDirectory(entry.FullName, target, null, cancellationToken);
+            else
+                File.Copy(entry.FullName, target, overwrite: false);
         }
     }
 
@@ -259,49 +248,16 @@ public sealed class WorkspaceManagementService
         return string.Equals(topLevel, excludedTopLevelDirectory, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static WorkspaceStatus Inspect(ModProfile profile, CancellationToken cancellationToken)
+    private static void EnsureIdle(ModProfile profile)
     {
-        var workspace = profile.WorkspacePath;
-        var current = string.IsNullOrWhiteSpace(workspace) ? string.Empty : Path.Combine(workspace, "current");
-        var rootExists = !string.IsNullOrWhiteSpace(workspace) && Directory.Exists(workspace);
-        var currentExists = !string.IsNullOrWhiteSpace(current) && Directory.Exists(current);
-        var manifestExists = rootExists && File.Exists(Path.Combine(workspace, "build-manifest.json"));
-        if (string.IsNullOrWhiteSpace(current) || !currentExists)
-        {
-            return WorkspaceStatus.Missing(workspace);
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-        var manifest = ReadManifest(workspace);
-        return manifest is null
-            ? new WorkspaceStatus(workspace, true, 0, 0, 0, 0, 0, 0, null, false, rootExists, currentExists, manifestExists)
-            : new WorkspaceStatus(
-                workspace,
-                true,
-                manifest.LogicalSizeBytes,
-                manifest.PhysicalSizeBytes,
-                manifest.FileCount,
-                manifest.SymbolicLinkCount,
-                manifest.HardLinkCount,
-                manifest.LocalFileCount,
-                manifest.BuiltAtUtc,
-                manifest.HasStatistics,
-                rootExists,
-                currentExists,
-                manifestExists);
+        if (profile.IsRunning || profile.IsPreparing)
+            throw new InvalidOperationException(Strings.ProfileStorage_Busy);
     }
 
-    private static WorkspaceBuildManifest? ReadManifest(string workspace)
+    private static WorkspaceStatus Inspect(ModProfile profile, CancellationToken cancellationToken)
     {
-        try
-        {
-            return JsonSerializer.Deserialize<WorkspaceBuildManifest>(
-                File.ReadAllText(Path.Combine(workspace, "build-manifest.json")));
-        }
-        catch
-        {
-            return null;
-        }
+        cancellationToken.ThrowIfCancellationRequested();
+        return WorkspaceStatus.Missing(profile.WorkspacePath);
     }
 }
 

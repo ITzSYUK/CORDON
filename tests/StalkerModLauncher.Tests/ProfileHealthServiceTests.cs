@@ -324,11 +324,11 @@ public sealed class ProfileHealthServiceTests : IDisposable
         Assert.True(report.IsReady);
         Assert.NotNull(report.LaunchPlan);
         Assert.NotNull(report.OverlayManifest);
-        Assert.Equal(LaunchBackendKind.LinkedWorkspace, report.LaunchPlan.BackendKind);
+        Assert.Equal(LaunchBackendKind.VirtualFileSystem, report.LaunchPlan.BackendKind);
         Assert.Equal("-nointro", report.LaunchPlan.Arguments);
         Assert.Equal(report.LaunchPlan.WorkingDirectory, report.OverlayManifest.LaunchPlan?.WorkingDirectory);
-        Assert.EndsWith(Path.Combine("current", "bin_x64", "xrEngine.exe"), report.LaunchPlan.ExecutablePath);
-        Assert.EndsWith(Path.Combine("current", "bin_x64"), report.LaunchPlan.WorkingDirectory);
+        Assert.EndsWith(Path.Combine("bin_x64", "xrEngine.exe"), report.LaunchPlan.ExecutablePath);
+        Assert.EndsWith(Path.Combine(game, "bin_x64"), report.LaunchPlan.WorkingDirectory);
     }
 
     [Fact]
@@ -397,8 +397,5 @@ public sealed class ProfileHealthServiceTests : IDisposable
         {
         }
 
-        public void ClearProfileWorkspaceCache(ModProfile profile, string gamePath)
-        {
-        }
     }
 }

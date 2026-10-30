@@ -139,6 +139,28 @@ public sealed partial class SettingsStore : IDisposable
         await SaveSnapshotCoreAsync(SerializeSettings(loaded.Settings));
     }
 
+    internal async Task<IReadOnlyList<ModProfile>> ReadLegacyProfilesAsync()
+    {
+        var directory = _paths.LegacyConfigDirectory;
+        if (directory is null || !AppPaths.HasSettingsFiles(directory)) return [];
+        var sourcePaths = new AppPaths(directory, _paths.WorkspaceRoot);
+        if (File.Exists(sourcePaths.SettingsPendingFile))
+            throw new SettingsPersistenceException(Strings.Settings_ImportPending);
+        var source = File.Exists(sourcePaths.SettingsFile) ? sourcePaths.SettingsFile : sourcePaths.SettingsBackupFile;
+        var imported = await TryLoadSettingsFileAsync(source);
+        if (imported.Settings is null)
+            throw new SettingsPersistenceException(imported.Error ?? Strings.Settings_FileInvalid);
+        if (imported.Settings.ProfileIds is null)
+        {
+            var profiles = imported.Settings.Profiles ?? [];
+            if (profiles.Any(p => p is null || string.IsNullOrWhiteSpace(p.Id)) ||
+                profiles.Select(p => p.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != profiles.Count)
+                throw new SettingsPersistenceException(Strings.Settings_ProfileIndexInvalid);
+        }
+        var loaded = await LoadProfilesAsync(imported.Settings, sourcePaths, restore: false);
+        return loaded.Settings.Profiles;
+    }
+
     public async Task<AppSettings> UpdateAsync(Func<AppSettings, AppSettings> update)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

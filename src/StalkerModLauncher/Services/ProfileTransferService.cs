@@ -33,7 +33,6 @@ public static class ProfileTransferService
 
         if (exported is null || exported.Name is null || exported.Mods is null ||
             !Enum.IsDefined(exported.LaunchBackendKind) ||
-            exported.IsStandalone && exported.LaunchBackendKind != LaunchBackendKind.LinkedWorkspace ||
             exported.CollapsedModGroups?.Any(name => name is null) == true ||
             exported.Mods.Any(mod => mod is null || mod.Name is null || mod.SourcePath is null ||
                                      mod.ExcludedFiles?.Any(path => path is null) == true))

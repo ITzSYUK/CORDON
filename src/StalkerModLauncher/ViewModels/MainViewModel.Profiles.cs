@@ -267,8 +267,7 @@ public sealed partial class MainViewModel
 
         return ProfileExecutableSourceResolver.TryCreateSelection(
             SelectedProfile,
-            selectedPath,
-            includeWorkspace: true);
+            selectedPath);
     }
 
     public ProfileSettingsViewModel? CreateProfileSettingsViewModel()
@@ -285,11 +284,9 @@ public sealed partial class MainViewModel
             () => SaveOrThrowAsync(),
             selectedPath => ProfileExecutableSourceResolver.TryCreateSelection(
                 profile,
-                selectedPath,
-                includeWorkspace: true),
+                selectedPath),
             () => ProfileExecutableSourceResolver.DetectAutomaticSelection(
-                profile,
-                includeWorkspace: false),
+                profile),
             name => Profiles.Any(p => p != profile && p.Name.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase)),
             paths: _paths);
     }

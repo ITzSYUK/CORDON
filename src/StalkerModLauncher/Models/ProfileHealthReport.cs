@@ -44,13 +44,6 @@ public sealed record ProfileHealthReport(
 
         lines.AddRange(Checks.Select(check =>
             $"[{StatusText(check.Status)}] {check.Title}: {check.Details}"));
-        if (Workspace is { Exists: true } workspace)
-        {
-            lines.Add(string.Empty);
-            lines.Add(LocalizedText.Format(Strings.Health_ReportWorkspaceFormat, workspace.LogicalSizeDisplay, workspace.PhysicalSizeDisplay));
-            lines.Add(LocalizedText.Format(Strings.Health_ReportFilesFormat, workspace.FileCount, workspace.HardLinkCount, workspace.SymbolicLinkCount, workspace.LocalFileCount));
-        }
-
         if (File.Exists(UsvfsLogPath))
         {
             lines.Add(string.Empty);

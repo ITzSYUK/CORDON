@@ -117,7 +117,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             parameter => parameter is ModProfile { SettingsLoadError.Length: 0 });
         InlineDeleteProfileCommand = new RelayCommand(
             parameter => DeleteProfile(parameter as ModProfile),
-            parameter => parameter is ModProfile { IsRunning: false });
+            parameter => parameter is ModProfile { IsRunning: false, IsPreparing: false });
         BrowseExecutableCommand = new RelayCommand(BrowseExecutable, () => SelectedProfile is { SettingsLoadError.Length: 0 });
         AddModCommand = new AsyncRelayCommand(AddModAsync, CanAddMod);
         InstallModArchiveCommand = new AsyncRelayCommand(InstallModArchiveAsync, CanInstallModArchive);
@@ -349,7 +349,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         private set => SetProperty(ref _isBuilding, value);
     }
 
-    public bool CanEditSelectedProfile => SelectedProfile is { IsRunning: false, SettingsLoadError.Length: 0 };
+    public bool CanEditSelectedProfile => SelectedProfile is { IsRunning: false, IsPreparing: false, SettingsLoadError.Length: 0 };
 
     public string BuildProgressText
     {

@@ -35,7 +35,33 @@ public sealed partial class MainViewModel
         confirmReset,
         isPortable: _paths.IsPortable,
         canInstallUpdate: () => !IsBuilding && !_isInstallingModArchive && Profiles.All(profile => !profile.IsRunning),
-        requestExit: () => LauncherUpdateInstallationRequested?.Invoke(this, EventArgs.Empty));
+        requestExit: () => LauncherUpdateInstallationRequested?.Invoke(this, EventArgs.Empty),
+        importLegacyProfiles: ImportLegacyProfilesAsync);
+
+    internal async Task<(int Added, int Skipped)> ImportLegacyProfilesAsync()
+    {
+        var source = await _settingsStore.ReadLegacyProfilesAsync();
+        var ids = Profiles.Select(profile => profile.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var added = source.Where(profile => ids.Add(profile.Id)).ToArray();
+        var previousSelection = SelectedProfile;
+        foreach (var profile in added)
+        {
+            _profileManager.EnsureDefaults(profile);
+            Profiles.Add(profile);
+        }
+        if (SelectedProfile is null) SelectedProfile = added.FirstOrDefault();
+        try
+        {
+            if (added.Length > 0) await SaveOrThrowAsync();
+        }
+        catch
+        {
+            foreach (var profile in added) Profiles.Remove(profile);
+            SelectedProfile = previousSelection;
+            throw;
+        }
+        return (added.Length, source.Count - added.Length);
+    }
 
     private async Task ApplyLauncherSettingsAsync(LauncherPreferences preferences)
     {

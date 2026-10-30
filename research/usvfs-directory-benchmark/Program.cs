@@ -67,7 +67,7 @@ static void CreateFixture(string root, bool sparse = false)
     Write(Path.Combine(root, "game", "gamedata", "configs", "кириллица.ltx"), "unicode");
     Write(Path.Combine(root, "game", "physical-only.txt"), "physical");
     var layerPlan = CreateLayerPlan(root, sparse);
-    var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(CreateProfile(root, sparse), layerPlan, Path.Combine(root, "workspace"));
+    var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(CreateProfile(root, sparse), layerPlan, Path.Combine(root, "workspace"));
     Directory.CreateDirectory(manifest.WriteOverlayRoot);
     Write(Path.Combine(manifest.WriteOverlayRoot, "gamedata", "configs", "overwrite.ltx"), "overwrite");
 
@@ -108,7 +108,7 @@ static ModProfile CreateProfile(string root, bool sparse = false)
 }
 
 static FileLayerPlan CreateLayerPlan(string root, bool sparse = false) =>
-    FileLayerPlan.CreateLinkedWorkspace(Path.Combine(root, "game"), CreateProfile(root, sparse), Path.Combine(root, "workspace"));
+    FileLayerPlan.CreateForProfile(Path.Combine(root, "game"), CreateProfile(root, sparse), Path.Combine(root, "workspace"));
 
 static async Task RunHost(string runtimeRoot, string root, string resultPath)
 {
@@ -121,7 +121,7 @@ static async Task RunHost(string runtimeRoot, string root, string resultPath)
 
     var profile = CreateProfile(root, fixture.Sparse);
     var layerPlan = CreateLayerPlan(root, fixture.Sparse);
-    var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, Path.Combine(root, "workspace"));
+    var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, Path.Combine(root, "workspace"));
     var plan = UsvfsMappingPlanBuilder.Build(layerPlan, manifest);
     var runtime = new UsvfsRuntime(new OfficialUsvfsNativeApi());
     var watch = Stopwatch.StartNew();

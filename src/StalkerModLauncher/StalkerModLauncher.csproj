@@ -22,6 +22,7 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="StalkerModLauncher.Tests" />
+    <InternalsVisibleTo Include="StalkerUsvfsManagedPoc" />
     <Using Remove="System.Drawing" />
     <Using Remove="System.Windows.Forms" />
     <Resource Include="..\..\assets\icons\mod-actions\add_mods.png" Link="Resources\add_mods.png" />

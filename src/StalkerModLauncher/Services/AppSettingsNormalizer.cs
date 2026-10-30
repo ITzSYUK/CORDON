@@ -66,7 +66,7 @@ public static class AppSettingsNormalizer
             profile.Mo2OverwritePath ??= string.Empty;
             if (!Enum.IsDefined(profile.LaunchBackendKind))
             {
-                profile.LaunchBackendKind = LaunchBackendKind.LinkedWorkspace;
+                profile.LaunchBackendKind = LaunchBackendKind.VirtualFileSystem;
             }
 
             profile.IsRunning = false;

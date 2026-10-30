@@ -18,7 +18,7 @@
   <data name="Settings_LanguageRestartTitle" xml:space="preserve"><value>Restart required</value></data>
   <data name="Settings_LanguageRussian" xml:space="preserve"><value>Russian</value></data>
   <data name="Settings_LanguageSystem" xml:space="preserve"><value>System</value></data>
-  <data name="Settings_LogDescriptionDetailed" xml:space="preserve"><value>Standard entries and technical launch, Workspace, and USVFS diagnostics.</value></data>
+  <data name="Settings_LogDescriptionDetailed" xml:space="preserve"><value>Standard entries plus detailed launch and USVFS diagnostics.</value></data>
   <data name="Settings_LogDescriptionErrors" xml:space="preserve"><value>Launch errors and launcher failures.</value></data>
   <data name="Settings_LogDescriptionStandard" xml:space="preserve"><value>Errors and main launcher actions.</value></data>
   <data name="Settings_LoggingHeading" xml:space="preserve"><value>LOGGING</value></data>
@@ -41,11 +41,11 @@
   <data name="Settings_StorageLabel" xml:space="preserve"><value>Settings</value></data>
   <data name="Settings_UpdateHeading" xml:space="preserve"><value>UPDATE</value></data>
   <data name="About_AnswerDeleteProfile" xml:space="preserve"><value>For a regular profile, only the profile entry and its workspace with profile settings, logs, and saves are deleted. Game and mod folders are not affected. A standalone profile's build folder also remains in place.</value></data>
-  <data name="About_AnswerModOrder" xml:space="preserve"><value>Mods lower in the list have higher priority and can replace files from mods above them. This is the normal way to install a patch over a main mod. Change the order by dragging or with the buttons in the mod row. On the next launch, Workspace rebuilds the environment, while USVFS creates a virtual overlay in the new order.</value></data>
+  <data name="About_AnswerModOrder" xml:space="preserve"><value>Mods lower in the list have higher priority. After changing their order, the next USVFS launch builds mappings in the new order.</value></data>
   <data name="About_AnswerRemoveMod" xml:space="preserve"><value>Yes. Remove only excludes the mod from this profile. The original mod folder remains untouched on disk.</value></data>
   <data name="About_AnswerSavesAndLogs" xml:space="preserve"><value>For a regular profile they are stored in workspace\userdata, so saves from different profiles do not mix. For a standalone build, its fsgame.ltx determines the location: the launcher finds common folders but cannot guarantee separate saves for each such build. The Status button shows the detected saves and latest log.</value></data>
   <data name="About_AnswerStartFailure" xml:space="preserve"><value>Open Status to see path checks, the selected EXE, latest log, and crash dump. First make sure every folder exists and that the EXE belongs to the game or an enabled mod. For the original Shadow of Chernobyl this is usually bin\XR_3DA.exe; for OGSR builds it is often bin_x64\xrEngine.exe.</value></data>
-  <data name="About_AnswerWorkspaceSize" xml:space="preserve"><value>File Explorer counts files linked into the workspace as if each one were a separate copy there. In reality, a hard link does not duplicate data on disk. The Status window shows both the size visible to the game and the approximate occupied space.</value></data>
+  <data name="About_AnswerWorkspaceSize" xml:space="preserve"><value>Saves, screenshots, shader caches, generated files and required bootstrap files take space. Game and mod layers are mounted virtually.</value></data>
   <data name="About_BrowserBody" xml:space="preserve"><value>The Mod Browser button opens the AP-PRO catalog for Shadow of Chernobyl, Clear Sky, and Call of Pripyat. Selecting a card opens the mod's source page in your browser. The launcher does not download or install mods from this catalog.</value></data>
   <data name="About_BrowserHeading" xml:space="preserve"><value>Mod browser</value></data>
   <data name="About_CreateBody" xml:space="preserve"><value>Select Create, enter a name, and choose the profile type. For a profile based on a game, select its folder and add mods in priority order. For a ready-made separate build, select Standalone build and choose its root folder. The wizard tries to find a suitable EXE; you can select it manually in Settings if necessary.</value></data>
@@ -54,7 +54,7 @@
   <data name="About_DisclaimerHeading" xml:space="preserve"><value>Unofficial project</value></data>
   <data name="About_DontShowAtStartup" xml:space="preserve"><value>Do not show at startup</value></data>
   <data name="About_FaqHeading" xml:space="preserve"><value>Frequently asked questions</value></data>
-  <data name="About_LaunchModesBody" xml:space="preserve"><value>Workspace prepares the environment in advance using file-system links. USVFS overlays the same layers virtually using Mod Organizer 2 technology and uses almost no space for game files. USVFS compatibility depends on the game and launch method; select Workspace in profile settings if you encounter problems.</value></data>
+  <data name="About_LaunchModesBody" xml:space="preserve"><value>Standard profiles launch through USVFS, which combines game and mod files virtually. Standalone builds launch directly from their own folders. Workspace launch is no longer supported.</value></data>
   <data name="About_LaunchModesHeading" xml:space="preserve"><value>Launch modes</value></data>
   <data name="About_Mo2Body" xml:space="preserve"><value>The MO2 button transfers an existing game profile: mod order and enabled state, as well as detected base-game and overwrite folders. The source Mod Organizer 2, game, and mod directories are not changed.</value></data>
   <data name="About_Mo2Heading" xml:space="preserve"><value>Importing from Mod Organizer 2</value></data>
@@ -65,12 +65,12 @@
   <data name="About_QuestionRemoveMod" xml:space="preserve"><value>Can I remove a mod without deleting its files?</value></data>
   <data name="About_QuestionSavesAndLogs" xml:space="preserve"><value>Where are saves and logs stored?</value></data>
   <data name="About_QuestionStartFailure" xml:space="preserve"><value>If the game does not start</value></data>
-  <data name="About_QuestionWorkspaceSize" xml:space="preserve"><value>Why can a workspace appear large?</value></data>
+  <data name="About_QuestionWorkspaceSize" xml:space="preserve"><value>What takes space in a profile?</value></data>
   <data name="About_RegularStandaloneBody" xml:space="preserve"><value>A regular profile adds mods on top of a base game and creates a separate environment for launching it. A standalone profile is for a ready-made build with its own engine and runs from its own folder; it does not require a base game.</value></data>
   <data name="About_RegularStandaloneHeading" xml:space="preserve"><value>Regular and standalone profiles</value></data>
   <data name="About_Title" xml:space="preserve"><value>About</value></data>
-  <data name="About_WorkspaceBody" xml:space="preserve"><value>Workspace is a separate folder where the launcher combines the game and enabled mods for a regular profile. Large source files are connected with links, so the entire game is not copied for every profile. All changes, profile settings, logs, and saves stay inside this environment; the original game is not modified.</value></data>
-  <data name="About_WorkspaceHeading" xml:space="preserve"><value>Working environment (workspace)</value></data>
+  <data name="About_WorkspaceBody" xml:space="preserve"><value>The managed profile folder stores user settings, saves, logs and service files. USVFS presents the game and mods virtually; a full current tree is not created.</value></data>
+  <data name="About_WorkspaceHeading" xml:space="preserve"><value>Profile storage</value></data>
   <data name="Common_Arguments" xml:space="preserve"><value>Arguments</value></data>
   <data name="Common_BaseGame" xml:space="preserve"><value>Base game</value></data>
   <data name="Common_Binary" xml:space="preserve"><value>Executable</value></data>
@@ -135,11 +135,8 @@
   <data name="Profile_Standalone" xml:space="preserve"><value>Standalone build</value></data>
   <data name="Profile_StandaloneTooltip" xml:space="preserve"><value>A standalone build has its own engine and all game files and runs from its own folder</value></data>
   <data name="Common_Profile" xml:space="preserve"><value>Profile</value></data>
-  <data name="Health_ClearCache" xml:space="preserve"><value>Clear cache</value></data>
   <data name="Health_CopyReport" xml:space="preserve"><value>Copy report</value></data>
   <data name="Health_LatestLog" xml:space="preserve"><value>Latest log</value></data>
-  <data name="Health_MoveWorkspace" xml:space="preserve"><value>Move...</value></data>
-  <data name="Health_RebuildWorkspace" xml:space="preserve"><value>Rebuild</value></data>
   <data name="Health_Saves" xml:space="preserve"><value>Saves</value></data>
   <data name="Health_Title" xml:space="preserve"><value>Profile status</value></data>
   <data name="Health_Warnings" xml:space="preserve"><value>Warnings</value></data>
@@ -218,7 +215,7 @@
   <data name="SettingsProfile_FsgameSource" xml:space="preserve"><value>fsgame.ltx source</value></data>
   <data name="SettingsProfile_InstalledModsFolder" xml:space="preserve"><value>Installed mods folder</value></data>
   <data name="SettingsProfile_Launcher" xml:space="preserve"><value>Launcher</value></data>
-  <data name="SettingsProfile_LaunchMode" xml:space="preserve"><value>Launch system</value></data>
+  <data name="SettingsProfile_LaunchMode" xml:space="preserve"><value>Launch through USVFS</value></data>
   <data name="SettingsProfile_LauncherHint" xml:space="preserve"><value>The launcher starts AnomalyLauncher.exe. Manual selection starts the selected engine directly and preserves mod priority.</value></data>
   <data name="SettingsProfile_ModFolderTooltip" xml:space="preserve"><value>Archives are extracted here, separately from the workspace.</value></data>
   <data name="SettingsProfile_Mo2Apply" xml:space="preserve"><value>Apply mod order from an MO2 profile...</value></data>
@@ -260,7 +257,7 @@
   <data name="Mo2_ImportBlockedAmbiguousFormat" xml:space="preserve"><value>Resolve {0} ambiguous mods in the Folder column.</value></data>
   <data name="Mo2_ImportBlockedName" xml:space="preserve"><value>Enter a profile name.</value></data>
   <data name="Mo2_ImportBlockedEmpty" xml:space="preserve"><value>No found mods to import.</value></data>
-  <data name="Mo2_LaunchModeHint" xml:space="preserve"><value>Workspace builds a linked profile folder. USVFS mounts files virtually without copying.</value></data>
+  <data name="Mo2_LaunchModeHint" xml:space="preserve"><value>The imported profile launches through USVFS. Source folders are retained.</value></data>
   <data name="Mo2_EnabledReadOnlyHint" xml:space="preserve"><value>State from modlist.txt. Change it in MO2 or after import.</value></data>
   <data name="Mo2_SelectFolderPlaceholder" xml:space="preserve"><value>Select a folder…</value></data>
   <data name="Catalog_CallOfPripyat" xml:space="preserve"><value>Call of Pripyat</value></data>
@@ -468,8 +465,8 @@
   <data name="SettingsProfile_SharedData" xml:space="preserve"><value>Shared saves, settings, logs, and screenshots</value></data>
   <data name="SettingsProfile_SeparateData" xml:space="preserve"><value>Separate profile data</value></data>
   <data name="SettingsProfile_DataPathFormat" xml:space="preserve"><value>{0}: {1}&#xA;Switching does not move or replace existing files.</value></data>
-  <data name="SettingsProfile_UsvfsAvailable" xml:space="preserve"><value>USVFS connects mods without building a full workspace. Compatibility depends on the specific game and mods.</value></data>
-  <data name="SettingsProfile_UsvfsMissing" xml:space="preserve"><value>USVFS components were not found next to the launcher. Only Workspace is available.</value></data>
+  <data name="SettingsProfile_UsvfsAvailable" xml:space="preserve"><value>USVFS mounts the game and mods virtually. Compatibility depends on the game and its launch method.</value></data>
+  <data name="SettingsProfile_UsvfsMissing" xml:space="preserve"><value>USVFS runtime is unavailable. Install the complete launcher package.</value></data>
   <data name="SettingsProfile_CreateWorkspaceFirst" xml:space="preserve"><value>First create the profile workspace by launching the game.</value></data>
   <data name="SettingsProfile_CopyTitle" xml:space="preserve"><value>Copy user data</value></data>
   <data name="SettingsProfile_CopyConfirmFormat" xml:space="preserve"><value>From: {0}&#xA;To: {1}&#xA;&#xA;Duplicate files will be skipped. Profile service files are not copied. Close other game instances before copying.</value></data>
@@ -498,39 +495,23 @@
   <data name="Health_Checking" xml:space="preserve"><value>Checking profile status...</value></data>
   <data name="Health_RegularProfile" xml:space="preserve"><value>Mod over base game</value></data>
   <data name="Health_UsvfsTooltip" xml:space="preserve"><value>Game and mod files are connected virtually. The current folder is not used.</value></data>
-  <data name="Health_StatePending" xml:space="preserve"><value>Workspace status has not been received yet.</value></data>
   <data name="Health_Layers" xml:space="preserve"><value>Layers</value></data>
-  <data name="Health_VisibleSize" xml:space="preserve"><value>Visible size</value></data>
   <data name="Health_LayersTooltip" xml:space="preserve"><value>Base game and enabled mods that USVFS will combine at launch.</value></data>
-  <data name="Health_VisibleSizeTooltip" xml:space="preserve"><value>How much data the game sees in the workspace. Because of links, this is not the same as disk usage.</value></data>
   <data name="Health_GameData" xml:space="preserve"><value>Game data</value></data>
-  <data name="Health_Occupied" xml:space="preserve"><value>Disk usage</value></data>
   <data name="Health_SharedData" xml:space="preserve"><value>The shared base-game data folder is used.</value></data>
   <data name="Health_SeparateData" xml:space="preserve"><value>Saves, settings, and logs are stored separately in the profile userdata.</value></data>
-  <data name="Health_OccupiedTooltip" xml:space="preserve"><value>Approximate disk space used by the workspace, accounting for hardlinks and symlinks.</value></data>
-  <data name="Health_CurrentFolder" xml:space="preserve"><value>current folder</value></data>
-  <data name="Health_Files" xml:space="preserve"><value>Files</value></data>
-  <data name="Health_NotUsed" xml:space="preserve"><value>not used</value></data>
-  <data name="Health_CurrentTooltip" xml:space="preserve"><value>USVFS creates the game view in process memory and does not build the current folder.</value></data>
   <data name="Health_DataCreated" xml:space="preserve"><value>created</value></data>
   <data name="Health_DataOnLaunch" xml:space="preserve"><value>on launch</value></data>
   <data name="Health_CheckFailedFormat" xml:space="preserve"><value>Check failed: {0}</value></data>
-  <data name="Health_ClearTitle" xml:space="preserve"><value>Clear workspace cache</value></data>
-  <data name="Health_ClearConfirm" xml:space="preserve"><value>Delete only the prepared current folder? Saves, settings, and logs in userdata will remain.</value></data>
-  <data name="Health_ClearFailed" xml:space="preserve"><value>Could not clear workspace cache</value></data>
-  <data name="Health_Rebuilding" xml:space="preserve"><value>Rebuilding workspace...</value></data>
-  <data name="Health_RebuildFailed" xml:space="preserve"><value>Could not rebuild workspace</value></data>
-  <data name="Health_PickWorkspace" xml:space="preserve"><value>Select a folder for the workspace</value></data>
+  <data name="Health_PickWorkspace" xml:space="preserve"><value>Choose a folder for profile storage</value></data>
   <data name="Health_MoveDataTitle" xml:space="preserve"><value>Move profile data</value></data>
-  <data name="Health_MoveWorkspaceTitle" xml:space="preserve"><value>Move workspace</value></data>
   <data name="Health_MoveUsvfsConfirmFormat" xml:space="preserve"><value>Move saves, settings, and logs to the selected folder?{0}{0}The temporary USVFS bootstrap is not copied and will be recreated.</value></data>
-  <data name="Health_MoveWorkspaceConfirmFormat" xml:space="preserve"><value>Move profile userdata to the selected folder?{0}{0}The current folder is not copied and will be rebuilt on next launch.</value></data>
   <data name="Health_MoveFailed" xml:space="preserve"><value>Could not move workspace</value></data>
-  <data name="Health_MovePartialTitle" xml:space="preserve"><value>Workspace moved</value></data>
+  <data name="Health_MovePartialTitle" xml:space="preserve"><value>Profile moved</value></data>
   <data name="Health_MovePartialFormat" xml:space="preserve"><value>Profile data was moved to:{0}{1}{0}{0}Could not delete the old folder:{0}{2}{0}{0}Retry deleting only the old folder?</value></data>
   <data name="Health_MoveCompleteTitle" xml:space="preserve"><value>Move complete</value></data>
   <data name="Health_OldDeletedFormat" xml:space="preserve"><value>Old workspace folder deleted:{0}{1}</value></data>
-  <data name="Health_OldRemainsTitle" xml:space="preserve"><value>Workspace moved; old folder remains</value></data>
+  <data name="Health_OldRemainsTitle" xml:space="preserve"><value>Profile moved; old folder remains</value></data>
   <data name="Health_OldRemainsFormat" xml:space="preserve"><value>The profile already uses the new folder:{0}{1}{0}{0}Could not delete the old folder:{0}{2}{0}{0}{3}</value></data>
   <data name="Preflight_Failed" xml:space="preserve"><value>Profile failed the pre-launch check:</value></data>
   <data name="ModConflict_Overwrite" xml:space="preserve"><value>Overwrites</value></data>
@@ -550,24 +531,8 @@
   <data name="Health_ReadyWarningsFormat" xml:space="preserve"><value>Profile is ready, but has warnings: {0}.</value></data>
   <data name="Health_AttentionFormat" xml:space="preserve"><value>Profile requires attention. Errors: {0}, warnings: {1}.</value></data>
   <data name="Health_ReportProfileFormat" xml:space="preserve"><value>Profile: {0}</value></data>
-  <data name="Health_ReportWorkspaceFormat" xml:space="preserve"><value>Workspace: logical size {0}, approximate disk usage {1}.</value></data>
-  <data name="Health_ReportFilesFormat" xml:space="preserve"><value>Files: {0:N0}; hardlinks: {1:N0}; symlinks: {2:N0}; local: {3:N0}.</value></data>
   <data name="Health_ReportUsvfsFormat" xml:space="preserve"><value>Latest USVFS messages ({0}):</value></data>
   <data name="Health_ReportUsvfsFailedFormat" xml:space="preserve"><value>Could not read USVFS log: {0}</value></data>
-  <data name="Workspace_PathPending" xml:space="preserve"><value>The path will be assigned when the workspace is first built.</value></data>
-  <data name="Workspace_CurrentPending" xml:space="preserve"><value>The current folder will be created at launch.</value></data>
-  <data name="Workspace_UserdataPending" xml:space="preserve"><value>The userdata folder will appear next to the workspace.</value></data>
-  <data name="Workspace_AfterRebuild" xml:space="preserve"><value>after rebuild</value></data>
-  <data name="Workspace_LinkSummaryFormat" xml:space="preserve"><value>Hardlinks: {0:N0}  ·  Symlinks: {1:N0}  ·  Local files: {2:N0}</value></data>
-  <data name="Workspace_StatsPending" xml:space="preserve"><value>Detailed statistics will appear after the next workspace rebuild.</value></data>
-  <data name="Workspace_NotPrepared" xml:space="preserve"><value>not prepared</value></data>
-  <data name="Workspace_PathMissing" xml:space="preserve"><value>Workspace folder has not been selected yet.</value></data>
-  <data name="Workspace_FolderMissing" xml:space="preserve"><value>Workspace folder has not been created yet.</value></data>
-  <data name="Workspace_FilesMissing" xml:space="preserve"><value>Launch files have not been prepared yet.</value></data>
-  <data name="Workspace_Ready" xml:space="preserve"><value>Workspace is ready.</value></data>
-  <data name="Workspace_RebuildRecommended" xml:space="preserve"><value>The workspace exists, but should be rebuilt.</value></data>
-  <data name="Workspace_SizeTooltip" xml:space="preserve"><value>Logical size is the data visible to the game. Disk usage is an estimate that accounts for links.</value></data>
-  <data name="Workspace_SizePending" xml:space="preserve"><value>Exact statistics will appear after the next workspace build.</value></data>
   <data name="Size_Bytes" xml:space="preserve"><value>B</value></data>
   <data name="Size_Kilobytes" xml:space="preserve"><value>KB</value></data>
   <data name="Size_Megabytes" xml:space="preserve"><value>MB</value></data>
@@ -613,14 +578,9 @@
   <data name="Check_FoundByFsltx" xml:space="preserve"><value>Found automatically from the -fsltx argument</value></data>
   <data name="Check_SourceDetailsFormat" xml:space="preserve"><value>{0}: {1}{2}Source: {3}.</value></data>
   <data name="Check_ProfilePathPendingUsvfs" xml:space="preserve"><value>The profile folder will be assigned on first launch. USVFS does not require a current folder.</value></data>
-  <data name="Check_PathPending" xml:space="preserve"><value>The path has not been assigned yet.</value></data>
   <data name="Check_ProfileFolderCreatedFormat" xml:space="preserve"><value>The profile folder will be created at launch: {0}</value></data>
   <data name="Check_ProfileDataSeparateFormat" xml:space="preserve"><value>Profile data is stored separately: {0}. The current folder is not used.</value></data>
-  <data name="Check_ManagedFolderFormat" xml:space="preserve"><value>Managed folder: {0}</value></data>
   <data name="Check_MarkerMissingFormat" xml:space="preserve"><value>Safety marker missing: {0}</value></data>
-  <data name="Check_WorkspaceCache" xml:space="preserve"><value>Workspace cache</value></data>
-  <data name="Check_WorkspacePresent" xml:space="preserve"><value>Prepared workspace and manifest are present.</value></data>
-  <data name="Check_WorkspacePending" xml:space="preserve"><value>The workspace will be prepared or rebuilt on next launch.</value></data>
   <data name="Check_ManualSourceMissingFormat" xml:space="preserve"><value>The manually selected launch executable is unavailable: {0}{1}{2}.</value></data>
   <data name="Check_FinalManualFormat" xml:space="preserve"><value>Final file: {0}{1}Source: {2}. Selected manually; mod priority will not replace this EXE.</value></data>
   <data name="Check_FinalAutomaticFormat" xml:space="preserve"><value>Final file: {0}{1}Source: {2}. Lower mods in the list have priority.</value></data>
@@ -679,22 +639,13 @@
   <data name="Preflight_FreeSpace" xml:space="preserve"><value>Free space</value></data>
   <data name="Preflight_WorkspaceDriveMissing" xml:space="preserve"><value>Could not determine the workspace drive.</value></data>
   <data name="Preflight_FreeSpaceFormat" xml:space="preserve"><value>{0} available on {1}</value></data>
-  <data name="Preflight_UsvfsLayeredOnly" xml:space="preserve"><value>USVFS is available only for regular layered profiles.</value></data>
   <data name="Preflight_ArchitectureMissingFormat" xml:space="preserve"><value>Could not determine the final EXE architecture: {0}</value></data>
   <data name="Preflight_UsvfsReadyFormat" xml:space="preserve"><value>Complete USVFS {0} runtime is ready. Target: {1}, {2}</value></data>
-  <data name="Preflight_CrossDriveLinks" xml:space="preserve"><value>Cross-drive links</value></data>
-  <data name="Preflight_CrossDriveAllowedFormat" xml:space="preserve"><value>Windows allows files from drive {0} to be connected without copying.</value></data>
-  <data name="Preflight_CrossDriveDeniedFormat" xml:space="preserve"><value>Windows could not create a symbolic link. Enable Developer Mode, run the launcher as administrator, or move the mod to the workspace drive. {0}</value></data>
   <data name="Preflight_EngineFiles" xml:space="preserve"><value>Engine files</value></data>
   <data name="Preflight_EngineDllFound" xml:space="preserve"><value>Engine DLLs were found next to the executable.</value></data>
   <data name="Preflight_EngineDllMissing" xml:space="preserve"><value>Typical engine DLLs were not found next to the selected executable. Some builds may still work.</value></data>
   <data name="Layer_BaseGame" xml:space="preserve"><value>base game</value></data>
   <data name="Layer_ModFormat" xml:space="preserve"><value>mod: {0}</value></data>
-  <data name="Log_HealthCacheClearedFormat" xml:space="preserve"><value>Workspace cache cleared from Health: {0}</value></data>
-  <data name="Log_HealthCacheClearFailedFormat" xml:space="preserve"><value>Workspace cache cleanup failed: {0}</value></data>
-  <data name="Log_HealthRebuildStartedFormat" xml:space="preserve"><value>Workspace rebuild started from Health: {0}</value></data>
-  <data name="Log_HealthRebuildFinishedFormat" xml:space="preserve"><value>Workspace rebuild finished from Health: {0}</value></data>
-  <data name="Log_HealthRebuildFailedFormat" xml:space="preserve"><value>Workspace rebuild failed: {0}</value></data>
   <data name="Log_HealthMoveStartedFormat" xml:space="preserve"><value>Workspace move started from Health: {0}</value></data>
   <data name="Log_HealthAlreadyThereFormat" xml:space="preserve"><value>Workspace is already in the selected folder: {0}</value></data>
   <data name="Log_HealthMoveFinishedFormat" xml:space="preserve"><value>Workspace moved from Health: {0}</value></data>
@@ -708,59 +659,13 @@
   <data name="Log_ReasonModListChanged" xml:space="preserve"><value>mod list change</value></data>
   <data name="Log_ReasonModListReplaced" xml:space="preserve"><value>mod list replacement</value></data>
   <data name="Log_ReasonModPriorityChanged" xml:space="preserve"><value>mod priority change</value></data>
-  <data name="Workspace_GameFolderRequired" xml:space="preserve"><value>Select a game folder for a regular profile.</value></data>
-  <data name="Workspace_CheckingFiles" xml:space="preserve"><value>Checking game and mod files...</value></data>
-  <data name="Workspace_ScanCompleteFormat" xml:space="preserve"><value>Sources checked in {0}. Rebuild is not required.</value></data>
-  <data name="Workspace_Preparing" xml:space="preserve"><value>Preparing a clean profile workspace...</value></data>
-  <data name="Workspace_ConnectingGame" xml:space="preserve"><value>Connecting the base game to the workspace...</value></data>
-  <data name="Workspace_ReadyFormat" xml:space="preserve"><value>Workspace ready. Hard links: {0:N0}; symbolic links: {1:N0}; local files: {2:N0}.</value></data>
-  <data name="Workspace_LocalFilesFormat" xml:space="preserve"><value>Local workspace files: {0:N0}. Service files: {1:N0}; read-only copies: {2:N0}. Source game and mod files were not changed.</value></data>
-  <data name="Workspace_ReadOnlyFilesFormat" xml:space="preserve"><value>Read-only files: {0:N0}. Symbolic links: {1:N0}; independent copies: {2:N0}. Source mod files were not changed.</value></data>
-  <data name="Workspace_TimingFormat" xml:space="preserve"><value>Preparation time: scan {0}; cleanup {1}; game {2}; mods {3}; configuration {4}; total {5}.</value></data>
-  <data name="Workspace_ManualSourceUnavailable" xml:space="preserve"><value>The manual executable source is no longer available. Select the executable again or reset the source to automatic.</value></data>
-  <data name="Workspace_ManualFileMissingFormat" xml:space="preserve"><value>The manual executable source was found, but the file is missing: {0}</value></data>
-  <data name="Workspace_ManualExecutableFormat" xml:space="preserve"><value>Using manually selected executable: {0}. Source: {1}.</value></data>
-  <data name="Workspace_SafetyMarkerRequired" xml:space="preserve"><value>The launcher refused to clean a folder without a workspace safety marker.</value></data>
-  <data name="Workspace_ProfileMarkerRestored" xml:space="preserve"><value>Profile safety marker restored. The workspace can be cleaned safely again.</value></data>
   <data name="Workspace_ExistingFolderFormat" xml:space="preserve"><value>Existing profile workspace found: {0}</value></data>
   <data name="Workspace_RootMarkerRestored" xml:space="preserve"><value>Workspace root service marker restored.</value></data>
-  <data name="Workspace_ProfileMarkerRebuildRestored" xml:space="preserve"><value>Profile safety marker restored. The workspace can be rebuilt safely again.</value></data>
+  <data name="Workspace_ProfileMarkerRebuildRestored" xml:space="preserve"><value>The profile safety marker has been restored.</value></data>
   <data name="Workspace_MovedToAsciiFormat" xml:space="preserve"><value>Workspace moved to a compatible ASCII path: {0}</value></data>
   <data name="Workspace_DriveRootForbidden" xml:space="preserve"><value>A drive root cannot be used as the workspace root.</value></data>
-  <data name="Workspace_MillisecondsFormat" xml:space="preserve"><value>{0:0} ms</value></data>
-  <data name="Workspace_SecondsFormat" xml:space="preserve"><value>{0:0.0} s</value></data>
-  <data name="Workspace_ExecutableAutoSelectedFormat" xml:space="preserve"><value>Profile executable not found. Automatically selected '{0}': {1}.</value></data>
-  <data name="WorkspaceManifest_CurrentMissing" xml:space="preserve"><value>Workspace will be prepared: the current folder has not been created yet.</value></data>
-  <data name="WorkspaceManifest_CacheMissing" xml:space="preserve"><value>Workspace will be prepared: build cache is missing.</value></data>
-  <data name="WorkspaceManifest_ExecutableMissing" xml:space="preserve"><value>Workspace will be rebuilt: the selected EXE is missing from the current build.</value></data>
-  <data name="WorkspaceManifest_Current" xml:space="preserve"><value>Workspace is current: no game or mod changes were found.</value></data>
-  <data name="WorkspaceManifest_CacheUnreadable" xml:space="preserve"><value>Workspace will be rebuilt: build cache could not be read.</value></data>
-  <data name="WorkspaceManifest_RebuildReasonFormat" xml:space="preserve"><value>Workspace will be rebuilt: {0}.</value></data>
-  <data name="WorkspaceManifest_AdditionalReasonFormat" xml:space="preserve"><value>Additional rebuild reason: {0}.</value></data>
-  <data name="WorkspaceManifest_DiagnosticFormatChanged" xml:space="preserve"><value>Workspace diagnostic signature format was updated</value></data>
-  <data name="WorkspaceManifest_FormatChangedFormat" xml:space="preserve"><value>Workspace format changed: {0} → {1}</value></data>
-  <data name="WorkspaceManifest_ExecutableChangedFormat" xml:space="preserve"><value>launch executable changed: {0} → {1}</value></data>
-  <data name="WorkspaceManifest_SourceChangedFormat" xml:space="preserve"><value>EXE source changed: {0} → {1}</value></data>
-  <data name="WorkspaceManifest_Auto" xml:space="preserve"><value>auto</value></data>
-  <data name="WorkspaceManifest_ProfileModeChangedFormat" xml:space="preserve"><value>profile mode changed: {0} → {1}</value></data>
-  <data name="WorkspaceManifest_InputsChanged" xml:space="preserve"><value>Workspace inputs changed</value></data>
-  <data name="WorkspaceManifest_MoreChangesFormat" xml:space="preserve"><value>additional changes not shown: {0:N0}</value></data>
-  <data name="WorkspaceManifest_LayersChanged" xml:space="preserve"><value>enabled layer set changed</value></data>
-  <data name="WorkspaceManifest_ModOrderChanged" xml:space="preserve"><value>mod order changed</value></data>
-  <data name="WorkspaceManifest_LayerPathChangedFormat" xml:space="preserve"><value>layer “{0}” path changed: {1} → {2}</value></data>
-  <data name="WorkspaceManifest_LayerPriorityChangedFormat" xml:space="preserve"><value>layer “{0}” priority changed: {1} → {2}</value></data>
-  <data name="WorkspaceManifest_ExclusionsChangedFormat" xml:space="preserve"><value>excluded files changed for layer “{0}”</value></data>
-  <data name="WorkspaceManifest_FileAddedFormat" xml:space="preserve"><value>file added to layer “{0}”: {1}</value></data>
-  <data name="WorkspaceManifest_FileChangedFormat" xml:space="preserve"><value>file changed in layer “{0}”: {1}</value></data>
-  <data name="WorkspaceManifest_FileRemovedFormat" xml:space="preserve"><value>file removed from layer “{0}”: {1}</value></data>
-  <data name="WorkspaceManifest_NotSet" xml:space="preserve"><value>not set</value></data>
   <data name="Materializer_OldLinksFound" xml:space="preserve"><value>Protected links from an older build were found. Preparing safe workspace cleanup...</value></data>
   <data name="Materializer_OldLinksReleasedFormat" xml:space="preserve"><value>Released protected links from the old workspace: {0:N0}. Source-file attributes will be restored.</value></data>
-  <data name="Materializer_CheckingSymlinks" xml:space="preserve"><value>Checking symbolic links for files on other drives...</value></data>
-  <data name="Materializer_GameFilesFormat" xml:space="preserve"><value>Base-game files connected: {0:N0}...</value></data>
-  <data name="Materializer_ConnectingModFormat" xml:space="preserve"><value>Connecting mod: {0}</value></data>
-  <data name="Materializer_ModConnectedFormat" xml:space="preserve"><value>Mod connected: {0}. Files: {1:N0}; folders: {2:N0}.</value></data>
-  <data name="Materializer_EmptyModFormat" xml:space="preserve"><value>Warning: no files were found in mod “{0}”. Make sure the mod's root folder is selected, not an empty outer folder.</value></data>
   <data name="Materializer_CrossDriveReasonFormat" xml:space="preserve"><value>Mod files are on drive {0}, but the workspace is created on drive {1}. Windows could not create a symbolic link between them.</value></data>
   <data name="Materializer_LinkReasonFormat" xml:space="preserve"><value>Windows could not create a link on drive {0}. The drive might not use NTFS, or the launcher might not have enough permissions.</value></data>
   <data name="Materializer_LinkFailureFormat" xml:space="preserve"><value>Could not connect mod files to the profile without copying.{0}{0}{1}{0}{0}To fix the problem:{0}1. Enable Developer Mode in Windows Settings: System → For developers.{0}2. Or run the launcher as administrator.{0}3. Or move the mod to drive {2}.{0}{0}The build was stopped. Game and mod files were not changed.</value></data>
@@ -815,7 +720,6 @@
   <data name="Usvfs_AlreadyRunning" xml:space="preserve"><value>Another profile is already running through USVFS. Close it before starting a second USVFS profile.</value></data>
   <data name="Navigation_Mo2FailedTitle" xml:space="preserve"><value>Could not open MO2 import</value></data>
   <data name="Navigation_WizardFailedFormat" xml:space="preserve"><value>The wizard was not opened. The launcher will continue.{0}{0}{1}</value></data>
-  <data name="Workspace_ExecutableFallbackFormat" xml:space="preserve"><value>Executable '{0}' was not found. Using '{1}': {2}.</value></data>
   <data name="Layer_ProfileData" xml:space="preserve"><value>profile data</value></data>
   <data name="Fsgame_ArgumentPathRequired" xml:space="preserve"><value>Specify a relative .ltx file path after -fsltx.</value></data>
   <data name="Fsgame_ArgumentFile" xml:space="preserve"><value>File from the -fsltx argument</value></data>
@@ -834,21 +738,16 @@
   <data name="Usvfs_RuntimeInvalidFormat" xml:space="preserve"><value>The USVFS runtime for the {0} failed validation. {1} Runtime folder: {2}</value></data>
   <data name="Usvfs_ArchitectureUnknown" xml:space="preserve"><value>unknown</value></data>
   <data name="Fsgame_NotFoundHelpFormat" xml:space="preserve"><value>fsgame.ltx was not found in enabled layers. Select it manually in an enabled layer.{0}{0}Open: “Profile settings” → “fsgame.ltx source” → “Select file...”.{0}{0}Depending on the modification, the file may have another name: fsgame.ltx, fsgame_coc.ltx, or fsolr.ltx.</value></data>
-  <data name="Fsgame_ManualUsingFormat" xml:space="preserve"><value>Using manually selected fsgame configuration: {0}</value></data>
-  <data name="ProfileData_SharedFormat" xml:space="preserve"><value>Using shared base-game data: {0}. Existing files are not copied or replaced.</value></data>
   <data name="ProfileData_MigratedFormat" xml:space="preserve"><value>Previously redirected profile data migrated: {0:N0}; existing files skipped: {1:N0}.</value></data>
   <data name="Launch_UsvfsFailedFormat" xml:space="preserve"><value>USVFS launch failed: {0}</value></data>
-  <data name="Launch_UsvfsNoAutoFallback" xml:space="preserve"><value>The profile was not switched to Workspace automatically. To retry through Workspace, select that mode in profile settings.</value></data>
+  <data name="Launch_UsvfsNoAutoFallback" xml:space="preserve"><value>The launch was stopped. No other backend was started.</value></data>
   <data name="Launch_BackendFormat" xml:space="preserve"><value>Launch mode: {0}.</value></data>
   <data name="Launch_ExecutableFormat" xml:space="preserve"><value>Launching: {0}</value></data>
   <data name="Launch_UsvfsUnavailable" xml:space="preserve"><value>USVFS is selected for the profile, but its components are unavailable. Install a launcher build containing usvfs_x64.dll and usvfs_proxy_x64.exe, or select Workspace in profile settings.</value></data>
-  <data name="Launch_BackendUnavailableFormat" xml:space="preserve"><value>Profile launch backend is unavailable: {0}.</value></data>
   <data name="Writable_CapturedFormat" xml:space="preserve"><value>Profile game settings captured from workspace: {0:N0}.</value></data>
   <data name="Writable_StaleSkippedFormat" xml:space="preserve"><value>A newer profile version was kept; stale current files skipped: {0:N0}.</value></data>
   <data name="Writable_UsvfsPreparedFormat" xml:space="preserve"><value>Profile writable files prepared: {0:N0}.</value></data>
   <data name="Writable_UsvfsMigratedFormat" xml:space="preserve"><value>Writable files moved from USVFS overwrite to profile storage: {0:N0}.</value></data>
-  <data name="Writable_LaunchPreparedFormat" xml:space="preserve"><value>Profile game settings prepared for launch: {0:N0}.</value></data>
-  <data name="Writable_WorkspaceRestoredFormat" xml:space="preserve"><value>Profile game settings restored to workspace: {0:N0}.</value></data>
   <data name="Writable_ObsoleteFsgameRemoved" xml:space="preserve"><value>Obsolete profile fsgame.ltx removed. The launcher will recreate it from the current profile layers.</value></data>
   <data name="Workspace_ActiveCannotDeleteFormat" xml:space="preserve"><value>Cannot delete the active profile workspace: {0}</value></data>
   <data name="Workspace_NestedDestination" xml:space="preserve"><value>The new workspace folder must not be inside the old folder or contain it.</value></data>
@@ -971,9 +870,6 @@
   <data name="Mod_DefaultNameFormat" xml:space="preserve"><value>Mod {0}</value></data>
   <data name="Profile_DefaultNameFormat" xml:space="preserve"><value>Profile {0}</value></data>
   <data name="Profile_DefaultDescription" xml:space="preserve"><value>S.T.A.L.K.E.R. mod profile</value></data>
-  <data name="Progress_LegacySaveHookRemoved" xml:space="preserve"><value>Removed the legacy save autoload hook from the profile workspace.</value></data>
-  <data name="Progress_FsgameDetectedFormat" xml:space="preserve"><value>Detected fsgame.ltx in “{0}”; using it as the working directory.</value></data>
-  <data name="Progress_FsgameRewritten" xml:space="preserve"><value>fsgame.ltx rewritten for profile-local saves and logs.</value></data>
   <data name="Progress_KeepingExistingUserLtx" xml:space="preserve"><value>Keeping the existing profile-local user.ltx.</value></data>
   <data name="Progress_KeepingModifiedUserLtx" xml:space="preserve"><value>Keeping the modified profile-local user.ltx.</value></data>
   <data name="Progress_UserLtxPreparedFormat" xml:space="preserve"><value>Profile user.ltx prepared from {0}: {1}</value></data>
@@ -1027,7 +923,6 @@
   <data name="Error_NativeOperationFailedFormat" xml:space="preserve"><value>Native operation failed: {0}.</value></data>
   <data name="Error_UsvfsParametersNull" xml:space="preserve"><value>USVFS returned empty creation parameters.</value></data>
   <data name="Error_WindowsDidNotStartGame" xml:space="preserve"><value>Windows did not start the game process.</value></data>
-  <data name="Error_LinkedBackendRequired" xml:space="preserve"><value>The linked-workspace launch backend must be registered.</value></data>
   <data name="Error_StandaloneNoValidMod" xml:space="preserve"><value>The standalone profile has no enabled mod with a valid folder.</value></data>
   <data name="Error_SoundFormatMismatch" xml:space="preserve"><value>Interface sound files must use the same audio format.</value></data>
   <data name="Error_SoundMissingFormat" xml:space="preserve"><value>Sound resource “{0}” was not found.</value></data>
@@ -1040,14 +935,12 @@
   <data name="Error_UsvfsMapFailedFormat" xml:space="preserve"><value>USVFS could not map “{0}” to “{1}”.</value></data>
   <data name="Error_UsvfsSessionAlreadyStarted" xml:space="preserve"><value>This USVFS session has already started a process.</value></data>
   <data name="Error_UsvfsSessionNotStarted" xml:space="preserve"><value>The USVFS session has not started a process.</value></data>
-  <data name="Error_GameFolderNotFoundFormat" xml:space="preserve"><value>Game folder not found: {0}</value></data>
   <data name="Error_WorkspaceDeleteOutsideRootFormat" xml:space="preserve"><value>Deletion of a workspace outside the managed launcher folders was blocked: {0}</value></data>
   <data name="Error_WorkspaceMarkerMissingFormat" xml:space="preserve"><value>Deletion of a profile workspace without its safety marker was blocked: {0}</value></data>
   <data name="Error_WorkspaceProfilePathFormat" xml:space="preserve"><value>The profile workspace must be a profile-specific folder inside a managed launcher folder: {0}</value></data>
   <data name="Error_WorkspaceParentMissingFormat" xml:space="preserve"><value>The workspace has no parent folder: {0}</value></data>
   <data name="Error_WorkspaceLegacyDestinationExistsFormat" xml:space="preserve"><value>Cannot migrate the legacy workspace because the destination already exists: {0}</value></data>
   <data name="Error_StandaloneNoModHelp" xml:space="preserve"><value>The standalone profile has no enabled mod with a valid folder. Add and enable a mod.</value></data>
-  <data name="Error_StandaloneExeMissingFormat" xml:space="preserve"><value>No executable was found in the standalone mod folder: {0}</value></data>
   <data name="Error_ModFolderNotFoundFormat" xml:space="preserve"><value>Mod folder not found: {0}</value></data>
   <data name="Error_UsvfsX86SessionAlreadyStarted" xml:space="preserve"><value>This USVFS x86 session has already started a process.</value></data>
   <data name="Error_UsvfsX86HostMissing" xml:space="preserve"><value>USVFS x86 host not found.</value></data>
@@ -1085,9 +978,6 @@
   <data name="Error_UsvfsAnomalyRootFormat" xml:space="preserve"><value>The USVFS Anomaly launcher must be in the game root: {0}</value></data>
   <data name="Error_UsvfsAsciiPath" xml:space="preserve"><value>USVFS requires an ASCII-only profile workspace. Move the profile workspace to a path without non-Latin characters.</value></data>
   <data name="Error_UsvfsBackendUnavailableFormat" xml:space="preserve"><value>The official USVFS backend is unavailable. Place the complete x64/x86 USVFS runtime and StalkerModLauncher.UsvfsX86Host.exe next to the launcher, or set {0}=1 for a development build.</value></data>
-  <data name="Error_NoExecutablesInWorkspace" xml:space="preserve"><value>No executable files were found in the built workspace.</value></data>
-  <data name="Error_ExecutablesFoundFormat" xml:space="preserve"><value>Executables found: {0}</value></data>
-  <data name="Error_ProfileExeAfterBuildFormat" xml:space="preserve"><value>The profile executable was not found after building the workspace: {0}. {1}</value></data>
   <data name="Safety_PathEmptyFormat" xml:space="preserve"><value>{0} is empty.</value></data>
   <data name="Safety_PathRelativeFormat" xml:space="preserve"><value>{0} must be a relative path inside the profile workspace.</value></data>
   <data name="Safety_PathEscapesFormat" xml:space="preserve"><value>{0} must not leave the profile workspace.</value></data>
@@ -1105,10 +995,8 @@
   <data name="Safety_BootstrapFsgame" xml:space="preserve"><value>Bootstrap fsgame.ltx</value></data>
   <data name="Safety_UsvfsWorkingDirectory" xml:space="preserve"><value>USVFS working directory</value></data>
   <data name="Safety_UsvfsWritableFile" xml:space="preserve"><value>USVFS writable file</value></data>
-  <data name="Safety_ModFile" xml:space="preserve"><value>Mod file</value></data>
   <data name="Safety_WorkspaceFile" xml:space="preserve"><value>Workspace file</value></data>
   <data name="Safety_ProfileShaderCacheFile" xml:space="preserve"><value>Profile shader-cache file</value></data>
-  <data name="Safety_PinnedExecutable" xml:space="preserve"><value>Pinned launch executable</value></data>
   <data name="Layer_ExcludedFallbackFormat" xml:space="preserve"><value>excluded-file fallback: {0}</value></data>
   <data name="Layer_UsvfsLogCollector" xml:space="preserve"><value>USVFS log collector</value></data>
   <data name="Update_CurrentVersionValue" xml:space="preserve"><value>current application version</value></data>
@@ -1149,4 +1037,25 @@
   <data name="SettingsProfile_SaveClose" xml:space="preserve"><value>Save and close</value></data>
   <data name="SettingsProfile_CopyImmediateHint" xml:space="preserve"><value>Copying starts after confirmation and does not wait for settings to be saved.</value></data>
   <data name="SettingsProfile_Mo2ImmediateHint" xml:space="preserve"><value>Applying mod order changes and saves the mod list immediately. Save profile settings separately.</value></data>
+  <data name="Error_StandaloneBackendRequired" xml:space="preserve">
+    <value>A direct-launch backend is required for standalone builds.</value>
+  </data>
+  <data name="Launch_WorkspaceRemoved" xml:space="preserve">
+    <value>Workspace launch is no longer supported. Create a USVFS profile. Existing profile files have not been migrated.</value>
+  </data>
+  <data name="ProfileStorage_Busy" xml:space="preserve">
+    <value>Stop the game and wait for profile preparation or maintenance to finish before changing profile files.</value>
+  </data>
+  <data name="ProfileStorage_SourceOverlap" xml:space="preserve">
+    <value>The profile directory and its parent storage folder must not overlap the game, mod or MO2 overwrite directories.</value>
+  </data>
+  <data name="Writable_BaselineInvalid" xml:space="preserve">
+    <value>The bootstrap settings snapshot is damaged. Profile settings have not been discarded.</value>
+  </data>
+  <data name="Writable_ConflictArchivedFormat" xml:space="preserve">
+    <value>A conflicting settings version was preserved: {0}</value>
+  </data>
+  <data name="Settings_ImportLegacyProfiles" xml:space="preserve"><value>Import profiles from old version</value></data>
+  <data name="Settings_LegacyImportResult" xml:space="preserve"><value>Profiles imported: {0}; skipped (already present): {1}.</value></data>
+  <data name="Settings_LegacyImportFailed" xml:space="preserve"><value>Could not import profiles: {0}</value></data>
 </root>

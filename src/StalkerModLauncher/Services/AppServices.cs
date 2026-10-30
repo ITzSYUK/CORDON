@@ -18,7 +18,7 @@ public sealed class AppServices : IDisposable
         ProfileManager = new ProfileManager(Paths, workspaceBuilder);
         var launchBackends = new List<IProfileLaunchBackend>
         {
-            new LinkedWorkspaceLaunchBackend(workspaceBuilder)
+            new StandaloneLaunchBackend()
         };
         if (UsvfsFeatureGate.IsEnabled())
         {

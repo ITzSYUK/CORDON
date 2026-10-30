@@ -55,8 +55,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             IsEnabled = true,
             Order = 1
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var runtime = new RecordingUsvfsRuntime();
         var backend = new UsvfsLaunchBackend(runtime, game);
 
@@ -134,7 +134,7 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             ExecutableRelativePath = @"bin_x64\xrEngine.exe",
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
         var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var runtime = new RecordingUsvfsRuntime();
         var backend = new UsvfsLaunchBackend(runtime, game);
@@ -177,8 +177,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             ExecutableRelativePath = @"bin_x64\xrEngine.exe",
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var backend = new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), game);
 
         var error = await Assert.ThrowsAsync<InvalidDataException>(() => backend.PrepareAsync(
@@ -209,7 +209,6 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         Directory.CreateDirectory(Path.GetDirectoryName(profileCache)!);
         File.WriteAllText(baseCache, "base cache");
         File.WriteAllText(modCache, "mod cache");
-        File.WriteAllText(profileCache, "stale cache");
         CreateUsvfsRuntimeFiles(game);
         var profile = new ModProfile
         {
@@ -227,8 +226,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             IsEnabled = true,
             Order = 1
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var backend = new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), game);
 
         await backend.PrepareAsync(
@@ -274,8 +273,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             IsEnabled = true,
             Order = 1
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var backend = new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), game);
 
         await backend.PrepareAsync(
@@ -351,8 +350,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             IsEnabled = true,
             Order = 2
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var runtime = new RecordingUsvfsRuntime();
         var backend = new UsvfsLaunchBackend(runtime, game);
 
@@ -457,8 +456,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             ExecutableRelativePath = launcherName,
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var runtime = new RecordingUsvfsRuntime();
         var backend = new UsvfsLaunchBackend(runtime, runtimeDirectory);
 
@@ -498,8 +497,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             ExecutableRelativePath = @"bin\Play.exe",
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var backend = new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), game);
 
         var plan = await backend.PrepareAsync(
@@ -545,8 +544,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             IsEnabled = true,
             Order = 1
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var runtime = new RecordingUsvfsRuntime();
         var backend = new UsvfsLaunchBackend(runtime, game);
 
@@ -603,8 +602,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             IsEnabled = true,
             Order = 1
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var runtime = new RecordingUsvfsRuntime();
         var backend = new UsvfsLaunchBackend(runtime, game);
 
@@ -654,8 +653,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             ExecutableRelativePath = @"bin_x64\xrEngine.exe",
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var backend = new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), game);
 
         await backend.PrepareAsync(
@@ -698,8 +697,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             IsEnabled = true,
             Order = 1
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var backend = new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), game);
 
         var plan = await backend.PrepareAsync(
@@ -741,8 +740,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             ExecutableRelativePath = @"bin\Play.exe",
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var backend = new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), game);
 
         var error = await Assert.ThrowsAsync<FileNotFoundException>(() => backend.PrepareAsync(
@@ -901,9 +900,28 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
         profile.Mods.Add(new ModEntry { Name = "Engine", SourcePath = mod, IsEnabled = true, Order = 1 });
-        var layers = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
         return new ProfileLaunchBackendContext(game, profile, layers,
             OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace));
+    }
+
+    [Fact]
+    public async Task BootstrapLoaderHonorsExcludedModFile()
+    {
+        var context = CreatePreparationContext();
+        var sourceDll = Path.Combine(context.GamePath, "bin", "test-loader.dll");
+        Directory.CreateDirectory(Path.GetDirectoryName(sourceDll)!);
+        File.WriteAllText(sourceDll, "base loader");
+        var mod = context.Profile.Mods[0];
+        File.WriteAllText(Path.Combine(mod.SourcePath, "bin", "test-loader.dll"), "excluded loader");
+        mod.ExcludedFiles.Add(Path.Combine("bin", "test-loader.dll"));
+        var plan = await new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), context.GamePath)
+            .PrepareAsync(context, new Progress<string>());
+        try
+        {
+            Assert.Equal("base loader", File.ReadAllText(Path.Combine(Path.GetDirectoryName(plan.ExecutablePath)!, "test-loader.dll")));
+        }
+        finally { await plan.RuntimeLease!.DisposeAsync(); }
     }
 
     private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>

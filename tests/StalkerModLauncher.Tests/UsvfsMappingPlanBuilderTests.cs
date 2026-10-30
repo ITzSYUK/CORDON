@@ -40,8 +40,8 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
             IsEnabled = true,
             Order = 2
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
 
         var plan = UsvfsMappingPlanBuilder.Build(layerPlan, manifest);
 
@@ -70,8 +70,8 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
             Name = "Layered",
             GameInstallPath = game
         };
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
 
         var plan = UsvfsMappingPlanBuilder.Build(layerPlan, manifest);
 
@@ -99,8 +99,8 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
             IsEnabled = true,
             Order = 1
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
 
         var plan = UsvfsMappingPlanBuilder.Build(layerPlan, manifest, virtualRoot);
 
@@ -131,8 +131,8 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
             IsEnabled = true,
             Order = 1
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var writableFile = manifest.WritableFiles.Single(file =>
             file.RelativePath == Path.Combine("gamedata", "configs", "localization.ltx"));
         Directory.CreateDirectory(Path.GetDirectoryName(writableFile.StoragePath)!);
@@ -164,8 +164,8 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
             GameInstallPath = game,
             UseBaseGameData = true
         };
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         Directory.CreateDirectory(Path.Combine(manifest.WriteOverlayRoot, "userdata", "savedgames"));
         File.WriteAllText(Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx"), "profile config");
 
@@ -198,8 +198,8 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
             Order = 2,
             ExcludedFiles = ["shared.ltx"]
         });
-        var layerPlan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(profile, layerPlan, workspace);
+        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
 
         var plan = UsvfsMappingPlanBuilder.Build(layerPlan, manifest);
 

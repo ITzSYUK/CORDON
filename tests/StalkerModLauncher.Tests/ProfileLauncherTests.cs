@@ -8,10 +8,10 @@ namespace StalkerModLauncher.Tests;
 public sealed class ProfileLauncherTests
 {
     [Fact]
-    public async Task LaunchAsyncUsesLinkedWorkspaceBackendByDefault()
+    public async Task LaunchAsyncUsesUsvfsBackendByDefault()
     {
         using var process = Process.GetCurrentProcess();
-        var linkedBackend = new RecordingLaunchBackend(LaunchBackendKind.LinkedWorkspace);
+        var linkedBackend = new RecordingLaunchBackend(LaunchBackendKind.VirtualFileSystem);
         var executor = new RecordingLaunchPlanExecutor(process);
         var launcher = new ProfileLauncher([linkedBackend], executor);
         var profile = new ModProfile();
@@ -20,14 +20,14 @@ public sealed class ProfileLauncherTests
 
         Assert.Same(process, launchedProcess.Process);
         Assert.Same(profile, linkedBackend.Profile);
-        Assert.Equal(LaunchBackendKind.LinkedWorkspace, executor.Plan?.BackendKind);
+        Assert.Equal(LaunchBackendKind.VirtualFileSystem, executor.Plan?.BackendKind);
     }
 
     [Fact]
     public async Task LaunchAsyncRejectsUnavailableVirtualFileSystemWithoutChangingProfile()
     {
         using var process = Process.GetCurrentProcess();
-        var linkedBackend = new RecordingLaunchBackend(LaunchBackendKind.LinkedWorkspace);
+        var linkedBackend = new RecordingLaunchBackend(LaunchBackendKind.Standalone);
         var executor = new RecordingLaunchPlanExecutor(process);
         var launcher = new ProfileLauncher([linkedBackend], executor);
         var profile = new ModProfile { LaunchBackendKind = LaunchBackendKind.VirtualFileSystem };
@@ -45,21 +45,21 @@ public sealed class ProfileLauncherTests
     {
         using var process = Process.GetCurrentProcess();
         var launcher = new ProfileLauncher(
-            [new RecordingLaunchBackend(LaunchBackendKind.LinkedWorkspace)],
+            [new RecordingLaunchBackend(LaunchBackendKind.VirtualFileSystem)],
             new RecordingLaunchPlanExecutor(process));
         var progress = new ListProgress();
 
         await launcher.LaunchAsync("game", new ModProfile(), progress);
 
-        Assert.Contains("Режим запуска: Workspace.", progress.Messages);
-        Assert.Contains("Запуск: C:\\Game\\LinkedWorkspace.exe", progress.Messages);
+        Assert.Contains("Режим запуска: USVFS.", progress.Messages);
+        Assert.Contains("Запуск: C:\\Game\\VirtualFileSystem.exe", progress.Messages);
     }
 
     [Fact]
     public async Task LaunchAsyncReportsVirtualFileSystemFailureWithoutSilentFallback()
     {
         using var process = Process.GetCurrentProcess();
-        var linkedBackend = new RecordingLaunchBackend(LaunchBackendKind.LinkedWorkspace);
+        var linkedBackend = new RecordingLaunchBackend(LaunchBackendKind.Standalone);
         var launcher = new ProfileLauncher(
             [linkedBackend, new ThrowingLaunchBackend(LaunchBackendKind.VirtualFileSystem)],
             new RecordingLaunchPlanExecutor(process));
@@ -73,7 +73,7 @@ public sealed class ProfileLauncherTests
         Assert.Contains("Ошибка запуска USVFS: overlay setup failed", progress.Messages);
         Assert.Contains(
             progress.Messages,
-            message => message.Contains("не переключён на Workspace автоматически", StringComparison.Ordinal));
+            message => message.Contains("Другой режим запуска не использовался", StringComparison.Ordinal));
         Assert.Equal(LaunchBackendKind.VirtualFileSystem, profile.LaunchBackendKind);
         Assert.Null(linkedBackend.Profile);
     }
@@ -91,7 +91,7 @@ public sealed class ProfileLauncherTests
             Directory.CreateDirectory(mod);
             var paths = new AppPaths(Path.Combine(root, "config"), Path.Combine(root, "workspaces"), false);
             var profileManager = new ProfileManager(paths, new NoopWorkspaceManager());
-            var linkedBackend = new RecordingLaunchBackend(LaunchBackendKind.LinkedWorkspace);
+            var linkedBackend = new RecordingLaunchBackend(LaunchBackendKind.VirtualFileSystem);
             var launcher = new ProfileLauncher(
                 [linkedBackend],
                 new RecordingLaunchPlanExecutor(process),
@@ -156,6 +156,30 @@ public sealed class ProfileLauncherTests
         Assert.True(runtimeLease.IsDisposed);
     }
 
+    [Fact]
+    public async Task LegacyWorkspaceIsRejectedWithoutPreparingOrStartingAnyBackend()
+    {
+        var backend = new RecordingLaunchBackend(LaunchBackendKind.VirtualFileSystem);
+        var profile = new ModProfile { LaunchBackendKind = LaunchBackendKind.LegacyWorkspace };
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            new ProfileLauncher([backend]).LaunchAsync("game", profile, new ListProgress()));
+        Assert.Null(backend.Context);
+        Assert.False(profile.IsPreparing);
+        Assert.Empty(profile.WorkspacePath);
+    }
+
+    [Fact]
+    public async Task StandaloneDoesNotRequireUsvfsAndUsesDirectBackend()
+    {
+        using var process = Process.GetCurrentProcess();
+        var backend = new RecordingLaunchBackend(LaunchBackendKind.Standalone);
+        var profile = new ModProfile { IsStandalone = true };
+        var executor = new RecordingLaunchPlanExecutor(process);
+        await new ProfileLauncher([backend], executor).LaunchAsync(string.Empty, profile, new ListProgress());
+        Assert.Equal(LaunchBackendKind.Standalone, executor.Plan!.BackendKind);
+        Assert.Null(backend.Context!.FileLayerPlan);
+    }
+
     private sealed class RecordingLaunchBackend(LaunchBackendKind kind) : IProfileLaunchBackend
     {
         public LaunchBackendKind Kind { get; } = kind;
@@ -217,7 +241,7 @@ public sealed class ProfileLauncherTests
         IAsyncDisposable runtimeLease,
         Task<int>? completion = null) : IProfileLaunchBackend
     {
-        public LaunchBackendKind Kind => LaunchBackendKind.LinkedWorkspace;
+        public LaunchBackendKind Kind => LaunchBackendKind.VirtualFileSystem;
 
         public Task<LaunchPlan> PrepareAsync(
             ProfileLaunchBackendContext context,
@@ -226,7 +250,7 @@ public sealed class ProfileLauncherTests
         {
             return Task.FromResult(new LaunchPlan(
                 Kind,
-                "C:\\Game\\LinkedWorkspace.exe",
+                "C:\\Game\\VirtualFileSystem.exe",
                 "-nointro",
                 "C:\\Game",
                 runtimeLease,
@@ -266,8 +290,5 @@ public sealed class ProfileLauncherTests
         {
         }
 
-        public void ClearProfileWorkspaceCache(ModProfile profile, string gamePath)
-        {
-        }
     }
 }

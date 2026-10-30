@@ -9,65 +9,14 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), "StalkerModLauncherTests", Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public async Task InspectAsyncReadsStatisticsFromManifestWithoutScanningWorkspace()
-    {
-        var workspace = Path.Combine(_root, "workspaces", "profile");
-        Directory.CreateDirectory(Path.Combine(workspace, "current"));
-        File.WriteAllText(Path.Combine(workspace, "current", "fsgame.ltx"), "12345");
-        File.WriteAllText(
-            Path.Combine(workspace, "build-manifest.json"),
-            """
-            {
-              "BuiltAtUtc": "2026-06-15T00:00:00Z",
-              "HasStatistics": true,
-              "FileCount": 12,
-              "HardLinkCount": 7,
-              "SymbolicLinkCount": 4,
-              "LocalFileCount": 1,
-              "LogicalSizeBytes": 12345,
-              "PhysicalSizeBytes": 5
-            }
-            """);
-        var profile = new ModProfile { WorkspacePath = workspace };
-
-        var status = await WorkspaceManagementService.InspectAsync(profile);
-
-        Assert.True(status.Exists);
-        Assert.Equal(12, status.FileCount);
-        Assert.Equal(12345, status.LogicalSizeBytes);
-        Assert.Equal(1, status.LocalFileCount);
-        Assert.Equal(7, status.HardLinkCount);
-        Assert.Equal(4, status.SymbolicLinkCount);
-    }
-
-    [Fact]
-    public async Task InspectAsyncReturnsImmediatelyWithoutDetailedStatisticsForOldManifest()
-    {
-        var workspace = Path.Combine(_root, "workspaces", "old-profile");
-        Directory.CreateDirectory(Path.Combine(workspace, "current"));
-        for (var index = 0; index < 5000; index++)
-        {
-            File.WriteAllText(Path.Combine(workspace, "current", $"{index}.bin"), "test");
-        }
-        File.WriteAllText(Path.Combine(workspace, "build-manifest.json"), """{"BuiltAtUtc":"2026-06-15T00:00:00Z"}""");
-        var profile = new ModProfile { WorkspacePath = workspace };
-        var started = DateTime.UtcNow;
-
-        var status = await WorkspaceManagementService.InspectAsync(profile);
-
-        Assert.False(status.StatisticsAvailable);
-        Assert.True(DateTime.UtcNow - started < TimeSpan.FromSeconds(1));
-    }
-
-    [Fact]
     public async Task MoveAsyncMovesUserDataButNotCurrentCache()
     {
         var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
         var service = new WorkspaceManagementService(new WorkspaceBuilder(paths));
         var oldWorkspace = Path.Combine(_root, "workspaces", "old-profile");
-        Directory.CreateDirectory(Path.Combine(oldWorkspace, "current"));
+        Directory.CreateDirectory(Path.Combine(oldWorkspace, ".usvfs-bootstrap"));
         File.WriteAllText(Path.Combine(oldWorkspace, ".stalker-launcher-workspace"), "marker");
-        File.WriteAllText(Path.Combine(oldWorkspace, "current", "cache.bin"), "cache");
+        File.WriteAllText(Path.Combine(oldWorkspace, ".usvfs-bootstrap", "cache.bin"), "cache");
         Directory.CreateDirectory(Path.Combine(oldWorkspace, "userdata", "savedgames"));
         File.WriteAllText(Path.Combine(oldWorkspace, "userdata", "savedgames", "save.sav"), "save");
         var profile = new ModProfile
@@ -83,16 +32,16 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         Assert.True(result.WasMoved);
         Assert.Null(result.CleanupFailure);
         Assert.True(File.Exists(Path.Combine(profile.WorkspacePath, "userdata", "savedgames", "save.sav")));
-        Assert.False(Directory.Exists(Path.Combine(profile.WorkspacePath, "current")));
+        Assert.False(Directory.Exists(Path.Combine(profile.WorkspacePath, ".usvfs-bootstrap")));
         Assert.False(Directory.Exists(oldWorkspace));
     }
 
     [Theory]
-    [InlineData(LaunchBackendKind.LinkedWorkspace, true)]
-    [InlineData(LaunchBackendKind.LinkedWorkspace, false)]
+    [InlineData(LaunchBackendKind.LegacyWorkspace, true)]
+    [InlineData(LaunchBackendKind.LegacyWorkspace, false)]
     [InlineData(LaunchBackendKind.VirtualFileSystem, true)]
     [InlineData(LaunchBackendKind.VirtualFileSystem, false)]
-    public async Task MoveAsyncPreservesNewestWritableSettings(LaunchBackendKind backend, bool workspaceIsNewer)
+    public async Task MoveAsyncPreservesNewestBootstrapSettings(LaunchBackendKind backend, bool workspaceIsNewer)
     {
         var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
         var service = new WorkspaceManagementService(new WorkspaceBuilder(paths));
@@ -101,7 +50,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         var storedWriteTime = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         foreach (var rule in ProfileWritableGameFiles.Rules)
         {
-            var workspaceFile = Path.Combine(oldWorkspace, "current", rule.RelativePath);
+            var workspaceFile = Path.Combine(oldWorkspace, ".usvfs-bootstrap", rule.RelativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(workspaceFile)!);
             File.WriteAllText(workspaceFile, "workspace settings");
             File.SetLastWriteTimeUtc(workspaceFile, storedWriteTime.AddMinutes(workspaceIsNewer ? 1 : -1));
@@ -128,7 +77,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
                 workspaceIsNewer ? "workspace settings" : "stored settings",
                 File.ReadAllText(Path.Combine(result.DestinationPath, rule.StorageRelativePath)));
         }
-        Assert.False(Directory.Exists(Path.Combine(result.DestinationPath, "current")));
+        Assert.False(Directory.Exists(Path.Combine(result.DestinationPath, ".usvfs-bootstrap")));
         Assert.False(Directory.Exists(oldWorkspace));
     }
 
@@ -140,7 +89,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         var oldWorkspace = Path.Combine(paths.WorkspaceRoot, "profile-first-move");
         File.WriteAllText(CreateDirectoryAndReturnFile(oldWorkspace, ".stalker-launcher-workspace"), "marker");
         var rule = ProfileWritableGameFiles.Rules[0];
-        var workspaceFile = Path.Combine(oldWorkspace, "current", rule.RelativePath);
+        var workspaceFile = Path.Combine(oldWorkspace, ".usvfs-bootstrap", rule.RelativePath);
         Directory.CreateDirectory(Path.GetDirectoryName(workspaceFile)!);
         File.WriteAllText(workspaceFile, "latest settings");
         var profile = new ModProfile { Id = "first-move", WorkspacePath = oldWorkspace };
@@ -160,7 +109,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         var oldWorkspace = Path.Combine(paths.WorkspaceRoot, "profile-locked-settings");
         File.WriteAllText(CreateDirectoryAndReturnFile(oldWorkspace, ".stalker-launcher-workspace"), "marker");
         var rule = ProfileWritableGameFiles.Rules[0];
-        var workspaceFile = Path.Combine(oldWorkspace, "current", rule.RelativePath);
+        var workspaceFile = Path.Combine(oldWorkspace, ".usvfs-bootstrap", rule.RelativePath);
         Directory.CreateDirectory(Path.GetDirectoryName(workspaceFile)!);
         File.WriteAllText(workspaceFile, "latest settings");
         var profile = new ModProfile { Id = "locked-settings", WorkspacePath = oldWorkspace };
@@ -265,9 +214,9 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
         var service = new WorkspaceManagementService(new WorkspaceBuilder(paths));
         var oldWorkspace = Path.Combine(_root, "workspaces", "profile-locked-profile");
-        Directory.CreateDirectory(Path.Combine(oldWorkspace, "current"));
+        Directory.CreateDirectory(Path.Combine(oldWorkspace, ".usvfs-bootstrap"));
         File.WriteAllText(Path.Combine(oldWorkspace, ".stalker-launcher-workspace"), "marker");
-        var lockedFile = Path.Combine(oldWorkspace, "current", "locked.bin");
+        var lockedFile = Path.Combine(oldWorkspace, ".usvfs-bootstrap", "locked.bin");
         File.WriteAllText(lockedFile, "locked");
         Directory.CreateDirectory(Path.Combine(oldWorkspace, "userdata"));
         File.WriteAllText(Path.Combine(oldWorkspace, "userdata", "user.ltx"), "settings");
@@ -296,6 +245,44 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
 
         Assert.Null(retryFailure);
         Assert.False(Directory.Exists(oldWorkspace));
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task MoveRejectsRunningOrPreparingProfileWithoutCreatingDestination(bool running, bool preparing)
+    {
+        var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
+        var profile = new ModProfile { IsRunning = running, IsPreparing = preparing };
+        var destination = Path.Combine(_root, "blocked");
+        await Assert.ThrowsAsync<InvalidOperationException>(() => new WorkspaceManagementService(new WorkspaceBuilder(paths))
+            .MoveAsync(profile, destination, new Progress<string>()));
+        Assert.False(Directory.Exists(destination));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MoveRejectsSourceDirectoryBeforeWritingMarker(bool mod)
+    {
+        var source = Path.Combine(_root, "source");
+        Directory.CreateDirectory(source);
+        var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
+        var profile = new ModProfile { GameInstallPath = mod ? string.Empty : source };
+        if (mod) profile.Mods.Add(new ModEntry { SourcePath = source });
+        await Assert.ThrowsAsync<InvalidOperationException>(() => new WorkspaceManagementService(new WorkspaceBuilder(paths))
+            .MoveAsync(profile, source, new Progress<string>()));
+        Assert.Empty(Directory.EnumerateFileSystemEntries(source));
+        Assert.False(profile.IsPreparing);
+    }
+
+    [Fact]
+    public async Task InspectUsesProfileDirectoryWithoutCurrentOrManifest()
+    {
+        var profile = new ModProfile { WorkspacePath = Directory.CreateDirectory(_root).FullName };
+        var status = await WorkspaceManagementService.InspectAsync(profile);
+        Assert.True(status.RootExists);
+        Assert.Equal(_root, status.WorkspacePath);
     }
 
     private static string CreateDirectoryAndReturnFile(string directory, string fileName)

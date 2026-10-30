@@ -74,9 +74,9 @@ Examples:
 - Call of Pripyat + the iX-Ray engine + gameplay add-ons;
 - Anomaly 1.5.3 + MCM + graphics and gameplay mods + Anomaly-modded-exes.
 
-The launcher combines the base folder and enabled mods in the specified order. Both Workspace and USVFS modes are available for this profile type.
+The launcher combines the base folder and enabled mods in the specified order. This profile type uses USVFS.
 
-A new **Game with mods** profile is created with USVFS selected. You can switch it to Workspace in the profile settings when necessary. Existing profiles are not switched automatically.
+A new **Game with mods** profile uses USVFS. Explicit legacy Workspace profiles are not migrated; create a new profile to use USVFS.
 
 ### Standalone build
 
@@ -131,13 +131,13 @@ You can:
 - quickly move mods to the top or bottom of the list;
 - remove a mod from the profile without deleting its source folder from disk.
 
-Changing the order changes the resulting file set. On the next launch, Workspace checks the order and rebuilds `current` if necessary; USVFS applies the new order when creating the virtual overlay.
+Changing the order changes the resulting file set. USVFS applies the new order on the next launch.
 
 ## Adding and finding mods
 
 The add button lets you select one folder manually. In an existing profile, selecting or dropping an unpacked folder containing `fomod/ModuleConfig.xml` opens the FOMOD wizard. Select the required options: their files are copied to the profile's permanent mods folder, while the original package stays unchanged. No archive is needed. Plain folders are connected directly. Scanning is useful when one common directory contains many mods: the launcher searches for typical X-Ray structures, including `gamedata`, `bin`, `bin_x64`, game archives, and `db` or `patches` folders.
 
-The `ZIP` button installs a mod from a ZIP, 7Z, RAR, or `.fomod` archive. Plain archives are extracted to the profile's permanent mods folder and then added to the list like a regular mod; FOMOD archives install only the resolved components. You can change this folder's path in the profile settings. Workspace is not used for the installed sources and can be freely recreated.
+The `ZIP` button installs a mod from a ZIP, 7Z, RAR, or `.fomod` archive. Plain archives are extracted to the profile's permanent mods folder and then added to the list like a regular mod; FOMOD archives install only the resolved components. You can change this folder's path in the profile settings. Installed source folders are kept outside the profile runtime cache.
 
 Check the detected root folders before adding scan results. Automatic detection helps, but an unusually packaged mod may need to be added manually.
 
@@ -163,7 +163,7 @@ Before the profile is created, the wizard shows:
 - the contents of `overwrite` as a separate optional highest-priority layer that does not clutter the mod list;
 - the automatically detected EXE, or a warning that you must select it manually.
 
-When there are problems, the preview initially shows only missing and ambiguous entries; you can disable the filter. You can assign an individual folder to a missing mod, otherwise it is not included in the profile. If one entry matches multiple folders, select the correct one in the **Folder** column—the profile cannot be created until every such match is resolved. Choose Workspace or USVFS before creating the profile; USVFS is selected by default. MO2 source folders are used only as sources and are not modified. A new profile is saved transactionally: if saving fails, it is removed from the list and the settings remain unchanged.
+When there are problems, the preview initially shows only missing and ambiguous entries; you can disable the filter. You can assign an individual folder to a missing mod, otherwise it is not included in the profile. If one entry matches multiple folders, select the correct one in the **Folder** column—the profile cannot be created until every such match is resolved. The created profile uses USVFS. MO2 source folders are used only as sources and are not modified. A new profile is saved transactionally: if saving fails, it is removed from the list and the settings remain unchanged.
 
 `overwrite` is an MO2 service folder for files created by the game or tools outside a specific mod, such as generated configs, patches, and other outputs. Mount it only if the setup actually depends on these files. The launcher keeps it as a separate highest-priority layer; you can disable the layer in the imported profile's settings.
 
@@ -194,26 +194,6 @@ For Anomaly in USVFS mode, you can keep automatic launch through Anomaly Launche
 
 Select the mode in the settings of a regular profile.
 
-### Workspace: stable mode
-
-Use this mode when a build is incompatible with USVFS or you need to inspect the assembled file tree. The launcher creates a `current` folder in which the game sees the final structure after mods are overlaid.
-
-Most large files are not copied again. Hard links are used on the same drive, and symbolic links are used across drives. Only files that must be writable or physically present in the working environment are created separately.
-
-Advantages:
-
-- the most predictable compatibility with different engines and helper launchers;
-- the resulting files can be inspected in `current`;
-- after the first build, later launches are usually faster thanks to caching.
-
-Things to know:
-
-- the first build of a large profile may take some time;
-- File Explorer shows the logical file size and may make it look as though the entire game was copied;
-- cross-drive symbolic links may require Windows Developer Mode or running as administrator.
-
-If a safe link cannot be created, the launcher stops and reports the problem. It does not silently begin copying the whole game.
-
 ### USVFS: stable virtual mode
 
 USVFS uses the Mod Organizer 2 virtual file system. The base game and mods become a single file set only for the launched game, so no `current` folder is created.
@@ -229,7 +209,6 @@ Things to know:
 - some unusual engines, launchers, and ready-made builds may be incompatible;
 - only one USVFS profile can run at a time;
 - all x64 and x86 USVFS files must remain next to the launcher;
-- if there is a problem, you can always switch the profile back to Workspace without modifying the source folders.
 
 If launching requires physical EXE and DLL files before USVFS is mounted, the launcher creates a bootstrap cache at `<workspace>\.usvfs-bootstrap`. It is inside the profile's ASCII-only workspace and is not a copy of the whole game. This cache is not created when an unmodified base-game EXE can launch directly.
 
@@ -243,23 +222,16 @@ D:\StalkerModLauncher\Workspaces\profile-12ab34cd...\
 
 The folder name is based only on the internal ID and always uses ASCII characters. The profile's display name, such as “Ихрей,” is stored in the launcher settings and does not affect the path. Old folders named like `Ихрей-12ab34cd` are renamed once the next time the profile is prepared.
 
-Typical Workspace structure:
+Typical profile structure:
 
 ```text
 profile-12ab34cd...\
   .stalker-launcher-workspace
-  build-manifest.json
-  current\
+  .usvfs-bootstrap\
   userdata\
 ```
 
 In USVFS mode, the profile folder and `userdata` remain, but `current` is not used.
-
-### current
-
-`current` is the rebuildable final game structure used in stable Workspace mode. It contains links to base-game and mod files, plus a small number of local service files.
-
-Clear or rebuild `current` with **Status → Clear cache** or **Rebuild**. Before deleting files, the launcher collects known writable configs, such as `gamedata\configs\axr_options.ltx` and `localization.ltx`, into `userdata\writable-game-files`. Until then, the latest changes may exist only in `current`. Deleting the directory manually bypasses that collection and can lose settings.
 
 ### userdata
 
@@ -289,10 +261,6 @@ Not every folder is created immediately. The exact set depends on the game, engi
 This rebuildable cache is not preserved when a profile is deleted or moved.
 
 When backing up a profile, save `userdata` and a profile export first.
-
-### build-manifest.json
-
-This is an internal record of the last Workspace build: which sources and settings were used and how many links were created. The launcher uses it to determine whether the prepared `current` can be reused.
 
 ### Safety marker
 
@@ -325,15 +293,13 @@ As a result, two profiles using the `same base game` get different saves, settin
 
 On the first launch, `user.ltx` is taken from the highest-priority layer (the mod in the profile list) that provides it. After the game or the user changes the profile file, the launcher tries to preserve that version instead of overwriting it at every launch.
 
-When launching through AnomalyLauncher, the launcher and game engine use one active `user.ltx` in the selected user-data directory. This works in Workspace and USVFS: settings changed through AnomalyLauncher or the game affect the same file. With shared game data selected, that file is also shared by profiles using the same directory.
+When launching through AnomalyLauncher, the launcher and game engine use one active `user.ltx` in the selected user-data directory. This works in USVFS: settings changed through AnomalyLauncher or the game affect the same file. With shared game data selected, that file is also shared by profiles using the same directory.
 
-After upgrading from an older version, the first Workspace launch of an AnomalyLauncher profile may rebuild `current` once. Differing legacy internal copies of `user.ltx` are saved as `<workspace>\diagnostics\user.ltx.migrated-<ID>.bak`; they do not replace the active selected settings. There is no need to move them back manually.
 
 ## Status window
 
 The Status window shows whether the profile is ready to launch, which mode it uses, and what should be checked.
 
-For Workspace, it shows the logical size of the resulting game, the actual additional disk space, and the file count. A large logical size does not mean that the same amount of data was copied.
 
 For USVFS, it shows the number of mounted layers and the state of profile data. This mode does not require `current`.
 
@@ -342,9 +308,7 @@ The **fsgame.ltx source** entry shows the selection method and full path: detect
 Main actions:
 
 - **Refresh** repeats the Status check;
-- **Rebuild** prepares Workspace again by rebuilding the `current` folder;
-- **Clear cache** removes rebuildable data while preserving `userdata`;
-- **Move...** copies `userdata` to a new managed workspace, switches the profile to it, and removes the old folder. `current` and `.usvfs-bootstrap` are recreated. If the old folder cannot be removed immediately, the new workspace remains active and the launcher offers to retry only the cleanup;
+- **Move...** copies `userdata` and `diagnostics` to a new managed workspace, switches the profile to it, and removes the old folder. Known bootstrap settings are saved before movement; `.usvfs-bootstrap` is recreated on the next launch. If the old folder cannot be removed immediately, the new workspace remains active and the launcher offers to retry only the cleanup;
 - **Latest log** opens the latest game log;
 - **Crash dump** opens the latest crash dump if one exists;
 - **Copy report** copies a diagnostic summary to the clipboard.
@@ -353,7 +317,7 @@ The save counter includes the main `.sav` and `.scop` file formats. Auxiliary `.
 
 ## Launcher log
 
-The log at the bottom of the main window shows check progress, the selected mode, the EXE source, Workspace or USVFS preparation, and the launch result.
+The log at the bottom of the main window shows check progress, the selected mode, the EXE source, USVFS preparation, and the launch result.
 
 The full log location depends on the launcher package:
 
@@ -391,7 +355,7 @@ On the first launch, the regular launcher automatically copies existing settings
 
 These paths apply to `CORDON.exe`. For `CORDON-Standalone.exe`, the same settings and backup filenames are stored in `<EXE directory>\Data\StalkerModLauncher`; launcher logs, cache, and temporary files are local too. Use **Open settings folder** in launcher settings to open the active location.
 
-`settings.json` contains general launcher settings and profile order. Each JSON in `profiles` contains its profile's Workspace/USVFS and standalone modes, launch arguments, paths, statistics, and mod list. Legacy settings migrate automatically, preserving the original as `settings.legacy.json`. Importing a new-format `settings.json` requires its sibling `profiles` directory. The Standalone launcher stores paths inside its own directory relatively; external paths stay absolute. Game files are not copied into settings. Mods and profile workspaces keep their separate storage locations.
+`settings.json` contains general launcher settings and profile order. Each JSON in `profiles` contains its profile's USVFS and standalone modes, launch arguments, paths, statistics, and mod list. Legacy settings migrate automatically, preserving the original as `settings.legacy.json`. Importing a new-format `settings.json` requires its sibling `profiles` directory. The Standalone launcher stores paths inside its own directory relatively; external paths stay absolute. Game files are not copied into settings. Mods and profile workspaces keep their separate storage locations.
 
 Current schema `10` example: [settings.json](example-settings/settings.json) and [the profile file in profiles](example-settings/profiles/profile-f2c6e8a0b7d149a38fc511bc2d8607e4.json). Replace the example game and mod paths with your own; when importing, keep the profile file in the `profiles` directory beside `settings.json`.
 
@@ -399,7 +363,7 @@ If a game or mod has been moved to another drive, correct the path in the profil
 
 ## What to back up
 
-Close the game before backing up. For a Workspace profile, use **Status → Clear cache** so the latest known game-config changes are collected from `current` into `userdata`. If cleanup has not completed successfully, also back up the changed configs from `current`. Back up any custom files and configs unknown to the launcher separately as well.
+Close the game before backing up. Back up `userdata`, `diagnostics`, a profile export and any unsaved physical bootstrap configs. There is no Workspace migration or cache-clear action.
 
 For reliable recovery, save:
 
@@ -409,7 +373,6 @@ For reliable recovery, save:
 
 For profiles using shared game data and for standalone builds, also back up the actual data directory shown in profile settings or Status. Keep game/mod source folders and original archives separately: profile exports contain no game or mod files. In the Standalone launcher, include `Data\StalkerModLauncher` in the backup.
 
-Once changed configs have been collected successfully, you do not need to back up `current`: the launcher can rebuild it from the base game, mod folders, and profile writable-file store.
 
 ## Screenshots
 
@@ -492,7 +455,7 @@ If a downloaded mod already contains all game files and runs from its own folder
 3. Check mod order and the build author's requirements.
 4. Check the selected EXE and its source.
 5. Read the launcher log and latest game log.
-6. If you use USVFS, temporarily switch the profile to Workspace. If Workspace works, the specific engine or its launcher is probably incompatible with USVFS.
+6. Check the USVFS log and whether the engine or its launcher is compatible with USVFS.
 7. For cross-drive link problems, enable Windows Developer Mode or run the launcher as administrator.
 8. Do not place files manually in `current`: they are removed when it is rebuilt.
 

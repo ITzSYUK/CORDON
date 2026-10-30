@@ -12,7 +12,7 @@ public sealed class OverlayManifestBuilderTests : IDisposable
         Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public void BuildLinkedWorkspaceCapturesOverlayDecisions()
+    public void BuildVirtualFileSystemCapturesOverlayDecisions()
     {
         var game = Path.Combine(_root, "game");
         var main = Path.Combine(_root, "main");
@@ -33,8 +33,8 @@ public sealed class OverlayManifestBuilderTests : IDisposable
         profile.Mods.Add(new ModEntry { Id = "main", Name = "Main", SourcePath = main, Order = 1 });
         profile.Mods.Add(new ModEntry { Id = "patch", Name = "Patch", SourcePath = patch, Order = 2 });
 
-        var plan = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildLinkedWorkspace(
+        var plan = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(
             profile,
             plan,
             workspace,
@@ -42,7 +42,7 @@ public sealed class OverlayManifestBuilderTests : IDisposable
 
         Assert.Equal(4, manifest.Layers.Count);
         Assert.Equal(patchExe, manifest.Executable?.FullPath);
-        Assert.EndsWith(Path.Combine("current", "bin_x64", "xrEngine.exe"), manifest.LaunchPlan?.ExecutablePath);
+        Assert.Equal(patchExe, manifest.LaunchPlan?.ExecutablePath);
         Assert.Contains(
             manifest.SystemFiles,
             file => file.RelativePath == "fsgame.ltx" && file.Source?.FullPath == patchFsgame);

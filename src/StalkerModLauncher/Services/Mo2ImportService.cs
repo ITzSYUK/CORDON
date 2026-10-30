@@ -263,8 +263,7 @@ public static class Mo2ImportService
     public static ModProfile CreateProfile(
         Mo2ImportPreview preview,
         string requestedName,
-        bool includeOverwrite,
-        LaunchBackendKind launchBackendKind = LaunchBackendKind.VirtualFileSystem)
+        bool includeOverwrite)
     {
         if (!Directory.Exists(preview.Discovery.GamePath))
         {
@@ -282,7 +281,7 @@ public static class Mo2ImportService
             Description = LocalizedText.Format(Strings.Mo2Service_ImportedDescriptionFormat, preview.Profile.Name),
             GameInstallPath = Path.GetFullPath(preview.Discovery.GamePath),
             IsStandalone = false,
-            LaunchBackendKind = launchBackendKind,
+            LaunchBackendKind = LaunchBackendKind.VirtualFileSystem,
             LaunchArguments = string.Empty,
             Mo2OverwritePath = includeOverwrite && preview.HasOverwriteContent
                 ? preview.Discovery.OverwritePath

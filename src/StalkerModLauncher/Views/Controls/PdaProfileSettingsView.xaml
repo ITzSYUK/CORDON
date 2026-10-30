@@ -214,16 +214,6 @@
                             <Border x:Name="LaunchModeSetting" Style="{StaticResource ProfilePdaSettingPanelStyle}">
                                 <StackPanel x:Name="LaunchModePanel" Style="{StaticResource ProfileNonStandaloneSectionStyle}">
                                     <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}" Foreground="#929B88" FontSize="11" Margin="0,0,0,4"/>
-                                    <WrapPanel Margin="0,0,0,5">
-                                        <RadioButton Content="Workspace"
-                                                     Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                                     IsChecked="{Binding UseLinkedWorkspace, Mode=TwoWay}"
-                                                     Margin="0,0,18,0"/>
-                                        <RadioButton Content="USVFS"
-                                                     Style="{StaticResource PdaProfileRadioButtonStyle}"
-                                                     IsChecked="{Binding UseVirtualFileSystem, Mode=TwoWay}"
-                                                     IsEnabled="{Binding CanUseUsvfs}"/>
-                                    </WrapPanel>
                                     <TextBlock Text="{Binding UsvfsAvailabilityText}"
                                                Foreground="#727B6D" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,9"/>
                                 </StackPanel>

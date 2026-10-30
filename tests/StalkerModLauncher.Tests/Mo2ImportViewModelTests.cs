@@ -82,8 +82,6 @@ public sealed class Mo2ImportViewModelTests : IDisposable
             path => remembered = path);
         Assert.Equal(mo2Root, restored.SourcePath);
         Assert.Null(remembered);
-        Assert.True(restored.UseVirtualFileSystem);
-        Assert.False(restored.UseLinkedWorkspace);
     }
 
     public void Dispose()

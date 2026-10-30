@@ -227,7 +227,7 @@ static async Task VerifyWritableDirectoryMappingAsync(
         IsEnabled = true,
         Order = 1
     });
-    var layers = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
+    var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
     var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
     var localization = manifest.WritableFiles.Single(file =>
         file.RelativePath == Path.Combine("gamedata", "configs", "localization.ltx"));
@@ -271,9 +271,8 @@ static async Task VerifyAppDataAliasAsync(IUsvfsRuntime runtime, string root, st
     foreach (var shared in new[] { false, true })
     {
         profile.UseBaseGameData = shared;
-        var built = await builder.BuildAsync(game, profile, new Progress<string>());
-        profile.WorkspacePath = built.ProfileWorkspacePath;
-        var layers = FileLayerPlan.CreateLinkedWorkspace(game, profile, profile.WorkspacePath);
+        profile.WorkspacePath = builder.EnsureProfileWorkspace(profile, game);
+        var layers = FileLayerPlan.CreateForProfile(game, profile, profile.WorkspacePath);
         var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, profile.WorkspacePath);
         Directory.CreateDirectory(manifest.WriteOverlayRoot);
         WriteText(Path.Combine(manifest.WriteOverlayRoot, "appdata", "user.ltx.old"), "legacy backup");
@@ -285,19 +284,27 @@ static async Task VerifyAppDataAliasAsync(IUsvfsRuntime runtime, string root, st
         WriteText(storedCommandLine, "-smap2048");
         var storedToml = Path.Combine(profile.WorkspacePath, "userdata", "writable-game-files", "launcherconfig.toml");
         WriteText(storedToml, "shadow_map = \"Size2048\"\nwindow_mode = \"Fullscreen\"");
+        UsvfsProfileDataPreparer.Prepare(layers, manifest, profile.WorkspacePath);
+        var bootstrapRoot = UsvfsBootstrapPathResolver.Resolve(profile.WorkspacePath);
+        UsvfsExecutableBootstrapper.Clear(profile.WorkspacePath, bootstrapRoot);
+        UsvfsExecutableBootstrapper.PrepareAnomalyLauncher(layers,
+            new UsvfsLaunchTarget(Path.Combine(game, "AnomalyLauncher.exe"), "AnomalyLauncher.exe", string.Empty, game, "fixture", false), bootstrapRoot);
         var result = await runtime.RunAsync(
-            UsvfsMappingPlanBuilder.BuildAnomalyLauncherBootstrap(layers, manifest, built.WorkspaceRoot),
-            new UsvfsProcessLaunchRequest(childExecutable, $"--appdata-child {Quote(built.WorkspaceRoot)}", AppContext.BaseDirectory),
+            UsvfsMappingPlanBuilder.BuildAnomalyLauncherBootstrap(layers, manifest, bootstrapRoot),
+            new UsvfsProcessLaunchRequest(childExecutable, $"--appdata-child {Quote(bootstrapRoot)}", AppContext.BaseDirectory),
             new UsvfsRuntimeOptions("stalker_appdata_alias_regression", LogToConsole: false));
         if (result.ExitCode != 0 || ReadText(canonical) != "reset settings" ||
             File.Exists(Path.Combine(manifest.WriteOverlayRoot, "appdata", "user.ltx")))
             throw new InvalidOperationException($"USVFS appdata alias regression failed (shared={shared}, exit={result.ExitCode}).");
-        await builder.BuildAsync(game, profile, new Progress<string>());
-        if (ReadText(Path.Combine(built.WorkspaceRoot, "AnomalyLauncher.cfg")) != "changed launcher" ||
-            ReadText(Path.Combine(built.WorkspaceRoot, "commandline.txt")) != "-smap4096" ||
+        ProfileWritableGameFileStore.CaptureFromWorkspace(bootstrapRoot, profile.WorkspacePath);
+        UsvfsExecutableBootstrapper.Clear(profile.WorkspacePath, bootstrapRoot);
+        UsvfsExecutableBootstrapper.PrepareAnomalyLauncher(layers,
+            new UsvfsLaunchTarget(Path.Combine(game, "AnomalyLauncher.exe"), "AnomalyLauncher.exe", string.Empty, game, "fixture", false), bootstrapRoot);
+        if (ReadText(Path.Combine(bootstrapRoot, "AnomalyLauncher.cfg")) != "changed launcher" ||
+            ReadText(Path.Combine(bootstrapRoot, "commandline.txt")) != "-smap4096" ||
             ReadText(storedLauncher) != "changed launcher" || ReadText(storedCommandLine) != "-smap4096" ||
             ReadText(storedToml) != "shadow_map = \"Size4096\"\nwindow_mode = \"Borderless\"" ||
-            ReadText(Path.Combine(built.WorkspaceRoot, "launcherconfig.toml")) != ReadText(storedToml) ||
+            ReadText(Path.Combine(bootstrapRoot, "launcherconfig.toml")) != ReadText(storedToml) ||
             ReadText(Path.Combine(game, "launcherconfig.toml")) != "shadow_map = \"Size1024\"" ||
             ReadText(Path.Combine(game, "AnomalyLauncher.cfg")) != "source launcher" ||
             ReadText(Path.Combine(game, "commandline.txt")) != "-smap1024")

@@ -7,7 +7,7 @@ public sealed class ExportedProfile
     public bool IsDiscordStatusEnabled { get; set; } = true;
     public bool IsStandalone { get; set; }
     public bool UseBaseGameData { get; set; }
-    public LaunchBackendKind LaunchBackendKind { get; set; } = LaunchBackendKind.LinkedWorkspace;
+    public LaunchBackendKind LaunchBackendKind { get; set; } = LaunchBackendKind.LegacyWorkspace;
     public string ExecutableRelativePath { get; set; } = @"bin\xr_3da.exe";
     public string ExecutableSourcePath { get; set; } = string.Empty;
     public string FsgameSourcePath { get; set; } = string.Empty;

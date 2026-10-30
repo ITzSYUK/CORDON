@@ -172,7 +172,7 @@ public sealed partial class FileLayerPlan
         };
     }
 
-    public static FileLayerPlan CreateLinkedWorkspace(string gamePath, ModProfile profile, string workspaceRoot)
+    public static FileLayerPlan CreateForProfile(string gamePath, ModProfile profile, string workspaceRoot)
     {
         if (profile.IsStandalone)
         {
@@ -273,7 +273,7 @@ public sealed partial class FileLayerPlan
             throw new FileNotFoundException(LocalizedText.Format(Strings.Fsgame_ManualMissingFormat, fullPath), fullPath);
         }
 
-        var selection = ProfileExecutableSourceResolver.TryCreateSelection(profile, fullPath, includeWorkspace: false)
+        var selection = ProfileExecutableSourceResolver.TryCreateSelection(profile, fullPath)
             ?? throw new InvalidOperationException(
                 Strings.Fsgame_ManualOutsideLayers);
         return new ProfileFsgameSource(fullPath, selection.RelativePath, selection.SourceName);

@@ -22,81 +22,6 @@ internal sealed record LaunchPlanResolution(
 
 internal static class ProfileLaunchPlanResolver
 {
-    public static LaunchPlan CreatePreparedPlan(
-        LaunchBackendKind backendKind,
-        ModProfile profile,
-        WorkspaceBuildResult workspace)
-    {
-        var workingDirectory = string.IsNullOrWhiteSpace(workspace.WorkingDirectoryRelative)
-            ? workspace.WorkspaceRoot
-            : FileSystemSafety.ResolvePathInside(
-                workspace.WorkspaceRoot,
-                workspace.WorkingDirectoryRelative,
-                Strings.Safety_UsvfsWorkingDirectory);
-
-        return new LaunchPlan(
-            backendKind,
-            workspace.ExecutablePath,
-            profile.LaunchArguments,
-            workingDirectory);
-    }
-
-    public static LaunchPlanResolution PreviewLinkedWorkspace(
-        ModProfile profile,
-        FileLayerPlan fileLayerPlan,
-        string profileWorkspace)
-    {
-        try
-        {
-            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Safety_LaunchExecutable);
-            var executable = ResolveExecutableSource(
-                profile,
-                FileLayerSourceResolver.CreateExecutableRoots(fileLayerPlan),
-                profile.ExecutableRelativePath,
-                allowPinnedSource: true,
-                allowDedicatedFallback: LaunchExecutableDetector.IsDedicatedExecutable(profile.ExecutableRelativePath));
-
-            if (executable is null)
-            {
-                return new LaunchPlanResolution(
-                    null,
-                    null,
-                    LocalizedText.Format(Strings.Ready_ExecutableMissingFormat, profile.ExecutableRelativePath));
-            }
-
-            if (!executable.IsAvailable)
-            {
-                return new LaunchPlanResolution(null, executable, executable.Reason);
-            }
-
-            var currentWorkspace = Path.Combine(profileWorkspace, "current");
-            var executablePath = FileSystemSafety.ResolvePathInside(
-                currentWorkspace,
-                executable.RelativePath,
-                Strings.Safety_LaunchExecutable);
-            var workingDirectoryRelative = FindWorkingDirectoryRelative(fileLayerPlan);
-            var workingDirectory = string.IsNullOrWhiteSpace(workingDirectoryRelative)
-                ? currentWorkspace
-                : FileSystemSafety.ResolvePathInside(
-                    currentWorkspace,
-                    workingDirectoryRelative,
-                    Strings.Safety_UsvfsWorkingDirectory);
-
-            return new LaunchPlanResolution(
-                new LaunchPlan(
-                    LaunchBackendKind.LinkedWorkspace,
-                    executablePath,
-                    profile.LaunchArguments,
-                    workingDirectory),
-                executable,
-                null);
-        }
-        catch (Exception ex)
-        {
-            return new LaunchPlanResolution(null, null, ex.Message);
-        }
-    }
-
     public static LaunchPlanResolution PreviewStandalone(ModProfile profile, CancellationToken cancellationToken = default)
     {
         var modRoot = profile.Mods.FirstOrDefault(mod => mod.IsEnabled && Directory.Exists(mod.SourcePath))?.SourcePath;
@@ -140,7 +65,7 @@ internal static class ProfileLaunchPlanResolver
 
             return new LaunchPlanResolution(
                 new LaunchPlan(
-                    LaunchBackendKind.LinkedWorkspace,
+                    LaunchBackendKind.Standalone,
                     executable.FullPath,
                     profile.LaunchArguments,
                     workingDirectory),
