@@ -297,8 +297,5 @@ public sealed class ProfileManagerTests
             DeletedProfiles.Add(profile);
         }
 
-        public void ClearProfileWorkspaceCache(ModProfile profile, string gamePath)
-        {
-        }
     }
 }

@@ -50,12 +50,20 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         CopyReportCommand = new RelayCommand(CopyReport, () => _report is not null);
         SetHealthFilterCommand = new RelayCommand(
             parameter => SetHealthFilter(parameter as HealthCheckFilter? ?? HealthCheckFilter.All));
-        ClearWorkspaceCommand = new RelayCommand(ClearWorkspace, () => CanManageWorkspace && UsesLinkedWorkspace);
-        RebuildWorkspaceCommand = new AsyncRelayCommand(RebuildWorkspaceAsync, () => CanManageWorkspace && UsesLinkedWorkspace && !IsChecking);
         MoveWorkspaceCommand = new AsyncRelayCommand(MoveWorkspaceAsync, () => CanManageWorkspace && !IsChecking);
 
+        _profile.PropertyChanged += ProfileOnPropertyChanged;
         Checks.CollectionChanged += ChecksOnCollectionChanged;
         _ = RefreshAsync();
+    }
+
+    private void ProfileOnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ModProfile.IsRunning) or nameof(ModProfile.IsPreparing))
+        {
+            OnPropertyChanged(nameof(CanManageWorkspace));
+            ((AsyncRelayCommand)MoveWorkspaceCommand).RaiseCanExecuteChanged();
+        }
     }
 
     private void SetHealthFilter(HealthCheckFilter requested) =>
@@ -138,33 +146,10 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     }
 
     public bool ShowStoragePanel => !_profile.IsStandalone;
-    public bool CanManageWorkspace => ShowStoragePanel && !string.IsNullOrWhiteSpace(_profile.WorkspacePath);
-    public bool UsesLinkedWorkspace => !_profile.IsStandalone && _profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace;
-    public bool UsesVirtualFileSystem => !_profile.IsStandalone && _profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem;
-    public string StoragePanelTitle => UsesVirtualFileSystem ? "USVFS" : "Workspace";
-    public string? StoragePanelToolTip => UsesVirtualFileSystem
-        ? Strings.Health_UsvfsTooltip
-        : null;
-    public string StorageStateDisplay => Workspace?.StateDisplay ?? Strings.Health_StatePending;
-    public string FirstMetricTitle => UsesVirtualFileSystem ? Strings.Health_Layers : Strings.Health_VisibleSize;
-    public string FirstMetricValue => UsesVirtualFileSystem
-        ? $"{1 + _profile.Mods.Count(mod => mod.IsEnabled):N0}"
-        : Workspace?.LogicalSizeDisplay ?? "—";
-    public string FirstMetricToolTip => UsesVirtualFileSystem
-        ? Strings.Health_LayersTooltip
-        : Strings.Health_VisibleSizeTooltip;
-    public string SecondMetricTitle => UsesVirtualFileSystem ? Strings.Health_GameData : Strings.Health_Occupied;
-    public string SecondMetricValue => UsesVirtualFileSystem
-        ? ProfileDataStateDisplay
-        : Workspace?.PhysicalSizeDisplay ?? "—";
-    public string SecondMetricToolTip => UsesVirtualFileSystem
-        ? _profile.UseBaseGameData ? Strings.Health_SharedData : Strings.Health_SeparateData
-        : Strings.Health_OccupiedTooltip;
-    public string ThirdMetricTitle => UsesVirtualFileSystem ? Strings.Health_CurrentFolder : Strings.Health_Files;
-    public string ThirdMetricValue => UsesVirtualFileSystem ? Strings.Health_NotUsed : Workspace?.FileCountDisplay ?? "—";
-    public string ThirdMetricToolTip => UsesVirtualFileSystem
-        ? Strings.Health_CurrentTooltip
-        : Workspace?.LinkSummaryDisplay ?? string.Empty;
+    public bool CanManageWorkspace => ShowStoragePanel && !_profile.IsRunning && !_profile.IsPreparing && !string.IsNullOrWhiteSpace(_profile.WorkspacePath);
+    public string FirstMetricValue => $"{1 + _profile.Mods.Count(mod => mod.IsEnabled):N0}";
+    public string SecondMetricValue => ProfileDataStateDisplay;
+    public string SecondMetricToolTip => _profile.UseBaseGameData ? Strings.Health_SharedData : Strings.Health_SeparateData;
 
     private string ProfileDataStateDisplay => ProfileDataPathResolver.GetSavedGameDirectories(_profile)
                                               .Any(path => Directory.Exists(Path.GetDirectoryName(path)))
@@ -185,7 +170,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
             if (SetProperty(ref _isChecking, value))
             {
                 ((AsyncRelayCommand)RefreshCommand).RaiseCanExecuteChanged();
-                ((AsyncRelayCommand)RebuildWorkspaceCommand).RaiseCanExecuteChanged();
+
                 ((AsyncRelayCommand)MoveWorkspaceCommand).RaiseCanExecuteChanged();
             }
         }
@@ -198,8 +183,6 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     public ICommand OpenCrashDumpCommand { get; }
     public ICommand CopyReportCommand { get; }
     public ICommand SetHealthFilterCommand { get; }
-    public ICommand ClearWorkspaceCommand { get; }
-    public ICommand RebuildWorkspaceCommand { get; }
     public ICommand MoveWorkspaceCommand { get; }
 
     private async Task RefreshAsync()
@@ -246,6 +229,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        _profile.PropertyChanged -= ProfileOnPropertyChanged;
         Checks.CollectionChanged -= ChecksOnCollectionChanged;
         _refreshCancellation?.Cancel();
         _refreshCancellation?.Dispose();
@@ -277,53 +261,6 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         RunAction(() => DialogService.CopyText(_report!.ToText(_profile.Name)));
     }
 
-    private void ClearWorkspace()
-    {
-        if (!DialogService.Confirm(
-                Strings.Health_ClearTitle,
-                Strings.Health_ClearConfirm))
-        {
-            return;
-        }
-
-        try
-        {
-            _workspaceManagementService.ClearCache(_profile, new Progress<string>(ReportWorkspaceProgress));
-            Log(LocalizedText.Format(Strings.Log_HealthCacheClearedFormat, _profile.Name));
-        }
-        catch (Exception ex)
-        {
-            Log(LocalizedText.Format(Strings.Log_HealthCacheClearFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError(Strings.Health_ClearFailed, ex.Message);
-            return;
-        }
-
-        _ = RefreshAsync();
-    }
-
-    private async Task RebuildWorkspaceAsync()
-    {
-        try
-        {
-            IsChecking = true;
-            Summary = Strings.Health_Rebuilding;
-            Log(LocalizedText.Format(Strings.Log_HealthRebuildStartedFormat, _profile.Name));
-            var progress = new Progress<string>(ReportWorkspaceProgress);
-            await _workspaceManagementService.RebuildAsync(_profile, progress);
-            Log(LocalizedText.Format(Strings.Log_HealthRebuildFinishedFormat, _profile.Name));
-            await RefreshAsync();
-        }
-        catch (Exception ex)
-        {
-            Log(LocalizedText.Format(Strings.Log_HealthRebuildFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
-            _dialogService.ShowError(Strings.Health_RebuildFailed, ex.Message);
-        }
-        finally
-        {
-            IsChecking = false;
-        }
-    }
-
     private async Task MoveWorkspaceAsync()
     {
         var destination = DialogService.PickFolder(Strings.Health_PickWorkspace);
@@ -333,10 +270,8 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         }
 
         if (!DialogService.Confirm(
-                UsesVirtualFileSystem ? Strings.Health_MoveDataTitle : Strings.Health_MoveWorkspaceTitle,
-                UsesVirtualFileSystem
-                    ? LocalizedText.Format(Strings.Health_MoveUsvfsConfirmFormat, Environment.NewLine)
-                    : LocalizedText.Format(Strings.Health_MoveWorkspaceConfirmFormat, Environment.NewLine)))
+                Strings.Health_MoveDataTitle,
+                LocalizedText.Format(Strings.Health_MoveUsvfsConfirmFormat, Environment.NewLine)))
         {
             return;
         }
@@ -447,16 +382,15 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         ((RelayCommand)OpenLatestLogCommand).RaiseCanExecuteChanged();
         ((RelayCommand)OpenCrashDumpCommand).RaiseCanExecuteChanged();
         ((RelayCommand)CopyReportCommand).RaiseCanExecuteChanged();
-        ((RelayCommand)ClearWorkspaceCommand).RaiseCanExecuteChanged();
-        ((AsyncRelayCommand)RebuildWorkspaceCommand).RaiseCanExecuteChanged();
+
+
         ((AsyncRelayCommand)MoveWorkspaceCommand).RaiseCanExecuteChanged();
     }
 
     private void RaiseStorageProperties()
     {
-        OnPropertyChanged(nameof(StorageStateDisplay));
         OnPropertyChanged(nameof(FirstMetricValue));
         OnPropertyChanged(nameof(SecondMetricValue));
-        OnPropertyChanged(nameof(ThirdMetricValue));
+
     }
 }

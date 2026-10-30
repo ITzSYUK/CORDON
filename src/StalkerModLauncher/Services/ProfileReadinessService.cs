@@ -47,6 +47,9 @@ public static class ProfileReadinessService
 
     private static ValidationResult ValidateOverlay(ModProfile profile)
     {
+        if (profile.LaunchBackendKind != LaunchBackendKind.VirtualFileSystem)
+            return CreateResult(false, Strings.Launch_WorkspaceRemoved, [Strings.Launch_WorkspaceRemoved]);
+
         var gameValidation = GameInstallationValidator.Validate(profile.GameInstallPath);
         var messages = new List<string>(gameValidation.Messages);
         var enabledMods = profile.Mods.Where(mod => mod.IsEnabled).ToArray();
@@ -127,7 +130,7 @@ public static class ProfileReadinessService
                 return true;
             }
 
-            var roots = ProfileExecutableSourceResolver.GetSourceRoots(profile, includeWorkspace: false)
+            var roots = ProfileExecutableSourceResolver.GetSourceRoots(profile)
                 .Select(root => new LaunchExecutableSearchRoot(
                     root.RootPath,
                     root.DisplayName,

@@ -326,7 +326,7 @@ public sealed partial class MainViewModel
             SynchronizeProfileFileWatchers();
         }
 
-        if (e.PropertyName == nameof(ModProfile.IsRunning))
+        if (e.PropertyName is nameof(ModProfile.IsRunning) or nameof(ModProfile.IsPreparing))
         {
             if (ReferenceEquals(profile, SelectedProfile))
             {
@@ -480,8 +480,7 @@ public sealed partial class MainViewModel
             ? ProfileExecutableSourceResolver.TryResolveExistingAutomaticSelection(profile)
             : null;
         selection ??= ProfileExecutableSourceResolver.DetectAutomaticSelection(
-            profile,
-            includeWorkspace: false);
+            profile);
         if (selection is null ||
             profile.ExecutableRelativePath.Equals(selection.RelativePath, StringComparison.OrdinalIgnoreCase))
         {

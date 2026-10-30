@@ -40,6 +40,9 @@ public sealed class FomodUiTests
                     WizardRendersNavigatesAndInstallsThroughBoundControls("classic");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("pda");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("pda-new");
+                    LauncherSettingsImportButtonRendersAndRuns("classic");
+                    LauncherSettingsImportButtonRendersAndRuns("pda");
+                    LauncherSettingsImportButtonRendersAndRuns("pda-new");
                     ClassicWindowCloseCancelsAndPdaPageReplacementCancels();
                     await FolderRequestsUseExistingWizardForBothInterfacesAsync(application);
                 }
@@ -49,6 +52,22 @@ public sealed class FomodUiTests
             application.Run();
             if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
         });
+    }
+
+    private static void LauncherSettingsImportButtonRendersAndRuns(string theme)
+    {
+        PdaThemeSelector.UseNewTheme = theme == "pda-new";
+        var calls = 0;
+        var settings = new LauncherSettingsViewModel(LauncherPreferences.Default, "test", _ => Task.CompletedTask,
+            new DialogService(), importLegacyProfiles: () => { calls++; return Task.FromResult((2, 1)); });
+        var view = new LauncherSettingsView { DataContext = settings };
+        var host = new Border { Resources = ReadAppResources(), Child = view };
+        Layout(host, 760, 500);
+        var button = Assert.Single(Descendants<Button>(view), item => ReferenceEquals(item.Command, settings.ImportLegacyProfilesCommand));
+        Assert.True(button.IsEnabled);
+        button.Command!.Execute(null);
+        Assert.Equal(1, calls);
+        Assert.Equal(LocalizedText.Format(Strings.Settings_LegacyImportResult, 2, 1), settings.LegacyImportStatus);
     }
 
     private static void WizardRendersNavigatesAndInstallsThroughBoundControls(string theme)

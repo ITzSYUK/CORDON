@@ -38,7 +38,6 @@ public sealed class ProfileSettingsViewModelTests : IDisposable
             _ => false,
             usvfsAvailable: true);
 
-        viewModel.UseVirtualFileSystem = true;
         viewModel.UseAnomalyDx9 = true;
         viewModel.AnomalyUseAvx = true;
 
@@ -52,7 +51,7 @@ public sealed class ProfileSettingsViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task SaveStandaloneProfileAlwaysUsesLinkedWorkspace()
+    public async Task SaveStandaloneProfileAlwaysUsesDirectLaunch()
     {
         var profile = new ModProfile
         {
@@ -73,7 +72,7 @@ public sealed class ProfileSettingsViewModelTests : IDisposable
         var result = await viewModel.TrySaveAsync();
 
         Assert.True(result);
-        Assert.Equal(LaunchBackendKind.LinkedWorkspace, profile.LaunchBackendKind);
+        Assert.Equal(LaunchBackendKind.Standalone, profile.LaunchBackendKind);
     }
 
     [Fact]
@@ -185,7 +184,7 @@ public sealed class ProfileSettingsViewModelTests : IDisposable
             GameInstallPath = _root,
             ExecutableRelativePath = @"bin\game.exe",
             LaunchArguments = "-saved",
-            LaunchBackendKind = LaunchBackendKind.LinkedWorkspace
+            LaunchBackendKind = LaunchBackendKind.LegacyWorkspace
         };
         var dialogs = new RecordingDialogService();
         var viewModel = new ProfileSettingsViewModel(
@@ -200,7 +199,7 @@ public sealed class ProfileSettingsViewModelTests : IDisposable
             ProfileName = "Changed",
             ProfileDescription = "Unsaved description",
             LaunchArguments = "-unsaved",
-            UseVirtualFileSystem = true
+
         };
 
         var result = await viewModel.TrySaveAsync();
@@ -209,7 +208,7 @@ public sealed class ProfileSettingsViewModelTests : IDisposable
         Assert.Equal("Original", profile.Name);
         Assert.Equal("Saved description", profile.Description);
         Assert.Equal("-saved", profile.LaunchArguments);
-        Assert.Equal(LaunchBackendKind.LinkedWorkspace, profile.LaunchBackendKind);
+        Assert.Equal(LaunchBackendKind.LegacyWorkspace, profile.LaunchBackendKind);
         Assert.Equal("Не удалось сохранить настройки профиля", dialogs.ErrorTitle);
         Assert.Contains("settings.json is locked", dialogs.ErrorMessage);
     }

@@ -92,7 +92,7 @@ public static class ProfileDataPathResolver
         }
 
         var configPath = Path.GetFullPath(profile.FsgameSourcePath.Trim());
-        _ = ProfileExecutableSourceResolver.TryCreateSelection(profile, configPath, includeWorkspace: false)
+        _ = ProfileExecutableSourceResolver.TryCreateSelection(profile, configPath)
             ?? throw new InvalidDataException(
                 Strings.Fsgame_ManualOutsideLayers);
         return ProfileAppDataSourceLocator.ResolveConfiguredRootFromFile(configPath, baseGamePath);

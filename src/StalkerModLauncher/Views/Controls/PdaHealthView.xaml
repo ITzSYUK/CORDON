@@ -28,18 +28,14 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="{Binding StoragePanelTitle}" FontWeight="SemiBold" FontSize="14" ToolTip="{Binding StoragePanelToolTip}"/>
-                    <TextBlock Text="{Binding StorageStateDisplay}" Foreground="#858E7D" FontSize="10" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}" FontWeight="SemiBold" FontSize="14" ToolTip="{x:Static res:Strings.Health_UsvfsTooltip}"/>
                 </StackPanel>
-                <UniformGrid Grid.Column="1" Columns="3" Margin="14,0">
-                    <StackPanel><TextBlock Text="{Binding FirstMetricTitle}" Foreground="#858E7D" FontSize="10"/><TextBlock Text="{Binding FirstMetricValue}" FontWeight="SemiBold"/></StackPanel>
-                    <StackPanel><TextBlock Text="{Binding SecondMetricTitle}" Foreground="#858E7D" FontSize="10"/><TextBlock Text="{Binding SecondMetricValue}" FontWeight="SemiBold"/></StackPanel>
-                    <StackPanel><TextBlock Text="{Binding ThirdMetricTitle}" Foreground="#858E7D" FontSize="10"/><TextBlock Text="{Binding ThirdMetricValue}" FontWeight="SemiBold"/></StackPanel>
+                <UniformGrid Grid.Column="1" Columns="2" Margin="14,0">
+                    <StackPanel><TextBlock Text="{x:Static res:Strings.Health_Layers}" Foreground="#858E7D" FontSize="10"/><TextBlock Text="{Binding FirstMetricValue}" FontWeight="SemiBold"/></StackPanel>
+                    <StackPanel><TextBlock Text="{x:Static res:Strings.Health_GameData}" Foreground="#858E7D" FontSize="10"/><TextBlock Text="{Binding SecondMetricValue}" FontWeight="SemiBold"/></StackPanel>
                 </UniformGrid>
                 <WrapPanel Grid.Column="2">
-                    <Button Content="{x:Static res:Strings.Health_RebuildWorkspace}" Command="{Binding RebuildWorkspaceCommand}" Margin="0,0,5,0"
-                            Visibility="{Binding UsesLinkedWorkspace, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    <Button Content="{x:Static res:Strings.Health_MoveWorkspace}" Command="{Binding MoveWorkspaceCommand}"/>
+                    <Button Content="{x:Static res:Strings.Health_MoveDataTitle}" Command="{Binding MoveWorkspaceCommand}"/>
                 </WrapPanel>
             </Grid>
         </Border>

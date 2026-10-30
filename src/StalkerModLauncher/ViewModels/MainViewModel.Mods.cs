@@ -708,7 +708,7 @@ public sealed partial class MainViewModel
 
         var wizard = app.Dispatcher.Invoke(() =>
         {
-            var layerPlan = new Lazy<FileLayerPlan>(() => FileLayerPlan.CreateLinkedWorkspace(
+            var layerPlan = new Lazy<FileLayerPlan>(() => FileLayerPlan.CreateForProfile(
                 profile.GameInstallPath, profile, _profileManager.GetProfileFolderPath(profile)!));
             string FileState(string path)
             {

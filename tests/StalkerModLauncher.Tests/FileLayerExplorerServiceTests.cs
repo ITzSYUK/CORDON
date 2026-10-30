@@ -24,7 +24,7 @@ public sealed class FileLayerExplorerServiceTests : IDisposable
             Order = 2,
             ExcludedFiles = ["shared.ltx"]
         });
-        var plan = FileLayerPlan.CreateLinkedWorkspace(profile.GameInstallPath, profile, Path.Combine(_root, "workspace"));
+        var plan = FileLayerPlan.CreateForProfile(profile.GameInstallPath, profile, Path.Combine(_root, "workspace"));
 
         var files = await FileLayerExplorerService.BuildFinalTreeAsync(plan);
 
@@ -43,7 +43,7 @@ public sealed class FileLayerExplorerServiceTests : IDisposable
         Directory.CreateDirectory(Path.GetDirectoryName(overwrite)!);
         File.WriteAllText(overwrite, "profile");
         var profile = new ModProfile { GameInstallPath = Path.Combine(_root, "game") };
-        var plan = FileLayerPlan.CreateLinkedWorkspace(profile.GameInstallPath, profile, workspace);
+        var plan = FileLayerPlan.CreateForProfile(profile.GameInstallPath, profile, workspace);
 
         var files = await FileLayerExplorerService.BuildFinalTreeAsync(plan, workspace);
 

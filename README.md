@@ -36,7 +36,7 @@ CORDON помогает держать несколько модификаций
 
 - Множество сборок: создавайте профили с разными модами, патчами и движками.
 - Раздельные данные: у каждого профиля свои сохранения, настройки, логи и скриншоты.
-- Без полной копии игры: Workspace подключает неизменяемые файлы NTFS-ссылками.
+- Без полной копии игры: USVFS виртуально подключает слои игры и модов.
 
 Подходит для классической трилогии, Anomaly, OGSR, iX-Ray и других проектов с типичной структурой X-Ray, а также для готовых автономных сборок.
 
@@ -51,8 +51,8 @@ CORDON помогает держать несколько модификаций
 - Анализ конфликтов: победившие, заменённые и уникальные файлы, итоговое дерево сборки и исключение отдельного файла без изменения исходного мода.
 - Импорт готовых игровых профилей из `Mod Organizer 2`.
 - Автоматический поиск итогового EXE с возможностью выбрать файл вручную; учитываются движки из включённых модов.
-- Два режима обычного профиля: Workspace с NTFS-ссылками и USVFS от Mod Organizer 2 для виртуального наложения файлов.
-- Проверка готовности профиля, состояния Workspace/USVFS, последнего игрового лога и crash dump; очистка кэша и копирование диагностического отчёта.
+- Обычные профили используют USVFS от Mod Organizer 2 для виртуального наложения файлов. Автономные сборки запускаются напрямую.
+- Проверка готовности профиля, состояния USVFS, последнего игрового лога и crash dump; перенос данных профиля и копирование диагностического отчёта.
 - Импорт, экспорт, копирование и переименование профилей.
 - Классический интерфейс и две темы интерфейса в стиле КПК S.T.A.L.K.E.R., русский и английский языки.
 - Встроенный браузер модификаций из каталога AP-PRO и просмотрщик скриншотов.
@@ -63,7 +63,6 @@ CORDON помогает держать несколько модификаций
 
 | Режим | Статус | Когда использовать |
 | --- | --- | --- |
-| **Workspace** | Стабильный | Собирает изолированный профиль с помощью NTFS-ссылок, не копируя игру целиком. Подходит для сборок, несовместимых с USVFS. |
 | **USVFS** | Стабильный | Режим по умолчанию для новых обычных профилей. Виртуально объединяет файлы через компоненты Mod Organizer 2; поддерживает x64 и x86. |
 | **Автономный профиль** | Стабильный | Запускает уже готовую самостоятельную сборку из её собственной папки. |
 
@@ -140,7 +139,7 @@ CORDON helps you keep multiple S.T.A.L.K.E.R. modifications and addon sets toget
 
 - Multiple setups: create profiles with different mods, patches and engines.
 - Separate data: every profile has its own saves, settings, logs and screenshots.
-- No full game copy: Workspace connects unchanged files through NTFS links.
+- No full game copy: USVFS mounts game and mod layers virtually.
 
 It supports the original trilogy, Anomaly, OGSR, iX-Ray and other X-Ray projects with a typical structure, as well as ready-to-play standalone builds.
 
@@ -155,8 +154,8 @@ It supports the original trilogy, Anomaly, OGSR, iX-Ray and other X-Ray projects
 - Conflict analysis: winning, replaced and unique files, the resulting build tree, and excluding one file without changing the source mod.
 - Import ready-made game profiles from `Mod Organizer 2`.
 - Automatically find the final EXE or choose it manually; engines from enabled mods are included.
-- Two regular profile modes: Workspace with NTFS links and USVFS from Mod Organizer 2 for virtual file overlays.
-- Profile readiness checks, Workspace/USVFS status, the latest game log and crash dump; cache cleanup and diagnostic report copying.
+- Regular profiles use USVFS from Mod Organizer 2 for virtual overlays. Standalone builds launch directly.
+- Profile readiness checks, USVFS status, the latest game log and crash dump; profile data movement and diagnostic report copying.
 - Import, export, duplicate and rename profiles.
 - Classic UI and two alternative S.T.A.L.K.E.R.-inspired PDA UI themes, with Russian and English languages.
 - Built-in AP-PRO mod browser and screenshot viewer.
@@ -167,7 +166,6 @@ It supports the original trilogy, Anomaly, OGSR, iX-Ray and other X-Ray projects
 
 | Mode | Status | When to use |
 | --- | --- | --- |
-| **Workspace** | Stable | Builds an isolated profile with NTFS links without copying the entire game. Useful for builds incompatible with USVFS. |
 | **USVFS** | Stable | The default for new regular profiles. Virtually combines files through Mod Organizer 2 components; supports x64 and x86. |
 | **Standalone profile** | Stable | Starts an already assembled standalone build from its own folder. |
 

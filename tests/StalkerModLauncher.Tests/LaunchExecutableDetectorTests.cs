@@ -223,8 +223,7 @@ public sealed class LaunchExecutableDetectorTests : IDisposable
         };
 
         var selection = ProfileExecutableSourceResolver.DetectAutomaticSelection(
-            profile,
-            includeWorkspace: false);
+            profile);
 
         Assert.NotNull(selection);
         Assert.Equal(@"bin_x64\xrEngine.exe", selection.RelativePath);

@@ -20,10 +20,9 @@ public static class ProfileExecutableSourceResolver
 {
     public static ProfileExecutableSelection? TryCreateSelection(
         ModProfile profile,
-        string selectedPath,
-        bool includeWorkspace)
+        string selectedPath)
     {
-        var roots = GetSourceRoots(profile, includeWorkspace)
+        var roots = GetSourceRoots(profile)
             .Where(root => Directory.Exists(root.RootPath))
             .OrderByDescending(root => root.RootPath.Length);
 
@@ -47,10 +46,9 @@ public static class ProfileExecutableSourceResolver
 
     public static ProfileExecutableSelection? DetectAutomaticSelection(
         ModProfile profile,
-        bool includeWorkspace,
         CancellationToken cancellationToken = default)
     {
-        var roots = GetSourceRoots(profile, includeWorkspace)
+        var roots = GetSourceRoots(profile)
             .Where(root => Directory.Exists(root.RootPath))
             .ToList();
         var detected = LaunchExecutableDetector.DetectBest(
@@ -87,7 +85,7 @@ public static class ProfileExecutableSourceResolver
             return null;
         }
 
-        var sourceRoots = GetSourceRoots(profile, includeWorkspace: false)
+        var sourceRoots = GetSourceRoots(profile)
             .Where(root => Directory.Exists(root.RootPath))
             .ToArray();
         foreach (var root in sourceRoots.Where(root => root.IsBaseGameRoot))
@@ -131,7 +129,7 @@ public static class ProfileExecutableSourceResolver
         }
 
         var pinnedPath = Path.GetFullPath(profile.ExecutableSourcePath);
-        return GetSourceRoots(profile, includeWorkspace: false)
+        return GetSourceRoots(profile)
             .Where(root => root.CanPinExecutableSource && Directory.Exists(root.RootPath))
             .FirstOrDefault(root => FileSystemSafety.IsSameDirectory(root.RootPath, pinnedPath));
     }
@@ -144,7 +142,7 @@ public static class ProfileExecutableSourceResolver
             : LocalizedText.Format(Strings.Executable_ManualSourceFormat, root.DisplayName);
     }
 
-    public static IReadOnlyList<ProfileFileSourceRoot> GetSourceRoots(ModProfile profile, bool includeWorkspace)
+    public static IReadOnlyList<ProfileFileSourceRoot> GetSourceRoots(ModProfile profile)
     {
         var roots = new List<ProfileFileSourceRoot>();
         if (!profile.IsStandalone && Directory.Exists(profile.GameInstallPath))
@@ -166,19 +164,6 @@ public static class ProfileExecutableSourceResolver
                 mod.Order,
                 true,
                 IsBaseGameRoot: profile.IsStandalone)));
-
-        if (includeWorkspace && !string.IsNullOrWhiteSpace(profile.WorkspacePath))
-        {
-            var currentWorkspace = Path.Combine(profile.WorkspacePath, "current");
-            if (Directory.Exists(currentWorkspace))
-            {
-                roots.Add(new ProfileFileSourceRoot(
-                    Path.GetFullPath(currentWorkspace),
-                    "workspace",
-                    int.MaxValue,
-                    false));
-            }
-        }
 
         return roots;
     }

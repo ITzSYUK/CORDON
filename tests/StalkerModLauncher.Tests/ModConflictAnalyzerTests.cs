@@ -117,7 +117,7 @@ public sealed class ModConflictAnalyzerTests : IDisposable
             IsEnabled = true,
             Order = 1
         });
-        var plan = FileLayerPlan.CreateLinkedWorkspace(profile.GameInstallPath, profile, Path.Combine(_root, "workspace"));
+        var plan = FileLayerPlan.CreateForProfile(profile.GameInstallPath, profile, Path.Combine(_root, "workspace"));
         var analyzer = new ModConflictAnalyzer();
 
         var result = await analyzer.AnalyzeAsync(plan, profile.ExecutableRelativePath, profile.ExecutableSourcePath);

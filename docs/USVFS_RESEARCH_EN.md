@@ -2,7 +2,7 @@
 
 [English version](USVFS_RESEARCH_EN.md) | [Русская версия](USVFS_RESEARCH_RU.md)
 
-This document records the original research into [ModOrganizer2/usvfs](https://github.com/ModOrganizer2/usvfs), initially conducted on a separate branch. The integration is now part of `main`: Workspace and USVFS are both stable, and new regular profiles default to USVFS. The architecture and restrictions described below reflect the research stage, not the current release. For current launch rules, writable storage and build instructions, use the [technical documentation](TECHNICAL_EN.md) and [user guide](USER_GUIDE_EN.md). Game data is profile-local by default; explicitly selecting shared game data permits writes to that selected directory.
+This document records the original research into [ModOrganizer2/usvfs](https://github.com/ModOrganizer2/usvfs), initially conducted on a separate branch. Regular profiles now launch through USVFS; Workspace launch has been removed. The architecture and restrictions described below reflect the research stage, not the current release. For current launch rules, writable storage and build instructions, use the [technical documentation](TECHNICAL_EN.md) and [user guide](USER_GUIDE_EN.md). Game data is profile-local by default; explicitly selecting shared game data permits writes to that selected directory.
 
 ## What was verified
 

@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text.Json;
 using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
@@ -5,6 +7,7 @@ namespace StalkerModLauncher.Services;
 internal static class ProfileWritableGameFileStore
 {
     private const string StoreDirectoryName = "writable-game-files";
+    private const string BaselineFileName = ".writable-baseline.json";
 
     public static void CaptureFromWorkspace(string currentWorkspace, string profileWorkspace, IProgress<string>? progress = null)
     {
@@ -15,6 +18,14 @@ internal static class ProfileWritableGameFileStore
 
         DeleteLegacyStoredFsgame(profileWorkspace, progress);
 
+        var baselinePath = Path.Combine(currentWorkspace, BaselineFileName);
+        Dictionary<string, string>? baseline = null;
+        if (File.Exists(baselinePath))
+        {
+            try { baseline = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(baselinePath)); }
+            catch (JsonException ex) { throw new InvalidDataException(Strings.Writable_BaselineInvalid, ex); }
+            if (baseline is null) throw new InvalidDataException(Strings.Writable_BaselineInvalid);
+        }
         var captured = 0;
         var skippedAsStale = 0;
         foreach (var rule in ProfileWritableGameFiles.Rules)
@@ -27,7 +38,23 @@ internal static class ProfileWritableGameFileStore
             }
 
             var storedFile = GetStoredFilePath(profileWorkspace, relativePath);
-            if (File.Exists(storedFile))
+            if (baseline?.TryGetValue(relativePath, out var originalHash) == true)
+            {
+                var runtimeHash = Hash(workspaceFile);
+                if (runtimeHash == originalHash) continue;
+                if (File.Exists(storedFile))
+                {
+                    var storedHash = Hash(storedFile);
+                    if (storedHash == runtimeHash) continue;
+                    if (storedHash != originalHash)
+                    {
+                        var backup = Path.Combine(profileWorkspace, "diagnostics", $"{Path.GetFileName(storedFile)}.conflict-{Guid.NewGuid():N}.bak");
+                        CopyThroughTemporaryFile(storedFile, backup);
+                        progress?.Report(LocalizedText.Format(Strings.Writable_ConflictArchivedFormat, backup));
+                    }
+                }
+            }
+            else if (File.Exists(storedFile))
             {
                 var writeTimeComparison = File.GetLastWriteTimeUtc(workspaceFile)
                     .CompareTo(File.GetLastWriteTimeUtc(storedFile));
@@ -59,14 +86,25 @@ internal static class ProfileWritableGameFileStore
         }
     }
 
-    public static void EnsureWorkspaceDirectories(string currentWorkspace)
+    public static void RecordBootstrapState(string bootstrapRoot)
     {
-        foreach (var rule in ProfileWritableGameFiles.Rules)
+        var hashes = ProfileWritableGameFiles.Rules
+            .Where(rule => File.Exists(Path.Combine(bootstrapRoot, rule.RelativePath)))
+            .ToDictionary(rule => rule.RelativePath, rule => Hash(Path.Combine(bootstrapRoot, rule.RelativePath)));
+        var destination = Path.Combine(bootstrapRoot, BaselineFileName);
+        var temporary = destination + $".{Guid.NewGuid():N}.tmp";
+        try
         {
-            var relativePath = rule.RelativePath;
-            var workspaceFile = Path.Combine(currentWorkspace, relativePath);
-            Directory.CreateDirectory(Path.GetDirectoryName(workspaceFile)!);
+            File.WriteAllText(temporary, JsonSerializer.Serialize(hashes));
+            File.Move(temporary, destination, overwrite: true);
         }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
+    }
+
+    private static string Hash(string path)
+    {
+        using var stream = File.OpenRead(path);
+        return Convert.ToHexString(SHA256.HashData(stream));
     }
 
     public static void Prepare(
@@ -118,71 +156,8 @@ internal static class ProfileWritableGameFileStore
             progress?.Report(LocalizedText.Format(Strings.Writable_UsvfsMigratedFormat, migrated));
         }
 
-        CaptureFromWorkspace(Path.Combine(profileWorkspace, "current"), profileWorkspace, progress);
         // The bootstrap is recreated on launch; collect files replaced there before discarding it.
         CaptureFromWorkspace(Path.Combine(profileWorkspace, ".usvfs-bootstrap"), profileWorkspace, progress);
-    }
-
-    public static void RestoreToCachedWorkspace(
-        string currentWorkspace,
-        string profileWorkspace,
-        IProgress<string>? progress = null)
-    {
-        EnsureWorkspaceDirectories(currentWorkspace);
-        DeleteLegacyStoredFsgame(profileWorkspace, progress);
-
-        var restored = 0;
-        foreach (var rule in ProfileWritableGameFiles.Rules)
-        {
-            var relativePath = rule.RelativePath;
-            var storedFile = GetStoredFilePath(profileWorkspace, relativePath);
-            if (!File.Exists(storedFile))
-            {
-                continue;
-            }
-
-            var workspaceFile = Path.Combine(currentWorkspace, relativePath);
-            Directory.CreateDirectory(Path.GetDirectoryName(workspaceFile)!);
-            CopyIndependentWorkspaceFile(storedFile, workspaceFile, relativePath, stats: null);
-            restored++;
-        }
-
-        if (restored > 0)
-        {
-            progress?.Report(LocalizedText.Format(Strings.Writable_LaunchPreparedFormat, restored));
-        }
-    }
-
-    public static void RestoreToWorkspace(
-        string currentWorkspace,
-        string profileWorkspace,
-        WorkspaceBuildStats stats,
-        IProgress<string>? progress = null)
-    {
-        EnsureWorkspaceDirectories(currentWorkspace);
-        DeleteLegacyStoredFsgame(profileWorkspace, progress);
-
-        var restored = 0;
-        foreach (var rule in ProfileWritableGameFiles.Rules)
-        {
-            var relativePath = rule.RelativePath;
-            var workspaceFile = Path.Combine(currentWorkspace, relativePath);
-            Directory.CreateDirectory(Path.GetDirectoryName(workspaceFile)!);
-
-            var storedFile = GetStoredFilePath(profileWorkspace, relativePath);
-            if (!File.Exists(storedFile))
-            {
-                continue;
-            }
-
-            CopyIndependentWorkspaceFile(storedFile, workspaceFile, relativePath, stats);
-            restored++;
-        }
-
-        if (restored > 0)
-        {
-            progress?.Report(LocalizedText.Format(Strings.Writable_WorkspaceRestoredFormat, restored));
-        }
     }
 
     internal static string GetStoredFilePath(string profileWorkspace, string relativePath)
@@ -222,22 +197,6 @@ internal static class ProfileWritableGameFileStore
                 File.Delete(temporaryFile);
             }
         }
-    }
-
-    private static void CopyIndependentWorkspaceFile(
-        string sourceFile,
-        string workspaceFile,
-        string relativePath,
-        WorkspaceBuildStats? stats)
-    {
-        if (File.Exists(workspaceFile))
-        {
-            File.Delete(workspaceFile);
-        }
-
-        File.Copy(sourceFile, workspaceFile, overwrite: false);
-        ClearReadOnlyAttribute(workspaceFile);
-        stats?.RecordRequiredLocal(relativePath, new FileInfo(workspaceFile).Length);
     }
 
     private static void ClearReadOnlyAttribute(string filePath)

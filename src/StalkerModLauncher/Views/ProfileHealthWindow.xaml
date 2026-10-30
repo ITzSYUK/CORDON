@@ -60,48 +60,32 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="{Binding StoragePanelTitle}"
+                    <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}"
                                FontSize="14"
                                FontWeight="SemiBold"
-                               ToolTip="{Binding StoragePanelToolTip}"/>
-                    <TextBlock Text="{Binding StorageStateDisplay}"
-                               Foreground="{StaticResource MutedTextBrush}"
-                               FontSize="11"
-                               TextTrimming="CharacterEllipsis"
-                               ToolTip="{Binding StorageStateDisplay}"
-                               Visibility="{Binding UsesLinkedWorkspace, Converter={StaticResource BooleanToVisibilityConverter}}"
-                               Margin="0,1,0,0"/>
+                               ToolTip="{x:Static res:Strings.Health_UsvfsTooltip}"/>
                 </StackPanel>
 
                 <UniformGrid Grid.Column="1"
-                             Columns="3"
+                             Columns="2"
                              VerticalAlignment="Center"
                              Margin="18,0">
                     <StackPanel Margin="0,0,12,0">
-                        <TextBlock Text="{Binding FirstMetricTitle}"
+                        <TextBlock Text="{x:Static res:Strings.Health_Layers}"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="11"
-                                   ToolTip="{Binding FirstMetricToolTip}"/>
+                                   ToolTip="{x:Static res:Strings.Health_LayersTooltip}"/>
                         <TextBlock Text="{Binding FirstMetricValue}"
                                    FontSize="13"
                                    FontWeight="SemiBold"
                                    Margin="0,1,0,0"/>
                     </StackPanel>
                     <StackPanel Margin="0,0,12,0">
-                        <TextBlock Text="{Binding SecondMetricTitle}"
+                        <TextBlock Text="{x:Static res:Strings.Health_GameData}"
                                    Foreground="{StaticResource MutedTextBrush}"
                                    FontSize="11"
                                    ToolTip="{Binding SecondMetricToolTip}"/>
                         <TextBlock Text="{Binding SecondMetricValue}"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"
-                                   Margin="0,1,0,0"/>
-                    </StackPanel>
-                    <StackPanel ToolTip="{Binding ThirdMetricToolTip}">
-                        <TextBlock Text="{Binding ThirdMetricTitle}"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   FontSize="11"/>
-                        <TextBlock Text="{Binding ThirdMetricValue}"
                                    FontSize="13"
                                    FontWeight="SemiBold"
                                    Margin="0,1,0,0"/>
@@ -111,16 +95,9 @@
                 <StackPanel Grid.Column="2"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <Button Content="{x:Static res:Strings.Health_RebuildWorkspace}"
-                            Command="{Binding RebuildWorkspaceCommand}"
-                            Visibility="{Binding UsesLinkedWorkspace, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            Margin="0,0,8,0"/>
-                    <Button Content="{x:Static res:Strings.Health_MoveWorkspace}"
+                    <Button Content="{x:Static res:Strings.Health_MoveDataTitle}"
                             Command="{Binding MoveWorkspaceCommand}"
                             Margin="0,0,8,0"/>
-                    <Button Content="{x:Static res:Strings.Health_ClearCache}"
-                            Command="{Binding ClearWorkspaceCommand}"
-                            Visibility="{Binding UsesLinkedWorkspace, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </StackPanel>
             </Grid>
         </Border>

@@ -87,7 +87,7 @@ public sealed class MainViewModelTests
     [InlineData(true, true)]
     public async Task LoadsSplitProfilesForEachInterface(bool pda, bool newPda)
     {
-        var first = new ModProfile { Name = "Workspace", LaunchArguments = "-workspace", LaunchBackendKind = LaunchBackendKind.LinkedWorkspace };
+        var first = new ModProfile { Name = "Workspace", LaunchArguments = "-workspace", LaunchBackendKind = LaunchBackendKind.LegacyWorkspace };
         var second = new ModProfile { Name = "USVFS", LaunchArguments = "-virtual", LaunchBackendKind = LaunchBackendKind.VirtualFileSystem };
         await RunWithViewModelAsync((viewModel, _) =>
         {
@@ -99,6 +99,41 @@ public sealed class MainViewModelTests
             Assert.Equal("-virtual", viewModel.Profiles[1].LaunchArguments);
             return Task.CompletedTask;
         }, initialSettings: new AppSettings { Profiles = [first, second], IsPdaInterfaceEnabled = pda, UseNewPdaInterface = newPda });
+    }
+
+    [Fact]
+    public async Task ManualLegacyImportMergesOnceAndPreservesExistingProfiles()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "LegacyImportTests", Guid.NewGuid().ToString("N"));
+        var oldDirectory = Path.Combine(root, "old");
+        var paths = new AppPaths(root, useLocalSettings: false, Path.Combine(root, "new"), oldDirectory);
+        var existing = new ModProfile { Name = "Current" };
+        var duplicate = new ModProfile { Id = existing.Id, Name = "Old version" };
+        var added = new ModProfile { Name = "Imported" };
+        MainViewModel? viewModel = null;
+        try
+        {
+            Directory.CreateDirectory(oldDirectory);
+            var oldJson = JsonSerializer.Serialize(new AppSettings { SchemaVersion = 9, Profiles = [duplicate, added] });
+            await File.WriteAllTextAsync(Path.Combine(oldDirectory, "settings.json"), oldJson);
+            using (var store = new SettingsStore(paths))
+                await store.SaveAsync(new AppSettings { Profiles = [existing] });
+            viewModel = CreateViewModel(root, paths: paths);
+            await WaitForSettingsLoadedAsync(viewModel);
+
+            Assert.Equal((1, 1), await viewModel.ImportLegacyProfilesAsync());
+            Assert.Equal((0, 2), await viewModel.ImportLegacyProfilesAsync());
+            Assert.Equal("Current", viewModel.Profiles[0].Name);
+            Assert.Equal("Imported", viewModel.Profiles[1].Name);
+            using var persisted = new SettingsStore(paths);
+            Assert.Equal(new[] { existing.Id, added.Id }, (await persisted.LoadAsync()).Profiles.Select(p => p.Id));
+            Assert.Equal(oldJson, await File.ReadAllTextAsync(Path.Combine(oldDirectory, "settings.json")));
+        }
+        finally
+        {
+            if (viewModel is not null) await viewModel.CleanupAsync();
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
     }
 
     [Fact]
@@ -926,9 +961,10 @@ public sealed class MainViewModelTests
     internal static MainViewModel CreateViewModel(
         string root,
         DialogService? dialogService = null,
-        IStartupRegistrationService? startupRegistrationService = null)
+        IStartupRegistrationService? startupRegistrationService = null,
+        AppPaths? paths = null)
     {
-        var paths = new AppPaths(
+        paths ??= new AppPaths(
             Path.Combine(root, "config"),
             Path.Combine(root, "workspaces"),
             preferGameDriveWorkspace: false);
@@ -1118,9 +1154,6 @@ public sealed class MainViewModelTests
         {
         }
 
-        public void ClearProfileWorkspaceCache(ModProfile profile, string gamePath)
-        {
-        }
     }
 
     private sealed class ThrowingProfileLauncher : IProfileLauncher

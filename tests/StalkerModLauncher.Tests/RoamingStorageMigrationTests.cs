@@ -30,9 +30,9 @@ public sealed class RoamingStorageMigrationTests : IDisposable
     }
 
     [Theory]
-    [InlineData(false, LaunchBackendKind.LinkedWorkspace)]
+    [InlineData(false, LaunchBackendKind.LegacyWorkspace)]
     [InlineData(false, LaunchBackendKind.VirtualFileSystem)]
-    [InlineData(true, LaunchBackendKind.LinkedWorkspace)]
+    [InlineData(true, LaunchBackendKind.LegacyWorkspace)]
     [InlineData(true, LaunchBackendKind.VirtualFileSystem)]
     public async Task MigratesBothFormatsOnceWithoutChangingSource(bool split, LaunchBackendKind backend)
     {
@@ -317,6 +317,40 @@ public sealed class RoamingStorageMigrationTests : IDisposable
         Assert.Equal(journal, await File.ReadAllTextAsync(Path.Combine(staging, "settings.pending.json")));
         using var destination = new SettingsStore(_destination);
         Assert.Equal("ru", (await destination.LoadAsync()).UiLanguage);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ManualImportReadsProfilesWithoutChangingSource(bool split)
+    {
+        var old = new ModProfile { Name = "Old", LaunchArguments = "-old" };
+        Directory.CreateDirectory(_source.ConfigDirectory);
+        if (split)
+        {
+            using var store = new SettingsStore(_source);
+            await store.SaveAsync(new AppSettings { Profiles = [old] });
+        }
+        else await File.WriteAllTextAsync(_source.SettingsFile,
+            JsonSerializer.Serialize(new AppSettings { SchemaVersion = 9, Profiles = [old] }));
+        var before = SnapshotSource();
+        using var destination = new SettingsStore(_destination);
+
+        var read = await destination.ReadLegacyProfilesAsync();
+
+        Assert.Equal(old.Id, Assert.Single(read).Id);
+        Assert.Equal("-old", read[0].LaunchArguments);
+        Assert.Equal(before, SnapshotSource());
+    }
+
+    [Fact]
+    public async Task ManualImportRejectsPendingSourceWithoutChangingIt()
+    {
+        Directory.CreateDirectory(_source.ConfigDirectory);
+        await File.WriteAllTextAsync(_source.SettingsPendingFile, "pending");
+        using var destination = new SettingsStore(_destination);
+        await Assert.ThrowsAsync<SettingsPersistenceException>(() => destination.ReadLegacyProfilesAsync());
+        Assert.Equal("pending", await File.ReadAllTextAsync(_source.SettingsPendingFile));
     }
 
     private KeyValuePair<string, string>[] SnapshotSource() => Directory.EnumerateFiles(_source.ConfigDirectory, "*", SearchOption.AllDirectories)

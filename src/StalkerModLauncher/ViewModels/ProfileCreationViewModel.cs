@@ -284,7 +284,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
             Description = IsStandalone ? Strings.Profile_Standalone : Strings.Creation_RegularProfileDescription,
             IsStandalone = IsStandalone,
             LaunchBackendKind = IsStandalone
-                ? LaunchBackendKind.LinkedWorkspace
+                ? LaunchBackendKind.Standalone
                 : LaunchBackendKind.VirtualFileSystem,
             GameInstallPath = IsStandalone ? string.Empty : GamePath.Trim(),
             ExecutableRelativePath = ExecutableRelativePath.Trim(),

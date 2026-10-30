@@ -29,7 +29,7 @@ public sealed class Mo2ImportUiBindingTests
     [Theory]
     [InlineData("Views/Mo2ImportWindow.xaml")]
     [InlineData("Views/Controls/PdaMo2ImportView.xaml")]
-    public void PreviewExposesProblemFilterFolderSelectionAndLaunchModes(string relativePath)
+    public void PreviewExposesProblemFilterAndNoBackendChoice(string relativePath)
     {
         var projectRoot = FindProjectRoot();
         var document = ReadSharedContent(projectRoot, relativePath);
@@ -41,10 +41,10 @@ public sealed class Mo2ImportUiBindingTests
         Assert.Contains(
             document.Descendants(presentation + "Button"),
             element => ((string?)element.Attribute("Command"))?.Contains("BrowseMissingModFolderCommand", StringComparison.Ordinal) == true);
-        Assert.Contains(
+        Assert.DoesNotContain(
             document.Descendants(presentation + "RadioButton"),
             element => (string?)element.Attribute("Content") == "Workspace");
-        Assert.Contains(
+        Assert.DoesNotContain(
             document.Descendants(presentation + "RadioButton"),
             element => (string?)element.Attribute("Content") == "USVFS");
     }

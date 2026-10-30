@@ -202,16 +202,6 @@
                                                Foreground="{StaticResource MutedTextBrush}"
                                                FontSize="12"
                                                Margin="0,0,0,6"/>
-                                    <WrapPanel>
-                                        <RadioButton Content="Workspace"
-                                                     Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                                     IsChecked="{Binding UseLinkedWorkspace, Mode=TwoWay}"
-                                                     Margin="0,0,18,0"/>
-                                        <RadioButton Content="USVFS"
-                                                     Style="{StaticResource ProfileLaunchRadioButtonStyle}"
-                                                     IsChecked="{Binding UseVirtualFileSystem, Mode=TwoWay}"
-                                                     IsEnabled="{Binding CanUseUsvfs}"/>
-                                    </WrapPanel>
                                     <TextBlock Text="{Binding UsvfsAvailabilityText}"
                                                Foreground="{StaticResource DisabledTextBrush}"
                                                FontSize="11"

@@ -12,22 +12,6 @@ public static class OverlayManifestBuilder
         Path.Combine("gamedata", "configs", "axr_options.ltx")
     ];
 
-    public static OverlayManifest BuildLinkedWorkspace(
-        ModProfile profile,
-        FileLayerPlan layerPlan,
-        string profileWorkspace,
-        bool includeOverwrites = false,
-        CancellationToken cancellationToken = default)
-    {
-        var launch = ProfileLaunchPlanResolver.PreviewLinkedWorkspace(profile, layerPlan, profileWorkspace);
-        return Build(
-            layerPlan,
-            profileWorkspace,
-            launch,
-            includeOverwrites,
-            cancellationToken);
-    }
-
     public static OverlayManifest BuildVirtualFileSystem(
         ModProfile profile,
         FileLayerPlan layerPlan,

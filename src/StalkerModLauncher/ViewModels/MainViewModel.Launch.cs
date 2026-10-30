@@ -8,12 +8,12 @@ public sealed partial class MainViewModel
 {
     private bool CanLaunch()
     {
-        return !IsBuilding && IsGameValid && SelectedProfile is { IsEnabled: true, IsRunning: false };
+        return !IsBuilding && IsGameValid && SelectedProfile is { IsEnabled: true, IsRunning: false, IsPreparing: false };
     }
 
     public bool CanLaunchProfile(ModProfile profile) =>
         !IsBuilding &&
-        profile is { IsEnabled: true, IsRunning: false } &&
+        profile is { IsEnabled: true, IsRunning: false, IsPreparing: false } &&
         GetProfileValidation(profile).IsValid;
 
     private Task LaunchAsync() => SelectedProfile is { } profile
@@ -25,7 +25,7 @@ public sealed partial class MainViewModel
         try
         {
             if (IsBuilding ||
-                profile is not { IsEnabled: true, IsRunning: false } ||
+                profile is not { IsEnabled: true, IsRunning: false, IsPreparing: false } ||
                 !GetProfileValidation(profile, forceRefresh: true).IsValid)
             {
                 Log(LocalizedText.Format(Strings.Launch_BlockedFormat, profile.Name), LauncherLogLevel.ErrorsOnly);
@@ -55,12 +55,12 @@ public sealed partial class MainViewModel
             });
 
             var session = await _launchCoordinator.StartAsync(profile.GameInstallPath, profile, progress);
-            await SaveAsync();
-            Log(LocalizedText.Format(Strings.Launch_ProcessCreatedFormat, session.ProcessId), LauncherLogLevel.Detailed);
             profile.IsRunning = true;
+            Log(LocalizedText.Format(Strings.Launch_ProcessCreatedFormat, session.ProcessId), LauncherLogLevel.Detailed);
             RaiseCommandStates();
             _ = ObserveLaunchReadinessAsync(session, profile);
             _ = CompleteGameSessionAsync(session.Completion, profile);
+            await SaveAsync();
         }
         catch (Exception ex)
         {

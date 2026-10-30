@@ -221,7 +221,12 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                 launchRequest.WorkingDirectory,
                 session,
                 processStarter,
-                () => session.GetExitCodeAsync(),
+                async () =>
+                {
+                    var exitCode = await session.GetExitCodeAsync().ConfigureAwait(false);
+                    ProfileWritableGameFileStore.CaptureFromWorkspace(bootstrapRoot, profileWorkspace, progress);
+                    return exitCode;
+                },
                 session.GetActiveProcessIds);
         }
         catch

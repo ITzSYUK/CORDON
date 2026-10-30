@@ -15,7 +15,7 @@ public sealed class ModProfile : ObservableObject
     private bool _isDiscordStatusEnabled = true;
     private bool _isStandalone;
     private bool _useBaseGameData;
-    private LaunchBackendKind _launchBackendKind = LaunchBackendKind.LinkedWorkspace;
+    private LaunchBackendKind _launchBackendKind = LaunchBackendKind.VirtualFileSystem;
     private string _launchArguments = "-nointro";
     private string _executableRelativePath = @"bin\xr_3da.exe";
     private string _executableSourcePath = string.Empty;
@@ -29,6 +29,7 @@ public sealed class ModProfile : ObservableObject
     private string _mo2OverwritePath = string.Empty;
     private string _modInstallPath = string.Empty;
     private bool _isRunning;
+    private bool _isPreparing;
     private bool _hasLaunchError;
     private string _launchErrorSummary = string.Empty;
     private List<string> _collapsedModGroups = [];
@@ -77,7 +78,6 @@ public sealed class ModProfile : ObservableObject
         set => SetProperty(ref _isStandalone, value);
     }
 
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public LaunchBackendKind LaunchBackendKind
     {
         get => _launchBackendKind;
@@ -189,6 +189,13 @@ public sealed class ModProfile : ObservableObject
     {
         get => _modInstallPath;
         set => SetProperty(ref _modInstallPath, value);
+    }
+
+    [JsonIgnore]
+    public bool IsPreparing
+    {
+        get => _isPreparing;
+        set => SetProperty(ref _isPreparing, value);
     }
 
     [JsonIgnore]

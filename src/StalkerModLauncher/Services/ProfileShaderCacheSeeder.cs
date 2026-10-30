@@ -38,7 +38,7 @@ internal static class ProfileShaderCacheSeeder
 
             try
             {
-                if (FilesAreEqual(source.FullPath, destination))
+                if (File.Exists(destination))
                 {
                     continue;
                 }
@@ -123,47 +123,6 @@ internal static class ProfileShaderCacheSeeder
             {
                 yield return cacheRoot;
                 yield break;
-            }
-        }
-    }
-
-    private static bool FilesAreEqual(string source, string destination)
-    {
-        if (!File.Exists(destination))
-        {
-            return false;
-        }
-
-        var sourceInfo = new FileInfo(source);
-        var destinationInfo = new FileInfo(destination);
-        if (sourceInfo.Length != destinationInfo.Length)
-        {
-            return false;
-        }
-
-        const int bufferSize = 64 * 1024;
-        using var sourceStream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize);
-        using var destinationStream = new FileStream(destination, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize);
-        var sourceBuffer = new byte[bufferSize];
-        var destinationBuffer = new byte[bufferSize];
-
-        while (true)
-        {
-            var sourceRead = sourceStream.Read(sourceBuffer, 0, sourceBuffer.Length);
-            var destinationRead = destinationStream.Read(destinationBuffer, 0, destinationBuffer.Length);
-            if (sourceRead != destinationRead)
-            {
-                return false;
-            }
-
-            if (sourceRead == 0)
-            {
-                return true;
-            }
-
-            if (!sourceBuffer.AsSpan(0, sourceRead).SequenceEqual(destinationBuffer.AsSpan(0, destinationRead)))
-            {
-                return false;
             }
         }
     }

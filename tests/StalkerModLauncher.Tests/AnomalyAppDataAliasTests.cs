@@ -10,26 +10,24 @@ public sealed class AnomalyAppDataAliasTests : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), "SmlAlias", Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public async Task WorkspaceAndUsvfsUseOneFileAndStorageSwitchDoesNotCopySettings()
+    public async Task UsvfsUsesOneFileAndStorageSwitchDoesNotCopySettings()
     {
         var (builder, profile) = CreateProfile();
         var mod = Path.Combine(_root, "mod");
         Write(Path.Combine(mod, "appdata", "user.ltx"), "mod settings");
         profile.Mods.Add(new ModEntry { SourcePath = mod, IsEnabled = true, Order = 1 });
-        var first = await builder.BuildAsync(profile.GameInstallPath, profile, new ProgressLog());
+        var first = await ProfileDataTestFixture.PrepareAsync(builder, profile.GameInstallPath, profile);
         profile.WorkspacePath = first.ProfileWorkspacePath;
         var data = Path.Combine(profile.WorkspacePath, "userdata");
         var user = Path.Combine(data, "user.ltx");
         var aliasUser = Path.Combine(first.WorkspaceRoot, "appdata", "user.ltx");
         var sourceUser = Path.Combine(profile.GameInstallPath, "appdata", "user.ltx");
-        var manifestPath = Path.Combine(profile.WorkspacePath, "build-manifest.json");
-        var manifestText = File.ReadAllText(manifestPath);
         Assert.Equal("mod settings", File.ReadAllText(user));
         Write(aliasUser, "workspace settings");
         Assert.Equal("workspace settings", File.ReadAllText(user));
         Assert.Equal("source settings", File.ReadAllText(sourceUser));
 
-        var layers = FileLayerPlan.CreateLinkedWorkspace(profile.GameInstallPath, profile, profile.WorkspacePath);
+        var layers = FileLayerPlan.CreateForProfile(profile.GameInstallPath, profile, profile.WorkspacePath);
         var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, profile.WorkspacePath);
         UsvfsProfileDataPreparer.Prepare(layers, manifest, profile.WorkspacePath);
         var bootstrap = Path.Combine(profile.WorkspacePath, ".usvfs-bootstrap");
@@ -40,25 +38,21 @@ public sealed class AnomalyAppDataAliasTests : IDisposable
         File.Move(temporary, Path.Combine(bootstrap, "appdata", "user.ltx"), overwrite: true);
         Assert.Equal("usvfs settings", File.ReadAllText(user));
         var progress = new ProgressLog();
-        await builder.BuildAsync(profile.GameInstallPath, profile, progress);
-        Assert.Contains(Strings.WorkspaceManifest_Current, progress.Messages);
-        Assert.Equal(manifestText, File.ReadAllText(manifestPath));
+        await ProfileDataTestFixture.PrepareAsync(builder, profile.GameInstallPath, profile);
         Assert.Equal("usvfs settings", File.ReadAllText(aliasUser));
 
         profile.UseBaseGameData = true;
-        await builder.BuildAsync(profile.GameInstallPath, profile, new ProgressLog());
+        await ProfileDataTestFixture.PrepareAsync(builder, profile.GameInstallPath, profile);
         Assert.Equal("source settings", File.ReadAllText(aliasUser));
         Write(aliasUser, "shared settings");
         Assert.Equal("shared settings", File.ReadAllText(sourceUser));
         Assert.Equal("mod settings", File.ReadAllText(Path.Combine(mod, "appdata", "user.ltx")));
         Assert.Equal("usvfs settings", File.ReadAllText(user));
         profile.UseBaseGameData = false;
-        await builder.BuildAsync(profile.GameInstallPath, profile, new ProgressLog());
+        await ProfileDataTestFixture.PrepareAsync(builder, profile.GameInstallPath, profile);
         Assert.Equal("usvfs settings", File.ReadAllText(aliasUser));
-        Assert.Equal(manifestText, File.ReadAllText(manifestPath));
 
         Write(Path.Combine(data, "savedgames", "keep.sav"), "save");
-        builder.ClearProfileWorkspaceCache(profile, profile.GameInstallPath);
         Assert.Equal("usvfs settings", File.ReadAllText(user));
         Assert.Equal("save", File.ReadAllText(Path.Combine(data, "savedgames", "keep.sav")));
         Assert.Equal("shared settings", File.ReadAllText(sourceUser));
@@ -71,9 +65,9 @@ public sealed class AnomalyAppDataAliasTests : IDisposable
     {
         var (builder, profile) = CreateProfile();
         profile.UseBaseGameData = shared;
-        var first = await builder.BuildAsync(profile.GameInstallPath, profile, new ProgressLog());
+        var first = await ProfileDataTestFixture.PrepareAsync(builder, profile.GameInstallPath, profile);
         profile.WorkspacePath = first.ProfileWorkspacePath;
-        var layers = FileLayerPlan.CreateLinkedWorkspace(profile.GameInstallPath, profile, profile.WorkspacePath);
+        var layers = FileLayerPlan.CreateForProfile(profile.GameInstallPath, profile, profile.WorkspacePath);
         var bootstrap = Path.Combine(profile.WorkspacePath, ".usvfs-bootstrap");
         Directory.CreateDirectory(bootstrap);
         AnomalyAppDataAlias.Prepare(bootstrap, layers);
@@ -94,7 +88,7 @@ public sealed class AnomalyAppDataAliasTests : IDisposable
     public async Task LegacyCopiesAreArchivedWithoutReplacingCanonicalSettings()
     {
         var (builder, profile) = CreateProfile();
-        var first = await builder.BuildAsync(profile.GameInstallPath, profile, new ProgressLog());
+        var first = await ProfileDataTestFixture.PrepareAsync(builder, profile.GameInstallPath, profile);
         var data = Path.Combine(first.ProfileWorkspacePath, "userdata");
         Write(Path.Combine(data, "user.ltx"), "canonical settings");
         var legacy = Path.Combine(data, "writable-game-files", "appdata", "user.ltx");
@@ -110,56 +104,12 @@ public sealed class AnomalyAppDataAliasTests : IDisposable
     }
 
     [Fact]
-    public async Task ReplacesLegacyPhysicalAppDataOnceAndKeepsUserSettings()
-    {
-        var (builder, profile) = CreateProfile();
-        profile.GameInstallPath += Path.DirectorySeparatorChar;
-        var first = await builder.BuildAsync(profile.GameInstallPath, profile, new ProgressLog());
-        profile.WorkspacePath = first.ProfileWorkspacePath;
-        var data = Path.Combine(profile.WorkspacePath, "userdata");
-        Write(Path.Combine(data, "user.ltx"), "keep settings");
-        AnomalyAppDataAlias.Detach(first.WorkspaceRoot);
-        Write(Path.Combine(first.WorkspaceRoot, "appdata", "user.ltx"), "legacy settings");
-
-        await builder.BuildAsync(profile.GameInstallPath, profile, new ProgressLog());
-        var progress = new ProgressLog();
-        await builder.BuildAsync(profile.GameInstallPath, profile, progress);
-
-        Assert.Contains(Strings.WorkspaceManifest_Current, progress.Messages);
-        Assert.Equal("keep settings", File.ReadAllText(Path.Combine(first.WorkspaceRoot, "appdata", "user.ltx")));
-        var backup = Assert.Single(Directory.GetFiles(Path.Combine(profile.WorkspacePath, "diagnostics"), "*.bak"));
-        Assert.Equal("legacy settings", File.ReadAllText(backup));
-        Assert.Equal("source settings", File.ReadAllText(Path.Combine(profile.GameInstallPath, "appdata", "user.ltx")));
-    }
-
-    [Fact]
-    public async Task CacheStillDetectsMissingFileSharedBySeveralLayers()
-    {
-        var (builder, profile) = CreateProfile();
-        for (var i = 0; i < 2; i++)
-        {
-            var mod = Path.Combine(_root, $"mod-{i}");
-            Write(Path.Combine(mod, "gamedata", "configs", "shared.ltx"), $"mod {i}");
-            profile.Mods.Add(new ModEntry { SourcePath = mod, IsEnabled = true, Order = i });
-        }
-        var first = await builder.BuildAsync(profile.GameInstallPath, profile, new ProgressLog());
-        var sharedFile = Path.Combine(first.WorkspaceRoot, "gamedata", "configs", "shared.ltx");
-        File.Delete(sharedFile);
-        var progress = new ProgressLog();
-
-        await builder.BuildAsync(profile.GameInstallPath, profile, progress);
-
-        Assert.DoesNotContain(Strings.WorkspaceManifest_Current, progress.Messages);
-        Assert.Equal("mod 1", File.ReadAllText(sharedFile));
-    }
-
-    [Fact]
     public async Task LegacyMigrationRefusesDirectoryLinksToSourceData()
     {
         var (builder, profile) = CreateProfile();
-        var first = await builder.BuildAsync(profile.GameInstallPath, profile, new ProgressLog());
+        var first = await ProfileDataTestFixture.PrepareAsync(builder, profile.GameInstallPath, profile);
         profile.UseBaseGameData = true;
-        var layers = FileLayerPlan.CreateLinkedWorkspace(profile.GameInstallPath, profile, first.ProfileWorkspacePath);
+        var layers = FileLayerPlan.CreateForProfile(profile.GameInstallPath, profile, first.ProfileWorkspacePath);
         var legacyStore = Path.Combine(first.ProfileWorkspacePath, "userdata", "writable-game-files");
         AnomalyAppDataAlias.Prepare(legacyStore, layers);
 
@@ -177,7 +127,7 @@ public sealed class AnomalyAppDataAliasTests : IDisposable
         Write(config, contents);
         profile.FsgameSourcePath = config;
 
-        Assert.Throws<InvalidOperationException>(() => FileLayerPlan.CreateLinkedWorkspace(
+        Assert.Throws<InvalidOperationException>(() => FileLayerPlan.CreateForProfile(
             profile.GameInstallPath, profile, Path.Combine(_root, "profile")));
 
         Assert.Equal(contents, File.ReadAllText(config));

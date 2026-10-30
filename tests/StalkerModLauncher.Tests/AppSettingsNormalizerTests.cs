@@ -7,14 +7,14 @@ namespace StalkerModLauncher.Tests;
 public sealed class AppSettingsNormalizerTests
 {
     [Fact]
-    public void NormalizeResetsUnknownLaunchBackendToLinkedWorkspace()
+    public void NormalizeResetsUnknownLaunchBackendToUsvfs()
     {
         var profile = new ModProfile { LaunchBackendKind = (LaunchBackendKind)999 };
         var settings = new AppSettings { Profiles = [profile] };
 
         var normalized = AppSettingsNormalizer.Normalize(settings);
 
-        Assert.Equal(LaunchBackendKind.LinkedWorkspace, normalized.Profiles[0].LaunchBackendKind);
+        Assert.Equal(LaunchBackendKind.VirtualFileSystem, normalized.Profiles[0].LaunchBackendKind);
     }
 
     [Fact]

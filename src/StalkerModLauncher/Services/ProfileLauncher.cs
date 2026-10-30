@@ -25,10 +25,6 @@ public sealed class ProfileLauncher : IProfileLauncher
         ProfileManager? profileManager = null)
     {
         _backends = backends.ToDictionary(backend => backend.Kind);
-        if (!_backends.ContainsKey(LaunchBackendKind.LinkedWorkspace))
-        {
-            throw new ArgumentException(Strings.Error_LinkedBackendRequired, nameof(backends));
-        }
 
         _launchPlanExecutor = launchPlanExecutor ?? new LaunchPlanExecutor();
         _profileManager = profileManager;
@@ -40,18 +36,22 @@ public sealed class ProfileLauncher : IProfileLauncher
         IProgress<string> progress,
         CancellationToken cancellationToken = default)
     {
+        if (profile.IsRunning || profile.IsPreparing)
+            throw new InvalidOperationException(Strings.ProfileStorage_Busy);
+        profile.IsPreparing = true;
         try
         {
             return await LaunchCoreAsync(gamePath, profile, progress, cancellationToken);
         }
         catch (Exception ex) when (
-            profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem &&
+            !profile.IsStandalone &&
             ex is not OperationCanceledException)
         {
             progress.Report(LocalizedText.Format(Strings.Launch_UsvfsFailedFormat, ex.Message));
             progress.Report(Strings.Launch_UsvfsNoAutoFallback);
             throw;
         }
+        finally { profile.IsPreparing = false; }
     }
 
     private async Task<ProfileLaunchHandle> LaunchCoreAsync(
@@ -60,8 +60,10 @@ public sealed class ProfileLauncher : IProfileLauncher
         IProgress<string> progress,
         CancellationToken cancellationToken)
     {
-        var backend = ResolveBackend(profile.LaunchBackendKind);
-        progress.Report(LocalizedText.Format(Strings.Launch_BackendFormat, backend.Kind == LaunchBackendKind.VirtualFileSystem ? "USVFS" : "Workspace"));
+        if (!profile.IsStandalone && profile.LaunchBackendKind != LaunchBackendKind.VirtualFileSystem)
+            throw new InvalidOperationException(Strings.Launch_WorkspaceRemoved);
+        var backend = ResolveBackend(profile.IsStandalone ? LaunchBackendKind.Standalone : profile.LaunchBackendKind);
+        progress.Report(LocalizedText.Format(Strings.Launch_BackendFormat, backend.Kind == LaunchBackendKind.VirtualFileSystem ? "USVFS" : Strings.Profile_Standalone));
         var context = CreateBackendContext(gamePath, profile, progress);
         var plan = await backend.PrepareAsync(context, progress, cancellationToken);
         progress.Report(LocalizedText.Format(Strings.Launch_ExecutableFormat, plan.ExecutablePath));
@@ -108,10 +110,8 @@ public sealed class ProfileLauncher : IProfileLauncher
 
         var workspace = _profileManager.EnsureProfileFolderPath(profile, progress);
 
-        var fileLayerPlan = FileLayerPlan.CreateLinkedWorkspace(gamePath, profile, workspace);
-        var overlayManifest = profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem
-            ? OverlayManifestBuilder.BuildVirtualFileSystem(profile, fileLayerPlan, workspace)
-            : OverlayManifestBuilder.BuildLinkedWorkspace(profile, fileLayerPlan, workspace);
+        var fileLayerPlan = FileLayerPlan.CreateForProfile(gamePath, profile, workspace);
+        var overlayManifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, fileLayerPlan, workspace);
         return new ProfileLaunchBackendContext(gamePath, profile, fileLayerPlan, overlayManifest);
     }
 
@@ -124,7 +124,7 @@ public sealed class ProfileLauncher : IProfileLauncher
 
         throw new InvalidOperationException(kind == LaunchBackendKind.VirtualFileSystem
             ? Strings.Launch_UsvfsUnavailable
-            : LocalizedText.Format(Strings.Launch_BackendUnavailableFormat, kind));
+            : Strings.Launch_WorkspaceRemoved);
     }
 
     private static async Task<int> WaitForProcessExitAsync(Process process)

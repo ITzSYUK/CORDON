@@ -195,12 +195,11 @@ public sealed class Mo2ImportServiceTests : IDisposable
         var profile = Mo2ImportService.CreateProfile(
             preview,
             "Without overwrite",
-            includeOverwrite: false,
-            LaunchBackendKind.LinkedWorkspace);
+            includeOverwrite: false);
 
         Assert.Equal(["One"], profile.Mods.Select(mod => mod.Name));
         Assert.Empty(profile.Mo2OverwritePath);
-        Assert.Equal(LaunchBackendKind.LinkedWorkspace, profile.LaunchBackendKind);
+        Assert.Equal(LaunchBackendKind.VirtualFileSystem, profile.LaunchBackendKind);
     }
 
     private Mo2Source CreatePortableMo2(params string[] modListLines)

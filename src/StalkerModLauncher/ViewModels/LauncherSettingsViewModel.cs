@@ -48,7 +48,8 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         bool? isStandaloneBuild = null,
         Func<string, bool>? confirmInstall = null,
         Func<bool>? canInstallUpdate = null,
-        Action? requestExit = null)
+        Action? requestExit = null,
+        Func<Task<(int Added, int Skipped)>>? importLegacyProfiles = null)
     {
         _initialUiLanguage = Services.UiLanguage.Normalize(preferences.UiLanguage);
         _uiLanguage = _initialUiLanguage;
@@ -81,6 +82,18 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         _confirmReset = confirmReset ?? (() => DialogService.Confirm(
             Strings.Settings_ResetTitle,
             Strings.Settings_ResetMessage));
+        ImportLegacyProfilesCommand = new AsyncRelayCommand(async () =>
+        {
+            try
+            {
+                var result = await importLegacyProfiles!();
+                LegacyImportStatus = LocalizedText.Format(Strings.Settings_LegacyImportResult, result.Added, result.Skipped);
+            }
+            catch (Exception ex)
+            {
+                LegacyImportStatus = LocalizedText.Format(Strings.Settings_LegacyImportFailed, ex.Message);
+            }
+        }, () => importLegacyProfiles is not null);
         OpenSettingsFolderCommand = new RelayCommand(OpenSettingsFolder);
         CheckForUpdatesCommand = new AsyncRelayCommand(CheckForUpdatesAsync, () => _checkForUpdates is not null);
         OpenReleaseCommand = new RelayCommand(OpenRelease, () => HasAvailableUpdate);
@@ -241,6 +254,13 @@ public sealed class LauncherSettingsViewModel : ObservableObject
 
     public bool CanShowDownloadButton => HasAvailableUpdate && !AreDownloadOptionsVisible;
     public bool HasDownloadedRelease => !string.IsNullOrWhiteSpace(_downloadedReleaseDirectory);
+    private string _legacyImportStatus = string.Empty;
+    public string LegacyImportStatus
+    {
+        get => _legacyImportStatus;
+        private set => SetProperty(ref _legacyImportStatus, value);
+    }
+    public AsyncRelayCommand ImportLegacyProfilesCommand { get; }
     public RelayCommand OpenSettingsFolderCommand { get; }
     public AsyncRelayCommand CheckForUpdatesCommand { get; }
     public RelayCommand OpenReleaseCommand { get; }

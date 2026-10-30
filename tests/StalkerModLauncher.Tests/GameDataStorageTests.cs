@@ -9,7 +9,7 @@ public sealed class GameDataStorageTests : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), "CordonDataTests", Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public async Task WorkspaceSwitchesDataWithoutOverwritingEitherDirectoryAndDeletionKeepsSharedSaves()
+    public async Task UsvfsSwitchesDataWithoutOverwritingEitherDirectoryAndDeletionKeepsSharedSaves()
     {
         var game = Path.Combine(_root, "game");
         Write(game, "bin/xr_3da.exe", "exe");
@@ -20,17 +20,17 @@ public sealed class GameDataStorageTests : IDisposable
         var builder = new WorkspaceBuilder(paths);
         var profile = new ModProfile { GameInstallPath = game };
         var progress = new Progress<string>();
-        var first = await builder.BuildAsync(game, profile, progress);
+        var first = await ProfileDataTestFixture.PrepareAsync(builder, game, profile);
         Write(profile.WorkspacePath, "userdata/user.ltx", "private settings");
         Write(profile.WorkspacePath, "userdata/savedgames/private.sav", "private save");
         profile.UseBaseGameData = true;
-        var second = await builder.BuildAsync(game, profile, progress);
+        var second = await ProfileDataTestFixture.PrepareAsync(builder, game, profile);
         Assert.Contains(Path.Combine(game, "appdata"), File.ReadAllText(Path.Combine(second.WorkspaceRoot, "fsgame.ltx")));
         Assert.Equal(Path.Combine(game, "appdata", "savedgames"), WorkspaceBuilder.GetSavedGamesPath(profile));
         Assert.Equal("shared settings", File.ReadAllText(Path.Combine(game, "appdata", "user.ltx")));
         Assert.False(File.Exists(Path.Combine(game, "appdata", "savedgames", "private.sav")));
         profile.UseBaseGameData = false;
-        await builder.BuildAsync(game, profile, progress);
+        await ProfileDataTestFixture.PrepareAsync(builder, game, profile);
         Assert.Contains(Path.Combine(profile.WorkspacePath, "userdata"), File.ReadAllText(Path.Combine(first.WorkspaceRoot, "fsgame.ltx")));
         Assert.Equal("private settings", File.ReadAllText(Path.Combine(profile.WorkspacePath, "userdata", "user.ltx")));
         profile.UseBaseGameData = true;
@@ -40,7 +40,7 @@ public sealed class GameDataStorageTests : IDisposable
     }
 
     [Fact]
-    public async Task ManualFsgameOverridesLayerPriorityAndDifferentFsltxTargetForWorkspaceAndUsvfs()
+    public async Task ManualFsgameOverridesLayerPriorityAndDifferentFsltxTargetForUsvfs()
     {
         var game = Path.Combine(_root, "manual-game");
         var main = Path.Combine(_root, "manual-main");
@@ -63,8 +63,8 @@ public sealed class GameDataStorageTests : IDisposable
         profile.Mods.Add(new ModEntry { Name = "Main", SourcePath = main, IsEnabled = true, Order = 1 });
         profile.Mods.Add(new ModEntry { Name = "Patch", SourcePath = patch, IsEnabled = true, Order = 2 });
 
-        var layers = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
-        var built = await new WorkspaceBuilder(paths).BuildAsync(game, profile, new Progress<string>(), layers);
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var built = await ProfileDataTestFixture.PrepareAsync(new WorkspaceBuilder(paths), game, profile);
         var workspaceFsgame = Path.Combine(built.WorkspaceRoot, "bin_x64", "fsgame_ogsr.ltx");
         var workspaceFallbackFsgame = Path.Combine(built.WorkspaceRoot, "bin_x64", "fsgame.ltx");
         var workspaceLaunchFsgame = Path.Combine(built.WorkspaceRoot, "fsgame_coc.ltx");
@@ -97,7 +97,7 @@ public sealed class GameDataStorageTests : IDisposable
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task FsltxSelectsNamedFsgameForWorkspaceAndUsvfs(bool useBaseGameData)
+    public async Task FsltxSelectsNamedFsgameForUsvfs(bool useBaseGameData)
     {
         var game = Path.Combine(_root, "fsltx-game");
         var patch = Path.Combine(_root, "fsltx-patch");
@@ -119,10 +119,10 @@ public sealed class GameDataStorageTests : IDisposable
         };
         profile.Mods.Add(new ModEntry { Name = "Patch", SourcePath = patch, IsEnabled = true, Order = 1 });
 
-        var layers = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
         Assert.Equal(patchFsgame, layers.FindFsgameSource()?.FullPath);
         var paths = new AppPaths(Path.Combine(_root, "config"), Path.Combine(_root, "workspaces"), false);
-        var built = await new WorkspaceBuilder(paths).BuildAsync(game, profile, new Progress<string>(), layers);
+        var built = await ProfileDataTestFixture.PrepareAsync(new WorkspaceBuilder(paths), game, profile);
         var workspaceFsgame = Path.Combine(built.WorkspaceRoot, "fsgame_coc.ltx");
         Assert.Contains("$source$ = patch", File.ReadAllText(workspaceFsgame));
         Assert.Contains(layers.GameDataRoot, File.ReadAllText(workspaceFsgame));
@@ -149,7 +149,7 @@ public sealed class GameDataStorageTests : IDisposable
         Write(mod, "_appdata_/user.ltx", "must not replace existing");
         var profile = new ModProfile { GameInstallPath = game, WorkspacePath = workspace, UseBaseGameData = true };
         profile.Mods.Add(new ModEntry { SourcePath = mod, IsEnabled = true, Order = 1 });
-        var layers = FileLayerPlan.CreateLinkedWorkspace(game, profile, workspace);
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
         var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
         var config = UsvfsProfileDataPreparer.Prepare(layers, manifest, workspace)!;
         var mapping = anomalyBootstrap

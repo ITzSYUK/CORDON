@@ -12,7 +12,7 @@ public sealed class FileLayerPlanTests : IDisposable
         Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public void CreateLinkedWorkspaceOrdersBaseGameEnabledModsAndUserData()
+    public void CreateForProfileOrdersBaseGameEnabledModsAndUserData()
     {
         var gamePath = Path.Combine(Path.GetTempPath(), "game");
         var workspacePath = Path.Combine(Path.GetTempPath(), "workspace");
@@ -45,7 +45,7 @@ public sealed class FileLayerPlanTests : IDisposable
         profile.Mods.Add(disabledMod);
         profile.Mods.Add(lowerPriorityMod);
 
-        var plan = FileLayerPlan.CreateLinkedWorkspace(gamePath, profile, workspacePath);
+        var plan = FileLayerPlan.CreateForProfile(gamePath, profile, workspacePath);
 
         Assert.Equal(FileLayerKind.BaseGame, plan.Layers[0].Kind);
         Assert.Equal(Path.GetFullPath(gamePath), plan.BaseGame.RootPath);
@@ -57,19 +57,19 @@ public sealed class FileLayerPlanTests : IDisposable
     }
 
     [Fact]
-    public void CreateLinkedWorkspaceRejectsStandaloneProfiles()
+    public void CreateForProfileRejectsStandaloneProfiles()
     {
         var profile = new ModProfile { IsStandalone = true };
 
         Assert.Throws<InvalidOperationException>(
-            () => FileLayerPlan.CreateLinkedWorkspace("game", profile, "workspace"));
+            () => FileLayerPlan.CreateForProfile("game", profile, "workspace"));
     }
 
     [Theory]
     [InlineData("-fsltx")]
     [InlineData(@"-fsltx ..\outside.ltx")]
     [InlineData("-fsltx config.txt")]
-    public void CreateLinkedWorkspaceRejectsInvalidFsltx(string launchArguments)
+    public void CreateForProfileRejectsInvalidFsltx(string launchArguments)
     {
         var game = Path.Combine(_root, "invalid-fsltx-game");
         Directory.CreateDirectory(game);
@@ -80,13 +80,13 @@ public sealed class FileLayerPlanTests : IDisposable
         };
 
         var error = Assert.Throws<InvalidOperationException>(() =>
-            FileLayerPlan.CreateLinkedWorkspace(game, profile, Path.Combine(_root, "invalid-fsltx-workspace")));
+            FileLayerPlan.CreateForProfile(game, profile, Path.Combine(_root, "invalid-fsltx-workspace")));
 
         Assert.Contains("-fsltx", error.Message);
     }
 
     [Fact]
-    public void CreateLinkedWorkspaceAddsMo2OverwriteAfterModsWithoutChangingProfileModList()
+    public void CreateForProfileAddsMo2OverwriteAfterModsWithoutChangingProfileModList()
     {
         var profile = new ModProfile
         {
@@ -100,7 +100,7 @@ public sealed class FileLayerPlanTests : IDisposable
             Order = 1
         });
 
-        var plan = FileLayerPlan.CreateLinkedWorkspace(
+        var plan = FileLayerPlan.CreateForProfile(
             Path.Combine(_root, "game"),
             profile,
             Path.Combine(_root, "workspace"));
@@ -121,7 +121,7 @@ public sealed class FileLayerPlanTests : IDisposable
         var patchFile = CreateFile(patch, "gamedata/configs/system.ltx", "patch");
         var profile = CreateProfile(game, main, patch);
 
-        var plan = FileLayerPlan.CreateLinkedWorkspace(game, profile, Path.Combine(_root, "workspace"));
+        var plan = FileLayerPlan.CreateForProfile(game, profile, Path.Combine(_root, "workspace"));
         var providers = plan.FindAllProviders(@"gamedata\configs\system.ltx");
         var final = plan.FindFinalFile(@"gamedata\configs\system.ltx");
 
@@ -142,7 +142,7 @@ public sealed class FileLayerPlanTests : IDisposable
         CreateFile(patch, "gamedata/configs/patch_only.ltx", "patch only");
         var profile = CreateProfile(game, main, patch);
 
-        var plan = FileLayerPlan.CreateLinkedWorkspace(game, profile, Path.Combine(_root, "workspace-overwrite"));
+        var plan = FileLayerPlan.CreateForProfile(game, profile, Path.Combine(_root, "workspace-overwrite"));
         var overwrites = plan.GetOverwrittenFiles(plan.Mods.Single(layer => layer.Name == "Patch"));
 
         var overwrite = Assert.Single(overwrites);
@@ -161,7 +161,7 @@ public sealed class FileLayerPlanTests : IDisposable
         var patchExe = CreateFile(patch, "bin_x64/xrEngine.exe", "patch");
         var profile = CreateProfile(game, main, patch);
 
-        var plan = FileLayerPlan.CreateLinkedWorkspace(game, profile, Path.Combine(_root, "workspace-exe"));
+        var plan = FileLayerPlan.CreateForProfile(game, profile, Path.Combine(_root, "workspace-exe"));
         var candidates = plan.GetExecutableCandidates();
 
         Assert.Equal([baseExe, patchExe], candidates.Select(candidate => candidate.FullPath));
@@ -179,7 +179,7 @@ public sealed class FileLayerPlanTests : IDisposable
         var profile = CreateProfile(game, main, patch);
         profile.Mods[1].ExcludedFiles.Add("shared.ltx");
 
-        var plan = FileLayerPlan.CreateLinkedWorkspace(game, profile, Path.Combine(_root, "excluded-workspace"));
+        var plan = FileLayerPlan.CreateForProfile(game, profile, Path.Combine(_root, "excluded-workspace"));
 
         Assert.Equal(mainFile, plan.FindFinalFile("shared.ltx")?.FullPath);
     }

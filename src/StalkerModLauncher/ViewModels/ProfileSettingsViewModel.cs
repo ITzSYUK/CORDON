@@ -29,7 +29,6 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     private bool _isDiscordStatusEnabled;
     private bool _isStandalone;
     private bool _useBaseGameData;
-    private LaunchBackendKind _launchBackendKind;
     private string _usvfsExecutableOverrideRelativePath;
     private string _anomalyRenderer = string.Empty;
     private bool _anomalyUseAvx;
@@ -69,7 +68,6 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         _isDiscordStatusEnabled = profile.IsDiscordStatusEnabled;
         _isStandalone = profile.IsStandalone;
         _useBaseGameData = profile.UseBaseGameData;
-        _launchBackendKind = profile.LaunchBackendKind;
         _usvfsExecutableOverrideRelativePath = profile.UsvfsExecutableOverrideRelativePath;
         _isAnomalyProfile = IsAnomalyProfile(profile);
         if (AnomalyUsvfsEngineSelection.TryParseRelativePath(
@@ -163,7 +161,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
                 return Strings.SettingsProfile_ExeAuto;
             }
 
-            var source = ProfileExecutableSourceResolver.GetSourceRoots(_profile, includeWorkspace: false)
+            var source = ProfileExecutableSourceResolver.GetSourceRoots(_profile)
                 .FirstOrDefault(root => FileSystemSafety.IsSameDirectory(root.RootPath, ExecutableSourcePath));
             return source is null
                 ? LocalizedText.Format(Strings.SettingsProfile_ExeManualMissingFormat, ExecutableSourcePath)
@@ -223,11 +221,6 @@ public sealed class ProfileSettingsViewModel : ObservableObject
             if (!SetProperty(ref _isStandalone, value))
             {
                 return;
-            }
-
-            if (value)
-            {
-                SetLaunchBackend(LaunchBackendKind.LinkedWorkspace);
             }
 
             OnPropertyChanged(nameof(CanUseUsvfs));
@@ -301,32 +294,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         ? Strings.SettingsProfile_UsvfsAvailable
         : Strings.SettingsProfile_UsvfsMissing;
 
-    public bool UseLinkedWorkspace
-    {
-        get => _launchBackendKind == LaunchBackendKind.LinkedWorkspace;
-        set
-        {
-            if (value)
-            {
-                SetLaunchBackend(LaunchBackendKind.LinkedWorkspace);
-            }
-        }
-    }
-
-    public bool UseVirtualFileSystem
-    {
-        get => _launchBackendKind == LaunchBackendKind.VirtualFileSystem;
-        set
-        {
-            if (value && CanUseUsvfs)
-            {
-                SetLaunchBackend(LaunchBackendKind.VirtualFileSystem);
-            }
-        }
-    }
-
     public bool IsAnomalyUsvfsOptionsVisible =>
-        _isAnomalyProfile && UseVirtualFileSystem;
+        _isAnomalyProfile && !IsStandalone;
 
     public bool UseAutomaticAnomalyRenderer
     {
@@ -493,8 +462,8 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         _profile.IsStandalone = IsStandalone;
         _profile.UseBaseGameData = UseBaseGameData;
         _profile.LaunchBackendKind = IsStandalone
-            ? LaunchBackendKind.LinkedWorkspace
-            : _launchBackendKind;
+            ? LaunchBackendKind.Standalone
+            : LaunchBackendKind.VirtualFileSystem;
         _profile.UsvfsExecutableOverrideRelativePath = _usvfsExecutableOverrideRelativePath;
     }
 
@@ -696,19 +665,6 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         {
             _dialogService.ShowError(Strings.SettingsProfile_ModListFailed, ex.Message);
         }
-    }
-
-    private void SetLaunchBackend(LaunchBackendKind backend)
-    {
-        if (_launchBackendKind == backend)
-        {
-            return;
-        }
-
-        _launchBackendKind = backend;
-        OnPropertyChanged(nameof(UseLinkedWorkspace));
-        OnPropertyChanged(nameof(UseVirtualFileSystem));
-        OnPropertyChanged(nameof(IsAnomalyUsvfsOptionsVisible));
     }
 
     private void SetAnomalyRenderer(string renderer)
