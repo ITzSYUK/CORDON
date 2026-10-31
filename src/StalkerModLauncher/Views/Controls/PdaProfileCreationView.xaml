@@ -54,6 +54,40 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+            <Style x:Key="PdaProfileRadioButtonStyle" TargetType="RadioButton">
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <BulletDecorator Background="Transparent">
+                                <BulletDecorator.Bullet>
+                                    <Grid Width="15" Height="15">
+                                        <Ellipse x:Name="Outer" Fill="{DynamicResource PdaRadioBackgroundBrush}" Stroke="{DynamicResource PdaRadioBorderBrush}" StrokeThickness="1"/>
+                                        <Ellipse x:Name="Inner" Width="7" Height="7"
+                                                 Fill="{StaticResource AccentBrush}" Visibility="Collapsed"/>
+                                    </Grid>
+                                </BulletDecorator.Bullet>
+                                <ContentPresenter Margin="4,0,0,0"
+                                                  VerticalAlignment="Center"/>
+                            </BulletDecorator>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Inner" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Outer" Property="Stroke" Value="{DynamicResource PdaRadioHoverBorderBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.38"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -267,7 +301,10 @@
                                 </TextBlock>
                             </Grid>
                         </Border>
-                        <Button Grid.Row="4" Content="{x:Static res:Strings.Creation_AddMod}" Command="{Binding AddModCommand}" HorizontalAlignment="Left"/>
+                        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Left">
+                            <Button Content="{x:Static res:Strings.Creation_AddMod}" Command="{Binding AddModCommand}"/>
+                            <Button Content="{x:Static res:Strings.Creation_ScanMods}" Command="{Binding ScanModsCommand}" Margin="8,0,0,0"/>
+                        </StackPanel>
                     </Grid>
 
                     <StackPanel>
@@ -296,9 +333,9 @@
                     </StackPanel>
                 </Grid>
 
-                <StackPanel>
-                    <StackPanel.Style>
-                        <Style TargetType="StackPanel">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,-10,0">
+                    <ScrollViewer.Style>
+                        <Style TargetType="ScrollViewer">
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsStepThree}" Value="True">
@@ -306,28 +343,50 @@
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </StackPanel.Style>
-                <Border Background="{DynamicResource PanelAltBrush}" BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1" Padding="10" Margin="0,0,0,11">
-                        <StackPanel>
-                            <TextBlock Text="{Binding ProfileTypeLabel}" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding SourceSummary}" Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0"/>
+                    </ScrollViewer.Style>
+                    <StackPanel Margin="0,0,20,0">
+                    <Border Background="{DynamicResource PanelAltBrush}" BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1" Padding="10" Margin="0,0,0,11">
+                            <StackPanel>
+                                <TextBlock Text="{Binding ProfileTypeLabel}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding SourceSummary}" Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Text="{x:Static res:Strings.Creation_Executable}" Foreground="{StaticResource MutedTextBrush}"/>
+                        <Grid Margin="0,4,0,9">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding ExecutableRelativePath, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Grid.Column="1" Content="{x:Static res:Strings.Common_Browse}" Command="{Binding BrowseExecutableCommand}" Margin="7,0,0,0"/>
+                        </Grid>
+                        <TextBlock Text="{Binding ExecutableDetectionMessage}" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,9"/>
+                        <TextBlock Text="{x:Static res:Strings.Creation_LaunchArguments}" Foreground="{StaticResource MutedTextBrush}"/>
+                        <TextBox Text="{Binding LaunchArguments, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,9"/>
+                        <TextBlock Text="{x:Static res:Strings.SettingsProfile_UserData}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,8"/>
+                        <StackPanel IsEnabled="{Binding IsOverlay}">
+                            <RadioButton Content="{x:Static res:Strings.SettingsProfile_UserDataProfile}" Style="{StaticResource PdaProfileRadioButtonStyle}" IsChecked="{Binding UseProfileGameData}" GroupName="CreationData" Margin="0,0,0,5"/>
+                            <RadioButton Content="{x:Static res:Strings.SettingsProfile_UserDataGame}" Style="{StaticResource PdaProfileRadioButtonStyle}" IsChecked="{Binding UseBaseGameData}" GroupName="CreationData"/>
                         </StackPanel>
-                    </Border>
-                    <TextBlock Text="{x:Static res:Strings.Creation_Executable}" Foreground="{StaticResource MutedTextBrush}"/>
-                    <Grid Margin="0,4,0,9">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding ExecutableRelativePath, UpdateSourceTrigger=PropertyChanged}"/>
-                        <Button Grid.Column="1" Content="{x:Static res:Strings.Common_Browse}" Command="{Binding BrowseExecutableCommand}" Margin="7,0,0,0"/>
-                    </Grid>
-                    <TextBlock Text="{Binding ExecutableDetectionMessage}" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,9"/>
-                    <TextBlock Text="{x:Static res:Strings.Creation_LaunchArguments}" Foreground="{StaticResource MutedTextBrush}"/>
-                    <TextBox Text="{Binding LaunchArguments, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,9"/>
-                    <TextBlock Text="{x:Static res:Strings.Creation_LaunchValidationHint}"
-                               Foreground="{StaticResource MutedTextBrush}"/>
-                </StackPanel>
+                        <TextBlock Text="{Binding GameDataDescription}" TextWrapping="Wrap" Margin="0,8,0,18"/>
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers><DataTrigger Binding="{Binding IsStandalone}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Text="{x:Static res:Strings.SettingsProfile_FsgameSource}" Foreground="{StaticResource MutedTextBrush}"/>
+                            <TextBlock Text="{Binding FsgameSourceDisplay}" TextWrapping="Wrap" Margin="0,8,0,8"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="{x:Static res:Strings.Common_Browse}" Command="{Binding BrowseFsgameCommand}"/>
+                                <Button Content="{x:Static res:Strings.SettingsProfile_AutoSelect}" Command="{Binding ClearFsgameCommand}" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock Text="{x:Static res:Strings.Creation_LaunchValidationHint}"
+                                   Foreground="{StaticResource MutedTextBrush}"/>
+                    </StackPanel>
+                </ScrollViewer>
             </Grid>
         </Border>
     </Grid>

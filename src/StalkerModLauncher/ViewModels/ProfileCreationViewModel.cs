@@ -9,7 +9,10 @@ namespace StalkerModLauncher.ViewModels;
 
 public sealed class ProfileCreationViewModel : ObservableObject
 {
+    private readonly ModProfile _draft = new();
     private int _step = 1;
+    private bool _useBaseGameData;
+    private string _fsgameSourcePath = string.Empty;
     private string _name = Strings.Creation_DefaultName;
     private bool _isStandalone;
     private string _gamePath = string.Empty;
@@ -27,6 +30,9 @@ public sealed class ProfileCreationViewModel : ObservableObject
         FinishCommand = new RelayCommand(Finish, () => Step == 3);
         BrowseGameCommand = new RelayCommand(BrowseGame);
         BrowseStandaloneCommand = new RelayCommand(BrowseStandalone);
+        ScanModsCommand = new AsyncRelayCommand(ScanModsAsync);
+        BrowseFsgameCommand = new RelayCommand(BrowseFsgame);
+        ClearFsgameCommand = new RelayCommand(() => FsgameSourcePath = string.Empty);
         AddModCommand = new RelayCommand(AddMod, () => !IsStandalone || Mods.Count == 0);
         RemoveModCommand = new RelayCommand(parameter => RemoveMod(parameter as ModEntry), parameter => parameter is ModEntry);
         BrowseExecutableCommand = new RelayCommand(BrowseExecutable);
@@ -34,6 +40,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
     }
 
     public event EventHandler<ModProfile>? Completed;
+    public event EventHandler<ModScanSelectionEventArgs>? ModScanSelectionRequested;
 
     public ObservableCollection<ModEntry> Mods { get; } = new();
 
@@ -180,7 +187,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
     public string LaunchArguments
     {
         get => _launchArguments;
-        set => SetProperty(ref _launchArguments, value);
+        set { if (SetProperty(ref _launchArguments, value)) RefreshSettings(); }
     }
 
     public string Message
@@ -201,6 +208,54 @@ public sealed class ProfileCreationViewModel : ObservableObject
         private set => SetProperty(ref _executableDetectionMessage, value);
     }
 
+    public bool UseBaseGameData
+    {
+        get => _useBaseGameData;
+        set { if (SetProperty(ref _useBaseGameData, value)) { OnPropertyChanged(nameof(UseProfileGameData)); RefreshSettings(); } }
+    }
+    public bool UseProfileGameData { get => !UseBaseGameData; set { if (value) UseBaseGameData = false; } }
+    public string FsgameSourcePath
+    {
+        get => _fsgameSourcePath;
+        private set { if (SetProperty(ref _fsgameSourcePath, value)) RefreshSettings(); }
+    }
+    public bool HasManualFsgameSource => !string.IsNullOrWhiteSpace(FsgameSourcePath);
+    private ModProfile SettingsProfile()
+    {
+        _draft.GameInstallPath = GamePath;
+        _draft.IsStandalone = IsStandalone;
+        _draft.UseBaseGameData = UseBaseGameData;
+        _draft.FsgameSourcePath = FsgameSourcePath;
+        _draft.LaunchArguments = LaunchArguments;
+        _draft.Mods = Mods;
+        _draft.WorkspacePath = Path.Combine(AppPaths.Current.GetPreferredWorkspaceRoot(GamePath), ProfileManager.CreateWorkspaceDirectoryName(_draft));
+        return _draft;
+    }
+    public string GameDataDescription
+    {
+        get
+        {
+            if (IsStandalone) return Strings.SettingsProfile_StandaloneData;
+            try { return ProfileDataPathResolver.GetGameDataRoot(SettingsProfile()); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException or InvalidOperationException) { return ex.Message; }
+        }
+    }
+    public string FsgameSourceDisplay
+    {
+        get
+        {
+            try
+            {
+                var path = FileLayerPlan.ResolveFsgameSource(SettingsProfile())?.FullPath ?? Strings.Creation_NotSelected;
+                return LocalizedText.Format(HasManualFsgameSource ? Strings.SettingsProfile_FsgameManualFormat : Strings.Creation_FsgameAutoFormat, path);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException or InvalidOperationException) { return ex.Message; }
+        }
+    }
+    private void RefreshSettings() { OnPropertyChanged(nameof(GameDataDescription)); OnPropertyChanged(nameof(FsgameSourceDisplay)); OnPropertyChanged(nameof(HasManualFsgameSource)); }
+    public ICommand ScanModsCommand { get; }
+    public ICommand BrowseFsgameCommand { get; }
+    public ICommand ClearFsgameCommand { get; }
     public ICommand NextCommand { get; }
     public ICommand BackCommand { get; }
     public ICommand FinishCommand { get; }
@@ -256,6 +311,7 @@ public sealed class ProfileCreationViewModel : ObservableObject
         SetMessage(Step == 2
             ? SourceStepDescription
             : Strings.Creation_ReviewExe);
+        RefreshSettings();
 
         if (Step == 3)
         {
@@ -280,6 +336,9 @@ public sealed class ProfileCreationViewModel : ObservableObject
 
         var profile = new ModProfile
         {
+            Id = _draft.Id,
+            UseBaseGameData = !IsStandalone && UseBaseGameData,
+            FsgameSourcePath = IsStandalone ? string.Empty : FsgameSourcePath,
             Name = Name.Trim(),
             Description = IsStandalone ? Strings.Profile_Standalone : Strings.Creation_RegularProfileDescription,
             IsStandalone = IsStandalone,
@@ -347,7 +406,71 @@ public sealed class ProfileCreationViewModel : ObservableObject
             }
         }
 
+        if (Step == 3 && !IsStandalone)
+        {
+            try
+            {
+                var profile = SettingsProfile();
+                if (!string.IsNullOrWhiteSpace(FsgameSourcePath))
+                {
+                    var source = FileLayerPlan.ResolveFsgameSource(profile);
+                    if (source is null) throw new InvalidDataException(Strings.SettingsProfile_FsgameLocation);
+                    ProfileDataConfigurator.ValidateFsgameSource(source.FullPath);
+                }
+                if (UseBaseGameData) _ = ProfileDataPathResolver.GetGameDataRoot(profile);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
+            {
+                SetMessage(ex.Message, isWarning: true);
+                return false;
+            }
+        }
+
         return true;
+    }
+
+    private async Task ScanModsAsync()
+    {
+        var folder = DialogService.PickFolder(Strings.Mod_ScanPickFolder);
+        if (folder is not null) await ScanModsFromFolderAsync(folder);
+    }
+
+    internal async Task ScanModsFromFolderAsync(string folder)
+    {
+        try
+        {
+            var discovered = await ModScannerService.ScanFolderAsync(folder);
+            if (discovered.Count == 0) { new DialogService().ShowError(Strings.Mod_NotFoundTitle, Strings.Mod_NotFound); return; }
+            var mods = discovered.Select(SelectableMod.FromDiscovered).ToList();
+            IReadOnlyList<SelectableMod>? selected;
+            if (ModScanSelectionRequested is not null)
+            {
+                var request = new ModScanSelectionEventArgs(mods);
+                ModScanSelectionRequested.Invoke(this, request);
+                selected = await request.Completion;
+            }
+            else
+            {
+                var window = new Views.ScanResultsWindow();
+                foreach (var mod in mods) window.Mods.Add(mod);
+                selected = window.ShowDialog() == true ? window.GetSelectedMods() : null;
+            }
+            if (selected is not null) foreach (var mod in selected) AddModPath(mod.Path);
+        }
+        catch (Exception ex) { new DialogService().ShowError(Strings.Mod_ScanFailed, ex.Message); }
+    }
+
+    private void BrowseFsgame()
+    {
+        var selected = DialogService.PickFile(Strings.SettingsProfile_PickFsgame, Strings.Dialog_LtxFilter, GamePath);
+        if (selected is null) return;
+        if (!Path.GetExtension(selected).Equals(".ltx", StringComparison.OrdinalIgnoreCase) ||
+            !new[] { GamePath }.Concat(Mods.Select(mod => mod.SourcePath)).Any(root => Directory.Exists(root) && FileSystemSafety.IsDirectoryInside(selected, root)))
+        {
+            new DialogService().ShowError(Strings.SettingsProfile_InvalidFsgame, Strings.SettingsProfile_FsgameLocation);
+            return;
+        }
+        FsgameSourcePath = Path.GetFullPath(selected);
     }
 
     private void BrowseGame()

@@ -37,6 +37,9 @@ public sealed class FomodUiTests
             {
                 try
                 {
+                    ProfileCreationRendersAndNavigates("classic");
+                    ProfileCreationRendersAndNavigates("pda");
+                    ProfileCreationRendersAndNavigates("pda-new");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("classic");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("pda");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("pda-new");
@@ -52,6 +55,68 @@ public sealed class FomodUiTests
             application.Run();
             if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
         });
+    }
+
+    private static void ProfileCreationRendersAndNavigates(string theme)
+    {
+        PdaThemeSelector.UseNewTheme = theme == "pda-new";
+        var root = Path.Combine(Path.GetTempPath(), "ProfileCreationUi", Guid.NewGuid().ToString("N"));
+        var game = Directory.CreateDirectory(Path.Combine(root, "game")).FullName;
+        Directory.CreateDirectory(Path.Combine(game, "bin"));
+        File.WriteAllText(Path.Combine(game, "bin", "xr_3da.exe"), "fixture");
+        File.WriteAllText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true | false | $fs_root$ | appdata");
+        var vm = new ProfileCreationViewModel { GamePath = game };
+        var classic = theme == "classic" ? new ProfileCreationWindow(vm) : null;
+        FrameworkElement view = classic is not null
+            ? (FrameworkElement)classic.Content
+            : new PdaProfileCreationView { DataContext = vm };
+        if (classic is not null) { classic.Content = null; view.DataContext = vm; }
+        var host = new Border { Resources = ReadAppResources(), Child = view };
+        try
+        {
+            Layout(host, 720, 480);
+            vm.NextCommand.Execute(null);
+            Layout(host, 720, 480);
+            var scan = Assert.Single(Descendants<Button>(view), button => ReferenceEquals(button.Command, vm.ScanModsCommand));
+            Assert.Equal(Visibility.Visible, scan.Visibility);
+            Assert.True(scan.IsEnabled);
+            vm.NextCommand.Execute(null);
+            Layout(host, 720, 480);
+            Assert.True(vm.IsStepThree);
+            Assert.True(vm.IsFinishVisible);
+            Assert.Contains(Path.Combine(game, "fsgame.ltx"), vm.FsgameSourceDisplay);
+            Assert.Contains(Descendants<TextBlock>(view), text => text.Text == vm.GameDataDescription);
+            Assert.Contains(Descendants<TextBlock>(view), text => text.Text == vm.FsgameSourceDisplay);
+            var browse = Assert.Single(Descendants<Button>(view), button => ReferenceEquals(button.Command, vm.BrowseFsgameCommand));
+            var scroll = Assert.Single(Descendants<ScrollViewer>(view), item => item.Content is StackPanel panel && Descendants<Button>(panel).Contains(browse));
+            scroll.ScrollToEnd();
+            Layout(host, 720, 480);
+            var bounds = browse.TransformToAncestor(host).TransformBounds(new Rect(browse.RenderSize));
+            Assert.InRange(bounds.Bottom, 0, host.RenderSize.Height);
+            var bitmap = new RenderTargetBitmap(720, 480, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(host);
+            var shared = Assert.Single(Descendants<RadioButton>(view), radio => Equals(radio.Content, Strings.SettingsProfile_UserDataGame));
+            shared.SetCurrentValue(System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty, true);
+            Assert.True(vm.UseBaseGameData);
+            shared.ApplyTemplate();
+            var inner = Assert.IsType<System.Windows.Shapes.Ellipse>(shared.Template.FindName(theme == "classic" ? "InnerCircle" : "Inner", shared));
+            Assert.Equal(Visibility.Visible, inner.Visibility);
+            Assert.Equal(Assert.IsType<SolidColorBrush>(shared.FindResource("AccentBrush")).Color, Assert.IsType<SolidColorBrush>(inner.Fill).Color);
+            Assert.Equal(Path.Combine(game, "appdata"), vm.GameDataDescription);
+            if (classic is null)
+            {
+                ModProfile? result = null;
+                vm.Completed += (_, profile) => result = profile;
+                vm.FinishCommand.Execute(null);
+                Assert.True(Assert.IsType<ModProfile>(result).UseBaseGameData);
+            }
+        }
+        finally
+        {
+            host.Child = null;
+            classic?.Close();
+            Directory.Delete(root, recursive: true);
+        }
     }
 
     private static void LauncherSettingsImportButtonRendersAndRuns(string theme)

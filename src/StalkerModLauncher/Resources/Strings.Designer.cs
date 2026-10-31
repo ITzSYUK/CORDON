@@ -345,6 +345,8 @@ public static class Strings
     public static string Creation_Intro => Get();
     public static string Creation_StepType => Get();
     public static string Creation_StepSources => Get();
+    public static string Creation_FsgameAutoFormat => Get();
+    public static string Creation_ScanMods => Get();
     public static string Creation_StepLaunch => Get();
     public static string Creation_StandaloneRootHint => Get();
     public static string Creation_ModListHint => Get();

@@ -103,6 +103,13 @@ public partial class PdaWindow : Window
 
         var creationViewModel = WindowNavigationService.CreateProfileCreationViewModel();
         var page = new PdaProfileCreationView { DataContext = creationViewModel };
+        creationViewModel.ModScanSelectionRequested += (_, request) =>
+        {
+            var results = new PdaScanResultsView(request.Mods);
+            results.Accepted += (_, _) => { request.Accept(results.GetSelectedMods()); PdaView.ShowPage(page, Strings.Creation_Title); };
+            results.Cancelled += (_, _) => { request.Cancel(); PdaView.ShowPage(page, Strings.Creation_Title); };
+            PdaView.ShowPage(results, Strings.Scan_Title, lifetime: results, showProfileTypeIcon: true);
+        };
         creationViewModel.Completed += (_, profile) =>
         {
             ViewModel.AddCreatedProfile(profile);

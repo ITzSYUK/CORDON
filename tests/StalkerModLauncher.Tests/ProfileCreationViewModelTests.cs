@@ -104,6 +104,49 @@ public sealed class ProfileCreationViewModelTests : IDisposable
         Assert.Equal(Path.GetFullPath(standalone), mod.SourcePath);
     }
 
+    [Fact]
+    public void SettingsStepShowsWinningLtxAndActualProfileDataPath()
+    {
+        var game = CreateDirectory("settings-game");
+        CreateFile(game, "bin/xr_3da.exe");
+        CreateFile(game, "fsgame.ltx");
+        var mod = CreateDirectory("settings-mod");
+        CreateFile(mod, "fsgame.ltx");
+        var vm = new ProfileCreationViewModel { GamePath = game };
+        vm.AddDroppedMods([mod]);
+        vm.NextCommand.Execute(null);
+        vm.NextCommand.Execute(null);
+        Assert.True(vm.IsStepThree);
+        Assert.True(vm.IsFinishVisible);
+        Assert.Contains(Path.Combine(mod, "fsgame.ltx"), vm.FsgameSourceDisplay);
+        var displayedPath = vm.GameDataDescription;
+        ModProfile? created = null;
+        vm.Completed += (_, profile) => created = profile;
+        vm.FinishCommand.Execute(null);
+        Assert.NotNull(created);
+        var workspace = Path.Combine(AppPaths.Current.GetPreferredWorkspaceRoot(game), ProfileManager.CreateWorkspaceDirectoryName(created));
+        Assert.Equal(Path.Combine(workspace, "userdata"), displayedPath);
+    }
+
+    [Fact]
+    public async Task ScanAddsOnlySelectedModsAndSkipsExistingOnes()
+    {
+        var folder = CreateDirectory("scan");
+        var first = CreateDirectory("scan/first/gamedata");
+        var second = CreateDirectory("scan/second/gamedata");
+        CreateDirectory("scan/unselected/gamedata");
+        var firstMod = Directory.GetParent(first)!.FullName;
+        var secondMod = Directory.GetParent(second)!.FullName;
+        var vm = new ProfileCreationViewModel();
+        vm.AddDroppedMods([firstMod]);
+        vm.ModScanSelectionRequested += (_, request) =>
+            request.Accept(request.Mods.Where(mod => mod.Path == firstMod || mod.Path == secondMod).ToList());
+
+        await vm.ScanModsFromFolderAsync(folder);
+
+        Assert.Equal(new[] { firstMod, secondMod }, vm.Mods.Select(mod => mod.SourcePath));
+    }
+
     private string CreateDirectory(string relativePath)
     {
         var path = Path.Combine(_root, relativePath.Replace('/', Path.DirectorySeparatorChar));
