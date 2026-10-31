@@ -36,7 +36,7 @@
                   BorderThickness="1"
                   Background="{StaticResource FieldBackgroundBrush}"
                   ScrollViewer.CanContentScroll="False"
-                  SelectionMode="Extended"
+                  SelectionMode="Multiple"
                   SelectionChanged="ModsListView_SelectionChanged">
             <ListView.Resources>
                 <Style TargetType="GridViewColumnHeader">
@@ -44,7 +44,17 @@
                     <Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}"/>
                     <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
                     <Setter Property="Padding" Value="6,4"/>
-                    <Setter Property="OverridesDefaultStyle" Value="True"/>
+                    <Setter Property="IsHitTestVisible" Value="False"/>
+                    <Setter Property="Focusable" Value="False"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="GridViewColumnHeader">
+                                <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
             </ListView.Resources>
             <ListView.View>

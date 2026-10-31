@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows;
+using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 using StalkerModLauncher.ViewModels;
@@ -19,6 +20,7 @@ public sealed partial class ScanResultsWindow : Window
     {
         InitializeComponent();
         ModsListView.ItemsSource = Mods;
+        _ = new ScanSelectionBehavior(ModsListView);
     }
 
     private void ScanResultsWindow_OnSourceInitialized(object? sender, EventArgs e)

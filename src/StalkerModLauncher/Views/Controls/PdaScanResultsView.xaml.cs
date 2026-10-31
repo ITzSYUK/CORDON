@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Resources;
 using StalkerModLauncher.ViewModels;
 
@@ -13,6 +14,7 @@ public sealed partial class PdaScanResultsView : UserControl, IDisposable
     {
         InitializeComponent();
         ModsListView.ItemsSource = mods;
+        _ = new ScanSelectionBehavior(ModsListView);
         UpdateSelectionSummary();
     }
 

@@ -104,7 +104,7 @@
             <ListView x:Name="ModsListView"
                       Background="Transparent"
                       BorderThickness="0"
-                      SelectionMode="Extended"
+                      SelectionMode="Multiple"
                       SelectionChanged="ModsListView_SelectionChanged"
                       ItemContainerStyle="{StaticResource ScanResultItemStyle}"
                       infrastructure:SmoothScrollBehavior.IsEnabled="True"
