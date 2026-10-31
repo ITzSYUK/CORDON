@@ -1058,4 +1058,6 @@
   <data name="Settings_ImportLegacyProfiles" xml:space="preserve"><value>Import profiles from old version</value></data>
   <data name="Settings_LegacyImportResult" xml:space="preserve"><value>Profiles imported: {0}; skipped (already present): {1}.</value></data>
   <data name="Settings_LegacyImportFailed" xml:space="preserve"><value>Could not import profiles: {0}</value></data>
+  <data name="Creation_ScanMods" xml:space="preserve"><value>Scan mods</value></data>
+  <data name="Creation_FsgameAutoFormat" xml:space="preserve"><value>Automatically selected: {0}</value></data>
 </root>
