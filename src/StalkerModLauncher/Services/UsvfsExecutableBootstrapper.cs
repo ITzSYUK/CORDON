@@ -220,16 +220,14 @@ internal static class UsvfsBootstrapPathResolver
 
     public static void DeleteProfile(string profileWorkspace, string baseGameRoot, string profileId)
     {
-        var profileRoot = Resolve(profileWorkspace);
+        var profileRoot = GetBootstrapPath(profileWorkspace);
         FileSystemSafety.DeleteDirectoryContents(profileRoot, profileWorkspace);
         DeleteLegacySharedProfile(profileWorkspace, baseGameRoot, profileId);
     }
 
     public static string Resolve(string profileWorkspace)
     {
-        var profileRoot = Path.Combine(
-            Path.GetFullPath(profileWorkspace),
-            BootstrapDirectoryName);
+        var profileRoot = GetBootstrapPath(profileWorkspace);
         if (!IsAscii(profileRoot))
         {
             throw new InvalidOperationException(Strings.Error_UsvfsAsciiPath);
@@ -237,6 +235,9 @@ internal static class UsvfsBootstrapPathResolver
 
         return profileRoot;
     }
+
+    private static string GetBootstrapPath(string profileWorkspace) => Path.Combine(
+        Path.GetFullPath(profileWorkspace), BootstrapDirectoryName);
 
     public static void DeleteLegacySharedProfile(
         string profileWorkspace,

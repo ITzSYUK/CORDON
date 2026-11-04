@@ -139,9 +139,10 @@ public sealed partial class SettingsStore
     {
         var directory = new DirectoryInfo(Path.GetDirectoryName(Path.GetFullPath(sourcePath))!);
         if (FileSystemSafety.IsSameDirectory(directory.FullName, _paths.ConfigDirectory)) return _paths;
-        return directory.Name.Equals("StalkerModLauncher", StringComparison.OrdinalIgnoreCase) &&
+        return (directory.Name.Equals("CordonModLauncher", StringComparison.OrdinalIgnoreCase) ||
+                directory.Name.Equals("StalkerModLauncher", StringComparison.OrdinalIgnoreCase)) &&
                directory.Parent?.Name.Equals("Data", StringComparison.OrdinalIgnoreCase) == true
-            ? new AppPaths(directory.Parent.Parent!.FullName, useLocalSettings: true)
+            ? new AppPaths(directory.FullName, Path.Combine(directory.FullName, "Workspaces"), directory.Parent.Parent!.FullName)
             : new AppPaths(directory.FullName, _paths.WorkspaceRoot);
     }
 
@@ -151,18 +152,19 @@ public sealed partial class SettingsStore
         if (!File.Exists(backup)) File.Copy(path, backup);
     }
 
-    private async Task<SettingsLoadResult> RecoverUnindexedProfilesAsync()
+    private async Task<SettingsLoadResult> RecoverUnindexedProfilesAsync(AppPaths? sourcePaths = null, bool restore = true)
     {
+        var paths = sourcePaths ?? _paths;
         var settings = new AppSettings();
         var damaged = new List<RecoveredSettingsFile>();
-        if (!Directory.Exists(_paths.ProfilesDirectory)) return new(settings, null);
+        if (!Directory.Exists(paths.ProfilesDirectory)) return new(settings, null);
 
         bool MatchesPath(ModProfile? profile, string path) => profile is not null &&
             !string.IsNullOrWhiteSpace(profile.Id) &&
-            FileSystemSafety.IsSameDirectory(path, _paths.GetProfileFile(profile.Id));
+            FileSystemSafety.IsSameDirectory(path, paths.GetProfileFile(profile.Id));
 
         var ids = new List<string>();
-        var files = Directory.EnumerateFiles(_paths.ProfilesDirectory, "profile-*.json")
+        var files = Directory.EnumerateFiles(paths.ProfilesDirectory, "profile-*.json")
             .Select(path => path.EndsWith(".backup.json", StringComparison.OrdinalIgnoreCase)
                 ? path[..^".backup.json".Length] + ".json" : path)
             .Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase);
@@ -175,6 +177,7 @@ public sealed partial class SettingsStore
             var profile = MatchesPath(primary.Settings, path) ? primary.Settings : backup.Settings;
             if (!MatchesPath(profile, path))
             {
+                if (!restore) throw new SettingsPersistenceException(primary.Error ?? backup.Error ?? Strings.Settings_ProfileIndexInvalid);
                 if (primary.Settings is not null)
                     primary = primary with { Kind = SettingsFileLoadKind.Corrupted, Error = Strings.Settings_ProfileIndexInvalid };
                 if (backup.Settings is not null)
@@ -185,7 +188,7 @@ public sealed partial class SettingsStore
             ids.Add(profile!.Id);
         }
         settings.ProfileIds = ids;
-        var loaded = await LoadProfilesAsync(settings, _paths);
+        var loaded = await LoadProfilesAsync(settings, paths, restore);
         damaged.AddRange(loaded.Recovery?.Files ?? []);
         return new(loaded.Settings, damaged.Count > 0 ? new SettingsRecoveryInfo(SettingsRecoveryMode.Defaults, damaged) : null);
     }

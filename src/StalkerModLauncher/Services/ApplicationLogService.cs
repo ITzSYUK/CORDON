@@ -35,7 +35,7 @@ public sealed class ApplicationLogService
             {
                 Directory.CreateDirectory(_paths.ConfigDirectory);
                 var logPath = Path.Combine(_paths.ConfigDirectory, LogFileName);
-                RotateIfNeeded(logPath);
+                RotateIfNeeded(logPath, PreviousLogFileName);
                 File.AppendAllText(
                     logPath,
                     $"[{time:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
@@ -49,14 +49,14 @@ public sealed class ApplicationLogService
         return displayEntry;
     }
 
-    private void RotateIfNeeded(string logPath)
+    private void RotateIfNeeded(string logPath, string previousLogFileName)
     {
         if (!File.Exists(logPath) || new FileInfo(logPath).Length < MaxLogFileBytes)
         {
             return;
         }
 
-        var previousLogPath = Path.Combine(_paths.ConfigDirectory, PreviousLogFileName);
+        var previousLogPath = Path.Combine(_paths.ConfigDirectory, previousLogFileName);
         if (File.Exists(previousLogPath))
         {
             File.Delete(previousLogPath);

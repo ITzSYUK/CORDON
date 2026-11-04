@@ -3,6 +3,7 @@ using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Resources;
 using StalkerModLauncher.Themes;
@@ -13,6 +14,10 @@ namespace StalkerModLauncher.Views.Controls;
 
 public partial class ModPanelView : UserControl
 {
+    private static readonly DependencyProperty ScrollProfileProperty = DependencyProperty.Register(
+        "ScrollProfile", typeof(ModProfile), typeof(ModPanelView),
+        new PropertyMetadata(null, (view, _) => ((ModPanelView)view).ResetModScroll()));
+
     public static readonly DependencyProperty ShowStandaloneToggleProperty = DependencyProperty.Register(
         nameof(ShowStandaloneToggle),
         typeof(bool),
@@ -52,6 +57,14 @@ public partial class ModPanelView : UserControl
     public ModPanelView()
     {
         InitializeComponent();
+        SetBinding(ScrollProfileProperty, nameof(MainViewModel.SelectedProfile));
+    }
+
+    private void ResetModScroll()
+    {
+        _ = Dispatcher.InvokeAsync(
+            () => FindVisualChild<ScrollViewer>(ModsList)?.ScrollToTop(),
+            DispatcherPriority.Loaded);
     }
 
     public bool ShowStandaloneToggle

@@ -115,6 +115,7 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
         string workingDirectory,
         CancellationToken cancellationToken = default)
     {
+        const uint createSuspended = 0x00000004;
         var startup = new StartupInfo { cb = Marshal.SizeOf<StartupInfo>() };
         if (!Native.usvfsCreateProcessHooked(
                 executablePath,
@@ -122,7 +123,7 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
                 IntPtr.Zero,
                 IntPtr.Zero,
                 false,
-                0,
+                createSuspended,
                 IntPtr.Zero,
                 workingDirectory,
                 ref startup,
@@ -133,9 +134,24 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
                 LocalizedText.Format(Strings.Error_NativeOperationFailedFormat, "usvfsCreateProcessHooked"));
         }
 
-        return Task.FromResult(new UsvfsProcessHandle(
-            unchecked((int)processInfo.dwProcessId),
-            WaitForExitAsync(processInfo, cancellationToken)));
+        System.Diagnostics.Process? process = null;
+        try
+        {
+            process = System.Diagnostics.Process.GetProcessById(unchecked((int)processInfo.dwProcessId));
+            // Keep a handle open before the child can exit, so Process remains usable afterwards.
+            _ = process.Handle;
+            if (Native.ResumeThread(processInfo.hThread) == uint.MaxValue)
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            return Task.FromResult(new UsvfsProcessHandle(process, WaitForExitAsync(processInfo, cancellationToken)));
+        }
+        catch
+        {
+            Native.TerminateProcess(processInfo.hProcess, 1);
+            Native.CloseHandle(processInfo.hThread);
+            Native.CloseHandle(processInfo.hProcess);
+            process?.Dispose();
+            throw;
+        }
     }
 
     private static Task<int> WaitForExitAsync(ProcessInformation processInfo, CancellationToken cancellationToken)
@@ -309,6 +325,13 @@ public sealed class OfficialUsvfsNativeApi : IUsvfsNativeApi
             string? lpCurrentDirectory,
             ref StartupInfo lpStartupInfo,
             out ProcessInformation lpProcessInformation);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern uint ResumeThread(IntPtr thread);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool TerminateProcess(IntPtr process, uint exitCode);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern uint WaitForSingleObject(IntPtr handle, uint milliseconds);

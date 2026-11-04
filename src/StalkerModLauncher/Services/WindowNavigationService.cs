@@ -3,11 +3,39 @@ using StalkerModLauncher.Models;
 using StalkerModLauncher.ViewModels;
 using StalkerModLauncher.Views;
 using StalkerModLauncher.Resources;
+using StalkerModLauncher.Views.Controls;
 
 namespace StalkerModLauncher.Services;
 
 public sealed class WindowNavigationService
 {
+    public async Task<StorageMigrationView> CreateStorageMigrationViewAsync(MainViewModel main)
+    {
+        string sourcesText;
+        try
+        {
+            var sources = await Task.Run(_settingsStore.GetProfileMigrationSources);
+            sourcesText = sources.Count > 0 ? string.Join(Environment.NewLine, sources) : Strings.Migration_NoSources;
+        }
+        catch (Exception ex)
+        {
+            sourcesText = LocalizedText.Format(Strings.Migration_PreviewErrorFormat, ex.Message);
+        }
+        return new StorageMigrationView(_settingsStore.StorageDirectory, sourcesText,
+            main.RunDataMigrationAsync, _dialogService);
+    }
+
+    public async Task<bool> ShowStorageMigrationAsync(Window owner, MainViewModel main)
+    {
+        var view = await CreateStorageMigrationViewAsync(main);
+        var accepted = new StorageMigrationWindow(view) { Owner = owner }.ShowDialog() == true;
+        if (accepted)
+        {
+            if (owner is LauncherSettingsWindow) owner.Close();
+        }
+        return accepted;
+    }
+
     private readonly DialogService _dialogService;
     private readonly SettingsStore _settingsStore;
     private readonly ProfileHealthService _profileHealthService;
@@ -97,19 +125,20 @@ public sealed class WindowNavigationService
         ModProfile profile,
         Action<string, LauncherLogLevel>? log = null)
     {
-        var viewModel = new ProfileHealthViewModel(
-            profile,
-            _profileHealthService,
-            _dialogService,
-            _workspaceManagementService,
-            log);
+        var viewModel = CreateProfileHealthViewModel(profile, log);
         new ProfileHealthWindow(viewModel) { Owner = owner }.ShowDialog();
     }
 
     public ProfileHealthViewModel CreateProfileHealthViewModel(
         ModProfile profile,
         Action<string, LauncherLogLevel>? log = null) =>
-        new(profile, _profileHealthService, _dialogService, _workspaceManagementService, log);
+        new(profile, _profileHealthService, _dialogService, _workspaceManagementService,
+            () => _settingsStore.UpdateAsync(settings =>
+            {
+                var stored = settings.Profiles.Single(item => string.Equals(item.Id, profile.Id, StringComparison.OrdinalIgnoreCase));
+                stored.WorkspacePath = profile.WorkspacePath;
+                return settings;
+            }), log);
 
     public Task<LauncherUpdateResult> CheckForUpdatesAsync(CancellationToken cancellationToken = default) =>
         _launcherUpdateService.CheckAsync(cancellationToken);

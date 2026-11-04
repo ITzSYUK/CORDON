@@ -53,7 +53,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         if (profile.IsRunning) throw new InvalidOperationException(Strings.ProfileStorage_Busy);
         ValidateProfileLocation(profile, workspacePath, gamePath);
         var fullWorkspacePath = Path.GetFullPath(workspacePath);
-        var allowedRoot = FindAllowedWorkspaceParent(fullWorkspacePath, gamePath);
+        var allowedRoot = FindAllowedWorkspaceParent(profile, fullWorkspacePath, gamePath);
         if (allowedRoot is null)
         {
             throw new InvalidOperationException(LocalizedText.Format(
@@ -76,8 +76,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
 
         WorkspaceMaterializer.DeleteWorkspaceContents(
             fullWorkspacePath,
-            allowedRoot,
-            () => WorkspaceSourceScanner.Capture(gamePath, profile, CancellationToken.None));
+            allowedRoot);
     }
 
     public string EnsureProfileWorkspace(
@@ -88,53 +87,47 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         var preferredRoot = _paths.GetPreferredWorkspaceRoot(gamePath);
         var managedRoots = _paths.GetManagedWorkspaceRoots(gamePath);
 
-        var existingGeneratedWorkspace = FindGeneratedWorkspacePaths(profile, gamePath)
-            .OrderByDescending(path =>
-                !string.IsNullOrWhiteSpace(profile.WorkspacePath) &&
-                FileSystemSafety.IsSameDirectory(path, profile.WorkspacePath))
-            .ThenByDescending(path => File.Exists(Path.Combine(path, MarkerFileName)))
-            .ThenByDescending(Directory.GetLastWriteTimeUtc)
-            .FirstOrDefault();
-        if (existingGeneratedWorkspace is not null)
+        string workspacePath;
+        string? emptyWorkspace = null;
+        if (!string.IsNullOrWhiteSpace(profile.WorkspacePath))
         {
-            existingGeneratedWorkspace = MigrateLegacyGeneratedWorkspace(
-                profile,
-                existingGeneratedWorkspace,
-                progress);
+            workspacePath = Path.GetFullPath(profile.WorkspacePath);
+            if (!Directory.Exists(workspacePath))
+                throw new DirectoryNotFoundException(LocalizedText.Format(Strings.Error_WorkspaceUnavailableFormat, workspacePath));
+            ValidateProfileLocation(profile, workspacePath, gamePath);
+            if (!string.IsNullOrWhiteSpace(profile.Id) && IsGeneratedWorkspaceOwnedByProfile(profile, workspacePath) &&
+                !HasDirectoryLinks(workspacePath) && !Directory.EnumerateFileSystemEntries(workspacePath).Any())
+            {
+                emptyWorkspace = workspacePath;
+                workspacePath = Path.Combine(_paths.WorkspaceRoot, ProfileManager.CreateWorkspaceDirectoryName(profile));
+            }
         }
-
-        var generatedWorkspacePath = existingGeneratedWorkspace ??
-                                     Path.Combine(preferredRoot, ProfileManager.CreateWorkspaceDirectoryName(profile));
-        var workspacePath = string.IsNullOrWhiteSpace(profile.WorkspacePath) ||
-                            ShouldRefreshUnusedGeneratedPath(profile, managedRoots)
-            ? generatedWorkspacePath
-            : profile.WorkspacePath;
-
-        if (string.IsNullOrWhiteSpace(profile.WorkspacePath) && existingGeneratedWorkspace is not null)
+        else
         {
-            progress?.Report(LocalizedText.Format(Strings.Workspace_ExistingFolderFormat, existingGeneratedWorkspace));
-        }
-
-        var hasCustomWorkspaceMarker = File.Exists(Path.Combine(workspacePath, MarkerFileName)) &&
-                                       HasManagedParentMarker(workspacePath);
-        if (!hasCustomWorkspaceMarker &&
-            !string.IsNullOrWhiteSpace(profile.WorkspacePath) &&
-            !string.IsNullOrWhiteSpace(gamePath) &&
-            !FileSystemSafety.IsSameDirectory(Path.GetPathRoot(workspacePath)!, Path.GetPathRoot(preferredRoot)!))
-        {
-            workspacePath = Path.Combine(preferredRoot, ProfileManager.CreateWorkspaceDirectoryName(profile));
-        }
-
-        if (!hasCustomWorkspaceMarker && !managedRoots.Any(root =>
-                FileSystemSafety.IsDirectoryInside(workspacePath, root) &&
-                !FileSystemSafety.IsSameDirectory(workspacePath, root)))
-        {
-            throw new InvalidOperationException(LocalizedText.Format(
-                Strings.Error_WorkspaceProfilePathFormat,
-                workspacePath));
+            var existingGeneratedWorkspace = FindGeneratedWorkspacePaths(profile, gamePath)
+                .OrderByDescending(path => File.Exists(Path.Combine(path, MarkerFileName)))
+                .ThenByDescending(Directory.GetLastWriteTimeUtc)
+                .FirstOrDefault();
+            workspacePath = existingGeneratedWorkspace is null
+                ? Path.Combine(preferredRoot, ProfileManager.CreateWorkspaceDirectoryName(profile))
+                : MigrateLegacyGeneratedWorkspace(profile, existingGeneratedWorkspace, progress);
+            if (existingGeneratedWorkspace is not null)
+                progress?.Report(LocalizedText.Format(Strings.Workspace_ExistingFolderFormat, workspacePath));
         }
 
         ValidateProfileLocation(profile, workspacePath, gamePath);
+        if (profile.LaunchBackendKind == Models.LaunchBackendKind.VirtualFileSystem)
+            _ = UsvfsBootstrapPathResolver.Resolve(workspacePath);
+        var hasCustomWorkspaceMarker = File.Exists(Path.Combine(workspacePath, MarkerFileName)) &&
+                                       HasManagedParentMarker(workspacePath);
+        if (!hasCustomWorkspaceMarker && !managedRoots.Any(root =>
+                FileSystemSafety.IsDirectoryInside(workspacePath, root) &&
+                !FileSystemSafety.IsSameDirectory(workspacePath, root)) &&
+            !IsRecoverableLegacyWorkspace(profile, workspacePath))
+        {
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Error_WorkspaceUnverifiedFormat, workspacePath));
+        }
+
         var workspaceAlreadyExisted = Directory.Exists(workspacePath);
         var workspaceManagedRoot = managedRoots.FirstOrDefault(root =>
                                        FileSystemSafety.IsDirectoryInside(workspacePath, root) &&
@@ -159,6 +152,8 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
             }
         }
 
+        if (emptyWorkspace is not null && !FileSystemSafety.IsSameDirectory(emptyWorkspace, workspacePath))
+            progress?.Report(LocalizedText.Format(Strings.Workspace_EmptyRedirectedFormat, emptyWorkspace, workspacePath));
         return workspacePath;
     }
 
@@ -171,7 +166,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
             throw new InvalidOperationException(Strings.ProfileStorage_SourceOverlap);
     }
 
-    private string? FindAllowedWorkspaceParent(string workspacePath, string gamePath)
+    private string? FindAllowedWorkspaceParent(ModProfile profile, string workspacePath, string gamePath)
     {
         var managedRoot = _paths.GetManagedWorkspaceRoots(gamePath)
             .Select(Path.GetFullPath)
@@ -183,7 +178,8 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
             return managedRoot;
         }
 
-        if (!File.Exists(Path.Combine(workspacePath, MarkerFileName)) || !HasManagedParentMarker(workspacePath))
+        if (!HasManagedParentMarker(workspacePath) ||
+            (!File.Exists(Path.Combine(workspacePath, MarkerFileName)) && !IsGeneratedWorkspaceOwnedByProfile(profile, workspacePath)))
         {
             return null;
         }
@@ -222,7 +218,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         return rootMarkerRestored || profileMarkerRestored;
     }
 
-    private static bool IsGeneratedWorkspaceOwnedByProfile(ModProfile profile, string workspacePath)
+    internal static bool IsGeneratedWorkspaceOwnedByProfile(ModProfile profile, string workspacePath)
     {
         var directoryName = Path.GetFileName(Path.TrimEndingDirectorySeparator(workspacePath));
         var shortId = profile.Id.Length > 8 ? profile.Id[..8] : profile.Id;
@@ -248,6 +244,8 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         var parent = Directory.GetParent(Path.GetFullPath(workspacePath))?.FullName ??
                      throw new IOException(LocalizedText.Format(Strings.Error_WorkspaceParentMissingFormat, workspacePath));
         var destination = Path.Combine(parent, destinationName);
+        if (profile.LaunchBackendKind == Models.LaunchBackendKind.VirtualFileSystem)
+            _ = UsvfsBootstrapPathResolver.Resolve(destination);
         if (Directory.Exists(destination))
         {
             throw new IOException(LocalizedText.Format(
@@ -288,7 +286,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         return matches;
     }
 
-    private static bool EnsureWorkspaceRootMarker(string workspaceRoot)
+    internal static bool EnsureWorkspaceRootMarker(string workspaceRoot)
     {
         if (FileSystemSafety.IsFileSystemRoot(workspaceRoot))
             throw new InvalidOperationException(Strings.Workspace_DriveRootForbidden);
@@ -308,20 +306,29 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         File.WriteAllText(markerPath, "Managed by CORDON. It is safe for the launcher to recreate the 'current' subfolder.");
     }
 
-    private static bool ShouldRefreshUnusedGeneratedPath(ModProfile profile, IReadOnlyList<string> managedRoots)
+    private static bool IsRecoverableLegacyWorkspace(ModProfile profile, string workspacePath)
     {
-        if (string.IsNullOrWhiteSpace(profile.WorkspacePath) || Directory.Exists(profile.WorkspacePath))
-        {
+        if (string.IsNullOrWhiteSpace(profile.Id)) return false;
+        var parent = Directory.GetParent(workspacePath);
+        if (parent is null ||
+            (!parent.Name.Equals("Workspace", StringComparison.OrdinalIgnoreCase) &&
+             !parent.Name.Equals("Workspaces", StringComparison.OrdinalIgnoreCase)) ||
+            (parent.Parent?.Name.Equals("StalkerModLauncher", StringComparison.OrdinalIgnoreCase) != true &&
+             parent.Parent?.Name.Equals("CordonModLauncher", StringComparison.OrdinalIgnoreCase) != true) ||
+            !IsGeneratedWorkspaceOwnedByProfile(profile, workspacePath))
             return false;
-        }
 
-        var workspacePath = Path.GetFullPath(profile.WorkspacePath);
-        if (!managedRoots.Any(root => FileSystemSafety.IsDirectoryInside(workspacePath, root)))
-        {
-            return false;
-        }
+        var userData = new DirectoryInfo(Path.Combine(workspacePath, "userdata"));
+        return userData.Exists && !HasDirectoryLinks(userData.FullName);
+    }
 
-        return IsGeneratedWorkspaceOwnedByProfile(profile, workspacePath);
+    internal static bool HasDirectoryLinks(string path)
+    {
+        // Never authorize future recursive deletion through a link to another directory.
+        for (var directory = new DirectoryInfo(path); directory is not null; directory = directory.Parent)
+            if (directory.Attributes != (FileAttributes)(-1) &&
+                (directory.Attributes & FileAttributes.ReparsePoint) != 0) return true;
+        return false;
     }
 
 }

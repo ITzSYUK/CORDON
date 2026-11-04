@@ -9,46 +9,90 @@ namespace StalkerModLauncher.ViewModels;
 
 public sealed partial class MainViewModel
 {
+    private readonly HashSet<ModProfile> _profilesAddingMods = new(ReferenceEqualityComparer.Instance);
+
+    private void AddMods(ModProfile profile, IEnumerable<(string Path, string? Name)> sources)
+    {
+        var count = profile.Mods.Count;
+        var existingPaths = GetModPaths(profile);
+        _profilesAddingMods.Add(profile);
+        try
+        {
+            foreach (var (path, name) in sources)
+            {
+                if (profile.IsStandalone && profile.Mods.Count >= 1) break;
+                var normalized = NormalizeModPath(path);
+                if (normalized is not null && !existingPaths.Add(normalized)) continue;
+                ModListEditor.Add(profile, path, name);
+            }
+        }
+        finally
+        {
+            _profilesAddingMods.Remove(profile);
+            if (profile.Mods.Count != count)
+            {
+                ModsOnCollectionChanged(profile.Mods,
+                    new System.Collections.Specialized.NotifyCollectionChangedEventArgs(
+                        System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
+                if (ReferenceEquals(SelectedProfile, profile)) SelectedMod = profile.Mods.LastOrDefault();
+            }
+        }
+    }
+
     public void AddDroppedMods(IEnumerable<string> paths) => _ = AddDroppedModsAsync(paths);
 
     internal async Task AddDroppedModsAsync(IEnumerable<string> paths)
     {
         if (IsBuilding || !CanEditSelectedProfile || SelectedProfile is not { } profile) return;
+        var pending = new List<(string Path, string? Name)>();
+        var existingPaths = GetModPaths(profile);
+        void FlushPending()
+        {
+            var batch = pending.ToArray();
+            pending.Clear();
+            AddMods(profile, batch);
+        }
         try
         {
             foreach (var path in paths.Where(Directory.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
             {
                 if (!ReferenceEquals(SelectedProfile, profile) || profile.IsStandalone && profile.Mods.Count >= 1) break;
-                if (profile.Mods.Any(mod => AreSamePaths(mod.SourcePath, path))) continue;
+                var normalized = NormalizeModPath(path);
+                if (normalized is not null && existingPaths.Contains(normalized)) continue;
                 if (FomodDetector.TryLocate(path) is not null)
                 {
+                    FlushPending();
+                    if (profile.IsStandalone && profile.Mods.Count >= 1) break;
                     if (!await InstallModPackageAsync(profile, path, fromFolder: true)) break;
+                    existingPaths = GetModPaths(profile);
                 }
                 else
                 {
-                    SelectedMod = ModListEditor.Add(profile, path);
+                    pending.Add((path, null));
+                    if (normalized is not null) existingPaths.Add(normalized);
                 }
             }
+            FlushPending();
             RefreshValidation();
             _ = SaveAsync();
         }
         catch (Exception ex)
         {
+            FlushPending();
             Log(LocalizedText.Format(Strings.Log_ArchiveFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
             _dialogService.ShowError(Strings.Mod_InstallFailed, ex.Message);
         }
     }
 
-    private static bool AreSamePaths(string left, string right)
+    private static HashSet<string> GetModPaths(ModProfile profile) => profile.Mods
+        .Select(mod => NormalizeModPath(mod.SourcePath))
+        .OfType<string>()
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    private static string? NormalizeModPath(string path)
     {
-        try
-        {
-            return FileSystemSafety.IsSameDirectory(left, right);
-        }
-        catch
-        {
-            return false;
-        }
+        try { return Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar); }
+        catch { return null; }
     }
 
     public void MoveMod(ModEntry source, ModEntry target)
@@ -462,20 +506,10 @@ public sealed partial class MainViewModel
                     return;
                 }
 
-                var existingPaths = new HashSet<string>(SelectedProfile.Mods.Select(m => m.SourcePath), StringComparer.OrdinalIgnoreCase);
-                var added = 0;
-
-                foreach (var mod in selected)
-                {
-                    if (existingPaths.Contains(mod.Path))
-                    {
-                        continue;
-                    }
-
-                    ModListEditor.Add(SelectedProfile, mod.Path, mod.Name);
-                    existingPaths.Add(mod.Path);
-                    added++;
-                }
+                var profile = SelectedProfile;
+                var previousCount = profile.Mods.Count;
+                AddMods(profile, selected.Select(mod => (mod.Path, (string?)mod.Name)));
+                var added = profile.Mods.Count - previousCount;
 
                 RefreshValidation();
                 _ = SaveAsync();

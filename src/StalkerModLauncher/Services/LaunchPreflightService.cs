@@ -389,7 +389,8 @@ public sealed class LaunchPreflightService
                      .Where(mod => mod.IsEnabled)
                      .OrderBy(mod => mod.Order))
         {
-            yield return new LaunchExecutableSearchRoot(mod.SourcePath, LocalizedText.Format(Strings.Layer_ModFormat, mod.Name), mod.Order);
+            yield return new LaunchExecutableSearchRoot(mod.SourcePath, LocalizedText.Format(Strings.Layer_ModFormat, mod.Name), mod.Order,
+                Mod: profile.IsStandalone ? null : mod);
         }
     }
 

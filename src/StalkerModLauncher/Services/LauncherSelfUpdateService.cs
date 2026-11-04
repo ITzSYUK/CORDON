@@ -10,11 +10,12 @@ internal sealed record LauncherUpdateRequest(
     int ParentProcessId,
     string TargetDirectory,
     string StagingDirectory,
-    LauncherReleasePackage Package,
     string ReadyEventName);
 
 internal static class LauncherSelfUpdateService
 {
+    internal const string ExecutableFileName = "CORDON.exe";
+    private const string LegacyExecutableFileName = "CORDON-Standalone.exe";
     private const string ApplyArgument = "--apply-launcher-update";
     private const string CleanupArgument = "--cleanup-launcher-updater";
     private const string ReadyEventPrefix = @"Local\CORDON-Update-Ready-";
@@ -34,24 +35,24 @@ internal static class LauncherSelfUpdateService
         "checksums.txt"
     ];
 
-    public static void PrepareAndLaunch(string archivePath, LauncherReleasePackage package)
+    public static void PrepareAndLaunch(string archivePath)
     {
         var launcherPath = Path.GetFullPath(Environment.ProcessPath
             ?? throw new InvalidOperationException(Strings.Startup_ExecutablePathMissing));
         var targetDirectory = Path.GetDirectoryName(launcherPath)
             ?? throw new InvalidOperationException(Strings.Update_LauncherDirectoryMissing);
         var stagingDirectory = Path.Combine(
-            Path.GetTempPath(),
+            GetUpdateTempDirectory(targetDirectory),
             $"CORDON-Update-{Guid.NewGuid():N}");
         var updaterDirectory = Path.Combine(
-            Path.GetTempPath(),
+            GetUpdateTempDirectory(targetDirectory),
             $"CORDON-Updater-{Guid.NewGuid():N}");
         var readyEventName = $"{ReadyEventPrefix}{Guid.NewGuid():N}";
 
         try
         {
-            EnsureSufficientSpaceForUpdate(archivePath, targetDirectory, package);
-            ExtractAndValidate(archivePath, stagingDirectory, package);
+            EnsureSufficientSpaceForUpdate(archivePath, targetDirectory);
+            ExtractAndValidate(archivePath, stagingDirectory);
             Directory.CreateDirectory(updaterDirectory);
             var updaterPath = Path.Combine(updaterDirectory, "CORDON-Updater.exe");
             File.Copy(launcherPath, updaterPath);
@@ -75,7 +76,6 @@ internal static class LauncherSelfUpdateService
             startInfo.ArgumentList.Add(Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
             startInfo.ArgumentList.Add(targetDirectory);
             startInfo.ArgumentList.Add(stagingDirectory);
-            startInfo.ArgumentList.Add(((int)package).ToString(CultureInfo.InvariantCulture));
             startInfo.ArgumentList.Add(readyEventName);
             using var updater = Process.Start(startInfo)
                 ?? throw new InvalidOperationException(Strings.Update_InstallerStartFailed);
@@ -95,13 +95,11 @@ internal static class LauncherSelfUpdateService
     public static bool TryParseRequest(string[] arguments, out LauncherUpdateRequest? request)
     {
         request = null;
-        if (arguments.Length != 6 ||
+        if (arguments.Length != 5 ||
             !arguments[0].Equals(ApplyArgument, StringComparison.Ordinal) ||
             !int.TryParse(arguments[1], out var parentProcessId) ||
             parentProcessId <= 0 ||
-            !int.TryParse(arguments[4], out var packageValue) ||
-            !Enum.IsDefined(typeof(LauncherReleasePackage), packageValue) ||
-            !IsReadyEventName(arguments[5]))
+            !IsReadyEventName(arguments[4]))
         {
             return false;
         }
@@ -112,8 +110,7 @@ internal static class LauncherSelfUpdateService
                 parentProcessId,
                 Path.GetFullPath(arguments[2]),
                 Path.GetFullPath(arguments[3]),
-                (LauncherReleasePackage)packageValue,
-                arguments[5]);
+                arguments[4]);
             return true;
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
@@ -124,21 +121,21 @@ internal static class LauncherSelfUpdateService
 
     public static async Task ApplyAsync(LauncherUpdateRequest request)
     {
-        if (!IsOwnedTemporaryDirectory(request.StagingDirectory, "CORDON-Update-"))
+        if (!IsOwnedTemporaryDirectory(request.StagingDirectory, "CORDON-Update-", request.TargetDirectory))
         {
             throw new InvalidOperationException(Strings.Update_TempFolderInvalid);
         }
 
-        ValidateStagingDirectory(request.StagingDirectory, request.Package);
+        ValidateStagingDirectory(request.StagingDirectory);
         await WaitForParentExitAsync(
             request.ParentProcessId,
             request.TargetDirectory,
             request.ReadyEventName);
-        ValidateStagingDirectory(request.StagingDirectory, request.Package);
-        ApplyStagedFiles(request.StagingDirectory, request.TargetDirectory, request.Package);
+        ValidateStagingDirectory(request.StagingDirectory);
+        ApplyStagedFiles(request.StagingDirectory, request.TargetDirectory);
 
         TryDeleteDirectory(request.StagingDirectory);
-        var executablePath = Path.Combine(request.TargetDirectory, GetExecutableName(request.Package));
+        var executablePath = Path.Combine(request.TargetDirectory, ExecutableFileName);
         var startInfo = new ProcessStartInfo
         {
             FileName = executablePath,
@@ -209,7 +206,7 @@ internal static class LauncherSelfUpdateService
         var updaterDirectory = Path.GetDirectoryName(updaterPath);
         if (!Path.GetFileName(updaterPath).Equals("CORDON-Updater.exe", StringComparison.OrdinalIgnoreCase) ||
             updaterDirectory is null ||
-            !IsOwnedTemporaryDirectory(updaterDirectory, "CORDON-Updater-"))
+            !IsOwnedTemporaryDirectory(updaterDirectory, "CORDON-Updater-", AppContext.BaseDirectory))
         {
             return;
         }
@@ -233,8 +230,7 @@ internal static class LauncherSelfUpdateService
 
     internal static void ExtractAndValidate(
         string archivePath,
-        string stagingDirectory,
-        LauncherReleasePackage package)
+        string stagingDirectory)
     {
         Directory.CreateDirectory(stagingDirectory);
         try
@@ -246,7 +242,7 @@ internal static class LauncherSelfUpdateService
                 entry.ExtractToFile(Path.Combine(stagingDirectory, entry.Name));
             }
 
-            ValidateStagingDirectory(stagingDirectory, package);
+            ValidateStagingDirectory(stagingDirectory);
         }
         catch
         {
@@ -295,8 +291,7 @@ internal static class LauncherSelfUpdateService
 
     private static void EnsureSufficientSpaceForUpdate(
         string archivePath,
-        string targetDirectory,
-        LauncherReleasePackage package)
+        string targetDirectory)
     {
         using var archive = ZipFile.OpenRead(archivePath);
         var files = GetValidatedArchiveFiles(archive);
@@ -307,9 +302,7 @@ internal static class LauncherSelfUpdateService
             .Sum(path => new FileInfo(path).Length);
         var obsoleteExecutable = Path.Combine(
             targetDirectory,
-            GetExecutableName(package == LauncherReleasePackage.Minimal
-                ? LauncherReleasePackage.Standalone
-                : LauncherReleasePackage.Minimal));
+            LegacyExecutableFileName);
         if (File.Exists(obsoleteExecutable))
         {
             backupBytes = checked(backupBytes + new FileInfo(obsoleteExecutable).Length);
@@ -317,7 +310,7 @@ internal static class LauncherSelfUpdateService
 
         EnsureAvailableSpace(CalculateRequiredFreeSpace(
             targetDirectory,
-            Path.GetTempPath(),
+            GetUpdateTempDirectory(targetDirectory),
             stagingBytes,
             backupBytes,
             files.Max(entry => entry.Length)));
@@ -384,8 +377,7 @@ internal static class LauncherSelfUpdateService
         Guid.TryParseExact(value[ReadyEventPrefix.Length..], "N", out _);
 
     internal static void ValidateStagingDirectory(
-        string stagingDirectory,
-        LauncherReleasePackage package)
+        string stagingDirectory)
     {
         var files = Directory.GetFiles(stagingDirectory, "*", SearchOption.TopDirectoryOnly);
         if (Directory.GetDirectories(stagingDirectory).Length != 0)
@@ -393,7 +385,7 @@ internal static class LauncherSelfUpdateService
             throw new InvalidDataException(Strings.Update_FoldersForbidden);
         }
 
-        foreach (var requiredFile in RequiredCommonFiles.Append(GetExecutableName(package)))
+        foreach (var requiredFile in RequiredCommonFiles.Append(ExecutableFileName))
         {
             if (!File.Exists(Path.Combine(stagingDirectory, requiredFile)))
             {
@@ -401,9 +393,7 @@ internal static class LauncherSelfUpdateService
             }
         }
 
-        var otherExecutable = GetExecutableName(package == LauncherReleasePackage.Minimal
-            ? LauncherReleasePackage.Standalone
-            : LauncherReleasePackage.Minimal);
+        var otherExecutable = LegacyExecutableFileName;
         if (File.Exists(Path.Combine(stagingDirectory, otherExecutable)))
         {
             throw new InvalidDataException(Strings.Update_WrongBuildType);
@@ -431,10 +421,9 @@ internal static class LauncherSelfUpdateService
 
     internal static void ApplyStagedFiles(
         string stagingDirectory,
-        string targetDirectory,
-        LauncherReleasePackage package)
+        string targetDirectory)
     {
-        var backupDirectory = Path.Combine(Path.GetTempPath(), $"CORDON-Backup-{Guid.NewGuid():N}");
+        var backupDirectory = Path.Combine(GetUpdateTempDirectory(targetDirectory), $"CORDON-Backup-{Guid.NewGuid():N}");
         var changedFiles = new List<(string Target, string? Backup)>();
         var keepBackup = false;
         Directory.CreateDirectory(backupDirectory);
@@ -472,9 +461,7 @@ internal static class LauncherSelfUpdateService
 
             var obsoleteExecutable = Path.Combine(
                 targetDirectory,
-                GetExecutableName(package == LauncherReleasePackage.Minimal
-                    ? LauncherReleasePackage.Standalone
-                    : LauncherReleasePackage.Minimal));
+                LegacyExecutableFileName);
             if (File.Exists(obsoleteExecutable))
             {
                 var backup = Path.Combine(backupDirectory, Path.GetFileName(obsoleteExecutable));
@@ -543,27 +530,23 @@ internal static class LauncherSelfUpdateService
         return checksums;
     }
 
-    internal static string GetExecutableName(LauncherReleasePackage package) => package switch
-    {
-        LauncherReleasePackage.Minimal => "CORDON.exe",
-        LauncherReleasePackage.Standalone => "CORDON-Standalone.exe",
-        _ => throw new ArgumentOutOfRangeException(nameof(package), package, null)
-    };
-
     private static string GetSha256(string path)
     {
         using var stream = File.OpenRead(path);
         return Convert.ToHexString(SHA256.HashData(stream));
     }
 
-    private static bool IsOwnedTemporaryDirectory(string path, string prefix)
+    internal static string GetUpdateTempDirectory(string targetDirectory) =>
+        Path.Combine(Path.GetFullPath(targetDirectory), "Data", "CordonModLauncher", "Temp");
+
+    private static bool IsOwnedTemporaryDirectory(string path, string prefix, string targetDirectory)
     {
         var fullPath = Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar);
         var parent = Path.GetDirectoryName(fullPath)?.TrimEnd(Path.DirectorySeparatorChar);
         var name = Path.GetFileName(fullPath);
         return parent is not null &&
                parent.Equals(
-                   Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar),
+                   GetUpdateTempDirectory(targetDirectory).TrimEnd(Path.DirectorySeparatorChar),
                    StringComparison.OrdinalIgnoreCase) &&
                name.StartsWith(prefix, StringComparison.Ordinal) &&
                Guid.TryParseExact(name[prefix.Length..], "N", out _);

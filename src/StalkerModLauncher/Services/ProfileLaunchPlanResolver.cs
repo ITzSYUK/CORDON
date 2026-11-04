@@ -144,6 +144,7 @@ internal static class ProfileLaunchPlanResolver
 
         var exact = roots
             .Where(root => Directory.Exists(root.RootPath))
+            .Where(root => !FileLayerPlan.IsExcluded(root.Mod, requestedRelativePath))
             .Select(root => new
             {
                 FullPath = Path.Combine(root.RootPath, requestedRelativePath),

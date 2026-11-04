@@ -1,4 +1,5 @@
 using StalkerModLauncher.Resources;
+using StalkerModLauncher.Models;
 
 namespace StalkerModLauncher.Services;
 
@@ -6,7 +7,8 @@ public sealed record LaunchExecutableSearchRoot(
     string RootPath,
     string DisplayName,
     int Order,
-    bool IsBaseGameRoot = false);
+    bool IsBaseGameRoot = false,
+    ModEntry? Mod = null);
 
 public sealed record LaunchExecutableDetection(
     string FullPath,
@@ -34,7 +36,7 @@ public static class LaunchExecutableDetector
             foreach (var root in availableRoots.Where(root => root.IsBaseGameRoot))
             {
                 var launcherPath = AnomalyLauncherLocator.TryFind(root.RootPath);
-                if (launcherPath is not null)
+                if (launcherPath is not null && !FileLayerPlan.IsExcluded(root.Mod, Path.GetFileName(launcherPath)))
                 {
                     return new LaunchExecutableDetection(
                         launcherPath,
@@ -58,7 +60,7 @@ public static class LaunchExecutableDetector
             foreach (var file in EnumerateExecutables(root.RootPath, cancellationToken))
             {
                 var relative = Normalize(Path.GetRelativePath(root.RootPath, file));
-                if (!allowDedicated && IsDedicatedExecutable(relative))
+                if (FileLayerPlan.IsExcluded(root.Mod, relative) || !allowDedicated && IsDedicatedExecutable(relative))
                 {
                     continue;
                 }

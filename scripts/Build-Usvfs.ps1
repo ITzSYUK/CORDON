@@ -32,7 +32,7 @@ $runningRoot = if (-not $CleanPublishRoot) {
     [IO.Path]::GetFullPath($outputDirectory)
 } else { $resolvedPublishRoot }
 $runningRoot = $runningRoot.TrimEnd('\') + '\'
-$runningLauncher = Get-Process -Name "CORDON" -ErrorAction SilentlyContinue | Where-Object {
+$runningLauncher = Get-Process -Name "CORDON", "CORDON-Standalone" -ErrorAction SilentlyContinue | Where-Object {
     try {
         $_.Path -and [System.IO.Path]::GetFullPath($_.Path).StartsWith($runningRoot, [System.StringComparison]::OrdinalIgnoreCase)
     } catch {
@@ -45,9 +45,22 @@ if ($runningLauncher) {
 }
 
 if ($CleanPublishRoot -and (Test-Path -LiteralPath $publishRoot)) {
+    if (Get-ChildItem -LiteralPath $publishRoot -Directory -Filter 'Data' -Recurse -Force | Select-Object -First 1) {
+        throw "Refusing to clean publish while it contains user Data. Move the installation or back it up outside publish first."
+    }
     Remove-Item -LiteralPath $publishRoot -Recurse -Force
 } elseif (Test-Path -LiteralPath $outputDirectory) {
-    Remove-Item -LiteralPath $outputDirectory -Recurse -Force
+    $resolvedOutput = [IO.Path]::GetFullPath($outputDirectory).TrimEnd('\') + '\'
+    if (-not $resolvedOutput.StartsWith($resolvedPublishRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to clean output outside publish: $resolvedOutput"
+    }
+    foreach ($item in Get-ChildItem -LiteralPath $outputDirectory -Force | Where-Object { $_.Name -ne 'Data' }) {
+        $target = [IO.Path]::GetFullPath($item.FullName)
+        if (-not $target.StartsWith($resolvedOutput, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Refusing to clean output outside the selected directory: $target"
+        }
+        Remove-Item -LiteralPath $target -Recurse -Force
+    }
 }
 
 New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
@@ -55,10 +68,10 @@ New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 dotnet publish $project `
     -c Release `
     -r win-x64 `
-    --self-contained false `
+    --self-contained true `
     -p:PublishSingleFile=true `
     -p:IncludeNativeLibrariesForSelfExtract=true `
-    -p:EnableCompressionInSingleFile=false `
+    -p:EnableCompressionInSingleFile=true `
     -p:PublishTrimmed=false `
     -p:DebugType=None `
     -p:DebugSymbols=false `

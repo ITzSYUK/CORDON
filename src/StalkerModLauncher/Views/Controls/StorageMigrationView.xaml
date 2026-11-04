@@ -1,0 +1,51 @@
+<UserControl x:Class="StalkerModLauncher.Views.Controls.StorageMigrationView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:StalkerModLauncher.Views.Controls"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources" FontSize="14" PreviewKeyDown="View_OnPreviewKeyDown">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,10,0">
+                <TextBlock Text="{x:Static res:Strings.Migration_Explanation}" TextWrapping="Wrap"/>
+                <TextBlock Text="{x:Static res:Strings.Migration_Contents}" TextWrapping="Wrap" Margin="0,14,0,0"/>
+                <TextBlock Text="{x:Static res:Strings.Migration_Safety}" TextWrapping="Wrap" Margin="0,14,0,0"/>
+                <TextBlock Text="{x:Static res:Strings.Migration_DestinationHeading}" FontWeight="Bold" Margin="0,14,0,6"/>
+                <TextBlock x:Name="DestinationText" TextWrapping="Wrap" Foreground="{DynamicResource AccentBrush}"/>
+                <TextBlock Text="{x:Static res:Strings.Migration_Sources}" FontWeight="Bold" Margin="0,14,0,6"/>
+                <TextBlock x:Name="SourcesText" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"/>
+            </StackPanel>
+        </ScrollViewer>
+        <StackPanel Grid.Row="1" Margin="0,16,0,0">
+            <ProgressBar x:Name="MigrationProgressBar" Height="12" Minimum="0" Maximum="1" Value="0"
+                         AutomationProperties.Name="{x:Static res:Strings.Migration_ProgressLabel}">
+                <ProgressBar.Style>
+                    <Style TargetType="ProgressBar" BasedOn="{StaticResource ModArchiveProgressBarStyle}">
+                        <Setter Property="Foreground" Value="#FFD18B22"/>
+                        <Setter Property="Background" Value="#FF24251B"/>
+                        <Setter Property="BorderBrush" Value="#FF655332"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding DataContext.UseNewPdaInterface, RelativeSource={RelativeSource AncestorType={x:Type controls:PdaMainView}}}" Value="False">
+                                <Setter Property="Foreground" Value="{DynamicResource ModArchiveProgressFillBrush}"/>
+                                <Setter Property="Background" Value="{DynamicResource ModArchiveProgressTrackBrush}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ProgressBar.Style>
+            </ProgressBar>
+            <TextBlock x:Name="MigrationStatus" Visibility="Collapsed" Margin="0,6,0,0"
+                       TextWrapping="Wrap" MaxHeight="64" TextTrimming="CharacterEllipsis"
+                       ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
+                       Foreground="{DynamicResource MutedTextBrush}"/>
+        </StackPanel>
+        <WrapPanel Grid.Row="2" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="ProfilesOnlyButton" Content="{x:Static res:Strings.Migration_ProfilesOnly}" Margin="0,0,8,8" Click="ProfilesOnly_OnClick"/>
+            <Button x:Name="DeclineButton" Content="{x:Static res:Strings.Migration_Decline}" MinWidth="110" Margin="8,0,0,8" Click="Decline_OnClick"/>
+        </WrapPanel>
+    </Grid>
+</UserControl>

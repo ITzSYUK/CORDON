@@ -12,11 +12,10 @@ public sealed class LauncherSettingsViewModel : ObservableObject
     private readonly Func<LauncherPreferences, Task> _save;
     private readonly DialogService _dialogService;
     private readonly Func<Task<LauncherUpdateResult>>? _checkForUpdates;
-    private readonly Func<string, string, LauncherReleasePackage, Task<string>> _downloadReleasePackage;
+    private readonly Func<string, string, Task<string>> _downloadReleasePackage;
     private readonly Func<string, bool> _confirmInstall;
     private readonly Func<bool> _canInstallUpdate;
     private readonly Action? _requestExit;
-    private readonly bool _isStandaloneBuild;
     private readonly Func<bool> _confirmReset;
     private readonly string _initialUiLanguage;
     private string _uiLanguage;
@@ -33,7 +32,6 @@ public sealed class LauncherSettingsViewModel : ObservableObject
     private string _updateStatus = string.Empty;
     private string? _releaseUrl;
     private string? _releaseTag;
-    private bool _areDownloadOptionsVisible;
     private string? _downloadedReleaseDirectory;
 
     public LauncherSettingsViewModel(
@@ -43,19 +41,15 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         DialogService dialogService,
         Func<Task<LauncherUpdateResult>>? checkForUpdates = null,
         Func<bool>? confirmReset = null,
-        Func<string, string, LauncherReleasePackage, Task<string>>? downloadReleasePackage = null,
-        bool isPortable = false,
-        bool? isStandaloneBuild = null,
+        Func<string, string, Task<string>>? downloadReleasePackage = null,
         Func<string, bool>? confirmInstall = null,
         Func<bool>? canInstallUpdate = null,
         Action? requestExit = null,
-        Func<Task<(int Added, int Skipped)>>? importLegacyProfiles = null)
+        Action? openMigrationWizard = null)
     {
         _initialUiLanguage = Services.UiLanguage.Normalize(preferences.UiLanguage);
         _uiLanguage = _initialUiLanguage;
-        StorageDescription = isPortable
-            ? Strings.Settings_StoragePortable
-            : Strings.Settings_StorageRegular;
+        StorageDescription = Strings.Settings_StoragePortable;
         _isPdaInterfaceEnabled = preferences.IsPdaInterfaceEnabled;
         _useNewPdaInterface = preferences.UseNewPdaInterface;
         _showTrayIcon = preferences.ShowTrayIcon;
@@ -71,38 +65,19 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         _dialogService = dialogService;
         _checkForUpdates = checkForUpdates;
         _downloadReleasePackage = downloadReleasePackage ??
-            ((releaseUrl, releaseTag, package) => LauncherReleaseDownloadService.DownloadAsync(
-                releaseUrl,
-                releaseTag,
-                package));
-        _isStandaloneBuild = isStandaloneBuild ?? AppPaths.IsStandaloneExecutable(Environment.ProcessPath);
+            ((releaseUrl, releaseTag) => LauncherReleaseDownloadService.DownloadAsync(releaseUrl, releaseTag));
         _confirmInstall = confirmInstall ?? (message => DialogService.Confirm(Strings.Update_InstallTitle, message));
         _canInstallUpdate = canInstallUpdate ?? (() => true);
         _requestExit = requestExit;
         _confirmReset = confirmReset ?? (() => DialogService.Confirm(
             Strings.Settings_ResetTitle,
             Strings.Settings_ResetMessage));
-        ImportLegacyProfilesCommand = new AsyncRelayCommand(async () =>
-        {
-            try
-            {
-                var result = await importLegacyProfiles!();
-                LegacyImportStatus = LocalizedText.Format(Strings.Settings_LegacyImportResult, result.Added, result.Skipped);
-            }
-            catch (Exception ex)
-            {
-                LegacyImportStatus = LocalizedText.Format(Strings.Settings_LegacyImportFailed, ex.Message);
-            }
-        }, () => importLegacyProfiles is not null);
+        OpenMigrationWizardCommand = new RelayCommand(() => openMigrationWizard?.Invoke(), () => openMigrationWizard is not null);
         OpenSettingsFolderCommand = new RelayCommand(OpenSettingsFolder);
         CheckForUpdatesCommand = new AsyncRelayCommand(CheckForUpdatesAsync, () => _checkForUpdates is not null);
         OpenReleaseCommand = new RelayCommand(OpenRelease, () => HasAvailableUpdate);
-        ShowDownloadOptionsCommand = new RelayCommand(ShowDownloadOptions, () => CanShowDownloadButton);
-        DownloadMinimalCommand = new AsyncRelayCommand(
-            () => DownloadReleasePackageAsync(LauncherReleasePackage.Minimal),
-            () => HasAvailableUpdate);
-        DownloadStandaloneCommand = new AsyncRelayCommand(
-            () => DownloadReleasePackageAsync(LauncherReleasePackage.Standalone),
+        DownloadAndInstallCommand = new AsyncRelayCommand(
+            DownloadReleasePackageAsync,
             () => HasAvailableUpdate);
         OpenDownloadsCommand = new RelayCommand(OpenDownloadsFolder, () => HasDownloadedRelease);
         ResetCommand = new RelayCommand(ResetToDefaults);
@@ -239,34 +214,12 @@ public sealed class LauncherSettingsViewModel : ObservableObject
     }
 
     public bool HasAvailableUpdate => !string.IsNullOrWhiteSpace(_releaseUrl);
-    public bool AreDownloadOptionsVisible
-    {
-        get => _areDownloadOptionsVisible;
-        private set
-        {
-            if (SetProperty(ref _areDownloadOptionsVisible, value))
-            {
-                OnPropertyChanged(nameof(CanShowDownloadButton));
-                ShowDownloadOptionsCommand.RaiseCanExecuteChanged();
-            }
-        }
-    }
-
-    public bool CanShowDownloadButton => HasAvailableUpdate && !AreDownloadOptionsVisible;
     public bool HasDownloadedRelease => !string.IsNullOrWhiteSpace(_downloadedReleaseDirectory);
-    private string _legacyImportStatus = string.Empty;
-    public string LegacyImportStatus
-    {
-        get => _legacyImportStatus;
-        private set => SetProperty(ref _legacyImportStatus, value);
-    }
-    public AsyncRelayCommand ImportLegacyProfilesCommand { get; }
+    public RelayCommand OpenMigrationWizardCommand { get; }
     public RelayCommand OpenSettingsFolderCommand { get; }
     public AsyncRelayCommand CheckForUpdatesCommand { get; }
     public RelayCommand OpenReleaseCommand { get; }
-    public RelayCommand ShowDownloadOptionsCommand { get; }
-    public AsyncRelayCommand DownloadMinimalCommand { get; }
-    public AsyncRelayCommand DownloadStandaloneCommand { get; }
+    public AsyncRelayCommand DownloadAndInstallCommand { get; }
     public RelayCommand OpenDownloadsCommand { get; }
     public RelayCommand ResetCommand { get; }
 
@@ -390,9 +343,7 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
     }
 
-    private void ShowDownloadOptions() => AreDownloadOptionsVisible = true;
-
-    private async Task DownloadReleasePackageAsync(LauncherReleasePackage package)
+    private async Task DownloadReleasePackageAsync()
     {
         if (string.IsNullOrWhiteSpace(_releaseUrl) || string.IsNullOrWhiteSpace(_releaseTag))
         {
@@ -405,19 +356,17 @@ public sealed class LauncherSettingsViewModel : ObservableObject
             return;
         }
 
-        if (!_confirmInstall(BuildInstallConfirmationMessage(package)))
+        if (!_confirmInstall(LocalizedText.Format(Strings.Update_InstallMessageFormat, string.Empty)))
         {
             return;
         }
 
-        var packageName = package == LauncherReleasePackage.Minimal
-            ? Strings.Update_MinimalPackage
-            : Strings.Update_StandalonePackage;
+        var packageName = Strings.Update_Package;
         UpdateStatus = LocalizedText.Format(Strings.Update_DownloadingFormat, packageName);
 
         try
         {
-            var path = await _downloadReleasePackage(_releaseUrl, _releaseTag, package);
+            var path = await _downloadReleasePackage(_releaseUrl, _releaseTag);
             SetDownloadedReleaseDirectory(Path.GetDirectoryName(path));
             UpdateStatus = LocalizedText.Format(Strings.Update_ReadyFormat, packageName, Path.GetFileName(path));
             _requestExit?.Invoke();
@@ -436,30 +385,14 @@ public sealed class LauncherSettingsViewModel : ObservableObject
         }
     }
 
-    private string BuildInstallConfirmationMessage(LauncherReleasePackage package)
-    {
-        var selectedStandalone = package == LauncherReleasePackage.Standalone;
-        var mismatchWarning = selectedStandalone == _isStandaloneBuild
-            ? string.Empty
-            : _isStandaloneBuild
-                ? Strings.Update_MismatchFromStandalone
-                : Strings.Update_MismatchToStandalone;
-
-        return LocalizedText.Format(Strings.Update_InstallMessageFormat, mismatchWarning);
-    }
-
     private void SetRelease(string? releaseUrl, string? releaseTag = null)
     {
         _releaseUrl = releaseUrl;
         _releaseTag = releaseTag;
         SetDownloadedReleaseDirectory(null);
-        AreDownloadOptionsVisible = false;
         OnPropertyChanged(nameof(HasAvailableUpdate));
-        OnPropertyChanged(nameof(CanShowDownloadButton));
         OpenReleaseCommand.RaiseCanExecuteChanged();
-        ShowDownloadOptionsCommand.RaiseCanExecuteChanged();
-        DownloadMinimalCommand.RaiseCanExecuteChanged();
-        DownloadStandaloneCommand.RaiseCanExecuteChanged();
+        DownloadAndInstallCommand.RaiseCanExecuteChanged();
     }
 
     private void SetDownloadedReleaseDirectory(string? directory)

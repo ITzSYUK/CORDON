@@ -21,6 +21,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
     private readonly ProfileHealthService _healthService;
     private readonly DialogService _dialogService;
     private readonly WorkspaceManagementService _workspaceManagementService;
+    private readonly Func<Task> _persistSettings;
     private readonly Action<string, LauncherLogLevel>? _log;
     private ProfileHealthReport? _report;
     private string _summary = Strings.Health_Checking;
@@ -34,12 +35,14 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
         ProfileHealthService healthService,
         DialogService dialogService,
         WorkspaceManagementService workspaceManagementService,
+        Func<Task> persistSettings,
         Action<string, LauncherLogLevel>? log = null)
     {
         _profile = profile;
         _healthService = healthService;
         _dialogService = dialogService;
         _workspaceManagementService = workspaceManagementService;
+        _persistSettings = persistSettings;
         _log = log;
 
         RefreshCommand = new AsyncRelayCommand(RefreshAsync, () => !IsChecking);
@@ -281,7 +284,7 @@ public sealed class ProfileHealthViewModel : ObservableObject, IDisposable
             IsChecking = true;
             Log(LocalizedText.Format(Strings.Log_HealthMoveStartedFormat, _profile.Name));
             var progress = new Progress<string>(ReportWorkspaceProgress);
-            var result = await _workspaceManagementService.MoveAsync(_profile, destination, progress);
+            var result = await _workspaceManagementService.MoveAsync(_profile, destination, progress, _persistSettings);
             if (!result.WasMoved)
             {
                 Log(LocalizedText.Format(Strings.Log_HealthAlreadyThereFormat, result.DestinationPath));

@@ -103,6 +103,26 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
     }
 
     [Fact]
+    public async Task InvalidAsciiPathIsRejectedBeforePreparingUserData()
+    {
+        var game = CreateDirectory("ascii-game");
+        var workspace = CreateDirectory(Path.Combine("Документы", "profile-test"));
+        File.WriteAllText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true | false | $fs_root$ | appdata");
+        var profile = new ModProfile { GameInstallPath = game, WorkspacePath = workspace };
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+        var runtime = new RecordingUsvfsRuntime();
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => new UsvfsLaunchBackend(runtime, game).PrepareAsync(
+            new ProfileLaunchBackendContext(game, profile, layers, manifest), new Progress<string>()));
+
+        Assert.Equal(StalkerModLauncher.Resources.Strings.Error_UsvfsAsciiPath, error.Message);
+        Assert.Empty(Directory.EnumerateFileSystemEntries(workspace));
+        Assert.Equal(workspace, profile.WorkspacePath);
+        Assert.Null(runtime.MappingPlan);
+    }
+
+    [Fact]
     public async Task PrepareAsyncSeedsAndMigratesKnownWritableGameFiles()
     {
         var game = CreateDirectory("writable-game");
@@ -634,13 +654,15 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
     public async Task PrepareAsyncDoesNotOverwriteExistingProfileUserSettings()
     {
         var game = CreateDirectory("existing-user-game");
-        var workspace = CreateDirectory("existing-user-workspace");
+        var workspace = CreateDirectory(Path.Combine("StalkerModLauncher", "Workspaces", "profile-profile-existing-user"));
         Directory.CreateDirectory(Path.Combine(game, "bin_x64"));
         Directory.CreateDirectory(Path.Combine(game, "userdata"));
         Directory.CreateDirectory(Path.Combine(workspace, "userdata"));
         File.WriteAllText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true | false | userdata\\");
         File.WriteAllText(Path.Combine(game, "userdata", "user.ltx"), "base settings");
         File.WriteAllText(Path.Combine(workspace, "userdata", "user.ltx"), "profile settings");
+        Directory.CreateDirectory(Path.Combine(workspace, "userdata", "savedgames"));
+        File.WriteAllText(Path.Combine(workspace, "userdata", "savedgames", "old.sav"), "old save");
         File.Copy(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "cmd.exe"),
             Path.Combine(game, "bin_x64", "xrEngine.exe"));
@@ -649,10 +671,14 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         {
             Id = "profile-existing-user",
             Name = "Existing user",
+            WorkspacePath = workspace,
             GameInstallPath = game,
             ExecutableRelativePath = @"bin_x64\xrEngine.exe",
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
+        var paths = new AppPaths(Path.Combine(_root, "new-config"), Path.Combine(_root, "new-workspaces"), false);
+        var manager = new ProfileManager(paths, new WorkspaceBuilder(paths));
+        Assert.Equal(workspace, manager.EnsureProfileFolderPath(profile));
         var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
         var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
         var backend = new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), game);
@@ -664,6 +690,10 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         Assert.Equal(
             "profile settings",
             File.ReadAllText(Path.Combine(workspace, "userdata", "user.ltx")));
+        Assert.Equal("old save", File.ReadAllText(Path.Combine(workspace, "userdata", "savedgames", "old.sav")));
+        Assert.Contains(Path.Combine(workspace, "userdata"), File.ReadAllText(Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx")));
+        Assert.Equal(workspace, profile.WorkspacePath);
+        Assert.False(Directory.Exists(paths.WorkspaceRoot));
     }
 
     [Fact]
@@ -920,6 +950,33 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         try
         {
             Assert.Equal("base loader", File.ReadAllText(Path.Combine(Path.GetDirectoryName(plan.ExecutablePath)!, "test-loader.dll")));
+        }
+        finally { await plan.RuntimeLease!.DisposeAsync(); }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExcludedEngineUsesBaseExecutableUnlessManuallyPinned(bool pinned)
+    {
+        var context = CreatePreparationContext();
+        var relative = context.Profile.ExecutableRelativePath;
+        var baseExe = Path.Combine(context.GamePath, relative);
+        Directory.CreateDirectory(Path.GetDirectoryName(baseExe)!);
+        CopyExecutable(baseExe, WindowsExecutableArchitecture.X64);
+        File.AppendAllText(baseExe, "base engine");
+        // Force a bootstrap so the test checks its physical EXE, not only the launch-plan.
+        File.WriteAllText(Path.Combine(context.Profile.Mods[0].SourcePath, "bin", "loader.dll"), "loader");
+        context.Profile.Mods[0].ExcludedFiles.Add(relative);
+        if (!pinned) context.Profile.ExecutableSourcePath = string.Empty;
+        var expected = pinned ? Path.Combine(context.Profile.Mods[0].SourcePath, relative) : baseExe;
+
+        var plan = await new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), context.GamePath)
+            .PrepareAsync(context, new Progress<string>());
+        try
+        {
+            Assert.Contains(".usvfs-bootstrap", plan.ExecutablePath, StringComparison.Ordinal);
+            Assert.Equal(File.ReadAllBytes(expected), File.ReadAllBytes(plan.ExecutablePath));
         }
         finally { await plan.RuntimeLease!.DisposeAsync(); }
     }

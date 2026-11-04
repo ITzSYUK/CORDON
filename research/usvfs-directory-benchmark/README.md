@@ -24,10 +24,10 @@ The main runtime's `runtime` subdirectory contains validated flat files and
 
 Run `scripts/Build-Usvfs.ps1` to publish the main test launcher to `publish/usvfs`;
 add `-LegacyUsvfs` for `publish/usvfs-legacy`. Release packaging through
-`scripts/Build-Release.ps1` requires a clean working tree and creates two standard
-archives with the optimized runtime. `-IncludeLegacyUsvfs` adds compact and
-standalone legacy archives with the `-usvfs-legacy` suffix. The built-in updater
-installs the main optimized runtime, including over legacy installations.
+`scripts/Build-Release.ps1` requires a clean working tree and creates one full
+self-contained archive, `CORDON-v<version>-win-x64.zip`, with the optimized
+runtime. The built-in updater installs this same package. Legacy runtime builds
+remain available through `scripts/Build-Usvfs.ps1 -LegacyUsvfs` for development.
 
 From the repository root, restore/build this project and run:
 

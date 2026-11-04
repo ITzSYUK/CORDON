@@ -33,10 +33,12 @@ public sealed class LauncherShellUiTests
         Assert.Contains("Strings.Settings_OpenRelease", settings.ToString());
         Assert.Contains("OpenReleaseButton", settings.ToString());
         Assert.Contains("Strings.Settings_DownloadAndInstall", settings.ToString());
-        Assert.Contains("DownloadToDownloadsButton", settings.ToString());
+        Assert.Contains("DownloadAndInstallButton", settings.ToString());
         Assert.Contains("Strings.Settings_OpenLauncherFolder", settings.ToString());
-        Assert.Contains("Strings.Settings_MinimalVersion", settings.ToString());
-        Assert.Contains("Strings.Settings_StandaloneVersion", settings.ToString());
+        Assert.DoesNotContain("DownloadMinimalCommand", settings.ToString());
+        Assert.DoesNotContain("DownloadOptionsPanel", settings.ToString());
+        Assert.Contains("DownloadAndInstallCommand", settings.ToString());
+        Assert.DoesNotContain("Strings.Settings_StandaloneVersion", settings.ToString());
         Assert.Contains("Strings.Settings_AutoCheckUpdates", settings.ToString());
         Assert.Contains("Strings.Settings_StartMinimized", settings.ToString());
         Assert.Contains("StartMinimizedToTrayOnWindowsStartup", settings.ToString());

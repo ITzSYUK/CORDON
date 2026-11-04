@@ -1,6 +1,5 @@
 param(
-    [string]$Version,
-    [switch]$IncludeLegacyUsvfs
+    [string]$Version
 )
 
 $ErrorActionPreference = "Stop"
@@ -54,19 +53,22 @@ foreach ($entry in $runtimeFiles.GetEnumerator()) {
         throw "Missing release dependency '$($entry.Key)': $($entry.Value)"
     }
 }
-$legacyRuntime = $null
-if ($IncludeLegacyUsvfs) {
-    $legacyRuntime = Get-UsvfsRuntime -RepositoryRoot $repositoryRoot -LegacyUsvfs
-}
-
 & $verificationScript -ExpectedVersion $Version
 if ($LASTEXITCODE -ne 0) {
     throw "Release verification failed."
 }
-if ($IncludeLegacyUsvfs) {
-    & (Join-Path $PSScriptRoot 'Test-UsvfsRuntime.ps1') -RuntimeRoot $legacyRuntime.SourceRoot
+foreach ($path in @($releaseRoot, $stagingRoot)) {
+    $resolvedOutput = [IO.Path]::GetFullPath($path)
+    $releaseParent = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'publish\release')).TrimEnd('\') + '\'
+    if (-not $resolvedOutput.StartsWith($releaseParent, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to clean release output outside publish/release: $resolvedOutput"
+    }
+    if (Test-Path -LiteralPath $path) {
+        if (Get-ChildItem -LiteralPath $path -Directory -Filter 'Data' -Recurse -Force | Select-Object -First 1) {
+            throw "Refusing to recreate release output containing user Data: $path"
+        }
+    }
 }
-
 foreach ($path in @($releaseRoot, $stagingRoot)) {
     if (Test-Path -LiteralPath $path) {
         Remove-Item -LiteralPath $path -Recurse -Force
@@ -75,89 +77,65 @@ foreach ($path in @($releaseRoot, $stagingRoot)) {
 
 New-Item -ItemType Directory -Path $releaseRoot, $stagingRoot | Out-Null
 
-function Publish-Package {
-    param(
-        [string]$PackageName,
-        [bool]$SelfContained,
-        [string]$ExecutableName
-    )
+$packageName = "CORDON-v$Version-win-x64"
+$publishDirectory = Join-Path $stagingRoot "$packageName-publish"
+New-Item -ItemType Directory -Path $publishDirectory | Out-Null
 
-    $publishDirectory = Join-Path $stagingRoot "$PackageName-publish"
-    New-Item -ItemType Directory -Path $publishDirectory | Out-Null
+$projectLockFile = Join-Path (Split-Path -Parent $project) "packages.lock.json"
+$publishLockFile = Join-Path $publishDirectory "packages.lock.json"
+Copy-Item -LiteralPath $projectLockFile -Destination $publishLockFile
 
-    $projectLockFile = Join-Path (Split-Path -Parent $project) "packages.lock.json"
-    $publishLockFile = Join-Path $publishDirectory "packages.lock.json"
-    Copy-Item -LiteralPath $projectLockFile -Destination $publishLockFile
-
-    dotnet publish $project `
-        -c Release `
-        -r win-x64 `
-        --self-contained $SelfContained `
-        -p:PublishSingleFile=true `
-        -p:IncludeNativeLibrariesForSelfExtract=true `
-        -p:EnableCompressionInSingleFile=$SelfContained `
-        -p:PublishTrimmed=false `
-        "-p:NuGetLockFilePath=$publishLockFile" `
-        -p:DebugType=None `
-        -p:DebugSymbols=false `
-        -o $publishDirectory
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "dotnet publish failed for $PackageName."
-    }
-
-    $variants = @(@{ Name = $PackageName; Files = $runtimeFiles; Manifest = $runtime.Manifest; Hashes = $runtime.Hashes })
-    if ($IncludeLegacyUsvfs) {
-        $legacyFiles = $legacyRuntime.Files.Clone()
-        $legacyFiles['StalkerModLauncher.UsvfsX86Host.exe'] = $x86Host
-        $variants += @{ Name = "$PackageName-usvfs-legacy"; Files = $legacyFiles;
-            Manifest = $legacyRuntime.Manifest; Hashes = $legacyRuntime.Hashes }
-    }
-    foreach ($variant in $variants) {
-        $packageDirectory = Join-Path $releaseRoot $variant.Name
-        New-Item -ItemType Directory -Path $packageDirectory | Out-Null
-        Copy-Item -LiteralPath (Join-Path $publishDirectory "CORDON.exe") -Destination (Join-Path $packageDirectory $ExecutableName)
-        foreach ($entry in $variant.Files.GetEnumerator()) {
-            Copy-Item -LiteralPath $entry.Value -Destination (Join-Path $packageDirectory $entry.Key)
-        }
-
-        Copy-Item -LiteralPath (Join-Path $repositoryRoot "LICENSE.md") -Destination (Join-Path $packageDirectory "LICENSE.txt")
-        Copy-Item -LiteralPath (Join-Path $repositoryRoot "THIRD_PARTY_NOTICES.md") -Destination (Join-Path $packageDirectory "THIRD-PARTY-NOTICES.txt")
-
-        $packageFiles = Get-ChildItem -LiteralPath $packageDirectory -Recurse -File |
-            Select-Object -ExpandProperty FullName
-        Write-Sha256ChecksumFile `
-            -Paths $packageFiles `
-            -RelativeTo $packageDirectory `
-            -OutputPath (Join-Path $packageDirectory "checksums.txt")
-
-        $unexpected = Get-ChildItem -LiteralPath $packageDirectory -File | Where-Object { $_.Extension -in @('.pdb', '.json', '.md') }
-        if ($unexpected) {
-            throw "Unexpected debug/runtime files in ${PackageName}: $($unexpected.Name -join ', ')"
-        }
-
-        $archive = Join-Path $releaseRoot "$($variant.Name).zip"
-        Compress-Archive -Path (Join-Path $packageDirectory '*') -DestinationPath $archive -CompressionLevel Optimal
-        Test-ReleasePackage `
-            -PackageDirectory $packageDirectory `
-            -ArchivePath $archive `
-            -ExecutableName $ExecutableName `
-            -ExpectedVersion $Version `
-            -ExpectedCommit $sourceRevision `
-            -UsvfsManifest $variant.Manifest `
-            -RuntimeHashes $variant.Hashes
-    }
+dotnet publish $project `
+    -c Release `
+    -r win-x64 `
+    --self-contained true `
+    -p:PublishSingleFile=true `
+    -p:IncludeNativeLibrariesForSelfExtract=true `
+    -p:EnableCompressionInSingleFile=true `
+    -p:PublishTrimmed=false `
+    "-p:NuGetLockFilePath=$publishLockFile" `
+    -p:DebugType=None `
+    -p:DebugSymbols=false `
+    -o $publishDirectory
+if ($LASTEXITCODE -ne 0) {
+    throw "dotnet publish failed for $packageName."
 }
 
-Publish-Package `
-    -PackageName "CORDON-v$Version-win-x64" `
-    -SelfContained $false `
-    -ExecutableName "CORDON.exe"
+# Keep the legacy asset and EXE name for already installed standalone updaters.
+foreach ($variant in @(
+    @{ Name = $packageName; Executable = "CORDON.exe" },
+    @{ Name = "$packageName-standalone"; Executable = "CORDON-Standalone.exe" }
+)) {
+    $packageDirectory = Join-Path $releaseRoot $variant.Name
+    New-Item -ItemType Directory -Path $packageDirectory | Out-Null
+    Copy-Item -LiteralPath (Join-Path $publishDirectory "CORDON.exe") -Destination (Join-Path $packageDirectory $variant.Executable)
+    foreach ($entry in $runtimeFiles.GetEnumerator()) {
+        Copy-Item -LiteralPath $entry.Value -Destination (Join-Path $packageDirectory $entry.Key)
+    }
+    Copy-Item -LiteralPath (Join-Path $repositoryRoot "LICENSE.md") -Destination (Join-Path $packageDirectory "LICENSE.txt")
+    Copy-Item -LiteralPath (Join-Path $repositoryRoot "THIRD_PARTY_NOTICES.md") -Destination (Join-Path $packageDirectory "THIRD-PARTY-NOTICES.txt")
 
-Publish-Package `
-    -PackageName "CORDON-v$Version-win-x64-standalone" `
-    -SelfContained $true `
-    -ExecutableName "CORDON-Standalone.exe"
+    $packageFiles = Get-ChildItem -LiteralPath $packageDirectory -Recurse -File | Select-Object -ExpandProperty FullName
+    Write-Sha256ChecksumFile `
+        -Paths $packageFiles `
+        -RelativeTo $packageDirectory `
+        -OutputPath (Join-Path $packageDirectory "checksums.txt")
+    $unexpected = Get-ChildItem -LiteralPath $packageDirectory -File | Where-Object { $_.Extension -in @('.pdb', '.json', '.md') }
+    if ($unexpected) {
+        throw "Unexpected debug/runtime files in ${packageName}: $($unexpected.Name -join ', ')"
+    }
+
+    $archive = Join-Path $releaseRoot "$($variant.Name).zip"
+    Compress-Archive -Path (Join-Path $packageDirectory '*') -DestinationPath $archive -CompressionLevel Optimal
+    Test-ReleasePackage `
+        -PackageDirectory $packageDirectory `
+        -ArchivePath $archive `
+        -ExecutableName $variant.Executable `
+        -ExpectedVersion $Version `
+        -ExpectedCommit $sourceRevision `
+        -UsvfsManifest $runtime.Manifest `
+        -RuntimeHashes $runtime.Hashes
+}
 
 $archives = Get-ChildItem -LiteralPath $releaseRoot -Filter '*.zip' -File |
     Select-Object -ExpandProperty FullName

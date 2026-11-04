@@ -31,20 +31,22 @@ If a mod is distributed as a complete ready-to-run build with its own game and e
 
 ## Installing the launcher
 
-1. Download the appropriate archive from the latest release page.
+1. Download `CORDON-vX.Y.Z-win-x64.zip` from the latest release page.
 2. Extract the archive to a separate permanent folder.
 3. Do not remove the USVFS DLL and EXE files next to the launcher.
-4. Run `CORDON.exe` or `CORDON-Standalone.exe`.
+4. Run `CORDON.exe`.
 
-The compact version requires .NET 8 Desktop Runtime x64. The Standalone version already includes .NET. USVFS may also require Microsoft Visual C++ 2015–2022 Redistributable x64 and x86.
+The released Standalone package includes .NET; a separate .NET Desktop Runtime installation is not required. USVFS may also require Microsoft Visual C++ 2015–2022 Redistributable x64 and x86.
 
-`CORDON.exe` stores launcher settings in AppData. `CORDON-Standalone.exe` stores them beside the executable in `Data\StalkerModLauncher`; this folder must be writable. On the first launch without local settings, the Standalone launcher imports the existing primary AppData settings file, then keeps its own independent settings. Game and mod folders outside the launcher directory are not made portable automatically.
+Only Standalone is supported. New settings, profiles, Mods, Workspaces, Cache and Temp are stored beside the EXE in `Data\CordonModLauncher`. Keep this folder writable and use an ASCII-only profile workspace path for USVFS. The startup wizard can import profile information from AppData and the old local Data folder. Games, mods, workspaces and saves stay in their current locations; do not delete the old folders containing them.
 
-The Standalone launcher package and the Standalone build profile type are different: both launcher packages support both profile types.
+The Standalone launcher package and the Standalone build profile type are different: the launcher supports both Game with mods and Standalone build profiles.
+
+`Build-Usvfs.ps1` preserves the complete existing `Data` directory, including old stores, installed mods and saves. Full cleanup with `-CleanPublishRoot` and release-directory recreation stop if user Data is present. Keep backups outside build outputs; the built-in updater also preserves Data.
 
 ### Main and legacy USVFS
 
-For regular use, choose a standard archive: it includes the validated optimized USVFS. Optional `-usvfs-legacy` archives contain the previous runtime for manual rollback if compatibility problems arise. They are not included in every release; .NET requirements and settings locations match the compact and standalone variants.
+The main FULL Standalone archive, `CORDON-vX.Y.Z-win-x64.zip`, is released with the validated optimized USVFS and the bundled .NET Runtime. The previous runtime remains available for development through `Build-Usvfs.ps1 -LegacyUsvfs`. A compatibility archive, `CORDON-vX.Y.Z-win-x64-standalone.zip`, contains the same launcher as `CORDON-Standalone.exe` for older automatic updaters.
 
 The main runtime includes batched directory enumeration from PR #99, early source-directory scan completion adapted from dlunch, and our TLS fix for the observed OGSR CoP crash. Gains depend on the build; faster file enumeration does not imply an equivalent increase in FPS or game loading speed. Known limitation: asynchronous directory enumeration sees only physical entries.
 
@@ -192,7 +194,7 @@ For Anomaly in USVFS mode, you can keep automatic launch through Anomaly Launche
 
 ## File mounting modes
 
-Select the mode in the settings of a regular profile.
+Regular profiles use USVFS. The old Workspace launch backend is unavailable; a retained legacy identifier in an imported profile is not a working fallback. Open that profile's settings, check the USVFS configuration and save before launching.
 
 ### USVFS: stable virtual mode
 
@@ -214,15 +216,17 @@ If launching requires physical EXE and DLL files before USVFS is mounted, the la
 
 ## What a workspace is
 
-A workspace is a launcher-managed folder for a regular profile. By default, it is created on the base game's drive, for example:
+A workspace is a launcher-managed folder for a regular profile. New workspaces are created beside the launcher by default, for example:
 
 ```text
-D:\StalkerModLauncher\Workspaces\profile-12ab34cd...\
+C:\Games\CORDON\Data\CordonModLauncher\Workspaces\profile-12ab34cd...\
 ```
 
-The folder name is based only on the internal ID and always uses ASCII characters. The profile's display name, such as “Ихрей,” is stored in the launcher settings and does not affect the path. Old folders named like `Ихрей-12ab34cd` are renamed once the next time the profile is prepared.
+New folder names are based only on the internal ID and always use ASCII characters. USVFS requires the entire workspace path to use ASCII, including every parent folder; an ASCII profile ID does not make a path under a non-Latin user directory safe. Use a permanent location such as `C:\Games\CORDON`. Imported profiles keep their existing workspace paths, including other drives: an assigned folder is never replaced or renamed. If the drive is disconnected or the folder is unavailable, launch stops and shows the old path; reconnect the drive or restore access. An empty replacement workspace is not created. Legacy folders without markers are checked against the profile ID and expected structure; unverified folders are not adopted automatically. The profile's display name, such as “Ихрей,” is stored in the launcher settings and does not affect the path. Automatic discovery and legacy-name migration inside current managed roots apply only when no path is assigned.
 
 Typical profile structure:
+
+Exception: when the old profile folder exists and is completely empty, the launcher prepares this profile's workspace in `Data\CordonModLauncher\Workspaces\profile-<ID>` beside the EXE and saves the new path. The old empty folder is not deleted. Any file or empty subdirectory, including hidden entries, prevents this switch. An unavailable drive still blocks launch. The new workspace path must also use ASCII characters for USVFS.
 
 ```text
 profile-12ab34cd...\
@@ -319,12 +323,11 @@ The save counter includes the main `.sav` and `.scop` file formats. Auxiliary `.
 
 The log at the bottom of the main window shows check progress, the selected mode, the EXE source, USVFS preparation, and the launch result.
 
-The full log location depends on the launcher package:
+The full log is stored beside the launcher:
 
 | Package | Path |
 | --- | --- |
-| `CORDON.exe` | `%APPDATA%\CordonModLauncher\launcher.log` |
-| `CORDON-Standalone.exe` | `<EXE directory>\Data\StalkerModLauncher\launcher.log` |
+| `CORDON.exe` | `<EXE directory>\Data\CordonModLauncher\launcher.log` |
 
 When the file reaches approximately 1 MB, it is moved to `launcher.old.log` and logging continues in a new file. The log does not grow indefinitely.
 
@@ -344,16 +347,22 @@ In PDA UI and PDA UI 2, errors appear inside the current interface and are accom
 
 ## Where launcher settings are stored
 
-On the first launch, the regular launcher automatically copies existing settings and profiles from `%APPDATA%\StalkerModLauncher` into `%APPDATA%\CordonModLauncher`. The old folder is preserved. Older launchers continue using it and cannot overwrite the new configuration. Changes are not synchronized between versions; games, mods, and profile workspaces retain their existing paths.
+Open **Data migration wizard** in launcher settings. Classic uses a separate window; both PDA themes embed the wizard as a page. The same wizard is available on first launch. **Transfer profile information** imports profiles from both AppData stores and the old local `Data\StalkerModLauncher` folder, keeping existing game, mod and workspace paths. Matching IDs are kept once, with existing destination profiles taking priority, followed by CordonModLauncher and StalkerModLauncher in AppData, then the old local store. Games, mods, workspaces, saves and game settings are not copied. Do not delete the old folders containing this data: imported profiles will continue to use them. You can repeat the import later in launcher settings.
+
+Import reads profile settings without changing the originals. Existing destination profiles are preserved. If import fails, fix the reported settings access or format error and retry.
+
+The wizard imports profiles, not general launcher preferences such as language, interface or tray settings. It reads every discovered old store before merging IDs: a damaged source can block the import even when another store is healthy. A healthy `settings.json` or its backup supplies profile order. If both indexes are missing or damaged, the wizard recovers profile IDs from the surviving profile JSON files and backups in `profiles`, without changing the source. The original display order cannot be recovered without an index. A pending `settings.pending.json` also blocks import until that interrupted save has been resolved.
+
+Moving the launcher or backing up only its new `Data\CordonModLauncher` folder does not include external mods or the old workspaces retained by imported profiles. Check each profile's actual paths.
 
 ```text
-%APPDATA%\CordonModLauncher\settings.json
-%APPDATA%\CordonModLauncher\settings.backup.json
-%APPDATA%\CordonModLauncher\profiles\profile-<ID>.json
-%APPDATA%\CordonModLauncher\profiles\profile-<ID>.backup.json
+Data\CordonModLauncher\settings.json
+Data\CordonModLauncher\settings.backup.json
+Data\CordonModLauncher\profiles\profile-<ID>.json
+Data\CordonModLauncher\profiles\profile-<ID>.backup.json
 ```
 
-These paths apply to `CORDON.exe`. For `CORDON-Standalone.exe`, the same settings and backup filenames are stored in `<EXE directory>\Data\StalkerModLauncher`; launcher logs, cache, and temporary files are local too. Use **Open settings folder** in launcher settings to open the active location.
+Use **Open settings folder** in launcher settings to open the active local store.
 
 `settings.json` contains general launcher settings and profile order. Each JSON in `profiles` contains its profile's USVFS and standalone modes, launch arguments, paths, statistics, and mod list. Legacy settings migrate automatically, preserving the original as `settings.legacy.json`. Importing a new-format `settings.json` requires its sibling `profiles` directory. The Standalone launcher stores paths inside its own directory relatively; external paths stay absolute. Game files are not copied into settings. Mods and profile workspaces keep their separate storage locations.
 
@@ -363,7 +372,9 @@ If a game or mod has been moved to another drive, correct the path in the profil
 
 ## What to back up
 
-Close the game before backing up. Back up `userdata`, `diagnostics`, a profile export and any unsaved physical bootstrap configs. There is no Workspace migration or cache-clear action.
+Close the game before backing up. Back up `userdata`, `diagnostics`, a profile export and any unsaved physical bootstrap configs. **Move...** in Status is a separate per-profile workspace operation; the profile-information import wizard does not perform it or move installed mods. Workspace launch and its old `current` cache controls are unavailable.
+
+A workspace move saves the new path before deleting the old folder. If saving fails, the old folder is preserved and the in-memory path is restored; the new copy is also retained so an interrupted settings journal can recover safely. Keep normal backups of important saves.
 
 For reliable recovery, save:
 
@@ -371,7 +382,7 @@ For reliable recovery, save:
 2. the `userdata` folders of the required regular profiles;
 3. exported profile files.
 
-For profiles using shared game data and for standalone builds, also back up the actual data directory shown in profile settings or Status. Keep game/mod source folders and original archives separately: profile exports contain no game or mod files. In the Standalone launcher, include `Data\StalkerModLauncher` in the backup.
+For profiles using shared game data and for standalone builds, also back up the actual data directory shown in profile settings or Status. Keep game/mod source folders and original archives separately: profile exports contain no game or mod files. In the Standalone launcher, include `Data\CordonModLauncher` in the backup.
 
 
 ## Screenshots
@@ -402,7 +413,7 @@ For each profile, you can enable **Show profile status in Discord**. Disable thi
 
 The launcher compares the installed version with the latest GitHub release. Automatic checking on startup and system notifications can be configured in launcher settings; a manual check is available in settings and the **About** window.
 
-When an update is available, settings offer the release page and package download. Choose the compact or Standalone package and confirm installation. The archive is saved beside the launcher, its checksum and contents are verified, and the launcher closes, replaces its application files, and starts again. Existing `Data`, game/mod sources, workspaces, and saves are preserved. Updates cannot be installed while a game or profile preparation/mod installation is active. Choosing a different package type shows a warning because it changes the .NET requirement and launcher-settings location.
+When an update is available, settings offer the release page and **Download and install** for `CORDON-vX.Y.Z-win-x64.zip`. Confirm installation. The archive is saved beside the launcher; staging, updater and rollback files use `Data\CordonModLauncher\Temp`. The archive checksum and contents are verified, and the launcher closes, replaces its application files, and starts again. Existing `Data`, game/mod sources, workspaces, and saves are preserved. Updates cannot be installed while a game or profile preparation/mod installation is active. Keep enough free space for the downloaded archive, extracted files and rollback copies. There is no compact-package selector.
 
 The built-in update installer downloads the main package with optimized USVFS. Updating a legacy package also replaces its previous runtime with the main one. To retain legacy, download the matching `-usvfs-legacy.zip` archive from the release page and update manually, preserving `Data` and user data. If the new version has no such archive, its legacy variant has not been published.
 

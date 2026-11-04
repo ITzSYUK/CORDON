@@ -51,6 +51,7 @@ public sealed class GameDataStorageTests : IDisposable
         Write(patch, "fsgame.ltx", "$app_data_root$ = true | false | patch-data\n$source$ = patch");
         var selected = Path.Combine(main, "bin_x64", "fsgame_ogsr.ltx");
         var workspace = Path.Combine(_root, "workspaces", "manual-profile");
+        Directory.CreateDirectory(workspace);
         var paths = new AppPaths(Path.Combine(_root, "config"), Path.Combine(_root, "workspaces"), false);
         var profile = new ModProfile
         {
@@ -102,6 +103,7 @@ public sealed class GameDataStorageTests : IDisposable
         var game = Path.Combine(_root, "fsltx-game");
         var patch = Path.Combine(_root, "fsltx-patch");
         var workspace = Path.Combine(_root, "workspaces", "fsltx-profile");
+        Directory.CreateDirectory(workspace);
         Write(game, "bin/xrEngine.exe", "exe");
         Write(game, "fsgame_coc.ltx", "$app_data_root$ = true | false | $fs_root$ | base-data\n$source$ = game");
         Write(

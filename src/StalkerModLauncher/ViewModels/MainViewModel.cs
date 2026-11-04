@@ -610,8 +610,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         ModListEditor.UpdateViewGroupKeys(profile);
         var changed = UpdateFilteredModsPresentation(profile);
-        if (changed && _filteredModViews.TryGetValue(profile, out var view) &&
-            (refresh || view.IsLiveFiltering != true))
+        if (_filteredModViews.TryGetValue(profile, out var view) &&
+            (refresh || changed && view.IsLiveFiltering != true))
         {
             view.Refresh();
         }

@@ -54,6 +54,7 @@ public static class ProfileTransferService
         return new ExportedProfile
         {
             Name = profile.Name,
+            Description = profile.Description,
             IsEnabled = profile.IsEnabled,
             IsDiscordStatusEnabled = profile.IsDiscordStatusEnabled,
             IsStandalone = profile.IsStandalone,
@@ -85,6 +86,7 @@ public static class ProfileTransferService
         var profile = new ModProfile
         {
             Name = exported.Name.Trim(),
+            Description = exported.Description ?? string.Empty,
             IsEnabled = exported.IsEnabled,
             IsDiscordStatusEnabled = exported.IsDiscordStatusEnabled,
             IsStandalone = exported.IsStandalone,

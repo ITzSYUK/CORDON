@@ -21,6 +21,59 @@ public sealed class ProfileManagerTests
     }
 
     [Fact]
+    public void DeleteProfileWithCyrillicWorkspaceRemovesBootstrapWithoutApplyingLaunchRestriction()
+    {
+        var workspace = Path.Combine(_paths.WorkspaceRoot, "Документы", "profile-test");
+        var cache = Path.Combine(workspace, ".usvfs-bootstrap");
+        Directory.CreateDirectory(cache);
+        File.WriteAllText(Path.Combine(cache, "runtime.tmp"), "cache");
+        var userdata = Path.Combine(workspace, "userdata");
+        Directory.CreateDirectory(userdata);
+        File.WriteAllText(Path.Combine(userdata, "save"), "save");
+        var profile = new ModProfile { WorkspacePath = workspace };
+        var profiles = new List<ModProfile> { profile };
+        try
+        {
+            Assert.Throws<InvalidOperationException>(() => UsvfsBootstrapPathResolver.Resolve(workspace));
+            _manager.Delete(profiles, profile);
+            Assert.Empty(profiles);
+            Assert.Contains(profile, _workspaceManager.DeletedProfiles);
+            Assert.False(Directory.Exists(cache));
+            Assert.Equal("save", File.ReadAllText(Path.Combine(userdata, "save")));
+        }
+        finally { Directory.Delete(Directory.GetParent(_paths.WorkspaceRoot)!.FullName, recursive: true); }
+    }
+
+    [Fact]
+    public void DeleteProfileUnderCyrillicLauncherDirectoryRemovesWorkspaceAndKeepsSources()
+    {
+        var root = Path.Combine(_paths.ConfigDirectory, "Документы");
+        var game = Path.Combine(root, "game");
+        Directory.CreateDirectory(game);
+        File.WriteAllText(Path.Combine(game, "source.txt"), "source");
+        var paths = new AppPaths(Path.Combine(root, "config"), Path.Combine(root, "Workspaces"), false);
+        var builder = new WorkspaceBuilder(paths);
+        var manager = new ProfileManager(paths, builder);
+        var profile = new ModProfile { GameInstallPath = game };
+        var profiles = new List<ModProfile> { profile };
+        try
+        {
+            var workspace = Path.Combine(paths.WorkspaceRoot, ProfileManager.CreateWorkspaceDirectoryName(profile));
+            profile.WorkspacePath = workspace;
+            Directory.CreateDirectory(workspace);
+            Directory.CreateDirectory(Path.Combine(workspace, ".usvfs-bootstrap"));
+            File.WriteAllText(Path.Combine(workspace, ".usvfs-bootstrap", "runtime.tmp"), "cache");
+            // Keep drive-wide legacy cache cleanup outside this fixture.
+            profile.GameInstallPath = string.Empty;
+            manager.Delete(profiles, profile);
+            Assert.Empty(profiles);
+            Assert.False(Directory.Exists(workspace));
+            Assert.Equal("source", File.ReadAllText(Path.Combine(game, "source.txt")));
+        }
+        finally { Directory.Delete(_paths.ConfigDirectory, recursive: true); }
+    }
+
+    [Fact]
     public void CreateUsesUniqueNameAndStartsWithoutInheritedPaths()
     {
         var expectedBaseName = LocalizedText.Format(Strings.Profile_DefaultNameFormat, 2);
@@ -33,6 +86,28 @@ public sealed class ProfileManagerTests
         Assert.Empty(created.WorkspacePath);
         Assert.EndsWith("Mods", created.ModInstallPath);
         Assert.Equal(LaunchBackendKind.VirtualFileSystem, created.LaunchBackendKind);
+    }
+
+    [Fact]
+    public void DeleteUnverifiedWorkspaceDoesNotRemoveItsBootstrapOrUserData()
+    {
+        var root = Path.Combine(_paths.ConfigDirectory, "Unrelated");
+        var workspace = Path.Combine(root, "profile-test");
+        Directory.CreateDirectory(Path.Combine(workspace, ".usvfs-bootstrap"));
+        Directory.CreateDirectory(Path.Combine(workspace, "userdata"));
+        File.WriteAllText(Path.Combine(workspace, ".usvfs-bootstrap", "valuable.dll"), "keep bootstrap");
+        File.WriteAllText(Path.Combine(workspace, "userdata", "save"), "keep save");
+        var profile = new ModProfile { Id = "test", WorkspacePath = workspace };
+        var profiles = new List<ModProfile> { profile };
+        var manager = new ProfileManager(_paths, new WorkspaceBuilder(_paths));
+        try
+        {
+            Assert.Throws<InvalidOperationException>(() => manager.Delete(profiles, profile));
+            Assert.Single(profiles);
+            Assert.Equal("keep bootstrap", File.ReadAllText(Path.Combine(workspace, ".usvfs-bootstrap", "valuable.dll")));
+            Assert.Equal("keep save", File.ReadAllText(Path.Combine(workspace, "userdata", "save")));
+        }
+        finally { Directory.Delete(_paths.ConfigDirectory, recursive: true); }
     }
 
     [Fact]
@@ -56,7 +131,8 @@ public sealed class ProfileManagerTests
         Assert.Equal("Zona — копия", duplicate.Name);
         Assert.NotEqual(source.Id, duplicate.Id);
         Assert.NotEqual(source.WorkspacePath, duplicate.WorkspacePath);
-        Assert.EndsWith($"profile-{duplicate.Id}", duplicate.WorkspacePath);
+        Assert.Empty(duplicate.WorkspacePath);
+        Assert.EndsWith($"profile-{duplicate.Id}", _manager.GetProfileFolderPath(duplicate));
         Assert.EndsWith("Mods", duplicate.ModInstallPath);
         Assert.Equal(0, duplicate.TotalPlaytimeSeconds);
         Assert.Null(duplicate.LastPlayedAt);
@@ -74,7 +150,8 @@ public sealed class ProfileManagerTests
         var source = new ModProfile { Name = new string('A', 100) + ": invalid." };
 
         var duplicate = _manager.Duplicate([source], source);
-        var directoryName = Path.GetFileName(duplicate.WorkspacePath);
+        Assert.Empty(duplicate.WorkspacePath);
+        var directoryName = Path.GetFileName(_manager.GetProfileFolderPath(duplicate))!;
 
         Assert.Equal($"profile-{duplicate.Id}", directoryName);
         Assert.All(directoryName, character => Assert.True(character <= 0x7F));

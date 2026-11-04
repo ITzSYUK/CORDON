@@ -9,6 +9,8 @@ namespace StalkerModLauncher.ViewModels;
 
 public sealed partial class MainViewModel
 {
+    private bool _isLoadingProfiles;
+
     private async Task LoadAsync()
     {
         try
@@ -73,12 +75,7 @@ public sealed partial class MainViewModel
                     message => Log(message, LauncherLogLevel.ErrorsOnly));
             }
 
-            Profiles.Clear();
-            foreach (var profile in settings.Profiles)
-            {
-                _profileManager.EnsureDefaults(profile);
-                Profiles.Add(profile);
-            }
+            LoadProfiles(settings.Profiles);
 
             SelectedProfile = Profiles.FirstOrDefault(profile => profile.SettingsLoadError.Length == 0) ?? Profiles.FirstOrDefault();
             RefreshValidation();
@@ -112,7 +109,26 @@ public sealed partial class MainViewModel
         }
     }
 
-    private Task SaveAsync() => SaveCoreAsync(throwOnFailure: false);
+    private void LoadProfiles(IEnumerable<ModProfile> profiles)
+    {
+        _isLoadingProfiles = true;
+        try
+        {
+            Profiles.Clear();
+            foreach (var profile in profiles)
+            {
+                _profileManager.EnsureDefaults(profile);
+                Profiles.Add(profile);
+            }
+        }
+        finally
+        {
+            _isLoadingProfiles = false;
+            ProfilesOnCollectionChanged(Profiles, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
+    }
+
+    private Task SaveAsync() => _dataMigrationTask.IsCompleted ? SaveCoreAsync(throwOnFailure: false) : Task.CompletedTask;
 
     private Task SaveOrThrowAsync() => SaveCoreAsync(throwOnFailure: true);
 
@@ -168,6 +184,8 @@ public sealed partial class MainViewModel
 
     private void ProfilesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        // Keep collection notifications for WPF, but synchronize subscriptions only after the full load.
+        if (_isLoadingProfiles) return;
         OnPropertyChanged(nameof(HasProfiles));
         OnPropertyChanged(nameof(CanImportSettings));
         ImportSettingsCommand.RaiseCanExecuteChanged();
@@ -259,7 +277,8 @@ public sealed partial class MainViewModel
             return;
         }
 
-        if (e.Action == NotifyCollectionChangedAction.Move && _profilesReorderingMods.Contains(profile))
+        if (_profilesAddingMods.Contains(profile) ||
+            e.Action == NotifyCollectionChangedAction.Move && _profilesReorderingMods.Contains(profile))
         {
             return;
         }
@@ -661,6 +680,14 @@ public sealed partial class MainViewModel
 
     public async Task CleanupAsync()
     {
+        _isClosing = true;
+        try { await _dataMigrationTask; }
+        catch
+        {
+            // The wizard reports the error; do not overwrite a partially imported store on exit.
+            Dispose();
+            return;
+        }
         await SaveAsync();
         Dispose();
     }

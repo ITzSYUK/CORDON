@@ -27,7 +27,6 @@
   <data name="Settings_LogLevelLabel" xml:space="preserve"><value>launcher.log detail level</value></data>
   <data name="Settings_LogLevelStandard" xml:space="preserve"><value>Standard</value></data>
   <data name="Settings_MinimizeToTray" xml:space="preserve"><value>Minimize to tray instead of closing</value></data>
-  <data name="Settings_MinimalVersion" xml:space="preserve"><value>Regular version</value></data>
   <data name="Settings_OpenLauncherFolder" xml:space="preserve"><value>Open launcher folder</value></data>
   <data name="Settings_OpenRelease" xml:space="preserve"><value>Open release</value></data>
   <data name="Settings_PdaUi" xml:space="preserve"><value>PDA UI</value></data>
@@ -35,7 +34,6 @@
   <data name="Settings_Reset" xml:space="preserve"><value>Reset settings</value></data>
   <data name="Settings_ShowTrayIcon" xml:space="preserve"><value>Show tray icon</value></data>
   <data name="Settings_ShowUpdateNotifications" xml:space="preserve"><value>Show a system notification when an update is available</value></data>
-  <data name="Settings_StandaloneVersion" xml:space="preserve"><value>Standalone version</value></data>
   <data name="Settings_StartMinimized" xml:space="preserve"><value>Open in the tray when started with Windows</value></data>
   <data name="Settings_StartWithWindows" xml:space="preserve"><value>Start with Windows</value></data>
   <data name="Settings_StorageLabel" xml:space="preserve"><value>Settings</value></data>
@@ -291,8 +289,7 @@
   <data name="Scan_SelectOne" xml:space="preserve"><value>Select at least one mod.</value></data>
   <data name="Scan_SelectionFormat" xml:space="preserve"><value>Found: {0}. Selected: {1}.</value></data>
   <data name="Scan_AddingTitle" xml:space="preserve"><value>Adding mods</value></data>
-  <data name="Settings_StoragePortable" xml:space="preserve"><value>Portable mode: settings, logs, cache, and temporary files are stored in .\Data\StalkerModLauncher. Mods and profile workspaces are stored in StalkerModLauncher at the root of the base-game drive. If there is no local settings.json yet, settings are imported automatically from AppData.</value></data>
-  <data name="Settings_StorageRegular" xml:space="preserve"><value>Regular mode: launcher settings are stored in %AppData%\StalkerModLauncher. Mods and profile workspaces are stored in StalkerModLauncher at the root of the base-game drive.</value></data>
+  <data name="Settings_StoragePortable" xml:space="preserve"><value>Standalone: new settings, profiles, mods, workspaces, cache and temporary files are stored beside the EXE in Data\CordonModLauncher. The wizard imports old profile information while keeping game, mod and workspace paths. Do not delete the old folders containing game data.</value></data>
   <data name="Update_InstallTitle" xml:space="preserve"><value>Install update?</value></data>
   <data name="Settings_ResetTitle" xml:space="preserve"><value>Reset launcher settings?</value></data>
   <data name="Settings_ResetMessage" xml:space="preserve"><value>Interface, behavior, logging, and update settings will be restored.&#xA;&#xA;Profiles, mods, and game files will remain unchanged.</value></data>
@@ -306,15 +303,12 @@
   <data name="Settings_OpenFolderFailed" xml:space="preserve"><value>Could not open settings folder</value></data>
   <data name="Update_OpenReleaseFailed" xml:space="preserve"><value>Could not open release page</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Before updating, close the running game and wait for current launcher operations to finish.</value></data>
-  <data name="Update_MinimalPackage" xml:space="preserve"><value>regular version</value></data>
-  <data name="Update_StandalonePackage" xml:space="preserve"><value>Standalone version</value></data>
+  <data name="Update_Package" xml:space="preserve"><value>launcher</value></data>
   <data name="Update_DownloadingFormat" xml:space="preserve"><value>Downloading the {0} package...</value></data>
   <data name="Update_ReadyFormat" xml:space="preserve"><value>The {0} package has been verified and is ready to install: {1}.</value></data>
   <data name="Update_HttpErrorFormat" xml:space="preserve"><value>GitHub returned HTTP {0}. Check the files in the selected release.</value></data>
   <data name="Update_DownloadConnectionFormat" xml:space="preserve"><value>Could not download the {0} package. Check your internet connection.</value></data>
   <data name="Update_DownloadFailedFormat" xml:space="preserve"><value>Could not download the {0} package: {1}</value></data>
-  <data name="Update_MismatchFromStandalone" xml:space="preserve"><value>&#xA;&#xA;WARNING: the Standalone version is running, but the regular version is selected. It requires .NET 8 Desktop Runtime and will use settings from AppData. The Data folder will remain unchanged.</value></data>
-  <data name="Update_MismatchToStandalone" xml:space="preserve"><value>&#xA;&#xA;WARNING: the regular version is running, but Standalone is selected. After the update, settings will be stored in the Data folder next to the launcher.</value></data>
   <data name="Update_InstallMessageFormat" xml:space="preserve"><value>The archive will be downloaded to the launcher folder. After verification, the launcher will close, replace its files, and start again. The Data folder is not changed.{0}</value></data>
   <data name="Update_OpenDownloadsFailed" xml:space="preserve"><value>Could not open Downloads</value></data>
   <data name="Creation_DefaultName" xml:space="preserve"><value>New profile</value></data>
@@ -351,6 +345,7 @@
   <data name="Creation_ModSourceFormat" xml:space="preserve"><value>mod: {0}</value></data>
   <data name="Screenshots_CopiedFormat" xml:space="preserve"><value>Copied: {0}</value></data>
   <data name="Screenshots_CopyFailedFormat" xml:space="preserve"><value>Could not copy screenshot: {0}</value></data>
+  <data name="Screenshots_OpenFailedFormat" xml:space="preserve"><value>Could not open screenshot: {0}</value></data>
   <data name="Main_SelectGame" xml:space="preserve"><value>Select the installed game folder.</value></data>
   <data name="Main_RegularProfileRequired" xml:space="preserve"><value>Select a regular profile.</value></data>
   <data name="ModFilter_All" xml:space="preserve"><value>All mods</value></data>
@@ -937,7 +932,11 @@
   <data name="Error_UsvfsSessionNotStarted" xml:space="preserve"><value>The USVFS session has not started a process.</value></data>
   <data name="Error_WorkspaceDeleteOutsideRootFormat" xml:space="preserve"><value>Deletion of a workspace outside the managed launcher folders was blocked: {0}</value></data>
   <data name="Error_WorkspaceMarkerMissingFormat" xml:space="preserve"><value>Deletion of a profile workspace without its safety marker was blocked: {0}</value></data>
-  <data name="Error_WorkspaceProfilePathFormat" xml:space="preserve"><value>The profile workspace must be a profile-specific folder inside a managed launcher folder: {0}</value></data>
+  <data name="Error_WorkspaceUnavailableFormat" xml:space="preserve"><value>The profile workspace is missing or unavailable: {0}. Restore access to it, or open Profile settings → Data and mods → Copy or create the profile workspace in .\Data\CordonModLauncher. A new empty workspace will not contain old saves.</value></data>
+  <data name="SettingsProfile_CopyWorkspace" xml:space="preserve"><value>Copy or create the profile workspace in .\Data\CordonModLauncher</value></data>
+  <data name="SettingsProfile_CopyWorkspaceConfirm" xml:space="preserve"><value>The launcher will copy userdata from the old workspace if available. Otherwise it will create an empty workspace. The profile path is saved immediately. Continue?</value></data>
+  <data name="Workspace_EmptyRedirectedFormat" xml:space="preserve"><value>The old workspace is completely empty: {0}. The profile will use its local Data workspace: {1}. The old folder was left untouched.</value></data>
+  <data name="Error_WorkspaceUnverifiedFormat" xml:space="preserve"><value>Could not verify that this workspace belongs to the profile: {0}. Check the path and restore the original profile folder. Launch was stopped to avoid using unrelated or empty game data.</value></data>
   <data name="Error_WorkspaceParentMissingFormat" xml:space="preserve"><value>The workspace has no parent folder: {0}</value></data>
   <data name="Error_WorkspaceLegacyDestinationExistsFormat" xml:space="preserve"><value>Cannot migrate the legacy workspace because the destination already exists: {0}</value></data>
   <data name="Error_StandaloneNoModHelp" xml:space="preserve"><value>The standalone profile has no enabled mod with a valid folder. Add and enable a mod.</value></data>
@@ -1035,7 +1034,6 @@
   <data name="SettingsProfile_Apply" xml:space="preserve"><value>Apply</value></data>
   <data name="SettingsProfile_Mo2Heading" xml:space="preserve"><value>MO2 integration</value></data>
   <data name="SettingsProfile_SaveClose" xml:space="preserve"><value>Save and close</value></data>
-  <data name="SettingsProfile_CopyImmediateHint" xml:space="preserve"><value>Copying starts after confirmation and does not wait for settings to be saved.</value></data>
   <data name="SettingsProfile_Mo2ImmediateHint" xml:space="preserve"><value>Applying mod order changes and saves the mod list immediately. Save profile settings separately.</value></data>
   <data name="Error_StandaloneBackendRequired" xml:space="preserve">
     <value>A direct-launch backend is required for standalone builds.</value>
@@ -1055,9 +1053,24 @@
   <data name="Writable_ConflictArchivedFormat" xml:space="preserve">
     <value>A conflicting settings version was preserved: {0}</value>
   </data>
-  <data name="Settings_ImportLegacyProfiles" xml:space="preserve"><value>Import profiles from old version</value></data>
-  <data name="Settings_LegacyImportResult" xml:space="preserve"><value>Profiles imported: {0}; skipped (already present): {1}.</value></data>
-  <data name="Settings_LegacyImportFailed" xml:space="preserve"><value>Could not import profiles: {0}</value></data>
+  <data name="Settings_MigrationWizard" xml:space="preserve"><value>Data migration wizard</value></data>
   <data name="Creation_ScanMods" xml:space="preserve"><value>Scan mods</value></data>
   <data name="Creation_FsgameAutoFormat" xml:space="preserve"><value>Automatically selected: {0}</value></data>
+  <data name="Migration_Explanation" xml:space="preserve"><value>Starting with CORDON Mod Launcher 1.6.0, new launcher settings and profiles are stored beside the executable in Data\CordonModLauncher.</value></data>
+  <data name="Migration_Contents" xml:space="preserve"><value>The wizard imports profile information from %APPDATA% and the old local Data\StalkerModLauncher folder, keeping existing game, mod and workspace paths. Existing profiles with matching IDs are neither replaced nor duplicated.</value></data>
+  <data name="Migration_Sources" xml:space="preserve"><value>Profile sources found:</value></data>
+  <data name="Migration_NoSources" xml:space="preserve"><value>No old profile sources were found. New profiles will be stored in the folder above.</value></data>
+  <data name="Migration_PreviewErrorFormat" xml:space="preserve"><value>Profile sources could not be inspected: {0}
+The wizard will check access to profile settings during import.</value></data>
+  <data name="Migration_Safety" xml:space="preserve"><value>Games, mods, workspaces, saves and game settings will stay in their current locations. Do not delete the old folders containing this data: imported profiles will continue to use them.
+
+If you decline, the existing configuration in Data\CordonModLauncher will open, or an empty profile list if no configuration exists. You can import profiles later in launcher settings.</value></data>
+  <data name="Migration_Decline" xml:space="preserve"><value>Decline</value></data>
+  <data name="Migration_ProgressLabel" xml:space="preserve"><value>Profile import progress</value></data>
+  <data name="Migration_FailedFormat" xml:space="preserve"><value>Transfer failed: {0}
+Original files have been preserved. You can retry.</value></data>
+  <data name="Migration_Preparing" xml:space="preserve"><value>Preparing profile import…</value></data>
+  <data name="Migration_CopyingFormat" xml:space="preserve"><value>Importing profiles: {0}</value></data>
+  <data name="Migration_ProfilesOnly" xml:space="preserve"><value>Transfer profile information</value></data>
+  <data name="Migration_DestinationHeading" xml:space="preserve"><value>Launcher settings and profiles folder:</value></data>
 </root>

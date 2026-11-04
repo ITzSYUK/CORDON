@@ -102,15 +102,28 @@ public sealed class ScreenshotsViewModel : ObservableObject, IDisposable
     public ICommand GoNextCommand { get; }
     public ICommand CopyScreenshotCommand { get; }
 
-    public void OpenScreenshot(int index)
+    public void OpenScreenshot(int index) => TryOpenScreenshot(index);
+
+    private bool TryOpenScreenshot(int index)
     {
         if (index < 0 || index >= Screenshots.Count)
         {
-            return;
+            return false;
+        }
+
+        BitmapImage image;
+        try
+        {
+            image = Screenshots[index].LoadForDisplay();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or FormatException or System.Runtime.InteropServices.COMException)
+        {
+            ShowTemporaryStatus(LocalizedText.Format(Strings.Screenshots_OpenFailedFormat, ex.Message));
+            return false;
         }
 
         _selectedIndex = index;
-        SelectedScreenshot = Screenshots[index].LoadForDisplay();
+        SelectedScreenshot = image;
         if (!_isFullScreen)
         {
             IsFullScreen = true;
@@ -119,6 +132,7 @@ public sealed class ScreenshotsViewModel : ObservableObject, IDisposable
         {
             RefreshNavigationState();
         }
+        return true;
     }
 
     public void CloseFullScreen()
@@ -130,17 +144,17 @@ public sealed class ScreenshotsViewModel : ObservableObject, IDisposable
 
     public void GoPrevious()
     {
-        if (_selectedIndex > 0)
+        for (var index = _selectedIndex - 1; index >= 0; index--)
         {
-            OpenScreenshot(_selectedIndex - 1);
+            if (TryOpenScreenshot(index)) break;
         }
     }
 
     public void GoNext()
     {
-        if (_selectedIndex < Screenshots.Count - 1)
+        for (var index = _selectedIndex + 1; index < Screenshots.Count; index++)
         {
-            OpenScreenshot(_selectedIndex + 1);
+            if (TryOpenScreenshot(index)) break;
         }
     }
 
@@ -243,14 +257,7 @@ public sealed class ScreenshotsViewModel : ObservableObject, IDisposable
                     return;
                 }
 
-                try
-                {
-                    Screenshots.Add(new ScreenshotItem(file));
-                }
-                catch
-                {
-                    // Ignore unreadable or partially written image files.
-                }
+                Screenshots.Add(new ScreenshotItem(file));
             }
         }
         catch (OperationCanceledException)

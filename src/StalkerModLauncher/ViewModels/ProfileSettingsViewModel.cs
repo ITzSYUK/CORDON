@@ -9,6 +9,7 @@ namespace StalkerModLauncher.ViewModels;
 public sealed class ProfileSettingsViewModel : ObservableObject
 {
     private readonly ModProfile _profile;
+    private readonly AppPaths _paths;
     private readonly DialogService _dialogService;
     private readonly Func<Task> _onSave;
     private readonly Func<string, ProfileExecutableSelection?> _createExecutableSelection;
@@ -45,6 +46,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         AppPaths? paths = null)
     {
         _profile = profile;
+        _paths = paths ?? AppPaths.Current;
         _dialogService = dialogService;
         _onSave = onSave;
         _createExecutableSelection = createExecutableSelection;
@@ -89,6 +91,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
         BrowseModInstallPathCommand = new RelayCommand(BrowseModInstallPath);
         ResetModInstallPathCommand = new RelayCommand(ResetModInstallPath);
         ImportMo2ModListCommand = new AsyncRelayCommand(ImportMo2ModListAsync);
+        CopyWorkspaceCommand = new AsyncRelayCommand(CopyWorkspaceAsync);
         CopyGameDataCommand = new AsyncRelayCommand(CopyGameDataAsync);
     }
 
@@ -359,6 +362,25 @@ public sealed class ProfileSettingsViewModel : ObservableObject
     public ICommand ImportMo2ModListCommand { get; }
     public ICommand CopyGameDataCommand { get; }
 
+    public ICommand CopyWorkspaceCommand { get; }
+
+    private async Task CopyWorkspaceAsync()
+    {
+        if (IsStandalone || _profile.IsRunning || _profile.IsPreparing) return;
+        try
+        {
+            if (!DialogService.Confirm(Strings.SettingsProfile_CopyWorkspace, Strings.SettingsProfile_CopyWorkspaceConfirm)) return;
+            var service = new WorkspaceManagementService(new WorkspaceBuilder(_paths));
+            var result = await service.CopyToLocalAsync(_profile, _paths.WorkspaceRoot, new Progress<string>(), _onSave);
+            WorkspacePath = result.DestinationPath;
+            DialogService.ShowInfo(Strings.SettingsProfile_CopyWorkspace, result.DestinationPath);
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError(Strings.SettingsProfile_CopyWorkspace, ex.Message);
+        }
+    }
+
     private async Task CopyGameDataAsync()
     {
         if (!CanChooseGameData) return;
@@ -395,6 +417,7 @@ public sealed class ProfileSettingsViewModel : ObservableObject
 
     public async Task<bool> TrySaveAsync()
     {
+        if (_profile.IsPreparing) return false;
         var validation = ProfileSettingsValidator.Validate(ProfileName, ExecutableRelativePath, _isNameTaken);
         if (!validation.IsValid)
         {

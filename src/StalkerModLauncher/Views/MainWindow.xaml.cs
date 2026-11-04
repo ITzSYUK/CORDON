@@ -28,9 +28,21 @@ public partial class MainWindow : Window
         viewModel.ActivityLog.PropertyChanged += ActivityLog_PropertyChanged;
         viewModel.PropertyChanged += ViewModel_PropertyChanged;
         viewModel.ProfileCreationRequested += ViewModel_ProfileCreationRequested;
+        viewModel.StorageMigrationRequested += ViewModel_StorageMigrationRequested;
+        Closed += (_, _) => viewModel.StorageMigrationRequested -= ViewModel_StorageMigrationRequested;
         viewModel.Mo2ImportRequested += ViewModel_Mo2ImportRequested;
         viewModel.ConflictExplorerRequested += ViewModel_ConflictExplorerRequested;
         DataContext = viewModel;
+    }
+
+    internal Task<bool> ShowStartupStorageMigrationAsync() => _pdaWindow is not null
+        ? _pdaWindow.ShowStorageMigrationAsync()
+        : _navigation.ShowStorageMigrationAsync(this, ViewModel!);
+
+    private async void ViewModel_StorageMigrationRequested(object? sender, EventArgs e)
+    {
+        if (ViewModel is not null && _pdaWindow is null)
+            await _navigation.ShowStorageMigrationAsync(OwnedWindows.OfType<LauncherSettingsWindow>().FirstOrDefault(window => window.IsActive) ?? (Window)this, ViewModel);
     }
 
     private void ViewModel_ProfileCreationRequested(object? sender, EventArgs e)

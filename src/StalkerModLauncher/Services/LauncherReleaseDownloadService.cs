@@ -6,12 +6,6 @@ using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
-public enum LauncherReleasePackage
-{
-    Minimal,
-    Standalone
-}
-
 public static class LauncherReleaseDownloadService
 {
     private const string GitHubRepository = "ITzSYUK/CORDON";
@@ -20,10 +14,9 @@ public static class LauncherReleaseDownloadService
     public static async Task<string> DownloadAsync(
         string releaseUrl,
         string releaseTag,
-        LauncherReleasePackage package,
         CancellationToken cancellationToken = default)
     {
-        var downloadUri = BuildDownloadUri(releaseUrl, releaseTag, package);
+        var downloadUri = BuildDownloadUri(releaseUrl, releaseTag);
         var assetFileName = Path.GetFileName(downloadUri.LocalPath);
         var expectedHash = await GetReleaseAssetSha256Async(releaseTag, assetFileName, cancellationToken);
         var destinationDirectory = Path.GetFullPath(AppContext.BaseDirectory);
@@ -60,7 +53,7 @@ public static class LauncherReleaseDownloadService
             File.Move(temporaryPath, destinationPath);
             downloadCompleted = true;
             VerifyArchiveChecksum(expectedHash, destinationPath);
-            LauncherSelfUpdateService.PrepareAndLaunch(destinationPath, package);
+            LauncherSelfUpdateService.PrepareAndLaunch(destinationPath);
             return destinationPath;
         }
         catch
@@ -79,10 +72,7 @@ public static class LauncherReleaseDownloadService
         }
     }
 
-    private static Uri BuildDownloadUri(
-        string releaseUrl,
-        string releaseTag,
-        LauncherReleasePackage package)
+    internal static Uri BuildDownloadUri(string releaseUrl, string releaseTag)
     {
         if (!Uri.TryCreate(releaseUrl, UriKind.Absolute, out var releaseUri) ||
             releaseUri.Scheme != Uri.UriSchemeHttps ||
@@ -94,12 +84,7 @@ public static class LauncherReleaseDownloadService
             throw new InvalidDataException(Strings.Update_UnexpectedReleaseUrl);
         }
 
-        var fileName = package switch
-        {
-            LauncherReleasePackage.Minimal => $"CORDON-{releaseTag}-win-x64.zip",
-            LauncherReleasePackage.Standalone => $"CORDON-{releaseTag}-win-x64-standalone.zip",
-            _ => throw new ArgumentOutOfRangeException(nameof(package), package, null)
-        };
+        var fileName = $"CORDON-{releaseTag}-win-x64.zip";
 
         return new Uri($"https://github.com/{GitHubRepository}/releases/download/{releaseTag}/{fileName}");
     }

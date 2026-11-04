@@ -368,10 +368,9 @@
                                         <Button Content="{x:Static res:Strings.SettingsProfile_CopyMissingData}"
                                                 Command="{Binding CopyGameDataCommand}" IsEnabled="{Binding CanChooseGameData}"
                                                 HorizontalAlignment="Left" Margin="0,6,0,0"/>
-
-                                        <TextBlock Text="{x:Static res:Strings.SettingsProfile_CopyImmediateHint}"
-                                                   Foreground="{DynamicResource MutedTextBrush}" FontSize="11"
-                                                   TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                        <Button Content="{x:Static res:Strings.SettingsProfile_CopyWorkspace}"
+                                                Command="{Binding CopyWorkspaceCommand}" IsEnabled="{Binding CanChooseGameData}"
+                                                Margin="0,6,0,0"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>

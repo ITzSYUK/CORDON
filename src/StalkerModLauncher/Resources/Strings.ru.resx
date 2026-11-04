@@ -27,7 +27,6 @@
   <data name="Settings_LogLevelLabel" xml:space="preserve"><value>Уровень записи launcher.log</value></data>
   <data name="Settings_LogLevelStandard" xml:space="preserve"><value>Обычный</value></data>
   <data name="Settings_MinimizeToTray" xml:space="preserve"><value>Сворачивать в трей вместо закрытия</value></data>
-  <data name="Settings_MinimalVersion" xml:space="preserve"><value>Обычная версия</value></data>
   <data name="Settings_OpenLauncherFolder" xml:space="preserve"><value>Открыть папку лаунчера</value></data>
   <data name="Settings_OpenRelease" xml:space="preserve"><value>Открыть релиз</value></data>
   <data name="Settings_PdaUi" xml:space="preserve"><value>PDA UI</value></data>
@@ -35,7 +34,6 @@
   <data name="Settings_Reset" xml:space="preserve"><value>Сбросить настройки</value></data>
   <data name="Settings_ShowTrayIcon" xml:space="preserve"><value>Показывать значок в трее</value></data>
   <data name="Settings_ShowUpdateNotifications" xml:space="preserve"><value>Показывать системное уведомление о доступном обновлении</value></data>
-  <data name="Settings_StandaloneVersion" xml:space="preserve"><value>Standalone-версия</value></data>
   <data name="Settings_StartMinimized" xml:space="preserve"><value>При запуске вместе с Windows открывать в трее</value></data>
   <data name="Settings_StartWithWindows" xml:space="preserve"><value>Запускать вместе с Windows</value></data>
   <data name="Settings_StorageLabel" xml:space="preserve"><value>Настройки</value></data>
@@ -291,8 +289,7 @@
   <data name="Scan_SelectOne" xml:space="preserve"><value>Выберите хотя бы один мод.</value></data>
   <data name="Scan_SelectionFormat" xml:space="preserve"><value>Найдено: {0}. Выбрано: {1}.</value></data>
   <data name="Scan_AddingTitle" xml:space="preserve"><value>Добавление модов</value></data>
-  <data name="Settings_StoragePortable" xml:space="preserve"><value>Портативный режим: настройки, журналы, кэш и временные файлы хранятся в .\Data\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой. Если локального settings.json ещё нет, настройки автоматически импортируются из AppData.</value></data>
-  <data name="Settings_StorageRegular" xml:space="preserve"><value>Обычный режим: настройки лаунчера хранятся в %AppData%\StalkerModLauncher. Моды и рабочие папки профилей — в StalkerModLauncher в корне диска с базовой игрой.</value></data>
+  <data name="Settings_StoragePortable" xml:space="preserve"><value>Standalone: новые настройки, профили, моды, рабочие папки, кэш и временные файлы хранятся рядом с EXE в Data\CordonModLauncher. Мастер импортирует информацию о старых профилях, сохраняя пути к играм, модам и рабочим папкам. Старые папки с игровыми данными удалять нельзя.</value></data>
   <data name="Update_InstallTitle" xml:space="preserve"><value>Установить обновление?</value></data>
   <data name="Settings_ResetTitle" xml:space="preserve"><value>Сбросить настройки лаунчера?</value></data>
   <data name="Settings_ResetMessage" xml:space="preserve"><value>Будут восстановлены настройки интерфейса, поведения, журналирования и обновлений.&#xA;&#xA;Профили, моды и игровые файлы останутся без изменений.</value></data>
@@ -306,15 +303,12 @@
   <data name="Settings_OpenFolderFailed" xml:space="preserve"><value>Не удалось открыть папку настроек</value></data>
   <data name="Update_OpenReleaseFailed" xml:space="preserve"><value>Не удалось открыть страницу релиза</value></data>
   <data name="Update_Busy" xml:space="preserve"><value>Перед обновлением завершите запущенную игру и текущие операции лаунчера.</value></data>
-  <data name="Update_MinimalPackage" xml:space="preserve"><value>обычной версии</value></data>
-  <data name="Update_StandalonePackage" xml:space="preserve"><value>Standalone-версии</value></data>
+  <data name="Update_Package" xml:space="preserve"><value>лаунчера</value></data>
   <data name="Update_DownloadingFormat" xml:space="preserve"><value>Скачивается пакет {0}...</value></data>
   <data name="Update_ReadyFormat" xml:space="preserve"><value>Пакет {0} проверен и готов к установке: {1}.</value></data>
   <data name="Update_HttpErrorFormat" xml:space="preserve"><value>GitHub вернул HTTP {0}. Проверьте файлы выбранного релиза.</value></data>
   <data name="Update_DownloadConnectionFormat" xml:space="preserve"><value>Не удалось скачать пакет {0}. Проверьте подключение к интернету.</value></data>
   <data name="Update_DownloadFailedFormat" xml:space="preserve"><value>Не удалось скачать пакет {0}: {1}</value></data>
-  <data name="Update_MismatchFromStandalone" xml:space="preserve"><value>&#xA;&#xA;ВНИМАНИЕ: сейчас запущена Standalone-версия, а выбрана обычная. Она требует установленный .NET 8 Desktop Runtime и будет использовать настройки из AppData. Папка Data останется без изменений.</value></data>
-  <data name="Update_MismatchToStandalone" xml:space="preserve"><value>&#xA;&#xA;ВНИМАНИЕ: сейчас запущена обычная версия, а выбрана Standalone. После обновления настройки будут храниться в папке Data рядом с лаунчером.</value></data>
   <data name="Update_InstallMessageFormat" xml:space="preserve"><value>Архив будет скачан в папку лаунчера. После проверки лаунчер закроется, заменит свои файлы и запустится снова. Папка Data не изменяется.{0}</value></data>
   <data name="Update_OpenDownloadsFailed" xml:space="preserve"><value>Не удалось открыть Загрузки</value></data>
   <data name="Creation_DefaultName" xml:space="preserve"><value>Новый профиль</value></data>
@@ -351,6 +345,7 @@
   <data name="Creation_ModSourceFormat" xml:space="preserve"><value>мод: {0}</value></data>
   <data name="Screenshots_CopiedFormat" xml:space="preserve"><value>Скопировано: {0}</value></data>
   <data name="Screenshots_CopyFailedFormat" xml:space="preserve"><value>Не удалось скопировать скриншот: {0}</value></data>
+  <data name="Screenshots_OpenFailedFormat" xml:space="preserve"><value>Не удалось открыть скриншот: {0}</value></data>
   <data name="Main_SelectGame" xml:space="preserve"><value>Выберите папку с установленной игрой.</value></data>
   <data name="Main_RegularProfileRequired" xml:space="preserve"><value>Выберите обычный профиль.</value></data>
   <data name="ModFilter_All" xml:space="preserve"><value>Все моды</value></data>
@@ -937,7 +932,11 @@
   <data name="Error_UsvfsSessionNotStarted" xml:space="preserve"><value>В этом сеансе USVFS процесс ещё не запущен.</value></data>
   <data name="Error_WorkspaceDeleteOutsideRootFormat" xml:space="preserve"><value>Удаление рабочей папки вне управляемых каталогов лаунчера заблокировано: {0}</value></data>
   <data name="Error_WorkspaceMarkerMissingFormat" xml:space="preserve"><value>Удаление рабочей папки профиля без защитного маркера заблокировано: {0}</value></data>
-  <data name="Error_WorkspaceProfilePathFormat" xml:space="preserve"><value>Рабочая папка профиля должна быть отдельной папкой внутри управляемого каталога лаунчера: {0}</value></data>
+  <data name="Error_WorkspaceUnavailableFormat" xml:space="preserve"><value>Рабочая папка профиля отсутствует или недоступна: {0}. Восстановите доступ к ней или откройте «Настройки профиля» → «Данные и моды» → «Скопировать или создать рабочую папку профиля в .\Data\CordonModLauncher». В новой пустой папке старых сохранений не будет.</value></data>
+  <data name="SettingsProfile_CopyWorkspace" xml:space="preserve"><value>Скопировать или создать рабочую папку профиля в .\Data\CordonModLauncher</value></data>
+  <data name="SettingsProfile_CopyWorkspaceConfirm" xml:space="preserve"><value>Лаунчер скопирует userdata из старой папки, если она доступна. Иначе создаст пустую рабочую папку. Новый путь профиля сохранится сразу. Продолжить?</value></data>
+  <data name="Workspace_EmptyRedirectedFormat" xml:space="preserve"><value>Старая рабочая папка полностью пуста: {0}. Профиль будет использовать локальный workspace в Data: {1}. Старая папка оставлена без изменений.</value></data>
+  <data name="Error_WorkspaceUnverifiedFormat" xml:space="preserve"><value>Не удалось подтвердить принадлежность рабочей папки профилю: {0}. Проверьте путь и восстановите исходную папку профиля. Запуск остановлен, чтобы не использовать чужие или пустые игровые данные.</value></data>
   <data name="Error_WorkspaceParentMissingFormat" xml:space="preserve"><value>У рабочей папки нет родительского каталога: {0}</value></data>
   <data name="Error_WorkspaceLegacyDestinationExistsFormat" xml:space="preserve"><value>Нельзя перенести старую рабочую папку: папка назначения уже существует: {0}</value></data>
   <data name="Error_StandaloneNoModHelp" xml:space="preserve"><value>В автономном профиле нет включённого мода с доступной папкой. Добавьте и включите мод.</value></data>
@@ -1035,7 +1034,6 @@
   <data name="SettingsProfile_Apply" xml:space="preserve"><value>Применить</value></data>
   <data name="SettingsProfile_Mo2Heading" xml:space="preserve"><value>Интеграция с MO2</value></data>
   <data name="SettingsProfile_SaveClose" xml:space="preserve"><value>Сохранить и закрыть</value></data>
-  <data name="SettingsProfile_CopyImmediateHint" xml:space="preserve"><value>Копирование начинается после подтверждения, без сохранения настроек.</value></data>
   <data name="SettingsProfile_Mo2ImmediateHint" xml:space="preserve"><value>Применение порядка сразу меняет и сохраняет список модов. Настройки профиля сохраняются отдельно.</value></data>
   <data name="Error_StandaloneBackendRequired" xml:space="preserve">
     <value>Для автономных сборок необходим прямой запуск.</value>
@@ -1055,9 +1053,24 @@
   <data name="Writable_ConflictArchivedFormat" xml:space="preserve">
     <value>Конфликтующая версия настроек сохранена: {0}</value>
   </data>
-  <data name="Settings_ImportLegacyProfiles" xml:space="preserve"><value>Импортировать профили из старой версии</value></data>
-  <data name="Settings_LegacyImportResult" xml:space="preserve"><value>Импортировано профилей: {0}; пропущено (уже существуют): {1}.</value></data>
-  <data name="Settings_LegacyImportFailed" xml:space="preserve"><value>Не удалось импортировать профили: {0}</value></data>
+  <data name="Settings_MigrationWizard" xml:space="preserve"><value>Мастер переноса данных</value></data>
   <data name="Creation_ScanMods" xml:space="preserve"><value>Сканировать моды</value></data>
   <data name="Creation_FsgameAutoFormat" xml:space="preserve"><value>Выбран автоматически: {0}</value></data>
+  <data name="Migration_Explanation" xml:space="preserve"><value>Начиная с версии CORDON Mod Launcher 1.6.0 новые настройки лаунчера и профили хранятся рядом с файлом запуска, в Data\CordonModLauncher.</value></data>
+  <data name="Migration_Contents" xml:space="preserve"><value>Мастер импортирует информацию о профилях из %APPDATA% и старой локальной папки Data\StalkerModLauncher, сохраняя пути к играм, модам и рабочим папкам. Имеющиеся профили с совпадающим ID не заменяются и не дублируются.</value></data>
+  <data name="Migration_Sources" xml:space="preserve"><value>Найденные источники профилей:</value></data>
+  <data name="Migration_NoSources" xml:space="preserve"><value>Старые источники профилей не найдены. Новые профили будут храниться в указанной выше папке.</value></data>
+  <data name="Migration_PreviewErrorFormat" xml:space="preserve"><value>Не удалось проверить источники профилей: {0}
+При импорте мастер проверит доступность настроек профилей.</value></data>
+  <data name="Migration_Safety" xml:space="preserve"><value>Игры, моды, рабочие папки, сохранения и настройки игр останутся на прежних местах. Не удаляйте старые папки с этими данными: импортированные профили продолжат их использовать.
+
+При отказе откроется имеющаяся конфигурация в Data\CordonModLauncher или пустой список профилей, если конфигурация отсутствует. Импорт можно выполнить позже в настройках лаунчера.</value></data>
+  <data name="Migration_Decline" xml:space="preserve"><value>Отказаться</value></data>
+  <data name="Migration_ProgressLabel" xml:space="preserve"><value>Ход импорта профилей</value></data>
+  <data name="Migration_FailedFormat" xml:space="preserve"><value>Ошибка переноса: {0}
+Исходные файлы сохранены. Можно повторить попытку.</value></data>
+  <data name="Migration_Preparing" xml:space="preserve"><value>Подготовка импорта профилей…</value></data>
+  <data name="Migration_CopyingFormat" xml:space="preserve"><value>Импорт профилей: {0}</value></data>
+  <data name="Migration_ProfilesOnly" xml:space="preserve"><value>Перенос информации о профилях</value></data>
+  <data name="Migration_DestinationHeading" xml:space="preserve"><value>Папка для настроек лаунчера и профилей:</value></data>
 </root>

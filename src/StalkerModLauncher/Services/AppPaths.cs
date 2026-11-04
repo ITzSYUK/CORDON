@@ -8,7 +8,7 @@ public sealed class AppPaths
     private readonly bool _preferGameDriveWorkspace;
 
     public AppPaths(string? executableDirectory = null)
-        : this(executableDirectory, IsStandaloneExecutable(Environment.ProcessPath))
+        : this(executableDirectory, useLocalSettings: true)
     {
     }
 
@@ -24,7 +24,9 @@ public sealed class AppPaths
         IsPortable = useLocalSettings;
         if (IsPortable)
         {
-            ConfigDirectory = Path.Combine(ExecutableDirectory, "Data", "StalkerModLauncher");
+            ConfigDirectory = Path.Combine(ExecutableDirectory, "Data", "CordonModLauncher");
+            WorkspaceRoot = Path.Combine(ConfigDirectory, "Workspaces");
+            _preferGameDriveWorkspace = false;
             SettingsFile = Path.Combine(ConfigDirectory, "settings.json");
             SettingsBackupFile = Path.Combine(ConfigDirectory, "settings.backup.json");
         }
@@ -38,6 +40,13 @@ public sealed class AppPaths
         RoamingSettingsFile = SettingsFile;
         WorkspaceRoot = workspaceRoot;
         _preferGameDriveWorkspace = preferGameDriveWorkspace;
+    }
+
+    internal AppPaths(string configDirectory, string workspaceRoot, string executableDirectory)
+        : this(configDirectory, workspaceRoot, preferGameDriveWorkspace: false)
+    {
+        ExecutableDirectory = executableDirectory;
+        IsPortable = true;
     }
 
     public string ConfigDirectory { get; }
@@ -61,6 +70,19 @@ public sealed class AppPaths
     public string WorkspaceRoot { get; }
     public string ExecutableDirectory { get; } = AppContext.BaseDirectory;
     public bool IsPortable { get; }
+    private string MigrationDecisionFile => Path.Combine(ConfigDirectory, "storage-migration-choice.txt");
+    internal bool? MigrationDecision => File.Exists(MigrationDecisionFile)
+        ? File.ReadAllText(MigrationDecisionFile) switch { "accepted" => true, "declined" => false, _ => null }
+        : null;
+    internal void ClearMigrationDecision()
+    {
+        if (File.Exists(MigrationDecisionFile)) File.Delete(MigrationDecisionFile);
+    }
+    internal void SetMigrationDecision(bool accepted)
+    {
+        Directory.CreateDirectory(ConfigDirectory);
+        File.WriteAllText(MigrationDecisionFile, accepted ? "accepted" : "declined");
+    }
     internal static bool IsStandaloneExecutable(string? path) =>
         string.Equals(Path.GetFileName(path), "CORDON-Standalone.exe", StringComparison.OrdinalIgnoreCase);
     public string CacheDirectory => IsPortable
@@ -92,6 +114,8 @@ public sealed class AppPaths
     internal void ValidateSourceDirectory(string source)
     {
         if (!IsPortable) return;
+        var managedMods = Path.Combine(ConfigDirectory, "Mods");
+        if (FileSystemSafety.IsDirectoryInside(source, managedMods)) return;
         if (new[] { ConfigDirectory, WorkspaceRoot, CacheDirectory, TempDirectory }.Any(root =>
                 FileSystemSafety.IsDirectoryInside(source, root) ||
                 FileSystemSafety.IsDirectoryInside(root, source)))
@@ -102,8 +126,9 @@ public sealed class AppPaths
 
     internal string FromStoredPath(string path)
     {
-        if (!IsPortable || string.IsNullOrWhiteSpace(path) || Path.IsPathRooted(path)) return path;
+        if (!IsPortable || string.IsNullOrWhiteSpace(path)) return path;
         var fullPath = Path.GetFullPath(path, ExecutableDirectory);
+        if (Path.IsPathRooted(path)) return path;
         if (!FileSystemSafety.IsDirectoryInside(fullPath, ExecutableDirectory))
             throw new InvalidDataException(Strings.Portable_PathEscapes);
         return fullPath;

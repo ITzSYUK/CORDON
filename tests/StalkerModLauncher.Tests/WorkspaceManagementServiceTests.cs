@@ -6,7 +6,167 @@ namespace StalkerModLauncher.Tests;
 
 public sealed class WorkspaceManagementServiceTests : IDisposable
 {
+    [Theory]
+    [InlineData("missing")]
+    [InlineData("local-missing")]
+    [InlineData("empty")]
+    [InlineData("userdata")]
+    [InlineData("conflict")]
+    [InlineData("exact-conflict")]
+    public async Task CopyToLocalPreservesSourceAndRejectsExistingProfileFolder(string scenario)
+    {
+        var paths = new AppPaths(Path.Combine(_root, "config"), Path.Combine(_root, "workspaces"), false);
+        var target = Path.Combine(paths.WorkspaceRoot, "profile-abcdef123456");
+        var old = scenario == "local-missing" ? target : Path.Combine(_root, "old");
+        var save = Path.Combine(old, "userdata", "save");
+        var profile = new ModProfile { Id = "abcdef123456", WorkspacePath = old };
+        if (scenario == "empty") Directory.CreateDirectory(old);
+        if (scenario == "userdata")
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(save)!);
+            File.WriteAllText(save, "keep");
+        }
+
+        var service = new WorkspaceManagementService(new WorkspaceBuilder(paths));
+        var persisted = false;
+        Task Persist()
+        {
+            persisted = true;
+            Assert.Equal(target, profile.WorkspacePath);
+            return Task.CompletedTask;
+        }
+
+        if (scenario is "conflict" or "exact-conflict")
+        {
+            var conflict = Directory.CreateDirectory(scenario == "exact-conflict"
+                ? target
+                : Path.Combine(paths.WorkspaceRoot, "old-name-abcdef12")).FullName;
+            File.WriteAllText(Path.Combine(conflict, "keep"), "existing");
+            var error = await Assert.ThrowsAsync<IOException>(() =>
+                service.CopyToLocalAsync(profile, paths.WorkspaceRoot, new Progress<string>(), Persist));
+            Assert.Contains(conflict, error.Message);
+            Assert.False(persisted);
+            Assert.Equal(old, profile.WorkspacePath);
+            Assert.Equal("existing", File.ReadAllText(Path.Combine(conflict, "keep")));
+            return;
+        }
+
+        await service.CopyToLocalAsync(profile, paths.WorkspaceRoot, new Progress<string>(), Persist);
+        Assert.True(persisted);
+        Assert.True(Directory.Exists(target));
+        if (scenario == "userdata")
+        {
+            Assert.Equal("keep", File.ReadAllText(save));
+            Assert.Equal("keep", File.ReadAllText(Path.Combine(target, "userdata", "save")));
+        }
+    }
+
+    [Fact]
+    public async Task MoveRejectsNonAsciiDestinationBeforeChangingDataOrSettings()
+    {
+        var paths = new AppPaths(Path.Combine(_root, "config"), Path.Combine(_root, "workspaces"), false);
+        var profile = new ModProfile { Id = "ascii", WorkspacePath = Path.Combine(paths.WorkspaceRoot, "profile-ascii") };
+        Directory.CreateDirectory(Path.Combine(profile.WorkspacePath, "userdata"));
+        var save = Path.Combine(profile.WorkspacePath, "userdata", "save");
+        File.WriteAllText(save, "keep");
+        var destination = Path.Combine(_root, "Профили");
+        var persisted = false;
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            new WorkspaceManagementService(new WorkspaceBuilder(paths)).MoveAsync(profile, destination,
+                new Progress<string>(), () => { persisted = true; return Task.CompletedTask; }));
+
+        Assert.Equal(StalkerModLauncher.Resources.Strings.Error_UsvfsAsciiPath, error.Message);
+        Assert.Equal("keep", File.ReadAllText(save));
+        Assert.False(Directory.Exists(destination));
+        Assert.False(persisted);
+        Assert.False(profile.IsPreparing);
+    }
+
     private readonly string _root = Path.Combine(Path.GetTempPath(), "StalkerModLauncherTests", Guid.NewGuid().ToString("N"));
+
+    [Fact]
+    public async Task MoveCannotReplaceAnUnavailableWorkspaceWithEmptyData()
+    {
+        var paths = new AppPaths(Path.Combine(_root, "config"), Path.Combine(_root, "workspaces"), false);
+        var old = Path.Combine(_root, "unavailable", "profile-test");
+        var profile = new ModProfile { Id = "test", WorkspacePath = old };
+        var destination = Path.Combine(_root, "destination");
+        var persisted = false;
+        var service = new WorkspaceManagementService(new WorkspaceBuilder(paths));
+
+        await Assert.ThrowsAsync<DirectoryNotFoundException>(() => service.MoveAsync(profile, destination,
+            new Progress<string>(), () => { persisted = true; return Task.CompletedTask; }));
+
+        Assert.Equal(old, profile.WorkspacePath);
+        Assert.False(profile.IsPreparing);
+        Assert.False(persisted);
+        Assert.False(Directory.Exists(destination));
+    }
+
+    [Fact]
+    public async Task MoveWaitsForPersistedPathBeforeDeletingOldWorkspace()
+    {
+        var paths = new AppPaths(Path.Combine(_root, "settings"), Path.Combine(_root, "workspaces"), false);
+        var old = Path.Combine(paths.WorkspaceRoot, "profile-test");
+        Directory.CreateDirectory(Path.Combine(old, "userdata"));
+        File.WriteAllText(Path.Combine(old, ".stalker-launcher-workspace"), "marker");
+        File.WriteAllText(Path.Combine(old, "userdata", "save"), "save");
+        var profile = new ModProfile { Id = "test", WorkspacePath = old };
+        var settings = new AppSettings { Profiles = [profile] };
+        using var store = new SettingsStore(paths);
+        await store.SaveAsync(settings);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var service = new WorkspaceManagementService(new WorkspaceBuilder(paths));
+        var move = service.MoveAsync(profile, Path.Combine(_root, "destination"), new Progress<string>(), async () =>
+        {
+            entered.SetResult();
+            await release.Task;
+            await store.SaveAsync(settings);
+        });
+        await entered.Task;
+        try
+        {
+            Assert.False(move.IsCompleted);
+            Assert.True(Directory.Exists(old));
+            Assert.Equal(old, Assert.Single((await store.LoadAsync()).Profiles).WorkspacePath);
+        }
+        finally { release.TrySetResult(); }
+        var result = await move;
+        Assert.Null(result.CleanupFailure);
+        Assert.False(Directory.Exists(old));
+        Assert.Equal(result.DestinationPath, Assert.Single((await store.LoadAsync()).Profiles).WorkspacePath);
+        Assert.Equal("save", File.ReadAllText(Path.Combine(result.DestinationPath, "userdata", "save")));
+    }
+
+    [Fact]
+    public async Task MoveKeepsBothCopiesOnFailedSaveAndPendingJournalCanRecoverDestination()
+    {
+        var paths = new AppPaths(Path.Combine(_root, "settings"), Path.Combine(_root, "workspaces"), false);
+        var old = Path.Combine(paths.WorkspaceRoot, "profile-test");
+        Directory.CreateDirectory(Path.Combine(old, "userdata"));
+        File.WriteAllText(Path.Combine(old, ".stalker-launcher-workspace"), "marker");
+        File.WriteAllText(Path.Combine(old, "userdata", "save"), "save");
+        var profile = new ModProfile { Id = "test", WorkspacePath = old };
+        using var store = new SettingsStore(paths);
+        await store.SaveAsync(new AppSettings { Profiles = [profile] });
+        var destination = Path.Combine(_root, "destination", "profile-test");
+        var service = new WorkspaceManagementService(new WorkspaceBuilder(paths));
+
+        await Assert.ThrowsAsync<IOException>(() => service.MoveAsync(profile, Path.Combine(_root, "destination"), new Progress<string>(), () =>
+        {
+            File.WriteAllText(paths.SettingsPendingFile, System.Text.Json.JsonSerializer.Serialize(new AppSettings { Profiles = [profile] }));
+            return Task.FromException(new IOException("save interrupted"));
+        }));
+
+        Assert.Equal(old, profile.WorkspacePath);
+        Assert.False(profile.IsPreparing);
+        Assert.Equal("save", File.ReadAllText(Path.Combine(old, "userdata", "save")));
+        Assert.Equal("save", File.ReadAllText(Path.Combine(destination, "userdata", "save")));
+        Assert.Equal(destination, Assert.Single((await store.LoadAsync()).Profiles).WorkspacePath);
+        Assert.True(Directory.Exists(old));
+    }
 
     [Fact]
     public async Task MoveAsyncMovesUserDataButNotCurrentCache()
@@ -27,7 +187,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         };
         var destinationRoot = Path.Combine(_root, "destination");
 
-        var result = await service.MoveAsync(profile, destinationRoot, new Progress<string>());
+        var result = await service.MoveAsync(profile, destinationRoot, new Progress<string>(), () => Task.CompletedTask);
 
         Assert.True(result.WasMoved);
         Assert.Null(result.CleanupFailure);
@@ -66,7 +226,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
             LaunchBackendKind = backend
         };
 
-        var result = await service.MoveAsync(profile, Path.Combine(_root, "destination-writable"), new Progress<string>());
+        var result = await service.MoveAsync(profile, Path.Combine(_root, "destination-writable"), new Progress<string>(), () => Task.CompletedTask);
 
         Assert.True(result.WasMoved);
         Assert.Null(result.CleanupFailure);
@@ -94,7 +254,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         File.WriteAllText(workspaceFile, "latest settings");
         var profile = new ModProfile { Id = "first-move", WorkspacePath = oldWorkspace };
 
-        var result = await service.MoveAsync(profile, Path.Combine(_root, "destination-first-move"), new Progress<string>());
+        var result = await service.MoveAsync(profile, Path.Combine(_root, "destination-first-move"), new Progress<string>(), () => Task.CompletedTask);
 
         Assert.Null(result.CleanupFailure);
         Assert.Equal("latest settings", File.ReadAllText(Path.Combine(result.DestinationPath, rule.StorageRelativePath)));
@@ -117,7 +277,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
 
         using (File.Open(workspaceFile, FileMode.Open, FileAccess.Read, FileShare.None))
         {
-            await Assert.ThrowsAsync<IOException>(() => service.MoveAsync(profile, destinationRoot, new Progress<string>()));
+            await Assert.ThrowsAsync<IOException>(() => service.MoveAsync(profile, destinationRoot, new Progress<string>(), () => Task.CompletedTask));
         }
 
         Assert.Equal(oldWorkspace, profile.WorkspacePath);
@@ -154,7 +314,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         var result = await service.MoveAsync(
             profile,
             Path.Combine(_root, "destination-usvfs"),
-            new Progress<string>());
+            new Progress<string>(), () => Task.CompletedTask);
 
         Assert.True(result.WasMoved);
         Assert.Null(result.CleanupFailure);
@@ -192,7 +352,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
             "save");
         profile.WorkspacePath = oldWorkspace;
 
-        var result = await service.MoveAsync(profile, destinationRoot, new Progress<string>());
+        var result = await service.MoveAsync(profile, destinationRoot, new Progress<string>(), () => Task.CompletedTask);
 
         Assert.True(result.WasMoved);
         Assert.Null(result.CleanupFailure);
@@ -232,7 +392,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         WorkspaceMoveResult result;
         using (File.Open(lockedFile, FileMode.Open, FileAccess.Read, FileShare.None))
         {
-            result = await service.MoveAsync(profile, destinationRoot, new Progress<string>());
+            result = await service.MoveAsync(profile, destinationRoot, new Progress<string>(), () => Task.CompletedTask);
         }
 
         Assert.True(result.WasMoved);
@@ -256,7 +416,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         var profile = new ModProfile { IsRunning = running, IsPreparing = preparing };
         var destination = Path.Combine(_root, "blocked");
         await Assert.ThrowsAsync<InvalidOperationException>(() => new WorkspaceManagementService(new WorkspaceBuilder(paths))
-            .MoveAsync(profile, destination, new Progress<string>()));
+            .MoveAsync(profile, destination, new Progress<string>(), () => Task.CompletedTask));
         Assert.False(Directory.Exists(destination));
     }
 
@@ -271,7 +431,7 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
         var profile = new ModProfile { GameInstallPath = mod ? string.Empty : source };
         if (mod) profile.Mods.Add(new ModEntry { SourcePath = source });
         await Assert.ThrowsAsync<InvalidOperationException>(() => new WorkspaceManagementService(new WorkspaceBuilder(paths))
-            .MoveAsync(profile, source, new Progress<string>()));
+            .MoveAsync(profile, source, new Progress<string>(), () => Task.CompletedTask));
         Assert.Empty(Directory.EnumerateFileSystemEntries(source));
         Assert.False(profile.IsPreparing);
     }

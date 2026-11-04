@@ -6,6 +6,40 @@ namespace StalkerModLauncher.Tests;
 
 public sealed class LaunchExecutableDetectorTests : IDisposable
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AutomaticExecutableSelectionSkipsExcludedEngine(bool missingRequestedPath)
+    {
+        var game = CreateDirectory("excluded-game");
+        var modRoot = CreateDirectory("excluded-mod");
+        var baseExe = CreateFile(game, @"bin\xr_3da.exe");
+        CreateFile(modRoot, @"bin\xr_3da.exe");
+        var profile = new ModProfile
+        {
+            GameInstallPath = game,
+            ExecutableRelativePath = missingRequestedPath ? @"bin\missing.exe" : @"bin\xr_3da.exe"
+        };
+        profile.Mods.Add(new ModEntry
+        {
+            SourcePath = modRoot,
+            Order = 1,
+            ExcludedFiles = ["BIN/xr_3da.EXE"]
+        });
+        var layers = FileLayerPlan.CreateForProfile(game, profile, Path.Combine(_root, "workspace"));
+
+        Assert.Equal(baseExe, ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, layers).Executable?.FullPath);
+        Assert.Equal(StalkerModLauncher.Resources.Strings.Layer_BaseGame,
+            ProfileExecutableSourceResolver.DetectAutomaticSelection(profile)?.SourceName);
+        profile.ExecutableRelativePath = @"bin\xr_3da.exe";
+        Assert.Equal(StalkerModLauncher.Resources.Strings.Layer_BaseGame,
+            ProfileExecutableSourceResolver.TryResolveExistingAutomaticSelection(profile)?.SourceName);
+
+        profile.ExecutableSourcePath = modRoot;
+        Assert.Equal(Path.Combine(modRoot, @"bin\xr_3da.exe"),
+            ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, layers).Executable?.FullPath);
+    }
+
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
         "StalkerModLauncherTests",
