@@ -233,19 +233,22 @@ public sealed class RoamingStorageMigrationTests : IDisposable
     public async Task StandalonePrefersNewRoamingStoreAndFallsBackToLegacy(bool newStoreExists)
     {
         using var legacy = new SettingsStore(_source);
-        await legacy.SaveAsync(new AppSettings { Profiles = [new ModProfile { Name = "Legacy" }] });
+        var profile = new ModProfile { Name = "Legacy" };
+        await legacy.SaveAsync(new AppSettings { Profiles = [profile] });
         if (newStoreExists)
         {
             using var current = new SettingsStore(new AppPaths(_destination.ConfigDirectory, _source.WorkspaceRoot));
-            await current.SaveAsync(new AppSettings { Profiles = [new ModProfile { Name = "Current" }] });
+            await current.SaveAsync(new AppSettings { Profiles = [new ModProfile { Id = profile.Id, Name = "Current" }] });
         }
         var paths = new AppPaths(Path.Combine(_root, "standalone"), useLocalSettings: true,
             _destination.ConfigDirectory, _source.ConfigDirectory);
+        paths.SetMigrationDecision(true);
         using var standalone = new SettingsStore(paths);
 
-        Assert.True(await standalone.TryImportRoamingSettingsAsync());
+        Assert.False(await standalone.TryImportRoamingSettingsAsync());
+        await standalone.TransferDataAsync(new Progress<(double Fraction, string Path)>());
         Assert.Equal(newStoreExists ? "Current" : "Legacy", Assert.Single((await standalone.LoadAsync()).Profiles).Name);
-        Assert.Equal(Path.Combine(_root, "standalone", "Data", "StalkerModLauncher"), paths.ConfigDirectory);
+        Assert.Equal(Path.Combine(_root, "standalone", "Data", "CordonModLauncher"), paths.ConfigDirectory);
     }
 
     [Theory]
@@ -264,14 +267,16 @@ public sealed class RoamingStorageMigrationTests : IDisposable
         var profileJson = await File.ReadAllTextAsync(sourcePaths.GetProfileFile(profile.Id));
         var paths = new AppPaths(Path.Combine(_root, "standalone"), useLocalSettings: true,
             _destination.ConfigDirectory, _source.ConfigDirectory);
+        paths.SetMigrationDecision(true);
         using var standalone = new SettingsStore(paths);
 
         Assert.Equal("en", UiLanguage.ReadPreference(paths));
-        Assert.True(await standalone.TryImportRoamingSettingsAsync());
+        Assert.False(await standalone.TryImportRoamingSettingsAsync());
+        await standalone.TransferDataAsync(new Progress<(double Fraction, string Path)>());
         var loaded = await standalone.LoadAsync();
         Assert.Equal(profile.Id, Assert.Single(loaded.Profiles).Id);
         Assert.Equal(42, loaded.Profiles[0].TotalPlaytimeSeconds);
-        Assert.Equal("en", loaded.UiLanguage);
+        Assert.Equal("system", loaded.UiLanguage);
         Assert.False(File.Exists(sourcePaths.SettingsFile));
         Assert.Equal(backup, await File.ReadAllTextAsync(sourcePaths.SettingsBackupFile));
         Assert.Equal(profileJson, await File.ReadAllTextAsync(sourcePaths.GetProfileFile(profile.Id)));
@@ -283,7 +288,7 @@ public sealed class RoamingStorageMigrationTests : IDisposable
     [InlineData(false, true)]
     [InlineData(true, false)]
     [InlineData(true, true)]
-    public async Task StandalonePendingSourceBlocksImportLoadAndWrites(bool hasIndex, bool validJournal)
+    public async Task StandalonePendingSourceBlocksExplicitImportButNotIndependentLocalSettings(bool hasIndex, bool validJournal)
     {
         Directory.CreateDirectory(_destination.ConfigDirectory);
         if (hasIndex)
@@ -292,13 +297,15 @@ public sealed class RoamingStorageMigrationTests : IDisposable
         await File.WriteAllTextAsync(_destination.SettingsPendingFile, journal);
         var paths = new AppPaths(Path.Combine(_root, "standalone"), useLocalSettings: true,
             _destination.ConfigDirectory, _source.ConfigDirectory);
+        paths.SetMigrationDecision(true);
         using var standalone = new SettingsStore(paths);
 
-        await Assert.ThrowsAsync<SettingsPersistenceException>(() => standalone.TryImportRoamingSettingsAsync());
-        await Assert.ThrowsAsync<SettingsPersistenceException>(() => standalone.LoadAsync());
-        await Assert.ThrowsAsync<SettingsPersistenceException>(() => standalone.SaveAsync(new AppSettings()));
-        await Assert.ThrowsAsync<SettingsPersistenceException>(() => standalone.UpdateAsync(current => current));
+        Assert.False(await standalone.TryImportRoamingSettingsAsync());
+        Assert.Empty((await standalone.LoadAsync()).Profiles);
+        await Assert.ThrowsAsync<SettingsPersistenceException>(() => standalone.TransferDataAsync(new Progress<(double Fraction, string Path)>()));
         Assert.False(standalone.HasSettingsFile);
+        await standalone.SaveAsync(new AppSettings());
+        await standalone.UpdateAsync(current => current);
         Assert.Equal(journal, await File.ReadAllTextAsync(_destination.SettingsPendingFile));
         Assert.Equal(hasIndex, File.Exists(_destination.SettingsFile));
     }

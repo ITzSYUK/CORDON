@@ -456,7 +456,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Button Content="{x:Static res:Strings.Main_ProfileList}" Width="190"
+                    <Button x:Name="ProfilesButton" Content="{x:Static res:Strings.Main_ProfileList}" Width="190"
                             Style="{StaticResource PdaNavButtonStyle}"
                             Click="ProfilesButton_OnClick"/>
                     <StackPanel Grid.Column="2" Orientation="Horizontal">

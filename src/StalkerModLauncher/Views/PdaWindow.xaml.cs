@@ -23,6 +23,8 @@ public partial class PdaWindow : Window
         viewModel.ProfileCreationRequested += ViewModel_ProfileCreationRequested;
         viewModel.Mo2ImportRequested += ViewModel_Mo2ImportRequested;
         viewModel.FomodInstallRequested += ViewModel_FomodInstallRequested;
+        viewModel.StorageMigrationRequested += ViewModel_StorageMigrationRequested;
+        Closing += (_, e) => { if (PdaView.IsMigrationActive) e.Cancel = true; };
         viewModel.ModScanSelectionRequested += ViewModel_ModScanSelectionRequested;
         viewModel.ConflictExplorerRequested += ViewModel_ConflictExplorerRequested;
         viewModel.DialogService.ErrorRequested += DialogService_ErrorRequested;
@@ -31,6 +33,7 @@ public partial class PdaWindow : Window
             viewModel.ProfileCreationRequested -= ViewModel_ProfileCreationRequested;
             viewModel.Mo2ImportRequested -= ViewModel_Mo2ImportRequested;
             viewModel.FomodInstallRequested -= ViewModel_FomodInstallRequested;
+            viewModel.StorageMigrationRequested -= ViewModel_StorageMigrationRequested;
             viewModel.ModScanSelectionRequested -= ViewModel_ModScanSelectionRequested;
             viewModel.ConflictExplorerRequested -= ViewModel_ConflictExplorerRequested;
             viewModel.DialogService.ErrorRequested -= DialogService_ErrorRequested;
@@ -38,6 +41,25 @@ public partial class PdaWindow : Window
     }
 
     public bool UsesNewTheme { get; }
+
+    private async void ViewModel_StorageMigrationRequested(object? sender, EventArgs e) => await ShowStorageMigrationAsync();
+
+    internal async Task<bool> ShowStorageMigrationAsync()
+    {
+        if (ViewModel is null || PdaView.IsMigrationActive) return false;
+        var page = await _navigation.CreateStorageMigrationViewAsync(ViewModel);
+        if (PdaView.IsMigrationActive) return false;
+        var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var previous = PdaView.CurrentPage;
+        page.Completed += (_, accepted) =>
+        {
+            if (previous is not null) PdaView.ShowPage(previous, Strings.Settings_Title);
+            else PdaView.ShowProfilePage();
+            completion.TrySetResult(accepted);
+        };
+        PdaView.ShowPage(page, Strings.Settings_MigrationWizard, lifetime: page);
+        return await completion.Task;
+    }
 
     private void ViewModel_FomodInstallRequested(object? sender, FomodInstallerViewModel wizard)
     {

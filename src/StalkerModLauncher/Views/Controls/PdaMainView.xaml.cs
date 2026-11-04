@@ -29,6 +29,9 @@ public partial class PdaMainView : UserControl
     public event RoutedEventHandler? LogRequested;
     public event RoutedEventHandler? LauncherSettingsRequested;
 
+    internal FrameworkElement? CurrentPage => PageHost.Content as FrameworkElement;
+    public bool IsMigrationActive => PageHost.Content is StorageMigrationView { IsTransferring: true };
+
     public void ShowError(string title, string message)
     {
         InlineErrorTitle.Text = title;
@@ -43,6 +46,7 @@ public partial class PdaMainView : UserControl
         IDisposable? lifetime = null,
         bool showProfileTypeIcon = false)
     {
+        if (IsMigrationActive) return;
         CloseDrawer();
         DisposeCurrentPage();
         _pageLifetime = lifetime;
@@ -67,6 +71,7 @@ public partial class PdaMainView : UserControl
 
     public void ShowProfilePage()
     {
+        if (IsMigrationActive) return;
         CloseDrawer();
         DisposeCurrentPage();
         PageHost.Content = null;
@@ -114,6 +119,7 @@ public partial class PdaMainView : UserControl
 
     private void ProfilesButton_OnClick(object sender, RoutedEventArgs e)
     {
+        if (IsMigrationActive) return;
         if (_isDrawerOpen) CloseDrawer(); else OpenDrawer();
     }
 

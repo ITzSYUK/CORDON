@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 
 namespace StalkerModLauncher.ViewModels;
@@ -13,6 +14,8 @@ public sealed partial class MainViewModel
     private bool _autoCheckForUpdates = true;
     private bool _showUpdateNotifications = true;
     private LauncherLogLevel _logLevel = LauncherLogLevel.Standard;
+    private Task _dataMigrationTask = Task.CompletedTask;
+    private bool _isClosing;
 
     public bool ShowTrayIcon => _showTrayIcon;
     public bool StartWithWindows => _startWithWindows;
@@ -23,6 +26,7 @@ public sealed partial class MainViewModel
     public LauncherLogLevel LogLevel => _logLevel;
     public string UiLanguage => _uiLanguage;
     public event EventHandler? LauncherUpdateInstallationRequested;
+    public event EventHandler? StorageMigrationRequested;
 
     public LauncherSettingsViewModel CreateLauncherSettingsViewModel(
         Func<Task<LauncherUpdateResult>>? checkForUpdates = null,
@@ -33,34 +37,34 @@ public sealed partial class MainViewModel
         _dialogService,
         checkForUpdates,
         confirmReset,
-        isPortable: _paths.IsPortable,
         canInstallUpdate: () => !IsBuilding && !_isInstallingModArchive && Profiles.All(profile => !profile.IsRunning),
         requestExit: () => LauncherUpdateInstallationRequested?.Invoke(this, EventArgs.Empty),
-        importLegacyProfiles: ImportLegacyProfilesAsync);
+        openMigrationWizard: () => StorageMigrationRequested?.Invoke(this, EventArgs.Empty));
 
-    internal async Task<(int Added, int Skipped)> ImportLegacyProfilesAsync()
+    internal Task RunDataMigrationAsync(IProgress<(double Fraction, string Path)> progress)
     {
-        var source = await _settingsStore.ReadLegacyProfilesAsync();
-        var ids = Profiles.Select(profile => profile.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var added = source.Where(profile => ids.Add(profile.Id)).ToArray();
-        var previousSelection = SelectedProfile;
-        foreach (var profile in added)
-        {
-            _profileManager.EnsureDefaults(profile);
-            Profiles.Add(profile);
-        }
-        if (SelectedProfile is null) SelectedProfile = added.FirstOrDefault();
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_isClosing || IsBuilding || _isInstallingModArchive || Profiles.Any(profile => profile.IsRunning || profile.IsPreparing))
+            throw new InvalidOperationException(Strings.Update_Busy);
+        return _dataMigrationTask = RunDataMigrationCoreAsync(progress);
+    }
+
+    private async Task RunDataMigrationCoreAsync(IProgress<(double Fraction, string Path)> progress)
+    {
+        IsBuilding = true;
+        RaiseCommandStates();
         try
         {
-            if (added.Length > 0) await SaveOrThrowAsync();
+            await SaveOrThrowAsync();
+            await _settingsStore.TransferDataAsync(progress);
+            await LoadAsync();
         }
-        catch
+        finally
         {
-            foreach (var profile in added) Profiles.Remove(profile);
-            SelectedProfile = previousSelection;
-            throw;
+            _autoSave.Cancel();
+            IsBuilding = false;
+            RaiseCommandStates();
         }
-        return (added.Length, source.Count - added.Length);
     }
 
     private async Task ApplyLauncherSettingsAsync(LauncherPreferences preferences)

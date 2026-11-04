@@ -308,7 +308,8 @@ public sealed class ProfileHealthService
                      .Where(mod => mod.IsEnabled)
                      .OrderBy(mod => mod.Order))
         {
-            yield return new LaunchExecutableSearchRoot(mod.SourcePath, LocalizedText.Format(Strings.Creation_ModSourceFormat, mod.Name), mod.Order);
+            yield return new LaunchExecutableSearchRoot(mod.SourcePath, LocalizedText.Format(Strings.Creation_ModSourceFormat, mod.Name), mod.Order,
+                Mod: profile.IsStandalone ? null : mod);
         }
     }
 

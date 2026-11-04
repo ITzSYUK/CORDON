@@ -122,11 +122,13 @@ If a mod provides the selected renderer at the same relative path, the file from
 
 Automatic mode always prefers the base-game Anomaly Launcher over engine executables from mods. The standard `AnomalyLauncher.exe` name is recognized directly; after a rename, EXE metadata (`OriginalFilename`, `InternalName`, description) is used, or `AnomalyLauncher.cfg` when there is a single root EXE. Ambiguous cases are not guessed and require manual selection.
 
+Automatic EXE selection applies mod file exclusions through the same `FileLayerPlan` rules as the final overlay. A manually pinned source remains an explicit choice of that EXE and takes precedence over its exclusion. Workspace movement validates the entire target path for USVFS compatibility before copying data or saving settings.
+
 ## 6. Profile storage
 
 Standard profiles launch only through USVFS. Standalone builds launch directly. The Workspace builder and backend selector have been removed. Explicit legacy Workspace recipes are rejected without migration: `current` is neither imported nor automatically deleted.
 
-Storage retains the path `<game drive>\StalkerModLauncher\Workspaces\profile-<ID>`. It contains `userdata`, `diagnostics`, a safety marker and, when needed, `.usvfs-bootstrap`. No full `current` tree or `build-manifest.json` is created. Display names do not affect the ASCII path.
+Storage retains the path `<EXE directory>\Data\CordonModLauncher\Workspaces\profile-<ID>`. It contains `userdata`, `diagnostics`, a safety marker and, when needed, `.usvfs-bootstrap`. No full `current` tree or `build-manifest.json` is created. Display names do not affect the ASCII path.
 
 ## 7. USVFS: stable virtual mode
 
@@ -273,6 +275,10 @@ The operation is blocked when validation fails. A missing marker may be restored
 
 The workspace path becomes bound to the profile ID after its first assignment. Renaming the profile does not create a new workspace. A copied profile receives a new ID and its own folder.
 
+A saved `WorkspacePath` is authoritative, including paths on another drive. Preparation never substitutes a different folder or renames the assigned directory. If the saved directory is missing or inaccessible, launch and workspace movement stop with its original path in the error. New and duplicated profiles leave this field empty until their workspace is prepared. Automatic discovery and legacy-name migration apply only when no workspace path is assigned.
+
+Outside the current managed roots, a workspace with both markers remains supported. Missing markers may be restored during preparation only when the folder name matches the profile ID (including legacy ID suffixes), its parent is `Workspace` or `Workspaces` under `StalkerModLauncher` or `CordonModLauncher`, and it has an existing `userdata` directory. This recovery rejects reparse points in the data directory and its ancestors. Unverified folders are rejected without creating markers. Deletion validates the workspace before clearing its bootstrap, and does not adopt unmarked legacy folders by itself.
+
 Deleting a standard profile removes only its validated managed workspace. Deleting a standalone profile removes its settings entry but leaves the standalone build folder untouched.
 
 
@@ -280,27 +286,30 @@ Maintenance and deletion are blocked while the profile is running or being prepa
 
 ## 10. Settings and recovery
 
-### Standalone local settings
+For USVFS, the prospective workspace/bootstrap path is checked for ASCII characters before creating workspace directories or markers, assigning the profile path or renaming a discovered legacy folder. The backend repeats this check before preparing game data, including calls that bypass the workspace manager.
 
-`CORDON-Standalone.exe` automatically uses `<EXE directory>\Data\StalkerModLauncher` for settings, backup, launcher logs, `Cache`, and `Temp`. Regular `CORDON.exe` always uses AppData and ignores `portable.flag`. `Mods` and `Workspaces` keep their normal `<game drive>\StalkerModLauncher` location; the `%LOCALAPPDATA%` fallback is used when a drive cannot be resolved. Write access is checked before startup; failure shows an error without falling back to AppData. Windows startup registration is supported and points to the current `CORDON-Standalone.exe`.
+Exception for completely empty assigned workspaces: if the directory exists, matches the profile ID, contains no files or subdirectories (including hidden entries), has no directory links in its path and does not overlap a game/mod source, preparation selects `Data\CordonModLauncher\Workspaces\profile-<ID>` instead. The old empty directory is left untouched. Any content or an unavailable directory disables this exception. The profile manager assigns the new path, which is persisted through normal settings saving.
 
-The portable launcher's local Data, cache, temporary and workspace directories must not overlap game/mod source folders. Source folders containing these managed directories, or contained inside them, are rejected before building layers. USVFS requires an ASCII-only workspace/bootstrap path; this is separate from the launcher's installation path.
+### Standalone local storage
 
-Paths inside the EXE directory are stored relative to it; external game, mod, and workspace paths stay absolute. On the first launch without local settings, a backup, a save journal, or profile files, AppData settings are imported automatically along with their separate profile JSON files. The standalone store is independent after that import; manual `settings.json` import is also available while the profile list is empty. The new format requires the sibling `profiles` directory beside the imported file. When importing another standalone store, relative paths resolve against its EXE directory. Import never changes the source; any pending save must first be recovered by the source launcher. Profile `userdata`, `Mods`, and `Workspaces` remain under `<game drive>\StalkerModLauncher`.
+Open **Data migration wizard** in launcher settings. Classic uses a separate window; both PDA themes embed the wizard as a page. The same wizard is available on first launch. **Transfer profile information** imports profiles from both AppData stores and the old local `Data\StalkerModLauncher` folder, keeping existing game, mod and workspace paths. Matching IDs are kept once, with existing destination profiles taking priority, followed by CordonModLauncher and StalkerModLauncher in AppData, then the old local store. Games, mods, workspaces, saves and game settings are not copied. Do not delete the old folders containing this data: imported profiles will continue to use them. You can repeat the import later in launcher settings.
 
-The paths below describe ordinary mode.
+Only the self-contained Standalone package is released. New launcher settings, profile JSON, backups, recovery files, logs, Cache, Temp, Mods and Workspaces use `<EXE directory>\Data\CordonModLauncher`, regardless of whether the executable is named `CORDON.exe` or `CORDON-Standalone.exe`. The old `portable.flag` is not a storage switch. Startup creates the settings root, Cache and Temp and probes write access; profiles, Mods and Workspaces are created when needed. There is no fallback to AppData on write failure. USVFS requires an ASCII-only workspace/bootstrap path, including all parent directories.
 
-The initial Standalone import uses `settings.backup.json` when the primary index is missing. A pending save or an unusable source blocks loading and saving instead of initializing an empty destination. Startup language selection checks the pending snapshot before the indexes, including the source or completed staging copy during migration. It reuses save-journal validation and never replays the journal or changes files during language selection.
+The visible wizard offers only profile-information import and decline. It reads `%APPDATA%\CordonModLauncher`, `%APPDATA%\StalkerModLauncher` and the old local `Data\StalkerModLauncher`. It preserves the destination's general preferences, existing profiles and all source files. A damaged or missing source index may use its healthy `settings.backup.json`; a locked file, newer unsupported schema, pending save journal or unavailable profile blocks import. All discovered stores are read before profiles are merged, so one invalid source can block the operation even when its IDs already exist at the destination.
 
-Regular `CORDON.exe` uses `%APPDATA%\CordonModLauncher`. On first load without settings, backups, a save journal, or profile files there, it copies the configuration from `%APPDATA%\StalkerModLauncher`: the index, backup, migration archive, pending save, profile JSON files, and recovery JSON files. A staged copy lets an interrupted migration resume before normal loading or saving. Recovery and schema migration then run only in the destination; the source is never changed. Logs and caches are not imported. Later launches never synchronize the stores, even if the new profile list is empty. Existing game/mod/workspace paths remain unchanged, so this isolates launcher configuration only. Standalone keeps its local directory and prefers the new roaming store for its initial import, falling back to the old one when the new store has no configuration.
+The wizard does not copy Mods, Workspaces, saves or game settings. Paths inside the executable directory are stored relatively; external paths stay absolute. Moving only the new settings folder does not make a profile independent of old game-data locations. A workspace may be moved separately through Status; this does not relocate mod folders. The example profile under `docs/example-settings` deliberately uses an external absolute workspace path, which remains valid after metadata import.
 
-Settings files are stored at:
+
+If both source indexes are missing or damaged, import recovers IDs from profile JSON files and their backups using the same recovery reader as normal loading. Import disables source restoration: it does not create indexes, rewrite profiles or preserve damaged files inside the source store. Unreadable, invalid or mismatched profiles still block import without changing the destination. Without an index, original profile order is unavailable.
+
+Settings files:
 
 ```text
-%APPDATA%\CordonModLauncher\settings.json
-%APPDATA%\CordonModLauncher\settings.backup.json
-%APPDATA%\CordonModLauncher\profiles\profile-<ID>.json
-%APPDATA%\CordonModLauncher\profiles\profile-<ID>.backup.json
+<EXE directory>\Data\CordonModLauncher\settings.json
+<EXE directory>\Data\CordonModLauncher\settings.backup.json
+<EXE directory>\Data\CordonModLauncher\profiles\profile-<ID>.json
+<EXE directory>\Data\CordonModLauncher\profiles\profile-<ID>.backup.json
 ```
 
 `settings.json` contains general launcher settings and `ProfileIds`, the profile IDs in display order. Each separate JSON stores the complete `ModProfile`: name, description, USVFS or a retained legacy Workspace identifier, standalone mode, launch arguments and sources, paths, statistics, groups, and mods with priorities and exclusions. Transient UI properties are omitted. File names use a safe representation of the existing ID; renaming a profile does not rename its file. In memory, callers still use `AppSettings.Profiles`.
@@ -324,7 +333,7 @@ Multi-file saves use a recovery journal:
 
 After interruption, the launcher finishes the journaled save before loading settings. Replay skips files already written and does not rotate their backups again. A damaged journal blocks writes and remains available for recovery. This recovers interrupted processes; it is not a filesystem-wide transaction.
 
-If a primary settings or profile JSON is damaged, it is first copied with a timestamp to `%APPDATA%\CordonModLauncher\recovery` and replaced with a readable backup only after the copy succeeds. Recovering one profile does not roll back other profiles or general settings. If both copies of a profile are missing or damaged, its ID and display position remain, and an unavailable entry shows the error. Its name is read from the migration archive when possible, without restoring outdated settings. Startup shows one message listing unavailable profiles; the About window's settings read no longer aborts startup. Healthy profiles and general preferences can still be saved. Unavailable profiles cannot be launched, edited, duplicated, or exported; saving skips their JSON files. The journal carries `UnavailableProfileIds` so replay cannot replace lost data with empty profiles. Manually restored JSON files are picked up after restarting. Importing settings with unavailable profiles fails without changing the destination.
+If a primary settings or profile JSON is damaged, it is first copied with a timestamp to `Data\CordonModLauncher\recovery` and replaced with a readable backup only after the copy succeeds. Recovering one profile does not roll back other profiles or general settings. If both copies of a profile are missing or damaged, its ID and display position remain, and an unavailable entry shows the error. Its name is read from the migration archive when possible, without restoring outdated settings. Startup shows one message listing unavailable profiles; the About window's settings read no longer aborts startup. Healthy profiles and general preferences can still be saved. Unavailable profiles cannot be launched, edited, duplicated, or exported; saving skips their JSON files. The journal carries `UnavailableProfileIds` so replay cannot replace lost data with empty profiles. Manually restored JSON files are picked up after restarting. Importing settings with unavailable profiles fails without changing the destination.
 
 If both general settings files are lost, profiles are recovered from their own files and general preferences revert to defaults; the original display order cannot be recovered. Damaged general JSON files are preserved in `recovery` and the user is notified. A temporarily locked or unreadable file is not treated as damaged: the launcher leaves it unchanged and blocks further writes until a successful reload. The complete failure reason is written to the launcher log.
 
@@ -338,7 +347,7 @@ Settings reads and writes are performed one at a time, so two operations cannot 
 
 An explicit save from the profile settings UI propagates persistence failures back to the window. The window remains open, shows the error, and restores the in-memory profile values instead of presenting unsaved changes as successful.
 
-In ordinary mode, game and mod paths are absolute. When a source folder is moved, the user must select it again. The workspace move operation first copies `userdata`, changes the stored path only after success, and then removes only the explicitly remembered old path without performing a general profile-folder search. The path is changed on the UI thread because WPF observes the profile. If final cleanup fails, the move remains successful: the launcher shows both paths, writes the full exception to the log, and offers to retry only the old-folder cleanup.
+External game and mod paths are absolute; paths inside the launcher directory are stored relative to it. Moving an external source requires selecting its new path. The separate Status-window workspace move operation first copies `userdata` and `diagnostics`, changes the in-memory path only after copying succeeds, and then removes only the explicitly remembered old path without a general profile-folder search. The path is changed on the UI thread because WPF observes the profile. MoveAsync requires a persistence callback and awaits successful journaled saving of the new path before cleanup. Both interfaces persist the path through SettingsStore.UpdateAsync. If saving fails, the in-memory path is restored and both directories are preserved; the destination remains available even if a partial journal already references it. If final cleanup fails, the launcher keeps the new workspace active, shows both paths, logs the exception, and offers to retry only the old-folder cleanup. Keep a backup until the new path has been saved and verified after restarting.
 
 ## 11. Validation, status, and diagnostics
 
@@ -361,13 +370,13 @@ The **fsgame.ltx source** check reports whether the file was found automatically
 Application logs are stored at:
 
 ```text
-%APPDATA%\CordonModLauncher\launcher.log
-%APPDATA%\CordonModLauncher\launcher.old.log
+<EXE directory>\Data\CordonModLauncher\launcher.log
+<EXE directory>\Data\CordonModLauncher\launcher.old.log
 ```
 
 The current log rotates at 1 MB, replacing `launcher.old.log` with the previous log.
 
-Game logs and dumps are searched in the profile's selected local or shared data directory, or the common data folders of a standalone build. Standalone launcher application logs are stored in its local `Data\StalkerModLauncher`. Diagnostics use the launch timestamp so an old crash dump is not reported as the result of the current session.
+Game logs and dumps are searched in the profile's selected local or shared data directory, or the common data folders of a standalone build. Standalone launcher application logs are stored in its local `Data\CordonModLauncher`. Diagnostics use the launch timestamp so an old crash dump is not reported as the result of the current session.
 
 After process creation the launcher watches actual readiness for up to 30 seconds: a main window, normal process memory growth, or a fresh game log. When none of these signals appears, the profile remains running, but the user receives a warning and may terminate the related processes or keep waiting.
 
@@ -381,7 +390,7 @@ On 18 October 2026, Release fixtures were measured before and after these change
 
 Scanning searches recursively for mod roots, but stops treating nested folders as separate mods after a valid root is found. It recognizes unpacked files and X-Ray archives, including `db` and `patches` directories.
 
-Archive installation is transactional through a temporary directory. The launcher validates entry paths, prevents extraction outside the destination, and finds one X-Ray content root for plain archives. The temporary directory is renamed only after extraction and any FOMOD materialization succeed. The storage path is profile-specific and defaults to `StalkerModLauncher\Mods\profile-<ID>` beside the workspace root. Source mods are never stored in the workspace because it is a rebuildable overlay result. Like MO2's Anomaly checker, loose `.db*` files are moved into `db\mods`.
+Archive installation is transactional through a temporary directory. The launcher validates entry paths, prevents extraction outside the destination, and finds one X-Ray content root for plain archives. The temporary directory is renamed only after extraction and any FOMOD materialization succeed. New profiles default to the shared managed `<EXE directory>\Data\CordonModLauncher\Mods` directory; a profile can retain a custom install path. `GetLegacyProfileModInstallPath` identifies an older layout, not the new default. Source mods are never stored in the workspace because it is a rebuildable overlay result. Like MO2's Anomaly checker, loose `.db*` files are moved into `db\mods`.
 
 ### FOMOD installation
 
@@ -433,7 +442,7 @@ Catalog pages are parsed as an HTML5 DOM rather than with regular expressions. T
 - Screenshot discovery finds PNG, JPG, and BMP files in profile and standalone data locations.
 - Clipboard copying releases the full-size image after transfer instead of keeping it in memory unnecessarily.
 - Discord Rich Presence publishes profile and launch state only when the user enables the option.
-- Update checking runs manually or automatically on startup, with optional system notifications. Settings can download a compact or Standalone release package, verify its archive checksum and contents, then close, replace and restart the launcher after confirmation. Installation is blocked during game sessions and build/mod-install operations; existing Data and game/profile sources are preserved.
+- Update checking runs manually or automatically on startup, with optional system notifications. Settings download the main Standalone package, verify its archive checksum and contents, then close, replace and restart the launcher after confirmation. The archive is saved beside the executable; staging, updater and rollback directories use `Data\CordonModLauncher\Temp`. Installation is blocked during game sessions and build/mod-install operations; existing Data and game/profile sources are preserved.
 - Launcher language can follow the system or be selected explicitly as Russian or English.
 - UI sounds reuse embedded OGG decoders instead of creating a new decoder on every click.
 - Child-window navigation is kept outside the main window so its code can focus on display and user actions.
@@ -477,6 +486,13 @@ dotnet run --project .\src\StalkerModLauncher\StalkerModLauncher.csproj
 
 NuGet dependencies are pinned by per-project lock files. Built-in .NET analyzers and warnings-as-errors are configured in `Directory.Build.props` and run during every build. GitHub Actions restores in locked mode, verifies formatting and repository guards, builds Release, runs all tests, and uploads Cobertura coverage on every push to `main` and every pull request.
 
+The current UI tests have a process-isolation limitation: `FomodUiTests` creates and shuts down a WPF `Application`, which can interfere with other UI classes in the same test host. For a repeatable diagnostic run, execute the remaining suite and this class in separate processes; do not run the two commands concurrently:
+
+```powershell
+dotnet test .\StalkerModLauncher.sln -c Release --no-restore --filter "FullyQualifiedName!~FomodUiTests" -- xUnit.ParallelizeTestCollections=false
+dotnet test .\StalkerModLauncher.sln -c Release --no-build --no-restore --filter "FullyQualifiedName~FomodUiTests"
+```
+
 Complete release packaging:
 
 Before packaging, set `Version` and `InformationalVersion` in the application project to the intended release number and set `FileVersion`/`AssemblyVersion` to its four-part form. Commit all release changes: `Build-Release.ps1` rejects a dirty working tree, including untracked files. Its optional `-Version` must match the project version; it does not override it.
@@ -491,14 +507,7 @@ To run these checks without creating archives, use `.\scripts\Verify-Release.ps1
 
 The full local stress test is started with `.\scripts\Test-UsvfsStress.ps1`. By default it performs 50 consecutive x64 and x86 sessions while changing overlay contents between launches.
 
-The script creates two ZIP archives:
-
-- a compact framework-dependent package that requires .NET 8 Desktop Runtime x64;
-- a self-contained package with the .NET runtime included.
-
-Both packages contain the official x64/x86 USVFS runtime, x86 host, `LICENSE.txt`, and `THIRD-PARTY-NOTICES.txt`. PDB, JSON, Markdown, and intermediate files are excluded from user ZIP files.
-
-By default, `Build-Release.ps1` creates two standard archives with the main optimized USVFS. To also package the previous runtime, first run `.\scripts\Build-UsvfsDependencies.ps1 -LegacyUsvfs`, then `.\scripts\Build-Release.ps1 -IncludeLegacyUsvfs`. This adds `CORDON-v<version>-win-x64-usvfs-legacy.zip` and `CORDON-v<version>-win-x64-standalone-usvfs-legacy.zip`; the launcher is published only twice. The main revision and patches are pinned in `scripts\UsvfsRuntimeManifest.psd1`, the previous revision in `scripts\UsvfsLegacyManifest.psd1`. Packaging validates the main build record, patch and binary hashes, source provenance and x64/x86 smoke tests before replacing release outputs, then checks packaged binary hashes and ZIPs. Missing, outdated or modified main runtimes fail before packaging. Legacy is not required without the explicit flag. The built-in updater installs main packages, including over legacy.
+The script creates the main FULL Standalone package, `CORDON-v<version>-win-x64.zip`: `CORDON.exe` with the bundled .NET Runtime, the official x64/x86 USVFS runtime, x86 host, LICENSE.txt and THIRD-PARTY-NOTICES.txt. PDB, JSON, Markdown and intermediate files are excluded. The launcher is published once; the compatibility archive `CORDON-v<version>-win-x64-standalone.zip` reuses that binary as `CORDON-Standalone.exe` for old standalone updaters. No archive with the legacy USVFS runtime is created. Main runtime provenance and binary hashes are verified before packaging. **Download and install** retrieves this same package. The previous runtime is available only for development through `Build-Usvfs.ps1 -LegacyUsvfs`.
 
 Before packaging, USVFS sources are checked against their pinned revision and tracked patches; `scripts\Prepare-UsvfsSource.ps1` prepares that state (`-LegacyUsvfs` for the previous runtime). Existing checkouts are never reset. Names, paths and versions of the four components are checked against the selected manifest. The main build saves `runtime/build-info.json` with its revision, patch hashes and binary hashes; packaging checks it against the current files. Hashes are not pinned across different compilers or SDKs. Every package contains a `checksums.txt`, and the release directory contains another checksum file for ZIP archives. After packaging, ZIPs are extracted to a temporary directory and compared completely with their prepared packages, including EXE version, source commit and absence of unexpected files.
 
@@ -517,7 +526,7 @@ Native listing tests probe which directory information classes the running kerne
 
 After changing Visual Studio or vcpkg, use `-CleanUsvfsBuild`: it removes only `vsbuild64` and `vsbuild32` in the selected checkout (`.external\usvfs-pr99` by default, `.external\usvfs` with `-LegacyUsvfs`) before configuring again.
 
-Use `.\scripts\Build-Usvfs.ps1` to publish a launcher with the validated main runtime to `publish\usvfs`; prepare its native files with `Build-UsvfsDependencies.ps1` first. The `-LegacyUsvfs` flag selects the previous runtime and a separate `publish\usvfs-legacy` directory. Publishing does not compile the native runtime itself. Both variants run x64/x86 smoke tests against the selected runtime. Without `-CleanPublishRoot`, the script recreates only the selected output directory; the switch deletes all of `publish`. Compiled third-party binaries are not stored in Git.
+Use `.\scripts\Build-Usvfs.ps1` to publish a launcher with the validated main runtime to `publish\usvfs`; prepare its native files with `Build-UsvfsDependencies.ps1` first. The `-LegacyUsvfs` flag selects the previous runtime and a separate `publish\usvfs-legacy` directory. Publishing does not compile the native runtime itself. Both variants run x64/x86 smoke tests against the selected runtime. Normal publishing refreshes application files while preserving the complete existing `Data` subtree. `-CleanPublishRoot` refuses to delete publish if it contains a Data directory. Rebuilding the same release version similarly refuses to recreate release/staging output containing user Data. Permanent backups should still live outside build outputs; the built-in updater also preserves Data. Compiled third-party binaries are not stored in Git.
 
 The `.github\workflows\usvfs.yml` workflow repeats the complete build and smoke test on Windows 2022 when USVFS, the native helper, or related scripts change. Failed native suites print their stdout and stderr in the job log. Once the native test directory has been created, CI uploads its `.log` and XML files as `usvfs-native-test-diagnostics`, including on failure, and retains the artifact for 14 days.
 

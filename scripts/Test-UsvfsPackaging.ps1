@@ -12,6 +12,7 @@ function Write-FixtureFile([string]$RelativePath, [string]$Content) {
 # Stub compilation and PE metadata; exercise copying, ZIPs, hashes and guards for real.
 function dotnet {
     if ($args[0] -ne 'publish') { throw 'Unexpected dotnet command.' }
+    if ([string]$args[[Array]::IndexOf($args, '--self-contained') + 1] -ne 'true') { throw 'Only self-contained publication is supported.' }
     $output = $args[[Array]::IndexOf($args, '-o') + 1]
     [IO.File]::WriteAllText((Join-Path $output 'CORDON.exe'), 'same launcher')
     $state.Publishes++
@@ -114,26 +115,29 @@ try {
     Assert-DefaultStops 'component is missing or changed'
     [IO.File]::WriteAllText($library, 'primary-' + $primary.Files[0].Name)
 
-    foreach ($include in @($false, $true)) {
-        $state.Publishes = 0
-        $legacyLibrary = Join-Path $fixtureRoot '.external\usvfs\lib\usvfs_x64.dll'
-        if (-not $include) { Remove-Item -LiteralPath $legacyLibrary }
-        & (Join-Path $fixtureRoot 'scripts\Build-Release.ps1') -IncludeLegacyUsvfs:$include | Out-Null
-        if ($state.Publishes -ne 2) { throw 'Launcher should only be published twice.' }
-        $release = Join-Path $fixtureRoot 'publish\release\v1.0.0'
-        $archives = @(Get-ChildItem -LiteralPath $release -Filter '*.zip')
-        if ($archives.Count -ne $(if ($include) { 4 } else { 2 })) { throw 'Wrong release archive count.' }
-        foreach ($standalone in @('', '-standalone')) {
-            $name = "CORDON-v1.0.0-win-x64$standalone"
-            $primaryBinary = Join-Path $release "$name\usvfs_x64.dll"
-            if ([IO.File]::ReadAllText($primaryBinary) -ne 'primary-usvfs_x64.dll') { throw 'Default package must contain optimized USVFS.' }
-            if ($include) {
-                $candidate = Join-Path $release "$name-usvfs-legacy\usvfs_x64.dll"
-                if ([IO.File]::ReadAllText($candidate) -ne 'legacy-usvfs_x64.dll') { throw 'Wrong legacy runtime.' }
-            }
-        }
-        if (-not $include) { [IO.File]::WriteAllText($legacyLibrary, 'legacy-usvfs_x64.dll') }
+    $state.Publishes = 0
+    $legacyLibrary = Join-Path $fixtureRoot '.external\usvfs\lib\usvfs_x64.dll'
+    Remove-Item -LiteralPath $legacyLibrary
+    & (Join-Path $fixtureRoot 'scripts\Build-Release.ps1') | Out-Null
+    if ($state.Publishes -ne 1) { throw 'Launcher must be published once.' }
+    $release = Join-Path $fixtureRoot 'publish\release\v1.0.0'
+    $archives = @(Get-ChildItem -LiteralPath $release -Filter '*.zip')
+    if ($archives.Count -ne 2 -or
+        @($archives.Name | Where-Object { $_ -notin @('CORDON-v1.0.0-win-x64.zip', 'CORDON-v1.0.0-win-x64-standalone.zip') }).Count -ne 0) {
+        throw 'Expected the full release and the legacy standalone updater package.'
     }
+    $package = Join-Path $release 'CORDON-v1.0.0-win-x64'
+    if (-not (Test-Path -LiteralPath (Join-Path $package 'CORDON.exe')) -or
+        (Test-Path -LiteralPath (Join-Path $package 'CORDON-Standalone.exe'))) { throw 'Expected the single full CORDON.exe launcher.' }
+    if ([IO.File]::ReadAllText((Join-Path $package 'usvfs_x64.dll')) -ne 'primary-usvfs_x64.dll') { throw 'Full package must contain optimized USVFS.' }
+    $compatibility = Join-Path $release 'CORDON-v1.0.0-win-x64-standalone'
+    if ((Test-Path -LiteralPath (Join-Path $compatibility 'CORDON.exe')) -or
+        -not (Test-Path -LiteralPath (Join-Path $compatibility 'CORDON-Standalone.exe')) -or
+        (Get-FileHash (Join-Path $compatibility 'CORDON-Standalone.exe')).Hash -ne
+        (Get-FileHash (Join-Path $package 'CORDON.exe')).Hash) {
+        throw 'The old standalone updater must receive the same launcher under its expected EXE name.'
+    }
+    [IO.File]::WriteAllText($legacyLibrary, 'legacy-usvfs_x64.dll')
     $state.Running = Join-Path $fixtureRoot 'publish\usvfs\CORDON.exe'
     & (Join-Path $fixtureRoot 'scripts\Build-Usvfs.ps1') -LegacyUsvfs | Out-Null
     if ([IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\usvfs\keep.txt')) -ne 'main output' -or
@@ -163,7 +167,46 @@ try {
         $failed = $true
     }
     if (-not $failed -or $state.Publishes -ne 0) { throw 'Running main launcher did not block publishing.' }
-    Write-Host 'USVFS packaging tests passed: 2/4 archives, shared launcher publishes, runtime isolation, missing/stale/tampered build guards.'
+    $state.Running = $null
+    $userData = @{
+        'publish\usvfs\Data\StalkerModLauncher\settings.json' = 'old settings'
+        'publish\usvfs\Data\CordonModLauncher\settings.pending.json' = 'pending settings'
+        'publish\usvfs\Data\CordonModLauncher\Mods\example\mod.ltx' = 'installed mod'
+        'publish\usvfs\Data\CordonModLauncher\Workspaces\profile-test\userdata\save.sav' = 'save'
+        'publish\usvfs-legacy\Data\CordonModLauncher\settings.json' = 'legacy settings'
+    }
+    foreach ($entry in $userData.GetEnumerator()) { Write-FixtureFile $entry.Key $entry.Value }
+    foreach ($legacyPublish in @($false, $true)) {
+        & (Join-Path $fixtureRoot 'scripts\Build-Usvfs.ps1') -LegacyUsvfs:$legacyPublish | Out-Null
+        foreach ($entry in $userData.GetEnumerator()) {
+            if ([IO.File]::ReadAllText((Join-Path $fixtureRoot $entry.Key)) -ne $entry.Value) {
+                throw "Publish changed user Data: $($entry.Key)"
+            }
+        }
+    }
+    $state.Publishes = 0
+    $failed = $false
+    try { & (Join-Path $fixtureRoot 'scripts\Build-Usvfs.ps1') -CleanPublishRoot | Out-Null }
+    catch {
+        if ($_.Exception.Message -notlike 'Refusing to clean publish while it contains user Data*') { throw }
+        $failed = $true
+    }
+    if (-not $failed -or $state.Publishes -ne 0) { throw 'CleanPublishRoot did not protect user Data.' }
+    foreach ($entry in $userData.GetEnumerator()) {
+        if ([IO.File]::ReadAllText((Join-Path $fixtureRoot $entry.Key)) -ne $entry.Value) { throw 'CleanPublishRoot changed user Data.' }
+    }
+    Write-FixtureFile 'publish\release\v1.0.0\CORDON-v1.0.0-win-x64\Data\settings.json' 'release settings'
+    $failed = $false
+    try { & (Join-Path $fixtureRoot 'scripts\Build-Release.ps1') | Out-Null }
+    catch {
+        if ($_.Exception.Message -notlike 'Refusing to recreate release output containing user Data*') { throw }
+        $failed = $true
+    }
+    if (-not $failed -or $state.Publishes -ne 0) { throw 'Release rebuild did not protect user Data.' }
+    if ([IO.File]::ReadAllText((Join-Path $fixtureRoot 'publish\release\v1.0.0\CORDON-v1.0.0-win-x64\Data\settings.json')) -ne 'release settings') {
+        throw 'Release rebuild changed user Data.'
+    }
+    Write-Host 'USVFS packaging tests passed: full and legacy updater archives, runtime isolation, provenance guards, Data preservation and destructive-clean guards.'
 }
 finally {
     $resolved = [IO.Path]::GetFullPath($fixtureRoot)

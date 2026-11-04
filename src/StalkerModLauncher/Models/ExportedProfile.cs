@@ -3,6 +3,7 @@ namespace StalkerModLauncher.Models;
 public sealed class ExportedProfile
 {
     public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public bool IsEnabled { get; set; } = true;
     public bool IsDiscordStatusEnabled { get; set; } = true;
     public bool IsStandalone { get; set; }

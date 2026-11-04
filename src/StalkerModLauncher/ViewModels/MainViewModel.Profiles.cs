@@ -249,6 +249,8 @@ public sealed partial class MainViewModel
             var path = _profileManager.GetProfileFolderPath(SelectedProfile)
                 ?? throw new DirectoryNotFoundException(Strings.Profile_StandaloneFolderMissing);
 
+            if (!SelectedProfile.IsStandalone && !string.IsNullOrWhiteSpace(SelectedProfile.WorkspacePath) && !Directory.Exists(path))
+                throw new DirectoryNotFoundException(LocalizedText.Format(Strings.Error_WorkspaceUnavailableFormat, path));
             Directory.CreateDirectory(path);
             DialogService.OpenFolder(path);
         }

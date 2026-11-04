@@ -218,23 +218,30 @@ public sealed partial class App : Application, IDisposable
 
     private async Task ShowLauncherAsync(Action? launcherShown = null)
     {
+        var shutdownMode = ShutdownMode;
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        var needsMigration = Services.Paths.MigrationDecision is null;
+        var startMinimized = _startMinimized && !needsMigration;
         var main = CreateMainWindow();
         MainWindow = main;
-        var pdaIsActive = await main.ShowInitialInterfaceAsync(_startMinimized);
+        await main.ShowInitialInterfaceAsync(startMinimized);
+        ShutdownMode = shutdownMode;
         _trayIconService = new TrayIconService(
             _mainViewModel!,
             main.ShowFromTray,
             () => _ = ExitLauncherAsync(),
             Services.ApplicationLogService);
 
-        var remainsHidden = _startMinimized && _mainViewModel!.ShowTrayIcon;
-        if (_startMinimized && !remainsHidden)
+        var remainsHidden = startMinimized && _mainViewModel!.ShowTrayIcon;
+        if (startMinimized && !remainsHidden)
         {
             main.ShowFromTray();
         }
 
         launcherShown?.Invoke();
-        if (!pdaIsActive && !remainsHidden)
+        if (needsMigration && !await main.ShowStartupStorageMigrationAsync())
+            Services.Paths.SetMigrationDecision(false);
+        if (!_mainViewModel!.IsPdaInterfaceEnabled && !remainsHidden)
         {
             await ShowAboutIfNeededAsync(main);
         }

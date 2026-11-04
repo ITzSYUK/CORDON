@@ -13,8 +13,54 @@ namespace StalkerModLauncher.Tests;
 
 public sealed class MainViewModelTests
 {
+    [Fact]
+    public async Task BulkDroppedModsRefreshOnceAndKeepSubscriptions()
+    {
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            var profile = new ModProfile { GameInstallPath = CreateValidGameRoot(root) };
+            viewModel.AddCreatedProfile(profile);
+            var paths = Enumerable.Range(0, 200).Select(index =>
+            {
+                var path = Path.Combine(root, "mods", index.ToString(CultureInfo.InvariantCulture));
+                Directory.CreateDirectory(Path.Combine(path, "gamedata"));
+                return path;
+            }).ToArray();
+            var refreshes = 0;
+            viewModel.LaunchCommand.CanExecuteChanged += (_, _) => refreshes++;
+            var watch = Stopwatch.StartNew();
+
+            await viewModel.AddDroppedModsAsync(paths.Concat(paths.Select(path => Path.Combine(path, "."))));
+
+            Console.WriteLine($"Bulk add 200 folders: {watch.ElapsedMilliseconds} ms; command refreshes: {refreshes}");
+            Assert.Equal(200, profile.Mods.Count);
+            Assert.Equal(Enumerable.Range(1, 200), profile.Mods.Select(mod => mod.Order));
+            Assert.InRange(refreshes, 1, 10);
+            var beforeToggle = refreshes;
+            profile.Mods[0].IsEnabled = false;
+            Assert.True(refreshes > beforeToggle);
+        });
+    }
+
     private static readonly string[] BoundaryTestModNames = ["First", "Second", "Third", "Fourth"];
     private static readonly string[] GroupBoundaryTestModNames = [.. BoundaryTestModNames, "Fifth"];
+
+    [Fact]
+    public async Task OpenProfileFolderDoesNotRecreateAnUnavailableAssignedWorkspace()
+    {
+        await RunWithViewModelAsync((viewModel, root) =>
+        {
+            var missing = Path.Combine(root, "unavailable", "profile-test");
+            viewModel.AddCreatedProfile(new ModProfile { WorkspacePath = missing });
+
+            viewModel.OpenProfileFolderCommand.Execute(null);
+
+            Assert.False(Directory.Exists(missing));
+            Assert.Equal(missing, viewModel.SelectedProfile!.WorkspacePath);
+            Assert.Contains(viewModel.ActivityLog.Entries, entry => entry.Contains(missing, StringComparison.Ordinal));
+            return Task.CompletedTask;
+        });
+    }
 
     [Theory]
     [InlineData(false, false, false)]
@@ -106,13 +152,16 @@ public sealed class MainViewModelTests
     {
         var root = Path.Combine(Path.GetTempPath(), "LegacyImportTests", Guid.NewGuid().ToString("N"));
         var oldDirectory = Path.Combine(root, "old");
-        var paths = new AppPaths(root, useLocalSettings: false, Path.Combine(root, "new"), oldDirectory);
+        var paths = new AppPaths(root, useLocalSettings: true, Path.Combine(root, "new"), oldDirectory);
         var existing = new ModProfile { Name = "Current" };
         var duplicate = new ModProfile { Id = existing.Id, Name = "Old version" };
         var added = new ModProfile { Name = "Imported" };
         MainViewModel? viewModel = null;
         try
         {
+            existing.GameInstallPath = CreateValidGameRoot(root);
+            var modRoot = Directory.CreateDirectory(Path.Combine(root, "mods", "loaded")).FullName;
+            existing.Mods.Add(new ModEntry { Name = "Loaded mod", SourcePath = modRoot, IsEnabled = true, Order = 1 });
             Directory.CreateDirectory(oldDirectory);
             var oldJson = JsonSerializer.Serialize(new AppSettings { SchemaVersion = 9, Profiles = [duplicate, added] });
             await File.WriteAllTextAsync(Path.Combine(oldDirectory, "settings.json"), oldJson);
@@ -121,13 +170,189 @@ public sealed class MainViewModelTests
             viewModel = CreateViewModel(root, paths: paths);
             await WaitForSettingsLoadedAsync(viewModel);
 
-            Assert.Equal((1, 1), await viewModel.ImportLegacyProfilesAsync());
-            Assert.Equal((0, 2), await viewModel.ImportLegacyProfilesAsync());
+            viewModel.Profiles[0].IsRunning = true;
+            await Assert.ThrowsAsync<InvalidOperationException>(() => viewModel.RunDataMigrationAsync(new Progress<(double Fraction, string Path)>()));
+            Assert.Single(viewModel.Profiles);
+            viewModel.Profiles[0].IsRunning = false;
+            var profileNotifications = 0;
+            var collectionNotifications = 0;
+            viewModel.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(MainViewModel.HasProfiles)) profileNotifications++;
+            };
+            viewModel.Profiles.CollectionChanged += (_, _) => collectionNotifications++;
+            await viewModel.RunDataMigrationAsync(new Progress<(double Fraction, string Path)>());
+            Assert.Equal(2, viewModel.Profiles.Count);
+            Assert.Equal(1, profileNotifications);
+            Assert.Equal(3, collectionNotifications);
+            Assert.True(viewModel.HasProfiles);
+            Assert.False(viewModel.CanImportSettings);
+            Assert.False(viewModel.ImportSettingsCommand.CanExecute(null));
+            profileNotifications = 0;
+            await viewModel.RunDataMigrationAsync(new Progress<(double Fraction, string Path)>());
+            Assert.Equal(2, viewModel.Profiles.Count);
+            Assert.Equal(1, profileNotifications);
             Assert.Equal("Current", viewModel.Profiles[0].Name);
             Assert.Equal("Imported", viewModel.Profiles[1].Name);
+            var loaded = viewModel.Profiles[0];
+            Assert.True(viewModel.CanEditSelectedProfile);
+            loaded.IsPreparing = true;
+            Assert.False(viewModel.CanEditSelectedProfile);
+            loaded.IsPreparing = false;
+            loaded.Description = "Edited after reload";
+            loaded.Mods[0].Name = "Edited mod";
+            await WaitUntilAsync(() =>
+            {
+                using var reader = new StreamReader(new FileStream(paths.GetProfileFile(existing.Id), FileMode.Open,
+                    FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
+                var json = reader.ReadToEnd();
+                return !File.Exists(paths.SettingsPendingFile) &&
+                    json.Contains("Edited after reload", StringComparison.Ordinal) && json.Contains("Edited mod", StringComparison.Ordinal);
+            });
+            Assert.True(viewModel.IsGameValid);
+            Directory.Delete(modRoot);
+            await WaitUntilAsync(() => loaded.HasLaunchError && !viewModel.IsGameValid);
+            Directory.CreateDirectory(modRoot);
+            await WaitUntilAsync(() => !loaded.HasLaunchError && viewModel.IsGameValid);
             using var persisted = new SettingsStore(paths);
             Assert.Equal(new[] { existing.Id, added.Id }, (await persisted.LoadAsync()).Profiles.Select(p => p.Id));
             Assert.Equal(oldJson, await File.ReadAllTextAsync(Path.Combine(oldDirectory, "settings.json")));
+        }
+        finally
+        {
+            if (viewModel is not null) await viewModel.CleanupAsync();
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MigrationPreservesPendingEditsAndImportedProfilesDuringShutdown(bool closeDuringTransfer)
+    {
+        var root = Path.Combine(Path.GetTempPath(), "MigrationShutdownTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? viewModel = null;
+        using var release = new ManualResetEventSlim();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task? migration = null;
+        Task? cleanup = null;
+        try
+        {
+            var legacy = Path.Combine(root, "legacy");
+            using (var source = new SettingsStore(new AppPaths(legacy, Path.Combine(root, "unused"), false)))
+                await source.SaveAsync(new AppSettings { Profiles = [new ModProfile { Name = "Imported", IsStandalone = true }] });
+            var paths = new AppPaths(root, useLocalSettings: true, Path.Combine(root, "roaming"), legacy);
+            using var store = new SettingsStore(paths);
+            await store.SaveAsync(new AppSettings { Profiles = [new ModProfile { Name = "Before", IsStandalone = true }] });
+            viewModel = CreateViewModel(root, paths: paths);
+            await viewModel.Initialization;
+            viewModel.Profiles[0].Name = "Pending edit";
+
+            migration = viewModel.RunDataMigrationAsync(new BlockingMigrationProgress(started, release));
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            if (closeDuringTransfer)
+            {
+                cleanup = viewModel.CleanupAsync();
+                Assert.False(cleanup.IsCompleted);
+            }
+            release.Set();
+            await migration;
+            if (cleanup is not null) await cleanup;
+
+            Assert.Equal(["Pending edit", "Imported"], (await store.LoadAsync()).Profiles.Select(profile => profile.Name));
+        }
+        finally
+        {
+            release.Set();
+            if (migration is not null) await migration;
+            if (cleanup is not null) await cleanup;
+            else if (viewModel is not null) await viewModel.CleanupAsync();
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private sealed class BlockingMigrationProgress(TaskCompletionSource started, ManualResetEventSlim release)
+        : IProgress<(double Fraction, string Path)>
+    {
+        public void Report((double Fraction, string Path) value)
+        {
+            if (value.Fraction != 0) return;
+            started.TrySetResult();
+            if (!release.Wait(TimeSpan.FromSeconds(10))) throw new TimeoutException("Migration was not released.");
+        }
+    }
+
+    [Fact]
+    public async Task MigrationStopsBeforeImportWhenPendingEditsCannotBeSaved()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "MigrationSaveFailureTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? viewModel = null;
+        try
+        {
+            var paths = new AppPaths(root, useLocalSettings: true, Path.Combine(root, "roaming"), Path.Combine(root, "legacy"));
+            using var store = new SettingsStore(paths);
+            await store.SaveAsync(new AppSettings { Profiles = [new ModProfile { Name = "Before", IsStandalone = true }] });
+            viewModel = CreateViewModel(root, paths: paths);
+            await viewModel.Initialization;
+            viewModel.Profiles[0].Name = "Pending edit";
+            using var release = new ManualResetEventSlim(true);
+            var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var locked = new FileStream(paths.SettingsFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                await Assert.ThrowsAsync<SettingsPersistenceException>(() =>
+                    viewModel.RunDataMigrationAsync(new BlockingMigrationProgress(started, release)));
+
+            Assert.False(started.Task.IsCompleted);
+            Assert.False(viewModel.IsBuilding);
+            Assert.Equal("Pending edit", Assert.Single(viewModel.Profiles).Name);
+            Assert.Equal("Before", Assert.Single((await store.LoadAsync()).Profiles).Name);
+        }
+        finally
+        {
+            if (viewModel is not null) await viewModel.CleanupAsync();
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MigrationRefreshesLaunchCommandAfterReloadWithoutSwitchingProfile(bool failTransfer)
+    {
+        var root = Path.Combine(Path.GetTempPath(), "MigrationCommandTests", Guid.NewGuid().ToString("N"));
+        MainViewModel? viewModel = null;
+        try
+        {
+            var profile = new ModProfile { Name = "Ready", GameInstallPath = CreateValidGameRoot(root) };
+            var roaming = Path.Combine(root, "roaming");
+            var paths = new AppPaths(root, useLocalSettings: true, roaming, Path.Combine(root, "legacy"));
+            paths.SetMigrationDecision(false);
+            using (var store = new SettingsStore(paths)) await store.SaveAsync(new AppSettings { Profiles = [profile] });
+            viewModel = CreateViewModel(root, paths: paths);
+            await WaitForSettingsLoadedAsync(viewModel);
+            Assert.True(viewModel.LaunchCommand.CanExecute(null));
+            var buttonEnabled = true;
+            var notifications = new List<bool>();
+            viewModel.LaunchCommand.CanExecuteChanged += (_, _) =>
+            {
+                buttonEnabled = viewModel.LaunchCommand.CanExecute(null);
+                notifications.Add(buttonEnabled);
+            };
+            if (failTransfer)
+            {
+                Directory.CreateDirectory(roaming);
+                await File.WriteAllTextAsync(Path.Combine(roaming, "settings.pending.json"), "{broken");
+                await Assert.ThrowsAsync<SettingsPersistenceException>(() =>
+                    viewModel.RunDataMigrationAsync(new Progress<(double Fraction, string Path)>()));
+            }
+            else
+            {
+                await viewModel.RunDataMigrationAsync(new Progress<(double Fraction, string Path)>());
+            }
+            Assert.Contains(false, notifications);
+            Assert.Equal(profile.Id, viewModel.SelectedProfile?.Id);
+            Assert.False(viewModel.IsBuilding);
+            Assert.True(viewModel.LaunchCommand.CanExecute(null));
+            Assert.True(buttonEnabled);
         }
         finally
         {
@@ -420,8 +645,7 @@ public sealed class MainViewModelTests
             Assert.Equal("Anomaly — копия", duplicate.Name);
             Assert.NotEqual(source.Id, duplicate.Id);
             Assert.Equal(source.GameInstallPath, duplicate.GameInstallPath);
-            Assert.NotEqual(source.WorkspacePath, duplicate.WorkspacePath);
-            Assert.EndsWith($"profile-{duplicate.Id}", duplicate.WorkspacePath);
+            Assert.Empty(duplicate.WorkspacePath);
             Assert.Equal(0, duplicate.TotalPlaytimeSeconds);
             Assert.Null(duplicate.LastPlayedAt);
             Assert.Single(duplicate.Mods);

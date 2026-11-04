@@ -16,9 +16,9 @@ public sealed class PortableStorageTests : IDisposable
         Directory.CreateDirectory(original);
         var paths = new AppPaths(original, useLocalSettings: true);
         paths.EnsureStorageWritable();
-        Assert.Equal(Path.Combine(original, "Data", "StalkerModLauncher"), paths.ConfigDirectory);
-        Assert.Equal(@"Z:\StalkerModLauncher\Workspaces", paths.GetPreferredWorkspaceRoot(@"Z:\game"));
-        Assert.Equal(@"Z:\StalkerModLauncher\Mods", paths.GetDefaultModInstallPath(@"Z:\game"));
+        Assert.Equal(Path.Combine(original, "Data", "CordonModLauncher"), paths.ConfigDirectory);
+        Assert.Equal(Path.Combine(paths.ConfigDirectory, "Workspaces"), paths.GetPreferredWorkspaceRoot(@"Z:\game"));
+        Assert.Equal(Path.Combine(paths.ConfigDirectory, "Mods"), paths.GetDefaultModInstallPath(@"Z:\game"));
         var external = Path.Combine(_root, "external-mod");
         var game = Path.Combine(original, "Games", "game");
         var workspace = paths.GetPreferredWorkspaceRoot(game);
@@ -48,8 +48,8 @@ public sealed class PortableStorageTests : IDisposable
         var restored = await movedStore.LoadAsync();
         var restoredProfile = Assert.Single(restored.Profiles);
         Assert.Equal(Path.Combine(moved, "Games", "game"), restoredProfile.GameInstallPath);
-        Assert.Equal(Path.Combine(workspace, "profile-test"), restoredProfile.WorkspacePath);
-        Assert.Equal(paths.GetDefaultModInstallPath(game), restoredProfile.ModInstallPath);
+        Assert.Equal(Path.Combine(movedPaths.WorkspaceRoot, "profile-test"), restoredProfile.WorkspacePath);
+        Assert.Equal(movedPaths.GetDefaultModInstallPath(game), restoredProfile.ModInstallPath);
         Assert.Equal(external, Assert.Single(restoredProfile.Mods).SourcePath);
         Assert.Equal(external, restoredProfile.ExecutableSourcePath);
         Assert.Equal(Path.Combine(external, "fsgame.ltx"), restoredProfile.FsgameSourcePath);
@@ -68,7 +68,18 @@ public sealed class PortableStorageTests : IDisposable
         var paths = new AppPaths(_root, useLocalSettings: true);
         Assert.True(paths.IsPortable);
         Assert.Throws<IOException>(paths.EnsureStorageWritable);
-        Assert.Equal(Path.Combine(_root, "Data", "StalkerModLauncher"), paths.ConfigDirectory);
+        Assert.Equal(Path.Combine(_root, "Data", "CordonModLauncher"), paths.ConfigDirectory);
+    }
+
+    [Fact]
+    public void DefaultStorageIsLocalRegardlessOfExecutableName()
+    {
+        var paths = new AppPaths(_root);
+        Assert.True(paths.IsPortable);
+        Assert.Equal(Path.Combine(_root, "Data", "CordonModLauncher"), paths.ConfigDirectory);
+        Assert.Equal(Path.Combine(paths.ConfigDirectory, "Workspaces"), paths.WorkspaceRoot);
+        Assert.Equal(Path.Combine(paths.ConfigDirectory, "Cache"), paths.CacheDirectory);
+        Assert.Equal(Path.Combine(paths.ConfigDirectory, "Temp"), paths.TempDirectory);
     }
 
     [Fact]
@@ -106,7 +117,7 @@ public sealed class PortableStorageTests : IDisposable
     }
 
     [Fact]
-    public async Task FirstPortableLaunchImportsExistingRoamingSettingsOnce()
+    public async Task ExplicitPortableImportReadsRoamingSettingsWithoutAutomaticReimport()
     {
         var executableDirectory = Path.Combine(_root, "standalone");
         var roamingDirectory = Path.Combine(_root, "roaming");
@@ -117,10 +128,12 @@ public sealed class PortableStorageTests : IDisposable
             {
                 Profiles = [new ModProfile { Name = "Профиль из AppData" }]
             }));
-        var paths = new AppPaths(executableDirectory, useLocalSettings: true, roamingDirectory);
+        var paths = new AppPaths(executableDirectory, useLocalSettings: true, roamingDirectory, Path.Combine(_root, "legacy"));
+        paths.SetMigrationDecision(true);
         using var store = new SettingsStore(paths);
 
-        Assert.True(await store.TryImportRoamingSettingsAsync());
+        Assert.False(await store.TryImportRoamingSettingsAsync());
+        await store.TransferDataAsync(new Progress<(double Fraction, string Path)>());
         Assert.Equal("Профиль из AppData", Assert.Single((await store.LoadAsync()).Profiles).Name);
 
         await File.WriteAllTextAsync(Path.Combine(roamingDirectory, "settings.json"), "{}");
@@ -137,10 +150,12 @@ public sealed class PortableStorageTests : IDisposable
         await source.SaveAsync(new AppSettings { Profiles = [profile] });
         var originalIndex = await File.ReadAllTextAsync(sourcePaths.SettingsFile);
         var originalProfile = await File.ReadAllTextAsync(sourcePaths.GetProfileFile(profile.Id));
-        var paths = new AppPaths(Path.Combine(_root, "standalone"), useLocalSettings: true, sourcePaths.ConfigDirectory);
+        var paths = new AppPaths(Path.Combine(_root, "standalone"), useLocalSettings: true, sourcePaths.ConfigDirectory, Path.Combine(_root, "legacy"));
+        paths.SetMigrationDecision(true);
         using var destination = new SettingsStore(paths);
 
-        Assert.True(await destination.TryImportRoamingSettingsAsync());
+        Assert.False(await destination.TryImportRoamingSettingsAsync());
+        await destination.TransferDataAsync(new Progress<(double Fraction, string Path)>());
         var loaded = Assert.Single((await destination.LoadAsync()).Profiles);
         Assert.Equal(profile.Id, loaded.Id);
         Assert.Equal(profile.GameInstallPath, loaded.GameInstallPath);

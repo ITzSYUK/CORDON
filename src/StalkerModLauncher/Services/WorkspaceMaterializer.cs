@@ -9,7 +9,6 @@ internal static class WorkspaceMaterializer
     public static void DeleteWorkspaceContents(
         string workspaceDirectory,
         string allowedRoot,
-        Func<WorkspaceSourceSnapshot> snapshotFactory,
         IProgress<string>? progress = null)
     {
         try
@@ -20,23 +19,12 @@ internal static class WorkspaceMaterializer
         catch (Exception ex) when (Directory.Exists(workspaceDirectory) &&
                                    (ex is UnauthorizedAccessException or IOException))
         {
-            // Old workspace versions could contain read-only hard links. NTFS shares
-            // attributes between hard links, so we temporarily unlock only the
-            // workspace entries and restore the source attributes immediately after.
             progress?.Report(Strings.Materializer_OldLinksFound);
         }
 
-        var sourceAttributes = CaptureReadOnlySourceAttributes(snapshotFactory());
-        try
-        {
-            var releasedFiles = ClearReadOnlyWorkspaceAttributes(workspaceDirectory);
-            progress?.Report(LocalizedText.Format(Strings.Materializer_OldLinksReleasedFormat, releasedFiles));
-            FileSystemSafety.DeleteDirectoryContents(workspaceDirectory, allowedRoot);
-        }
-        finally
-        {
-            RestoreSourceAttributes(sourceAttributes);
-        }
+        var releasedFiles = DeleteReadOnlyWorkspaceFiles(workspaceDirectory);
+        progress?.Report(LocalizedText.Format(Strings.Materializer_OldLinksReleasedFormat, releasedFiles));
+        FileSystemSafety.DeleteDirectoryContents(workspaceDirectory, allowedRoot);
     }
 
     public static void ReplaceFile(
@@ -135,34 +123,14 @@ internal static class WorkspaceMaterializer
     private static bool IsAnomalyLauncherConfiguration(string relativePath) =>
         Path.GetFileName(relativePath).Equals("AnomalyLauncher.cfg", StringComparison.OrdinalIgnoreCase);
 
-    private static List<SourceFileAttributes> CaptureReadOnlySourceAttributes(WorkspaceSourceSnapshot snapshot)
+    private static int DeleteReadOnlyWorkspaceFiles(string workspaceDirectory)
     {
-        var sourceFiles = new[] { snapshot.Game }
-            .Concat(snapshot.Mods.Values)
-            .SelectMany(directory => directory.Files)
-            .GroupBy(file => file.FullPath, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.First());
-        var attributes = new List<SourceFileAttributes>();
-
-        foreach (var sourceFile in sourceFiles)
-        {
-            if (!File.Exists(sourceFile.FullPath))
-            {
-                continue;
-            }
-
-            var sourceAttributes = File.GetAttributes(sourceFile.FullPath);
-            if ((sourceAttributes & FileAttributes.ReadOnly) != 0)
-            {
-                attributes.Add(new SourceFileAttributes(sourceFile.FullPath, sourceAttributes));
-            }
-        }
-
-        return attributes;
-    }
-
-    private static int ClearReadOnlyWorkspaceAttributes(string workspaceDirectory)
-    {
+        const uint deleteAccess = 0x00010000;
+        const uint shareReadWriteDelete = 7;
+        const uint openExisting = 3;
+        const uint openReparsePoint = 0x00200000;
+        const int fileDispositionInfoEx = 21;
+        const uint deletePosixIgnoreReadOnly = 0x1 | 0x2 | 0x10;
         var options = new EnumerationOptions
         {
             RecurseSubdirectories = true,
@@ -176,33 +144,28 @@ internal static class WorkspaceMaterializer
             var attributes = File.GetAttributes(file);
             if ((attributes & FileAttributes.ReadOnly) != 0)
             {
-                File.SetAttributes(file, attributes & ~FileAttributes.ReadOnly);
+                // Delete the directory entry without changing attributes shared with other hard links.
+                using var handle = CreateFile(file, deleteAccess, shareReadWriteDelete, IntPtr.Zero, openExisting, openReparsePoint, IntPtr.Zero);
+                if (handle.IsInvalid)
+                    throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+                var flags = deletePosixIgnoreReadOnly;
+                if (!SetFileInformationByHandle(handle, fileDispositionInfoEx, ref flags, sizeof(uint)))
+                    throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
                 releasedFiles++;
-            }
-        }
-
-        foreach (var directory in Directory.EnumerateDirectories(workspaceDirectory, "*", options))
-        {
-            var attributes = File.GetAttributes(directory);
-            if ((attributes & FileAttributes.ReadOnly) != 0)
-            {
-                File.SetAttributes(directory, attributes & ~FileAttributes.ReadOnly);
             }
         }
 
         return releasedFiles;
     }
 
-    private static void RestoreSourceAttributes(IEnumerable<SourceFileAttributes> sourceAttributes)
-    {
-        foreach (var source in sourceAttributes)
-        {
-            if (File.Exists(source.FullPath))
-            {
-                File.SetAttributes(source.FullPath, source.Attributes);
-            }
-        }
-    }
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern Microsoft.Win32.SafeHandles.SafeFileHandle CreateFile(
+        string name, uint access, uint share, IntPtr security, uint creation, uint flags, IntPtr template);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetFileInformationByHandle(
+        Microsoft.Win32.SafeHandles.SafeFileHandle handle, int informationClass, ref uint flags, uint size);
 
     private static IOException CreateLinkFailureException(string sourceFile, string targetFile)
     {
@@ -244,7 +207,6 @@ internal static class WorkspaceMaterializer
     [return: MarshalAs(UnmanagedType.U1)]
     private static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, int dwFlags);
 
-    private sealed record SourceFileAttributes(string FullPath, FileAttributes Attributes);
 }
 
 internal sealed class WorkspaceBuildStats

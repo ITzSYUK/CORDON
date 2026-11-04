@@ -73,6 +73,7 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
         var layerPlan = context.FileLayerPlan!;
         var manifest = context.OverlayManifest!;
         var profileWorkspace = Path.GetFullPath(Path.Combine(manifest.WriteOverlayRoot, "..", ".."));
+        var bootstrapRoot = UsvfsBootstrapPathResolver.Resolve(profileWorkspace);
         var profileFsgamePath = UsvfsProfileDataPreparer.Prepare(
             layerPlan,
             manifest,
@@ -126,7 +127,6 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
         var usePhysicalArchiveRoot = !useAnomalyLauncherBootstrap &&
                                      !useSharedAnomalyBootstrap &&
                                      RequiresPhysicalArchiveRoot(layerPlan);
-        var bootstrapRoot = UsvfsBootstrapPathResolver.Resolve(profileWorkspace);
         UsvfsBootstrapPathResolver.DeleteLegacySharedProfile(
             profileWorkspace,
             layerPlan.BaseGame.RootPath,

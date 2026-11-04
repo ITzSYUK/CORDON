@@ -63,11 +63,6 @@ public sealed class ProfileManager
             });
         }
 
-        if (!duplicate.IsStandalone)
-        {
-            duplicate.WorkspacePath = CreateWorkspacePath(duplicate, duplicate.GameInstallPath);
-        }
-
         duplicate.ModInstallPath = _paths.GetDefaultModInstallPath(duplicate.GameInstallPath);
 
         return duplicate;
@@ -119,12 +114,12 @@ public sealed class ProfileManager
             var workspacePath = string.IsNullOrWhiteSpace(profile.WorkspacePath)
                 ? CreateWorkspacePath(profile, profile.GameInstallPath)
                 : profile.WorkspacePath;
+            _workspaceManager.DeleteProfileWorkspace(profile, profile.GameInstallPath);
             LegacyProfileDataAlias.Delete(workspacePath, profile.Id);
             UsvfsBootstrapPathResolver.DeleteProfile(
                 workspacePath,
                 profile.GameInstallPath,
                 profile.Id);
-            _workspaceManager.DeleteProfileWorkspace(profile, profile.GameInstallPath);
         }
 
         profiles.Remove(profile);

@@ -8,7 +8,8 @@ public sealed record ProfileFileSourceRoot(
     string DisplayName,
     int Order,
     bool CanPinExecutableSource,
-    bool IsBaseGameRoot = false);
+    bool IsBaseGameRoot = false,
+    ModEntry? Mod = null);
 
 public sealed record ProfileExecutableSelection(
     string RelativePath,
@@ -56,7 +57,8 @@ public static class ProfileExecutableSourceResolver
                 root.RootPath,
                 root.DisplayName,
                 root.Order,
-                root.IsBaseGameRoot)),
+                root.IsBaseGameRoot,
+                root.Mod)),
             requestedRelativePath: null,
             cancellationToken: cancellationToken);
 
@@ -91,7 +93,7 @@ public static class ProfileExecutableSourceResolver
         foreach (var root in sourceRoots.Where(root => root.IsBaseGameRoot))
         {
             var launcherPath = AnomalyLauncherLocator.TryFind(root.RootPath);
-            if (launcherPath is not null)
+            if (launcherPath is not null && !FileLayerPlan.IsExcluded(root.Mod, Path.GetFileName(launcherPath)))
             {
                 return new ProfileExecutableSelection(
                     Path.GetFileName(launcherPath),
@@ -108,7 +110,7 @@ public static class ProfileExecutableSourceResolver
                 root.RootPath,
                 profile.ExecutableRelativePath,
                 Strings.Safety_AutomaticExecutable);
-            if (File.Exists(candidate))
+            if (File.Exists(candidate) && !FileLayerPlan.IsExcluded(root.Mod, profile.ExecutableRelativePath))
             {
                 return new ProfileExecutableSelection(
                     profile.ExecutableRelativePath,
@@ -163,7 +165,8 @@ public static class ProfileExecutableSourceResolver
                 LocalizedText.Format(Strings.Layer_ModFormat, mod.Name),
                 mod.Order,
                 true,
-                IsBaseGameRoot: profile.IsStandalone)));
+                IsBaseGameRoot: profile.IsStandalone,
+                Mod: profile.IsStandalone ? null : mod)));
 
         return roots;
     }

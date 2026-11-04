@@ -53,5 +53,5 @@ public interface IUsvfsNativeApi
 }
 
 public sealed record UsvfsProcessHandle(
-    int ProcessId,
+    System.Diagnostics.Process Process,
     Task<int> ExitCodeTask);

@@ -42,17 +42,8 @@ public sealed partial class SettingsStore : IDisposable
         finally { _ioLock.Release(); }
     }
 
-    private async Task<bool> TryImportRoamingSettingsCoreAsync()
-    {
-        if (!_paths.IsPortable) return TryMigrateLegacySettings();
-        if (HasSettingsFile) return false;
-        var source = _paths.SettingsImportFile;
-        if (source is null || !AppPaths.HasSettingsFiles(Path.GetDirectoryName(source)!)) return false;
-        if (!File.Exists(source)) source = Path.ChangeExtension(source, ".backup.json");
-
-        await ImportCoreAsync(source);
-        return true;
-    }
+    private Task<bool> TryImportRoamingSettingsCoreAsync() =>
+        Task.FromResult(!_paths.IsPortable && TryMigrateLegacySettings());
 
     public async Task<AppSettings> LoadAsync()
     {
@@ -139,26 +130,55 @@ public sealed partial class SettingsStore : IDisposable
         await SaveSnapshotCoreAsync(SerializeSettings(loaded.Settings));
     }
 
-    internal async Task<IReadOnlyList<ModProfile>> ReadLegacyProfilesAsync()
+    internal Task<IReadOnlyList<ModProfile>> ReadLegacyProfilesAsync() => ReadProfilesFromDirectoryAsync(_paths.LegacyConfigDirectory);
+
+    private IEnumerable<string> AppDataDirectories => new[] { Path.GetDirectoryName(_paths.RoamingSettingsFile), _paths.LegacyConfigDirectory }
+        .OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase);
+
+    internal async Task<IReadOnlyList<ModProfile>> ReadAppDataProfilesAsync()
     {
-        var directory = _paths.LegacyConfigDirectory;
+        var profiles = new List<ModProfile>();
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var directory in AppDataDirectories)
+            profiles.AddRange((await ReadProfilesFromDirectoryAsync(directory)).Where(profile => ids.Add(profile.Id)));
+        return profiles;
+    }
+
+    private async Task<IReadOnlyList<ModProfile>> ReadProfilesFromDirectoryAsync(string? directory)
+    {
         if (directory is null || !AppPaths.HasSettingsFiles(directory)) return [];
-        var sourcePaths = new AppPaths(directory, _paths.WorkspaceRoot);
+        var sourcePaths = GetImportPaths(Path.Combine(directory, "settings.json"));
+        return (await LoadMigrationSettingsAsync(sourcePaths)).Profiles;
+    }
+
+    private async Task<AppSettings> LoadMigrationSettingsAsync(AppPaths sourcePaths)
+    {
         if (File.Exists(sourcePaths.SettingsPendingFile))
             throw new SettingsPersistenceException(Strings.Settings_ImportPending);
-        var source = File.Exists(sourcePaths.SettingsFile) ? sourcePaths.SettingsFile : sourcePaths.SettingsBackupFile;
-        var imported = await TryLoadSettingsFileAsync(source);
-        if (imported.Settings is null)
-            throw new SettingsPersistenceException(imported.Error ?? Strings.Settings_FileInvalid);
-        if (imported.Settings.ProfileIds is null)
+        var primary = await TryLoadSettingsFileAsync(sourcePaths.SettingsFile);
+        var settings = primary.Settings;
+        if (settings is null)
         {
-            var profiles = imported.Settings.Profiles ?? [];
+            var backup = await TryLoadSettingsFileAsync(sourcePaths.SettingsBackupFile);
+            ThrowIfUnavailable(primary, backup);
+            settings = backup.Settings;
+            if (settings is null)
+            {
+                var recovered = await RecoverUnindexedProfilesAsync(sourcePaths, restore: false);
+                if (recovered.Settings.Profiles.Count == 0)
+                    throw new SettingsPersistenceException(primary.Error ?? backup.Error ?? Strings.Settings_FileInvalid);
+                return recovered.Settings;
+            }
+        }
+        if (settings.ProfileIds is null)
+        {
+            var profiles = settings.Profiles ?? [];
             if (profiles.Any(p => p is null || string.IsNullOrWhiteSpace(p.Id)) ||
                 profiles.Select(p => p.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != profiles.Count)
                 throw new SettingsPersistenceException(Strings.Settings_ProfileIndexInvalid);
         }
-        var loaded = await LoadProfilesAsync(imported.Settings, sourcePaths, restore: false);
-        return loaded.Settings.Profiles;
+        var loaded = await LoadProfilesAsync(settings, sourcePaths, restore: false);
+        return loaded.Settings;
     }
 
     public async Task<AppSettings> UpdateAsync(Func<AppSettings, AppSettings> update)

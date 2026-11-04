@@ -7,27 +7,44 @@ namespace StalkerModLauncher.Tests;
 
 public sealed class LauncherSelfUpdateServiceTests : IDisposable
 {
+    [Fact]
+    public void DownloadUsesTheSingleFullReleaseArchive()
+    {
+        var uri = LauncherReleaseDownloadService.BuildDownloadUri(
+            "https://github.com/ITzSYUK/CORDON/releases/tag/v1.5.5", "v1.5.5");
+
+        Assert.Equal("https://github.com/ITzSYUK/CORDON/releases/download/v1.5.5/CORDON-v1.5.5-win-x64.zip", uri.AbsoluteUri);
+        Assert.Throws<InvalidDataException>(() => LauncherReleaseDownloadService.BuildDownloadUri(
+            "https://example.com/releases/tag/v1.5.5", "v1.5.5"));
+    }
+
+    [Fact]
+    public void UpdateTemporaryFilesStayInLauncherData()
+    {
+        Assert.Equal(Path.Combine(_root, "Data", "CordonModLauncher", "Temp"),
+            LauncherSelfUpdateService.GetUpdateTempDirectory(_root));
+    }
+
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"CORDON-UpdateTests-{Guid.NewGuid():N}");
 
     [Fact]
     public void ExtractAndValidateAcceptsReleaseAndChecksEveryFile()
     {
-        var archivePath = CreateReleaseArchive(LauncherReleasePackage.Standalone);
+        var archivePath = CreateReleaseArchive();
         var stagingDirectory = Path.Combine(_root, "staging");
 
         LauncherSelfUpdateService.ExtractAndValidate(
             archivePath,
-            stagingDirectory,
-            LauncherReleasePackage.Standalone);
+            stagingDirectory);
 
-        Assert.True(File.Exists(Path.Combine(stagingDirectory, "CORDON-Standalone.exe")));
+        Assert.True(File.Exists(Path.Combine(stagingDirectory, "CORDON.exe")));
         Assert.False(Directory.Exists(Path.Combine(stagingDirectory, "Data")));
     }
 
     [Fact]
     public void ExtractAndValidateRejectsDataDirectory()
     {
-        var archivePath = CreateReleaseArchive(LauncherReleasePackage.Minimal, archive =>
+        var archivePath = CreateReleaseArchive(archive =>
         {
             var entry = archive.CreateEntry("Data/settings.json");
             using var writer = new StreamWriter(entry.Open());
@@ -37,33 +54,33 @@ public sealed class LauncherSelfUpdateServiceTests : IDisposable
         var error = Assert.Throws<InvalidDataException>(() =>
             LauncherSelfUpdateService.ExtractAndValidate(
                 archivePath,
-                Path.Combine(_root, "staging-data"),
-                LauncherReleasePackage.Minimal));
+                Path.Combine(_root, "staging-data")));
 
         Assert.Contains("Data", error.Message);
     }
 
-    [Fact]
-    public void ApplyStagedFilesPreservesDataAndRemovesOldPackageExecutable()
+    [Theory]
+    [InlineData("CORDON.exe")]
+    [InlineData("CORDON-Standalone.exe")]
+    public void ApplyStagedFilesPreservesDataAndRemovesOldPackageExecutable(string previousExecutable)
     {
         var target = Directory.CreateDirectory(Path.Combine(_root, "target")).FullName;
         var staging = Directory.CreateDirectory(Path.Combine(_root, "apply-staging")).FullName;
         Directory.CreateDirectory(Path.Combine(target, "Data"));
         File.WriteAllText(Path.Combine(target, "Data", "settings.json"), "keep");
-        File.WriteAllText(Path.Combine(target, "CORDON.exe"), "old executable");
+        File.WriteAllText(Path.Combine(target, previousExecutable), "old executable");
         File.WriteAllText(Path.Combine(target, "user-file.txt"), "keep too");
-        File.WriteAllText(Path.Combine(staging, "CORDON-Standalone.exe"), "new executable");
+        File.WriteAllText(Path.Combine(staging, "CORDON.exe"), "new executable");
         File.WriteAllText(Path.Combine(staging, "usvfs_x64.dll"), "new runtime");
 
         LauncherSelfUpdateService.ApplyStagedFiles(
             staging,
-            target,
-            LauncherReleasePackage.Standalone);
+            target);
 
         Assert.Equal("keep", File.ReadAllText(Path.Combine(target, "Data", "settings.json")));
         Assert.Equal("keep too", File.ReadAllText(Path.Combine(target, "user-file.txt")));
-        Assert.Equal("new executable", File.ReadAllText(Path.Combine(target, "CORDON-Standalone.exe")));
-        Assert.False(File.Exists(Path.Combine(target, "CORDON.exe")));
+        Assert.Equal("new executable", File.ReadAllText(Path.Combine(target, "CORDON.exe")));
+        Assert.False(File.Exists(Path.Combine(target, "CORDON-Standalone.exe")));
     }
 
     [Fact]
@@ -85,12 +102,12 @@ public sealed class LauncherSelfUpdateServiceTests : IDisposable
     public void GetReleaseAssetSha256UsesGitHubAssetDigest()
     {
         using var document = System.Text.Json.JsonDocument.Parse(
-            """{"tag_name":"v1.4.5","assets":[{"name":"CORDON-v1.4.5-win-x64-standalone.zip","digest":"sha256:333F37A1E87F56883E045CD06163EA294FB640936293A7E305220C4506FC81A0"}]}""");
+            """{"tag_name":"v1.4.5","assets":[{"name":"CORDON-v1.4.5-win-x64.zip","digest":"sha256:333F37A1E87F56883E045CD06163EA294FB640936293A7E305220C4506FC81A0"}]}""");
 
         var hash = LauncherReleaseDownloadService.GetReleaseAssetSha256(
             document.RootElement,
             "v1.4.5",
-            "CORDON-v1.4.5-win-x64-standalone.zip");
+            "CORDON-v1.4.5-win-x64.zip");
 
         Assert.Equal("333F37A1E87F56883E045CD06163EA294FB640936293A7E305220C4506FC81A0", hash);
     }
@@ -99,7 +116,7 @@ public sealed class LauncherSelfUpdateServiceTests : IDisposable
     public void TryParseRequestRejectsInvalidPathsWithoutThrowing()
     {
         Assert.False(LauncherSelfUpdateService.TryParseRequest(
-            ["--apply-launcher-update", "1", "invalid\0path", _root, "0", ReadyEventName()],
+            ["--apply-launcher-update", "1", "invalid\0path", _root, ReadyEventName()],
             out _));
     }
 
@@ -109,7 +126,7 @@ public sealed class LauncherSelfUpdateServiceTests : IDisposable
         var eventName = ReadyEventName();
 
         Assert.True(LauncherSelfUpdateService.TryParseRequest(
-            ["--apply-launcher-update", "1", _root, _root, "0", eventName],
+            ["--apply-launcher-update", "1", _root, _root, eventName],
             out var request));
 
         Assert.Equal(eventName, request!.ReadyEventName);
@@ -145,14 +162,13 @@ public sealed class LauncherSelfUpdateServiceTests : IDisposable
     }
 
     private string CreateReleaseArchive(
-        LauncherReleasePackage package,
         Action<ZipArchive>? addEntries = null)
     {
         Directory.CreateDirectory(_root);
         var archivePath = Path.Combine(_root, $"{Guid.NewGuid():N}.zip");
         var files = new Dictionary<string, byte[]>
         {
-            [LauncherSelfUpdateService.GetExecutableName(package)] = "launcher"u8.ToArray(),
+            [LauncherSelfUpdateService.ExecutableFileName] = "launcher"u8.ToArray(),
             ["StalkerModLauncher.UsvfsX86Host.exe"] = "host"u8.ToArray(),
             ["usvfs_x64.dll"] = "x64 dll"u8.ToArray(),
             ["usvfs_proxy_x64.exe"] = "x64 proxy"u8.ToArray(),

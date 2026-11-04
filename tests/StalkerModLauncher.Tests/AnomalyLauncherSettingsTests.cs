@@ -81,7 +81,7 @@ public sealed class AnomalyLauncherSettingsTests : IDisposable
         Write(Path.Combine(first.WorkspaceRoot, "launcherconfig.toml"), "latest");
         var old = _profile.WorkspacePath;
 
-        var result = await new WorkspaceManagementService(_builder).MoveAsync(_profile, Path.Combine(_root, "moved"), new Progress<string>());
+        var result = await new WorkspaceManagementService(_builder).MoveAsync(_profile, Path.Combine(_root, "moved"), new Progress<string>(), () => Task.CompletedTask);
 
         Assert.Null(result.CleanupFailure);
         Assert.False(Directory.Exists(old));
@@ -138,7 +138,7 @@ public sealed class AnomalyLauncherSettingsTests : IDisposable
         var first = await ProfileDataTestFixture.PrepareAsync(_builder, _game, _profile);
         Write(ProfileWritableGameFileStore.GetStoredFilePath(_profile.WorkspacePath, "AnomalyLauncher.cfg"), "stored edit");
         Write(Path.Combine(first.WorkspaceRoot, "AnomalyLauncher.cfg"), "physical edit");
-        var result = await new WorkspaceManagementService(_builder).MoveAsync(_profile, Path.Combine(_root, "move-conflict"), new Progress<string>());
+        var result = await new WorkspaceManagementService(_builder).MoveAsync(_profile, Path.Combine(_root, "move-conflict"), new Progress<string>(), () => Task.CompletedTask);
         Assert.Null(result.CleanupFailure);
         var backup = Assert.Single(Directory.GetFiles(Path.Combine(_profile.WorkspacePath, "diagnostics"), "*.conflict-*.bak"));
         Assert.Equal("stored edit", File.ReadAllText(backup));

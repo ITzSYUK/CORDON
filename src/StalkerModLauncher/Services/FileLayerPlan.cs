@@ -38,7 +38,7 @@ public sealed partial class FileLayerPlan
     public IReadOnlyList<LaunchExecutableSearchRoot> CreateExecutableRoots()
     {
         return SourceLayers
-            .Select(layer => new LaunchExecutableSearchRoot(layer.RootPath, GetDisplayName(layer), layer.Order))
+            .Select(layer => new LaunchExecutableSearchRoot(layer.RootPath, GetDisplayName(layer), layer.Order, Mod: layer.Mod))
             .ToArray();
     }
 
@@ -279,7 +279,7 @@ public sealed partial class FileLayerPlan
         return new ProfileFsgameSource(fullPath, selection.RelativePath, selection.SourceName);
     }
 
-    private static List<FileLayer> CreateSourceLayers(string gamePath, ModProfile profile)
+    internal static List<FileLayer> CreateSourceLayers(string gamePath, ModProfile profile)
     {
         var layers = new List<FileLayer>
         {
@@ -370,8 +370,11 @@ public sealed partial class FileLayerPlan
     }
 
     public static bool IsExcluded(FileLayer layer, string relativePath)
+        => IsExcluded(layer.Mod, relativePath);
+
+    internal static bool IsExcluded(ModEntry? mod, string relativePath)
     {
-        return layer.Mod?.ExcludedFiles.Any(excluded =>
+        return mod?.ExcludedFiles.Any(excluded =>
             NormalizeRelativePath(excluded).Equals(
                 NormalizeRelativePath(relativePath),
                 StringComparison.OrdinalIgnoreCase)) == true;

@@ -166,6 +166,28 @@ public sealed class ProfileReadinessServiceTests : IDisposable
     }
 
     [Fact]
+    public void ValidateAcceptsExecutableAndExcludedFileProvidedByMo2Overwrite()
+    {
+        CreateFile("game/fsgame.ltx", ValidFsgame);
+        CreateFile("mod/unique.ltx");
+        CreateFile("overwrite/unique.ltx");
+        CreateFile("overwrite/bin/xr_3da.exe");
+        var profile = new ModProfile
+        {
+            GameInstallPath = Path.Combine(_root, "game"),
+            Mo2OverwritePath = Path.Combine(_root, "overwrite")
+        };
+        profile.Mods.Add(new ModEntry
+        {
+            Name = "Mod",
+            SourcePath = Path.Combine(_root, "mod"),
+            ExcludedFiles = ["unique.ltx"]
+        });
+
+        Assert.True(ProfileReadinessService.Validate(profile).IsValid);
+    }
+
+    [Fact]
     public void ValidateRejectsExcludedUniqueFileWithoutFallbackProvider()
     {
         CreateFile("game/fsgame.ltx", ValidFsgame);

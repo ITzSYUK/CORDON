@@ -37,32 +37,6 @@ public partial class LauncherSettingsView : UserControl
     private void CancelButton_OnClick(object sender, RoutedEventArgs e) =>
         Cancelled?.Invoke(this, EventArgs.Empty);
 
-    private void DownloadToDownloadsButton_OnClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not LauncherSettingsViewModel viewModel ||
-            !viewModel.ShowDownloadOptionsCommand.CanExecute(null))
-        {
-            return;
-        }
-
-        DownloadToDownloadsButton.IsEnabled = false;
-        var hideButton = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(140));
-        hideButton.Completed += (_, _) =>
-        {
-            viewModel.ShowDownloadOptionsCommand.Execute(null);
-            DownloadToDownloadsButton.BeginAnimation(OpacityProperty, null);
-            DownloadToDownloadsButton.Opacity = 1;
-            DownloadToDownloadsButton.IsEnabled = true;
-            Dispatcher.BeginInvoke(() =>
-            {
-                DownloadOptionsPanel.BeginAnimation(
-                    OpacityProperty,
-                    new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(160)));
-            }, DispatcherPriority.Loaded);
-        };
-        DownloadToDownloadsButton.BeginAnimation(OpacityProperty, hideButton);
-    }
-
     private void LauncherSettingsView_OnDataContextChanged(
         object sender,
         DependencyPropertyChangedEventArgs e)
@@ -91,12 +65,12 @@ public partial class LauncherSettingsView : UserControl
             if (_updateViewModel?.HasAvailableUpdate == true)
             {
                 FadeIn(OpenReleaseButton);
-                FadeIn(DownloadToDownloadsButton);
+                FadeIn(DownloadAndInstallButton);
             }
             else
             {
                 ResetFade(OpenReleaseButton);
-                ResetFade(DownloadToDownloadsButton);
+                ResetFade(DownloadAndInstallButton);
             }
         }, DispatcherPriority.DataBind);
     }

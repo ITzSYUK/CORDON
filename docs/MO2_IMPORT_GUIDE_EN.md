@@ -21,6 +21,8 @@ Saves, `user.ltx` and MO2 launch arguments are not copied automatically. After i
 
 Close MO2 and the game. Check that the build launches from MO2 and that you do not plan to move or delete its folders: the new profile will reference them.
 
+New profile workspaces default to `Data\CordonModLauncher\Workspaces` beside the CORDON executable. The entire workspace path must use ASCII for USVFS, including parent directories; use a permanent launcher location such as `C:\Games\CORDON`. The imported MO2 mod paths remain external references and are not included in a backup of the new CORDON settings alone.
+
 You only need the path to one of these locations:
 
 - the MO2 root folder;

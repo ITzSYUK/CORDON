@@ -1,0 +1,12 @@
+<Window x:Class="StalkerModLauncher.Views.StorageMigrationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="CORDON"
+        Width="700" Height="620" MinWidth="540" MinHeight="480"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Foreground="{StaticResource TextBrush}"
+        WindowStartupLocation="CenterScreen"
+        SourceInitialized="Window_OnSourceInitialized">
+    <ContentControl x:Name="MigrationHost"/>
+</Window>

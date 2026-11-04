@@ -210,10 +210,8 @@
 
                     <StackPanel Grid.Row="1" Margin="0,18">
                         <Border Height="1" Background="{DynamicResource StrokeBrush}" Margin="0,0,0,18"/>
-                        <Button Content="{x:Static res:Strings.Settings_ImportLegacyProfiles}"
-                                Command="{Binding ImportLegacyProfilesCommand}" HorizontalAlignment="Left"/>
-                        <TextBlock Text="{Binding LegacyImportStatus}" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource MutedTextBrush}" Margin="0,8,0,0"/>
+                        <Button Content="{x:Static res:Strings.Settings_MigrationWizard}"
+                                Command="{Binding OpenMigrationWizardCommand}" HorizontalAlignment="Left"/>
                         <Border Height="1" Background="{DynamicResource StrokeBrush}" Margin="0,18,0,0"/>
                     </StackPanel>
 
@@ -295,23 +293,12 @@
                                     Margin="8,0,0,0"
                                     Opacity="0"
                                     Visibility="{Binding HasAvailableUpdate, Converter={StaticResource SettingsBooleanToVisibilityConverter}}"/>
-                            <Grid Margin="8,0,0,0">
-                                <Button x:Name="DownloadToDownloadsButton"
-                                        Content="{x:Static res:Strings.Settings_DownloadAndInstall}"
-                                        Click="DownloadToDownloadsButton_OnClick"
-                                        Opacity="0"
-                                        Visibility="{Binding CanShowDownloadButton, Converter={StaticResource SettingsBooleanToVisibilityConverter}}"/>
-                                <StackPanel x:Name="DownloadOptionsPanel"
-                                            Orientation="Horizontal"
-                                            Opacity="0"
-                                            Visibility="{Binding AreDownloadOptionsVisible, Converter={StaticResource SettingsBooleanToVisibilityConverter}}">
-                                    <Button Content="{x:Static res:Strings.Settings_MinimalVersion}"
-                                            Command="{Binding DownloadMinimalCommand}"/>
-                                    <Button Content="{x:Static res:Strings.Settings_StandaloneVersion}"
-                                            Command="{Binding DownloadStandaloneCommand}"
-                                            Margin="8,0,0,0"/>
-                                </StackPanel>
-                            </Grid>
+                            <Button x:Name="DownloadAndInstallButton"
+                                    Content="{x:Static res:Strings.Settings_DownloadAndInstall}"
+                                    Command="{Binding DownloadAndInstallCommand}"
+                                    Margin="8,0,0,0"
+                                    Opacity="0"
+                                    Visibility="{Binding HasAvailableUpdate, Converter={StaticResource SettingsBooleanToVisibilityConverter}}"/>
                         </StackPanel>
                         <CheckBox Content="{x:Static res:Strings.Settings_AutoCheckUpdates}"
                                       Style="{StaticResource SettingsCheckBoxStyle}"

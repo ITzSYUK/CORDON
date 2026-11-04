@@ -17,18 +17,30 @@ public sealed class WorkspaceManagementService
         return Task.Run(() => Inspect(profile, cancellationToken), cancellationToken);
     }
 
-    public async Task<WorkspaceMoveResult> MoveAsync(
+    public Task<WorkspaceMoveResult> MoveAsync(
+        ModProfile profile, string destinationRoot, IProgress<string> progress,
+        Func<Task> persistSettings, CancellationToken cancellationToken = default) =>
+        TransferAsync(profile, destinationRoot, progress, persistSettings, false, cancellationToken);
+
+    internal Task<WorkspaceMoveResult> CopyToLocalAsync(
+        ModProfile profile, string destinationRoot, IProgress<string> progress, Func<Task> persistSettings) =>
+        TransferAsync(profile, destinationRoot, progress, persistSettings, true, CancellationToken.None);
+
+    private async Task<WorkspaceMoveResult> TransferAsync(
         ModProfile profile,
         string destinationRoot,
         IProgress<string> progress,
-        CancellationToken cancellationToken = default)
+        Func<Task> persistSettings,
+        bool copyOnly,
+        CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(persistSettings);
         EnsureIdle(profile);
         profile.IsPreparing = true;
         try
         {
             var result = await Task.Run(
-                () => PrepareMove(profile, destinationRoot, progress, cancellationToken),
+                () => PrepareMove(profile, destinationRoot, progress, copyOnly, cancellationToken),
                 cancellationToken);
             if (!result.WasMoved)
             {
@@ -38,6 +50,15 @@ public sealed class WorkspaceManagementService
             // ModProfile is observed by WPF. Change it only after returning to the
             // caller's synchronization context, never from the Task.Run worker.
             profile.WorkspacePath = result.DestinationPath;
+            try { await persistSettings(); }
+            catch
+            {
+                // A partial save journal may already reference the copy; keep both directories.
+                profile.WorkspacePath = result.PreviousWorkspacePath ?? string.Empty;
+                throw;
+            }
+
+            if (copyOnly) return result;
 
             var cleanupFailure = await Task.Run(
                 () => TryCleanupOldWorkspace(profile, result.PreviousWorkspacePath),
@@ -74,12 +95,16 @@ public sealed class WorkspaceManagementService
         ModProfile profile,
         string destinationRoot,
         IProgress<string> progress,
+        bool copyOnly,
         CancellationToken cancellationToken)
     {
         if (profile.IsStandalone)
         {
             throw new InvalidOperationException(Strings.Profile_StandaloneNoWorkspace);
         }
+
+        if (!copyOnly && !string.IsNullOrWhiteSpace(profile.WorkspacePath) && !Directory.Exists(profile.WorkspacePath))
+            throw new DirectoryNotFoundException(LocalizedText.Format(Strings.Error_WorkspaceUnavailableFormat, profile.WorkspacePath));
 
         if (FileSystemSafety.IsFileSystemRoot(destinationRoot))
         {
@@ -88,6 +113,8 @@ public sealed class WorkspaceManagementService
 
         var finalDestination = Path.Combine(destinationRoot, ProfileManager.CreateWorkspaceDirectoryName(profile));
         WorkspaceBuilder.ValidateProfileLocation(profile, finalDestination, profile.GameInstallPath);
+        if (profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem)
+            _ = UsvfsBootstrapPathResolver.Resolve(finalDestination);
         var sourceRoots = new[] { profile.GameInstallPath, profile.Mo2OverwritePath }
             .Concat(profile.Mods.Select(mod => mod.SourcePath));
         if (sourceRoots.Where(path => !string.IsNullOrWhiteSpace(path)).Any(source =>
@@ -95,22 +122,39 @@ public sealed class WorkspaceManagementService
                 FileSystemSafety.IsDirectoryInside(source, destinationRoot)))
             throw new InvalidOperationException(Strings.ProfileStorage_SourceOverlap);
 
-        Directory.CreateDirectory(destinationRoot);
-        File.WriteAllText(
-            Path.Combine(destinationRoot, WorkspaceBuilder.RootMarkerFileName),
-            "Managed workspace root created by CORDON.");
-        var destination = Path.Combine(destinationRoot, ProfileManager.CreateWorkspaceDirectoryName(profile));
+        var destination = finalDestination;
         var oldWorkspace = profile.WorkspacePath;
-        if (!string.IsNullOrWhiteSpace(oldWorkspace) && FileSystemSafety.IsSameDirectory(oldWorkspace, destination))
-        {
-            return new WorkspaceMoveResult(destination, oldWorkspace, WasMoved: false);
-        }
-
-        if (!string.IsNullOrWhiteSpace(oldWorkspace) &&
+        var sameWorkspace = !string.IsNullOrWhiteSpace(oldWorkspace) &&
+                            FileSystemSafety.IsSameDirectory(oldWorkspace, destination);
+        if (!sameWorkspace && !string.IsNullOrWhiteSpace(oldWorkspace) &&
             (FileSystemSafety.IsDirectoryInside(destination, oldWorkspace) ||
              FileSystemSafety.IsDirectoryInside(oldWorkspace, destination)))
         {
             throw new InvalidOperationException(Strings.Workspace_NestedDestination);
+        }
+
+        if (copyOnly)
+        {
+            if (WorkspaceBuilder.HasDirectoryLinks(destinationRoot))
+                throw new IOException(LocalizedText.Format(Strings.Copy_ThroughLinkForbiddenFormat, destinationRoot));
+            var conflict = Directory.Exists(destinationRoot)
+                ? Directory.EnumerateFileSystemEntries(destinationRoot)
+                    .FirstOrDefault(path => WorkspaceBuilder.IsGeneratedWorkspaceOwnedByProfile(profile, path))
+                : null;
+            if (conflict is not null)
+                throw new IOException(LocalizedText.Format(Strings.Workspace_DestinationExistsFormat, conflict));
+            WorkspaceBuilder.EnsureWorkspaceRootMarker(destinationRoot);
+        }
+        else
+        {
+            Directory.CreateDirectory(destinationRoot);
+            File.WriteAllText(
+                Path.Combine(destinationRoot, WorkspaceBuilder.RootMarkerFileName),
+                "Managed workspace root created by CORDON.");
+        }
+        if (!copyOnly && sameWorkspace)
+        {
+            return new WorkspaceMoveResult(destination, oldWorkspace, WasMoved: false);
         }
 
         if (Directory.Exists(destination))
@@ -126,7 +170,7 @@ public sealed class WorkspaceManagementService
                 Path.Combine(temporary, ".stalker-launcher-workspace"),
                 "Managed by CORDON. It is safe for the launcher to recreate the 'current' subfolder.");
 
-            if (!string.IsNullOrWhiteSpace(oldWorkspace))
+            if (!copyOnly && !string.IsNullOrWhiteSpace(oldWorkspace))
             {
                 ProfileWritableGameFileStore.CaptureFromWorkspace(
                     Path.Combine(oldWorkspace, ".usvfs-bootstrap"),
@@ -136,18 +180,20 @@ public sealed class WorkspaceManagementService
 
             var sourceUserData = string.IsNullOrWhiteSpace(oldWorkspace) ? string.Empty : Path.Combine(oldWorkspace, "userdata");
             var targetUserData = Path.Combine(temporary, "userdata");
-            if (Directory.Exists(sourceUserData))
+            if (copyOnly ? HasUserData(sourceUserData) : Directory.Exists(sourceUserData))
             {
                 progress.Report(Strings.Workspace_CopyingUserData);
+                if (copyOnly && WorkspaceBuilder.HasDirectoryLinks(sourceUserData))
+                    throw new IOException(LocalizedText.Format(Strings.Copy_ThroughLinkForbiddenFormat, sourceUserData));
                 CopyDirectory(
                     sourceUserData,
                     targetUserData,
-                    "usvfs-bootstrap",
+                    copyOnly ? null : "usvfs-bootstrap",
                     cancellationToken);
             }
 
             var diagnostics = string.IsNullOrWhiteSpace(oldWorkspace) ? string.Empty : Path.Combine(oldWorkspace, "diagnostics");
-            if (Directory.Exists(diagnostics))
+            if (!copyOnly && Directory.Exists(diagnostics))
                 CopyDirectory(diagnostics, Path.Combine(temporary, "diagnostics"), null, cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -164,6 +210,14 @@ public sealed class WorkspaceManagementService
 
             throw;
         }
+    }
+
+    private static bool HasUserData(string path)
+    {
+        if (path.Length == 0) return false;
+        try { return (File.GetAttributes(path) & FileAttributes.Directory) != 0; }
+        catch (FileNotFoundException) { return false; }
+        catch (DirectoryNotFoundException) { return false; }
     }
 
     private Exception? TryCleanupOldWorkspace(ModProfile profile, string? oldWorkspace)

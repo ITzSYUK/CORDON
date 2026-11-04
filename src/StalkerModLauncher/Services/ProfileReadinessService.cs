@@ -98,11 +98,10 @@ public static class ProfileReadinessService
                 try
                 {
                     FileSystemSafety.EnsureRelativePath(excluded, Strings.Safety_ExcludedModFile);
-                    var hasOtherProvider = File.Exists(Path.Combine(profile.GameInstallPath, excluded)) ||
-                                           orderedMods.Any(other =>
-                                               !ReferenceEquals(other, mod) &&
-                                               File.Exists(Path.Combine(other.SourcePath, excluded)) &&
-                                               !other.ExcludedFiles.Contains(excluded, StringComparer.OrdinalIgnoreCase));
+                    var hasOtherProvider = FileLayerPlan.CreateSourceLayers(profile.GameInstallPath, profile)
+                        .Any(layer => !ReferenceEquals(layer.Mod, mod) &&
+                                      !FileLayerPlan.IsExcluded(layer, excluded) &&
+                                      File.Exists(Path.Combine(layer.RootPath, excluded)));
                     if (!hasOtherProvider)
                     {
                         messages.Add(LocalizedText.Format(Strings.Ready_ExcludedProviderMissingFormat, mod.Name, excluded));
@@ -130,12 +129,10 @@ public static class ProfileReadinessService
                 return true;
             }
 
-            var roots = ProfileExecutableSourceResolver.GetSourceRoots(profile)
-                .Select(root => new LaunchExecutableSearchRoot(
-                    root.RootPath,
-                    root.DisplayName,
-                    root.Order,
-                    root.IsBaseGameRoot))
+            var roots = FileLayerPlan.CreateSourceLayers(profile.GameInstallPath, profile)
+                .Select(layer => new LaunchExecutableSearchRoot(
+                    layer.RootPath, FileLayerPlan.GetDisplayName(layer), layer.Order,
+                    layer.Kind == FileLayerKind.BaseGame, layer.Mod))
                 .ToArray();
             var executable = ProfileLaunchPlanResolver.ResolveExecutableSource(
                 profile,

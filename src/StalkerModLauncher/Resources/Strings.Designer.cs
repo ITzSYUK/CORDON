@@ -38,7 +38,6 @@ public static class Strings
     public static string Settings_LogLevelLabel => Get();
     public static string Settings_LogLevelStandard => Get();
     public static string Settings_MinimizeToTray => Get();
-    public static string Settings_MinimalVersion => Get();
     public static string Settings_OpenLauncherFolder => Get();
     public static string Settings_OpenRelease => Get();
     public static string Settings_PdaUi => Get();
@@ -46,7 +45,6 @@ public static class Strings
     public static string Settings_Reset => Get();
     public static string Settings_ShowTrayIcon => Get();
     public static string Settings_ShowUpdateNotifications => Get();
-    public static string Settings_StandaloneVersion => Get();
     public static string Settings_StartMinimized => Get();
     public static string Settings_StartWithWindows => Get();
     public static string Settings_StorageLabel => Get();
@@ -224,6 +222,8 @@ public static class Strings
     public static string SettingsProfile_AnomalyEngine => Get();
     public static string SettingsProfile_AutoSelect => Get();
     public static string SettingsProfile_AutoSelectExeTooltip => Get();
+    public static string SettingsProfile_CopyWorkspace => Get();
+    public static string SettingsProfile_CopyWorkspaceConfirm => Get();
     public static string SettingsProfile_CopyMissingData => Get();
     public static string SettingsProfile_Discord => Get();
     public static string SettingsProfile_DiscordTooltip => Get();
@@ -245,7 +245,6 @@ public static class Strings
     public static string SettingsProfile_Apply => Get();
     public static string SettingsProfile_Mo2Heading => Get();
     public static string SettingsProfile_SaveClose => Get();
-    public static string SettingsProfile_CopyImmediateHint => Get();
     public static string SettingsProfile_Mo2ImmediateHint => Get();
     public static string SettingsProfile_Title => Get();
     public static string SettingsProfile_UserData => Get();
@@ -316,7 +315,6 @@ public static class Strings
     public static string Scan_SelectionFormat => Get();
     public static string Scan_AddingTitle => Get();
     public static string Settings_StoragePortable => Get();
-    public static string Settings_StorageRegular => Get();
     public static string Update_InstallTitle => Get();
     public static string Settings_ResetTitle => Get();
     public static string Settings_ResetMessage => Get();
@@ -330,15 +328,12 @@ public static class Strings
     public static string Settings_OpenFolderFailed => Get();
     public static string Update_OpenReleaseFailed => Get();
     public static string Update_Busy => Get();
-    public static string Update_MinimalPackage => Get();
-    public static string Update_StandalonePackage => Get();
+    public static string Update_Package => Get();
     public static string Update_DownloadingFormat => Get();
     public static string Update_ReadyFormat => Get();
     public static string Update_HttpErrorFormat => Get();
     public static string Update_DownloadConnectionFormat => Get();
     public static string Update_DownloadFailedFormat => Get();
-    public static string Update_MismatchFromStandalone => Get();
-    public static string Update_MismatchToStandalone => Get();
     public static string Update_InstallMessageFormat => Get();
     public static string Update_OpenDownloadsFailed => Get();
     public static string Creation_DefaultName => Get();
@@ -377,6 +372,7 @@ public static class Strings
     public static string Creation_ModSourceFormat => Get();
     public static string Screenshots_CopiedFormat => Get();
     public static string Screenshots_CopyFailedFormat => Get();
+    public static string Screenshots_OpenFailedFormat => Get();
     public static string Main_SelectGame => Get();
     public static string Main_RegularProfileRequired => Get();
     public static string ModFilter_All => Get();
@@ -974,7 +970,9 @@ public static class Strings
     public static string Error_UsvfsSessionNotStarted => Get();
     public static string Error_WorkspaceDeleteOutsideRootFormat => Get();
     public static string Error_WorkspaceMarkerMissingFormat => Get();
-    public static string Error_WorkspaceProfilePathFormat => Get();
+    public static string Error_WorkspaceUnavailableFormat => Get();
+    public static string Workspace_EmptyRedirectedFormat => Get();
+    public static string Error_WorkspaceUnverifiedFormat => Get();
     public static string Error_WorkspaceParentMissingFormat => Get();
     public static string Error_WorkspaceLegacyDestinationExistsFormat => Get();
     public static string Error_StandaloneNoModHelp => Get();
@@ -1056,7 +1054,18 @@ public static class Strings
     public static string Fomod_FolderNotFoundFormat => Get();
     public static string Fomod_ConfigNotFound => Get();
     public static string Fomod_CopyingFormat => Get();
-    public static string Settings_ImportLegacyProfiles => Get();
-    public static string Settings_LegacyImportResult => Get();
-    public static string Settings_LegacyImportFailed => Get();
+    public static string Settings_MigrationWizard => Get();
+    public static string Migration_Explanation => Get();
+    public static string Migration_Contents => Get();
+    public static string Migration_Sources => Get();
+    public static string Migration_NoSources => Get();
+    public static string Migration_PreviewErrorFormat => Get();
+    public static string Migration_Safety => Get();
+    public static string Migration_Decline => Get();
+    public static string Migration_ProgressLabel => Get();
+    public static string Migration_FailedFormat => Get();
+    public static string Migration_Preparing => Get();
+    public static string Migration_CopyingFormat => Get();
+    public static string Migration_ProfilesOnly => Get();
+    public static string Migration_DestinationHeading => Get();
 }

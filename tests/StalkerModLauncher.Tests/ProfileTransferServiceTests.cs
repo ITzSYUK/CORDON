@@ -21,6 +21,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
         var source = new ModProfile
         {
             Name = "Zona",
+            Description = "Описание профиля\nSecond line",
             IsStandalone = true,
             IsDiscordStatusEnabled = false,
             ExecutableRelativePath = @"bin_x64\xrEngine.exe",
@@ -46,6 +47,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
         var imported = ProfileTransferService.Import(filePath);
 
         Assert.Equal(source.Name, imported.Name);
+        Assert.Equal(source.Description, imported.Description);
         Assert.False(imported.IsDiscordStatusEnabled);
         Assert.Equal(source.ExecutableRelativePath, imported.ExecutableRelativePath);
         Assert.Equal(source.FsgameSourcePath, imported.FsgameSourcePath);
@@ -109,6 +111,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
         var imported = ProfileTransferService.Import(filePath);
 
         Assert.Equal(LaunchBackendKind.LegacyWorkspace, imported.LaunchBackendKind);
+        Assert.Empty(imported.Description);
         Assert.Empty(imported.Mods);
     }
 
@@ -145,6 +148,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
             """
             {
               "Name": "Profile",
+              "Description": null,
               "ExecutableSourcePath": null,
               "FsgameSourcePath": null,
               "UsvfsExecutableOverrideRelativePath": null,
@@ -159,6 +163,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
 
         var imported = ProfileTransferService.Import(filePath);
 
+        Assert.Empty(imported.Description);
         Assert.Empty(imported.ExecutableSourcePath);
         Assert.Empty(imported.FsgameSourcePath);
         Assert.Empty(imported.UsvfsExecutableOverrideRelativePath);

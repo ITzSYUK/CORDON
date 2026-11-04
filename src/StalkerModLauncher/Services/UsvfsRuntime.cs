@@ -203,7 +203,7 @@ public sealed class UsvfsRuntimeSession : IUsvfsRuntimeSession
                 .GetResult();
 
             _exitCodeTask = handle.ExitCodeTask;
-            return Process.GetProcessById(handle.ProcessId);
+            return handle.Process;
         }
     }
 

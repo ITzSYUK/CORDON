@@ -9,6 +9,28 @@ namespace StalkerModLauncher.Tests;
 
 public sealed class UsvfsRuntimeTests
 {
+    [Fact]
+    public async Task SessionRetainsProcessThatExitedBeforeStartReturns()
+    {
+        using var exited = Process.Start(new ProcessStartInfo
+        {
+            FileName = Environment.GetEnvironmentVariable("ComSpec")!,
+            Arguments = "/c exit 0",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        })!;
+        await exited.WaitForExitAsync();
+        var native = new FakeUsvfsNativeApi { StartedProcess = exited };
+        await using var session = new UsvfsRuntime(native).CreateSession(
+            new UsvfsMappingPlan(@"C:\game", @"C:\overwrite", []),
+            new UsvfsRuntimeOptions("test-instance"));
+
+        var returned = session.StartProcess(new UsvfsProcessLaunchRequest(@"C:\game\start.exe", "", @"C:\game"));
+
+        Assert.Same(exited, returned);
+        Assert.Equal(0, await session.GetExitCodeAsync());
+    }
+
     [Theory]
     [InlineData(false, UsvfsLogLevel.Info)]
     [InlineData(true, UsvfsLogLevel.Debug)]
@@ -283,6 +305,7 @@ public sealed class UsvfsRuntimeTests
         public List<string> Calls { get; } = [];
         public List<MappingCall> Mappings { get; } = [];
         public bool FailNextMapping { get; init; }
+        public Process? StartedProcess { get; init; }
         public string? CommandLine { get; private set; }
         public string? WorkingDirectory { get; private set; }
         public bool? LogToConsole { get; private set; }
@@ -364,7 +387,7 @@ public sealed class UsvfsRuntimeTests
             CommandLine = commandLine;
             WorkingDirectory = workingDirectory;
             Calls.Add("create-process-hooked");
-            return Task.FromResult(new UsvfsProcessHandle(Environment.ProcessId, Task.FromResult(0)));
+            return Task.FromResult(new UsvfsProcessHandle(StartedProcess ?? Process.GetCurrentProcess(), Task.FromResult(0)));
         }
 
         private static string InferSourceName(string sourcePath)

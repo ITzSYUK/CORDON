@@ -37,15 +37,19 @@ public sealed class FomodUiTests
             {
                 try
                 {
+                    StorageMigrationWindowRenders();
+                    await StorageMigrationPageBlocksNavigationDuringTransferAsync();
+                    ScreenshotsViewsUseViewportLoading();
+                    await ModListScrollResetsWhenProfileChangesAsync();
                     ProfileCreationRendersAndNavigates("classic");
                     ProfileCreationRendersAndNavigates("pda");
                     ProfileCreationRendersAndNavigates("pda-new");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("classic");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("pda");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("pda-new");
-                    LauncherSettingsImportButtonRendersAndRuns("classic");
-                    LauncherSettingsImportButtonRendersAndRuns("pda");
-                    LauncherSettingsImportButtonRendersAndRuns("pda-new");
+                    await LauncherSettingsImportButtonRendersAndRunsAsync("classic");
+                    await LauncherSettingsImportButtonRendersAndRunsAsync("pda");
+                    await LauncherSettingsImportButtonRendersAndRunsAsync("pda-new");
                     ClassicWindowCloseCancelsAndPdaPageReplacementCancels();
                     await FolderRequestsUseExistingWizardForBothInterfacesAsync(application);
                 }
@@ -55,6 +59,134 @@ public sealed class FomodUiTests
             application.Run();
             if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
         });
+    }
+
+    private static async Task ModListScrollResetsWhenProfileChangesAsync()
+    {
+        var panel = new ModPanelView { Resources = ReadAppResources() };
+        var mods = Enumerable.Range(1, 100).Select(i => new ModEntry { Name = $"Mod {i}" }).ToArray();
+        panel.DataContext = new { SelectedProfile = new ModProfile(), FilteredMods = mods };
+        Layout(panel, 800, 500);
+        await panel.Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
+        var list = Assert.IsType<ListView>(panel.FindName("ModsList"));
+        var scroll = Descendants<ScrollViewer>(list).First();
+        scroll.ScrollToEnd();
+        panel.UpdateLayout();
+        Assert.True(scroll.VerticalOffset > 0);
+
+        panel.DataContext = new { SelectedProfile = new ModProfile(), FilteredMods = mods };
+        await panel.Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
+        panel.UpdateLayout();
+        Assert.Equal(0, scroll.VerticalOffset);
+    }
+
+    private static void ScreenshotsViewsUseViewportLoading()
+    {
+        using var classicViewModel = new ScreenshotsViewModel(new ModProfile(), new ScreenshotClipboardService());
+        using var pdaViewModel = new ScreenshotsViewModel(new ModProfile(), new ScreenshotClipboardService());
+        var classic = new ScreenshotsWindow(classicViewModel) { Resources = ReadAppResources() };
+        var classicContent = Assert.IsAssignableFrom<FrameworkElement>(classic.Content);
+        Layout(classicContent, 800, 500);
+        Assert.Contains(Descendants<ScrollViewer>(classicContent), ScreenshotViewportBehavior.GetEnabled);
+        foreach (var newTheme in new[] { false, true })
+        {
+            PdaThemeSelector.UseNewTheme = newTheme;
+            var pda = new PdaScreenshotsView { Resources = ReadAppResources(), DataContext = pdaViewModel };
+            Layout(pda, 800, 500);
+            Assert.Contains(Descendants<ScrollViewer>(pda), ScreenshotViewportBehavior.GetEnabled);
+        }
+    }
+
+    private static void StorageMigrationWindowRenders()
+    {
+        var window = new StorageMigrationWindow(@"D:\CORDON\Data\CordonModLauncher",
+            string.Join(Environment.NewLine, @"C:\Users\Player\AppData\Roaming\StalkerModLauncher", @"D:\StalkerModLauncher\Mods", @"D:\StalkerModLauncher\Workspaces", @"E:\StalkerModLauncher\Mods"));
+        try
+        {
+            Assert.Equal(Visibility.Collapsed, Assert.IsType<TextBlock>(window.ContentView.FindName("MigrationStatus")).Visibility);
+            var content = Assert.IsType<Grid>(window.ContentView.Content);
+            content.Measure(new Size(668, 550));
+            content.Arrange(new Rect(0, 0, 668, 550));
+            content.UpdateLayout();
+            Assert.Equal(@"D:\CORDON\Data\CordonModLauncher", Assert.IsType<TextBlock>(window.ContentView.FindName("DestinationText")).Text);
+            Assert.Contains(@"E:\StalkerModLauncher\Mods", Assert.IsType<TextBlock>(window.ContentView.FindName("SourcesText")).Text);
+            var bitmap = new RenderTargetBitmap(668, 550, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(content);
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            using var stream = File.Create(Path.Combine(Path.GetTempPath(), "Cordon-storage-migration-preview.png"));
+            encoder.Save(stream);
+            window.Dispatcher.BeginInvoke(new Action(() =>
+                Assert.IsType<Button>(window.ContentView.FindName("ProfilesOnlyButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent))));
+            Assert.True(window.ShowDialog());
+            var decline = new StorageMigrationWindow("destination", "sources");
+            decline.Dispatcher.BeginInvoke(new Action(() =>
+                Assert.IsType<Button>(decline.ContentView.FindName("DeclineButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent))));
+            Assert.False(decline.ShowDialog());
+            var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var busy = new StorageMigrationWindow("destination", "sources", progress =>
+            {
+                progress.Report((0.4, "fixture.dat"));
+                return completion.Task;
+            });
+            busy.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                Assert.IsType<Button>(busy.ContentView.FindName("ProfilesOnlyButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                busy.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    Assert.False(Assert.IsType<ProgressBar>(busy.ContentView.FindName("MigrationProgressBar")).IsIndeterminate);
+                    Assert.Equal(0.4, Assert.IsType<ProgressBar>(busy.ContentView.FindName("MigrationProgressBar")).Value);
+                    var bar = Assert.IsType<ProgressBar>(busy.ContentView.FindName("MigrationProgressBar"));
+                    bar.UpdateLayout();
+                    var indicator = Assert.IsType<Border>(bar.Template.FindName("PART_Indicator", bar));
+                    Assert.InRange(indicator.ActualWidth, 1, bar.ActualWidth - 1);
+                    Assert.False(Assert.IsType<Button>(busy.ContentView.FindName("DeclineButton")).IsEnabled);
+                    Assert.Equal(Visibility.Visible, Assert.IsType<TextBlock>(busy.ContentView.FindName("MigrationStatus")).Visibility);
+                    Assert.Contains("fixture.dat", Assert.IsType<TextBlock>(busy.ContentView.FindName("MigrationStatus")).Text);
+                    busy.Close();
+                    Assert.True(busy.IsVisible);
+                    completion.SetResult();
+                }));
+            }));
+            Assert.True(busy.ShowDialog());
+            var attempts = 0;
+            var errors = new TestDialogs();
+            var retry = new StorageMigrationWindow("destination", "sources", _ =>
+                ++attempts == 1 ? Task.FromException(new IOException("fixture failure")) : Task.CompletedTask, errors);
+            retry.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var button = Assert.IsType<Button>(retry.ContentView.FindName("ProfilesOnlyButton"));
+                button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Assert.True(button.IsEnabled);
+                Assert.Contains("fixture failure", errors.Error);
+                button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            }));
+            Assert.True(retry.ShowDialog());
+            Assert.Equal(2, attempts);
+        }
+        finally { window.Close(); }
+    }
+
+    private static async Task StorageMigrationPageBlocksNavigationDuringTransferAsync()
+    {
+        var copying = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var shell = new PdaMainView { Resources = ReadAppResources() };
+        var page = new StorageMigrationView("destination", "sources", _ => copying.Task);
+        page.Completed += (_, _) => completed.TrySetResult();
+        shell.ShowPage(page, Strings.Settings_MigrationWizard, lifetime: page);
+        Assert.IsType<Button>(page.FindName("ProfilesOnlyButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.True(shell.IsMigrationActive);
+        Assert.IsType<Button>(shell.FindName("ProfilesButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.Equal(Visibility.Collapsed, Assert.IsType<Border>(shell.FindName("ProfileDrawer")).Visibility);
+        shell.ShowProfilePage();
+        Assert.Same(page, shell.CurrentPage);
+        shell.ShowPage(new Grid(), "other page");
+        Assert.Same(page, shell.CurrentPage);
+        copying.SetResult();
+        await completed.Task;
+        shell.ShowProfilePage();
+        Assert.Null(shell.CurrentPage);
     }
 
     private static void ProfileCreationRendersAndNavigates(string theme)
@@ -119,20 +251,80 @@ public sealed class FomodUiTests
         }
     }
 
-    private static void LauncherSettingsImportButtonRendersAndRuns(string theme)
+    private static async Task LauncherSettingsImportButtonRendersAndRunsAsync(string theme)
     {
         PdaThemeSelector.UseNewTheme = theme == "pda-new";
         var calls = 0;
+        var downloads = 0;
         var settings = new LauncherSettingsViewModel(LauncherPreferences.Default, "test", _ => Task.CompletedTask,
-            new DialogService(), importLegacyProfiles: () => { calls++; return Task.FromResult((2, 1)); });
+            new DialogService(),
+            checkForUpdates: () => Task.FromResult(new LauncherUpdateResult("1.0.0", "v1.5.5",
+                "https://github.com/ITzSYUK/CORDON/releases/tag/v1.5.5", true)),
+            downloadReleasePackage: (_, _) =>
+            {
+                downloads++;
+                return Task.FromResult(@"C:\CORDON\CORDON-v1.5.5-win-x64.zip");
+            },
+            confirmInstall: _ => true,
+            openMigrationWizard: () => calls++);
         var view = new LauncherSettingsView { DataContext = settings };
         var host = new Border { Resources = ReadAppResources(), Child = view };
+        if (theme != "classic") host.Resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri(theme == "pda-new" ? "/CORDON;component/Themes/NewPdaTheme.xaml" : "/CORDON;component/Themes/PdaTheme.xaml", UriKind.Relative)
+        });
         Layout(host, 760, 500);
-        var button = Assert.Single(Descendants<Button>(view), item => ReferenceEquals(item.Command, settings.ImportLegacyProfilesCommand));
+        var install = Assert.IsType<Button>(view.FindName("DownloadAndInstallButton"));
+        Assert.Equal(Visibility.Collapsed, install.Visibility);
+        await settings.CheckForUpdatesAsync();
+        Layout(host, 760, 500);
+        Assert.Equal(Visibility.Visible, install.Visibility);
+        Assert.Equal(Strings.Settings_DownloadAndInstall, install.Content);
+        Assert.Same(settings.DownloadAndInstallCommand, install.Command);
+        Assert.Single(Descendants<Button>(view), item => ReferenceEquals(item.Command, settings.DownloadAndInstallCommand));
+        Assert.Null(view.FindName("DownloadOptionsPanel"));
+        install.Command.Execute(null);
+        Assert.Equal(1, downloads);
+        await Task.Delay(TimeSpan.FromMilliseconds(250));
+        Assert.InRange(install.Opacity, 0.99, 1);
+        Descendants<ScrollViewer>(view).First().ScrollToBottom();
+        Layout(host, 760, 500);
+        SavePreview(host, "settings-" + theme);
+        var button = Assert.Single(Descendants<Button>(view), item => ReferenceEquals(item.Command, settings.OpenMigrationWizardCommand));
         Assert.True(button.IsEnabled);
         button.Command!.Execute(null);
         Assert.Equal(1, calls);
-        Assert.Equal(LocalizedText.Format(Strings.Settings_LegacyImportResult, 2, 1), settings.LegacyImportStatus);
+        Assert.Equal(Strings.Settings_MigrationWizard, button.Content);
+        bool? selected = null;
+        var migration = new StorageMigrationView("destination", "sources", _ =>
+        {
+            selected = true;
+            return Task.CompletedTask;
+        });
+        if (theme == "classic") host.Child = migration;
+        else
+        {
+            host.Child = null;
+            var shell = new PdaMainView { DataContext = new { UseNewPdaInterface = theme == "pda-new" } };
+            shell.ShowPage(migration, Strings.Settings_MigrationWizard);
+            host.Child = shell;
+            Assert.Same(migration, shell.CurrentPage);
+        }
+        Layout(host, theme == "classic" ? 760 : 1200, theme == "classic" ? 500 : 823);
+        var bar = Assert.IsType<ProgressBar>(migration.FindName("MigrationProgressBar"));
+        if (theme == "pda")
+        {
+            Assert.Same(bar.FindResource("ModArchiveProgressFillBrush"), bar.Foreground);
+            Assert.Same(bar.FindResource("ModArchiveProgressTrackBrush"), bar.Background);
+            Assert.Same(bar.FindResource("StrokeBrush"), bar.BorderBrush);
+        }
+        else Assert.Equal(Color.FromRgb(0xD1, 0x8B, 0x22), Assert.IsType<SolidColorBrush>(bar.Foreground).Color);
+        Assert.True(Assert.IsType<Button>(migration.FindName("ProfilesOnlyButton")).IsEnabled);
+        Assert.Null(migration.FindName("TransferButton"));
+        Assert.Equal(Strings.Migration_ProfilesOnly, Assert.IsType<Button>(migration.FindName("ProfilesOnlyButton")).Content);
+        Assert.IsType<Button>(migration.FindName("ProfilesOnlyButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.True(selected);
+        Assert.Equal(1, Assert.IsType<ProgressBar>(migration.FindName("MigrationProgressBar")).Value);
     }
 
     private static void WizardRendersNavigatesAndInstallsThroughBoundControls(string theme)
