@@ -81,6 +81,7 @@ public static class FileSystemSafety
     public static void DeleteDirectoryContents(string directoryPath, string allowedRoot)
     {
         EnsureDirectoryInside(directoryPath, allowedRoot);
+        EnsureNoDirectoryLinks(directoryPath);
 
         if (!Directory.Exists(directoryPath))
         {
@@ -101,5 +102,11 @@ public static class FileSystemSafety
         var chars = value.Select(ch => invalid.Contains(ch) ? '_' : ch).ToArray();
         var sanitized = new string(chars).Trim(' ', '.');
         return string.IsNullOrWhiteSpace(sanitized) ? "Profile" : sanitized;
+    }
+
+    internal static void EnsureNoDirectoryLinks(string path)
+    {
+        if (WorkspaceBuilder.HasDirectoryLinks(path))
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Safety_DirectoryLinkForbiddenFormat, path));
     }
 }

@@ -192,6 +192,13 @@ public sealed class WorkspaceManagementService
                     cancellationToken);
             }
 
+            if (copyOnly && !string.IsNullOrWhiteSpace(oldWorkspace))
+            {
+                FileSystemSafety.EnsureNoDirectoryLinks(oldWorkspace);
+                ProfileWritableGameFileStore.CaptureFromWorkspace(
+                    Path.Combine(oldWorkspace, ".usvfs-bootstrap"), temporary, progress);
+            }
+
             var diagnostics = string.IsNullOrWhiteSpace(oldWorkspace) ? string.Empty : Path.Combine(oldWorkspace, "diagnostics");
             if (!copyOnly && Directory.Exists(diagnostics))
                 CopyDirectory(diagnostics, Path.Combine(temporary, "diagnostics"), null, cancellationToken);

@@ -13,6 +13,7 @@ internal static class LegacyProfileDataAlias
             return;
         }
 
+        FileSystemSafety.EnsureNoDirectoryLinks(workspaceParent);
         var aliasRoot = Path.Combine(workspaceParent, ".profile-data");
         var aliasPath = Path.Combine(aliasRoot, GetProfileKey(profileId));
         var alias = new DirectoryInfo(aliasPath);

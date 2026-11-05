@@ -16,6 +16,9 @@ public static class LauncherReleaseDownloadService
         string releaseTag,
         CancellationToken cancellationToken = default)
     {
+        using var downloadCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        downloadCancellation.CancelAfter(HttpClient.Timeout);
+        cancellationToken = downloadCancellation.Token;
         var downloadUri = BuildDownloadUri(releaseUrl, releaseTag);
         var assetFileName = Path.GetFileName(downloadUri.LocalPath);
         var expectedHash = await GetReleaseAssetSha256Async(releaseTag, assetFileName, cancellationToken);

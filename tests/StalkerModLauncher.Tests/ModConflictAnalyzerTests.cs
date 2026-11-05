@@ -6,6 +6,30 @@ namespace StalkerModLauncher.Tests;
 
 public sealed class ModConflictAnalyzerTests : IDisposable
 {
+    [Fact]
+    public async Task ProviderViewsKeepPriorityAndExclusionsAcrossAnalyses()
+    {
+        var roots = Enumerable.Range(0, 3).Select(i => CreateMod($"views-{i}", "shared.ltx", "other.ltx")).ToArray();
+        var inputs = roots.Select((root, i) => new ModConflictInput($"id-{i}", $"Name {i}", root, true, [])).ToArray();
+        var analyzer = new ModConflictAnalyzer();
+        var result = await analyzer.AnalyzeAsync(inputs);
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.All(result[$"id-{i}"].Files, file =>
+            {
+                Assert.Equal(inputs.Take(i).Select(mod => mod.Id), file.LowerPriorityModIds);
+                Assert.Equal(inputs.Take(i).Select(mod => mod.Name), file.LowerPriorityModNames);
+                Assert.Equal(inputs.Skip(i + 1).Select(mod => mod.Id), file.HigherPriorityModIds);
+                Assert.Equal(inputs.Skip(i + 1).Select(mod => mod.Name), file.HigherPriorityModNames);
+                Assert.Equal("id-2", file.FinalProviderId);
+            });
+        }
+        inputs[2] = inputs[2] with { ExcludedFiles = ["shared.ltx"] };
+        var changed = await analyzer.AnalyzeAsync(inputs);
+        Assert.Equal("id-1", changed["id-0"].Files.Single(file => file.RelativePath == "shared.ltx").FinalProviderId);
+        Assert.All(result["id-0"].Files, file => Assert.Equal("id-2", file.FinalProviderId));
+    }
+
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
         "StalkerModLauncherTests",

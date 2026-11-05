@@ -11,6 +11,7 @@ internal static class WorkspaceMaterializer
         string allowedRoot,
         IProgress<string>? progress = null)
     {
+        FileSystemSafety.EnsureNoDirectoryLinks(workspaceDirectory);
         try
         {
             FileSystemSafety.DeleteDirectoryContents(workspaceDirectory, allowedRoot);

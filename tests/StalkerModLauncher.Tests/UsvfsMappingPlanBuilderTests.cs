@@ -213,6 +213,44 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
         Assert.Equal(Path.Combine(Path.GetFullPath(game), "shared.ltx"), fallback.DestinationPath);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ExclusionsRemainHiddenWhenFallbackDisappears(bool anomalyBootstrap)
+    {
+        var game = CreateDirectory("transition-game");
+        var first = CreateDirectory("transition-first");
+        var second = CreateDirectory("transition-second");
+        var workspace = CreateDirectory("transition-workspace");
+        const string relative = @"gamedata\configs\shared.ltx";
+        foreach (var root in new[] { first, second })
+        {
+            Directory.CreateDirectory(Path.Combine(root, "gamedata", "configs"));
+            File.WriteAllText(Path.Combine(root, relative), root);
+            File.WriteAllText(Path.Combine(root, "gamedata", "configs", "keep.ltx"), "keep");
+        }
+        var profile = new ModProfile { GameInstallPath = game };
+        var fallback = new ModEntry { SourcePath = first, Order = 1 };
+        profile.Mods.Add(fallback);
+        profile.Mods.Add(new ModEntry { SourcePath = second, Order = 2, ExcludedFiles = [relative] });
+        foreach (var enabled in new[] { true, false })
+        {
+            fallback.IsEnabled = enabled;
+            var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+            var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+            var plan = anomalyBootstrap
+                ? UsvfsMappingPlanBuilder.BuildAnomalyLauncherBootstrap(layers, manifest, Path.Combine(workspace, "bootstrap"))
+                : UsvfsMappingPlanBuilder.Build(layers, manifest);
+            Assert.Equal(enabled, layers.FindFinalFile(relative) is not null);
+            Assert.DoesNotContain(plan.Operations, op =>
+                op.Kind == UsvfsMappingKind.DirectoryStatic &&
+                FileSystemSafety.IsDirectoryInside(Path.Combine(second, relative), op.SourcePath));
+            Assert.DoesNotContain(plan.Operations, op => op.SourcePath == Path.Combine(second, relative));
+            Assert.Contains(plan.Operations, op => op.SourcePath == Path.Combine(second, "gamedata", "configs", "keep.ltx"));
+            Assert.Equal(second, File.ReadAllText(Path.Combine(second, relative)));
+        }
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))

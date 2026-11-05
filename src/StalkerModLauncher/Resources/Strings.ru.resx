@@ -1073,4 +1073,7 @@
   <data name="Migration_CopyingFormat" xml:space="preserve"><value>Импорт профилей: {0}</value></data>
   <data name="Migration_ProfilesOnly" xml:space="preserve"><value>Перенос информации о профилях</value></data>
   <data name="Migration_DestinationHeading" xml:space="preserve"><value>Папка для настроек лаунчера и профилей:</value></data>
+  <data name="Safety_DirectoryLinkForbiddenFormat" xml:space="preserve">
+    <value>Операция через ссылку на каталог запрещена: {0}</value>
+  </data>
 </root>

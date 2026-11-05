@@ -13,6 +13,37 @@ namespace StalkerModLauncher.Tests;
 
 public sealed class MainViewModelTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task UpdateReservationBlocksLaunchAndReleasesBusyState(bool fails)
+    {
+        await RunWithViewModelAsync(async (model, root) =>
+        {
+            var profile = new ModProfile { GameInstallPath = CreateValidGameRoot(root) };
+            model.AddCreatedProfile(profile);
+            var completion = new TaskCompletionSource<string>();
+            var update = model.InstallLauncherUpdateAsync(() => completion.Task);
+            Assert.True(model.IsBuilding);
+            Assert.False(model.CanLaunchProfile(profile));
+            Assert.False(model.LaunchCommand.CanExecute(null));
+            await model.LaunchProfileAsync(profile);
+            Assert.True(model.IsBuilding);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => model.InstallLauncherUpdateAsync(() => Task.FromResult("other")));
+            if (fails)
+            {
+                completion.SetException(new IOException("failed"));
+                await Assert.ThrowsAsync<IOException>(() => update);
+            }
+            else
+            {
+                completion.SetResult("archive.zip");
+                Assert.Equal("archive.zip", await update);
+            }
+            Assert.False(model.IsBuilding);
+        });
+    }
+
     [Fact]
     public async Task BulkDroppedModsRefreshOnceAndKeepSubscriptions()
     {

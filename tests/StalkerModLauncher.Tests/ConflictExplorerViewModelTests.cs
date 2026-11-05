@@ -8,6 +8,49 @@ namespace StalkerModLauncher.Tests;
 
 public sealed class ConflictExplorerViewModelTests : IDisposable
 {
+    [Fact]
+    public void SupersededRefreshCannotClearCurrentBusyState()
+    {
+        var previous = SynchronizationContext.Current;
+        var context = new QueuedContext();
+        SynchronizationContext.SetSynchronizationContext(context);
+        try
+        {
+            var game = Directory.CreateDirectory(Path.Combine(_root, "race-game")).FullName;
+            var profile = new ModProfile { GameInstallPath = game };
+            using var model = new ConflictExplorerViewModel(profile, null, new ModConflictAnalyzer(),
+                new DialogService(), () => Task.CompletedTask, () => { });
+            context.PumpUntil(() => !model.IsBusy);
+            var old = model.RefreshAsync();
+            Assert.True(SpinWait.SpinUntil(() => !context.Callbacks.IsEmpty, TimeSpan.FromSeconds(5)));
+            var current = model.RefreshAsync();
+            context.PumpUntil(() => old.IsCompleted);
+            Assert.False(current.IsCompleted);
+            Assert.True(model.IsBusy);
+            Assert.Equal(Strings.Conflict_Analyzing, model.Summary);
+            context.PumpUntil(() => current.IsCompleted);
+            Assert.True(current.IsCompletedSuccessfully);
+            Assert.False(model.IsBusy);
+        }
+        finally { SynchronizationContext.SetSynchronizationContext(previous); }
+    }
+
+    private sealed class QueuedContext : SynchronizationContext
+    {
+        public System.Collections.Concurrent.ConcurrentQueue<(SendOrPostCallback Callback, object? State)> Callbacks { get; } = new();
+        public override void Post(SendOrPostCallback d, object? state) => Callbacks.Enqueue((d, state));
+        public void PumpUntil(Func<bool> done)
+        {
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (!done() && DateTime.UtcNow < deadline)
+            {
+                if (Callbacks.TryDequeue(out var item)) item.Callback(item.State);
+                else Thread.Yield();
+            }
+            Assert.True(done());
+        }
+    }
+
     private readonly string _root = Path.Combine(Path.GetTempPath(), "StalkerModLauncherTests", "ConflictExplorer", Guid.NewGuid().ToString("N"));
 
     [Fact]
