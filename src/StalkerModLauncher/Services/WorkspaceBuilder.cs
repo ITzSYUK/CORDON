@@ -108,6 +108,8 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
                 .OrderByDescending(path => File.Exists(Path.Combine(path, MarkerFileName)))
                 .ThenByDescending(Directory.GetLastWriteTimeUtc)
                 .FirstOrDefault();
+            if (existingGeneratedWorkspace is not null)
+                ValidateProfileLocation(profile, existingGeneratedWorkspace, gamePath);
             workspacePath = existingGeneratedWorkspace is null
                 ? Path.Combine(preferredRoot, ProfileManager.CreateWorkspaceDirectoryName(profile))
                 : MigrateLegacyGeneratedWorkspace(profile, existingGeneratedWorkspace, progress);
@@ -159,6 +161,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
 
     internal static void ValidateProfileLocation(ModProfile profile, string workspacePath, string gamePath)
     {
+        FileSystemSafety.EnsureNoDirectoryLinks(workspacePath);
         var sources = new[] { gamePath, profile.Mo2OverwritePath }.Concat(profile.Mods.Select(mod => mod.SourcePath));
         if (sources.Where(path => !string.IsNullOrWhiteSpace(path)).Any(source =>
                 FileSystemSafety.IsDirectoryInside(workspacePath, source) ||
@@ -288,6 +291,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
 
     internal static bool EnsureWorkspaceRootMarker(string workspaceRoot)
     {
+        FileSystemSafety.EnsureNoDirectoryLinks(workspaceRoot);
         if (FileSystemSafety.IsFileSystemRoot(workspaceRoot))
             throw new InvalidOperationException(Strings.Workspace_DriveRootForbidden);
         Directory.CreateDirectory(workspaceRoot);

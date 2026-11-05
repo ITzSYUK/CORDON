@@ -37,9 +37,30 @@ public sealed partial class MainViewModel
         _dialogService,
         checkForUpdates,
         confirmReset,
-        canInstallUpdate: () => !IsBuilding && !_isInstallingModArchive && Profiles.All(profile => !profile.IsRunning),
+        downloadReleasePackage: (url, tag) => InstallLauncherUpdateAsync(() => LauncherReleaseDownloadService.DownloadAsync(url, tag)),
+        canInstallUpdate: CanInstallLauncherUpdate,
         requestExit: () => LauncherUpdateInstallationRequested?.Invoke(this, EventArgs.Empty),
         openMigrationWizard: () => StorageMigrationRequested?.Invoke(this, EventArgs.Empty));
+
+    private bool CanInstallLauncherUpdate() =>
+        !IsBuilding && !_isInstallingModArchive && !_isClosing &&
+        Profiles.All(profile => !profile.IsRunning && !profile.IsPreparing);
+
+    internal async Task<string> InstallLauncherUpdateAsync(Func<Task<string>> install)
+    {
+        if (!CanInstallLauncherUpdate()) throw new InvalidOperationException(Strings.Update_Busy);
+        IsBuilding = true;
+        RaiseCommandStates();
+        try
+        {
+            return await install();
+        }
+        finally
+        {
+            IsBuilding = false;
+            RaiseCommandStates();
+        }
+    }
 
     internal Task RunDataMigrationAsync(IProgress<(double Fraction, string Path)> progress)
     {

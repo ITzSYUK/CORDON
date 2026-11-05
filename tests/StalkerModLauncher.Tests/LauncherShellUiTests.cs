@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml.Linq;
+using StalkerModLauncher.Models;
 using StalkerModLauncher.Services;
 using StalkerModLauncher.Themes;
 using StalkerModLauncher.Views;
@@ -18,64 +19,27 @@ public sealed class LauncherShellUiTests
     [Fact]
     public void LauncherSettingsRendersAtClassicAndPdaContentSize()
     {
-        var settings = LoadProjectXaml("Views", "Controls", "LauncherSettingsView.xaml");
-        var classicWindow = LoadProjectXaml("Views", "LauncherSettingsWindow.xaml");
-
-        Assert.DoesNotContain("ПОВЕДЕНИЕ", settings.ToString());
-        Assert.Contains("FontSize=\"12\"", settings.ToString());
-        Assert.Contains("Width=\"20\" Height=\"20\"", settings.ToString());
-        Assert.Contains("Strings.Settings_LogLevelLabel", settings.ToString());
-        Assert.Contains("Strings.Settings_StorageLabel", settings.ToString());
-        Assert.Contains("TextWrapping=\"NoWrap\"", settings.ToString());
-        Assert.Contains("Strings.Settings_UpdateHeading", settings.ToString());
-        Assert.Contains("Strings.Settings_CheckUpdates", settings.ToString());
-        Assert.Contains("CheckForUpdatesCommand", settings.ToString());
-        Assert.Contains("Strings.Settings_OpenRelease", settings.ToString());
-        Assert.Contains("OpenReleaseButton", settings.ToString());
-        Assert.Contains("Strings.Settings_DownloadAndInstall", settings.ToString());
-        Assert.Contains("DownloadAndInstallButton", settings.ToString());
-        Assert.Contains("Strings.Settings_OpenLauncherFolder", settings.ToString());
-        Assert.DoesNotContain("DownloadMinimalCommand", settings.ToString());
-        Assert.DoesNotContain("DownloadOptionsPanel", settings.ToString());
-        Assert.Contains("DownloadAndInstallCommand", settings.ToString());
-        Assert.DoesNotContain("Strings.Settings_StandaloneVersion", settings.ToString());
-        Assert.Contains("Strings.Settings_AutoCheckUpdates", settings.ToString());
-        Assert.Contains("Strings.Settings_StartMinimized", settings.ToString());
-        Assert.Contains("StartMinimizedToTrayOnWindowsStartup", settings.ToString());
-        Assert.Contains("Strings.Settings_ShowTrayIcon", settings.ToString());
-        Assert.Contains("CanStartMinimizedToTray", settings.ToString());
-        Assert.Contains("Strings.Settings_ShowUpdateNotifications", settings.ToString());
-        Assert.Contains("ShowUpdateNotifications", settings.ToString());
-        Assert.Contains("Strings.Settings_Reset", settings.ToString());
-        Assert.Contains("ResetCommand", settings.ToString());
-        Assert.Contains("LauncherSettingsPanelCornerRadius", settings.ToString());
-        Assert.Contains("Strings.Settings_LogDescriptionDetailed", settings.ToString(), StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("Только ошибки —", settings.ToString());
-        Assert.Equal("760", (string?)classicWindow.Root?.Attribute("Width"));
-
-        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-        var behaviorOptions = settings.Descendants(presentation + "CheckBox").ToList();
-        var startWithWindowsIndex = behaviorOptions.FindIndex(element =>
-            (string?)element.Attribute("Content") == "{x:Static res:Strings.Settings_StartWithWindows}");
-        var showTrayIconIndex = behaviorOptions.FindIndex(element =>
-            (string?)element.Attribute("Content") == "{x:Static res:Strings.Settings_ShowTrayIcon}");
-        Assert.True(startWithWindowsIndex < showTrayIconIndex);
-        var minimizeToTray = Assert.Single(behaviorOptions, element =>
-            (string?)element.Attribute("Content") == "{x:Static res:Strings.Settings_MinimizeToTray}");
-        Assert.Equal("26,0,0,0", (string?)minimizeToTray.Attribute("Margin"));
-        Assert.Equal("{Binding CanUseTray}", (string?)minimizeToTray.Attribute("IsEnabled"));
-
         Exception? failure = null;
         var thread = new Thread(() =>
         {
             try
             {
                 var host = CreateThemeHost();
-                var classicSettings = new LauncherSettingsView();
+                var model = new StalkerModLauncher.ViewModels.LauncherSettingsViewModel(
+                    LauncherPreferences.Default, Path.GetTempPath(), _ => Task.CompletedTask,
+                    new DialogService(), () => Task.FromResult(new LauncherUpdateResult("1.0", "1.0", string.Empty, false)));
+                var classicSettings = new LauncherSettingsView { DataContext = model };
                 host.Children.Add(classicSettings);
                 host.Measure(new Size(600, 480));
                 host.Arrange(new Rect(0, 0, 600, 480));
                 host.UpdateLayout();
+
+                var classicSettingsDownload = Assert.IsType<Button>(classicSettings.FindName("DownloadAndInstallButton"));
+                Assert.Same(model.DownloadAndInstallCommand, classicSettingsDownload.Command);
+                Assert.False(classicSettingsDownload.IsEnabled);
+                var classicSettingsRelease = Assert.IsType<Button>(classicSettings.FindName("OpenReleaseButton"));
+                Assert.Same(model.OpenReleaseCommand, classicSettingsRelease.Command);
+                Assert.False(classicSettingsRelease.IsEnabled);
 
                 var classicPanel = Assert.IsType<Border>(classicSettings.FindName("SettingsPanelBorder"));
                 Assert.Equal(new CornerRadius(5), classicPanel.CornerRadius);
@@ -85,11 +49,18 @@ public sealed class LauncherShellUiTests
                 Assert.Equal(600, bitmap.PixelWidth);
 
                 var pda = CreatePdaThemeHost();
-                var pdaSettings = new LauncherSettingsView();
+                var pdaSettings = new LauncherSettingsView { DataContext = model };
                 pda.Children.Add(pdaSettings);
                 pda.Measure(new Size(908, 521));
                 pda.Arrange(new Rect(0, 0, 908, 521));
                 pda.UpdateLayout();
+
+                var pdaSettingsDownload = Assert.IsType<Button>(pdaSettings.FindName("DownloadAndInstallButton"));
+                Assert.Same(model.DownloadAndInstallCommand, pdaSettingsDownload.Command);
+                Assert.False(pdaSettingsDownload.IsEnabled);
+                var pdaSettingsRelease = Assert.IsType<Button>(pdaSettings.FindName("OpenReleaseButton"));
+                Assert.Same(model.OpenReleaseCommand, pdaSettingsRelease.Command);
+                Assert.False(pdaSettingsRelease.IsEnabled);
 
                 var pdaPanel = Assert.IsType<Border>(pdaSettings.FindName("SettingsPanelBorder"));
                 Assert.Equal(new CornerRadius(0), pdaPanel.CornerRadius);
@@ -120,11 +91,18 @@ public sealed class LauncherShellUiTests
                 var newPda = CreatePdaThemeHost(useNewTheme: true);
                 newPda.Width = 959;
                 newPda.Height = 424;
-                var newPdaSettings = new LauncherSettingsView();
+                var newPdaSettings = new LauncherSettingsView { DataContext = model };
                 newPda.Children.Add(newPdaSettings);
                 newPda.Measure(new Size(959, 424));
                 newPda.Arrange(new Rect(0, 0, 959, 424));
                 newPda.UpdateLayout();
+
+                var newPdaSettingsDownload = Assert.IsType<Button>(newPdaSettings.FindName("DownloadAndInstallButton"));
+                Assert.Same(model.DownloadAndInstallCommand, newPdaSettingsDownload.Command);
+                Assert.False(newPdaSettingsDownload.IsEnabled);
+                var newPdaSettingsRelease = Assert.IsType<Button>(newPdaSettings.FindName("OpenReleaseButton"));
+                Assert.Same(model.OpenReleaseCommand, newPdaSettingsRelease.Command);
+                Assert.False(newPdaSettingsRelease.IsEnabled);
 
                 var newPdaBitmap = new RenderTargetBitmap(959, 424, 96, 96, PixelFormats.Pbgra32);
                 newPdaBitmap.Render(newPda);

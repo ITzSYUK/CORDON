@@ -30,20 +30,14 @@ public static class UsvfsMappingPlanBuilder
 
         foreach (var layer in layerPlan.Mods)
         {
-            operations.Add(new UsvfsMappingOperation(
-                UsvfsMappingKind.DirectoryStatic,
-                Path.GetFullPath(layer.RootPath),
-                virtualRoot,
-                FileLayerPlan.GetDisplayName(layer),
-                layer.Order,
-                MonitorChanges: false,
-                CreateTarget: false));
+            AddLayerDirectory(operations, layer, Path.GetFullPath(layer.RootPath), virtualRoot);
         }
 
         AddExcludedFileRestorations(operations, layerPlan, virtualRoot);
         AddWritableFiles(operations, virtualRoot, manifest);
 
         AddProfileOverwrite(operations, layerPlan, manifest, virtualRoot);
+        AddMissingParentDirectories(operations, manifest, virtualRoot);
 
         return new UsvfsMappingPlan(
             virtualRoot,
@@ -77,6 +71,7 @@ public static class UsvfsMappingPlanBuilder
 
         if (layerPlan.UsesAnomalyAppDataAlias)
             operations.RemoveAll(operation => AnomalyAppDataAlias.IsAppDataPath(Path.GetRelativePath(fullVirtualRoot, operation.DestinationPath)));
+        AddMissingParentDirectories(operations, manifest, fullVirtualRoot);
 
         return new UsvfsMappingPlan(
             fullVirtualRoot,
@@ -95,20 +90,12 @@ public static class UsvfsMappingPlanBuilder
             return;
         }
 
-        var sourceName = FileLayerPlan.GetDisplayName(layer);
         foreach (var sourceDirectory in Directory.EnumerateDirectories(sourceRoot, "*", SearchOption.TopDirectoryOnly))
         {
             var directoryName = Path.GetFileName(sourceDirectory);
             if (!directoryName.Equals("bin", StringComparison.OrdinalIgnoreCase))
             {
-                operations.Add(new UsvfsMappingOperation(
-                    UsvfsMappingKind.DirectoryStatic,
-                    sourceDirectory,
-                    Path.Combine(virtualRoot, directoryName),
-                    sourceName,
-                    layer.Order,
-                    MonitorChanges: false,
-                    CreateTarget: false));
+                AddLayerDirectory(operations, layer, sourceDirectory, Path.Combine(virtualRoot, directoryName));
                 continue;
             }
 
@@ -117,15 +104,71 @@ public static class UsvfsMappingPlanBuilder
                          "*",
                          SearchOption.TopDirectoryOnly))
             {
-                operations.Add(new UsvfsMappingOperation(
-                    UsvfsMappingKind.DirectoryStatic,
-                    binSubdirectory,
-                    Path.Combine(virtualRoot, "bin", Path.GetFileName(binSubdirectory)),
-                    sourceName,
-                    layer.Order,
-                    MonitorChanges: false,
-                    CreateTarget: false));
+                AddLayerDirectory(operations, layer, binSubdirectory,
+                    Path.Combine(virtualRoot, "bin", Path.GetFileName(binSubdirectory)));
             }
+        }
+    }
+
+    private static void AddLayerDirectory(
+        List<UsvfsMappingOperation> operations, FileLayer layer, string sourceDirectory, string destinationDirectory)
+    {
+        var exclusions = (layer.Mod?.ExcludedFiles ?? [])
+            .Select(path => FileSystemSafety.ResolvePathInside(layer.RootPath, path, Strings.Safety_ExcludedModFile))
+            .Where(path => FileSystemSafety.IsDirectoryInside(path, sourceDirectory))
+            .ToArray();
+        if (exclusions.Length == 0)
+        {
+            operations.Add(new UsvfsMappingOperation(
+                UsvfsMappingKind.DirectoryStatic, sourceDirectory, destinationDirectory,
+                FileLayerPlan.GetDisplayName(layer), layer.Order, MonitorChanges: false, CreateTarget: false));
+            return;
+        }
+
+        // Split only branches containing exclusions; a recursive mapping would expose excluded files.
+        if (!Directory.Exists(sourceDirectory)) return;
+        foreach (var entry in Directory.EnumerateFileSystemEntries(sourceDirectory))
+        {
+            if (exclusions.Contains(entry, StringComparer.OrdinalIgnoreCase)) continue;
+            var destination = Path.Combine(destinationDirectory, Path.GetFileName(entry));
+            if (Directory.Exists(entry))
+                AddLayerDirectory(operations, layer, entry, destination);
+            else
+                operations.Add(new UsvfsMappingOperation(
+                    UsvfsMappingKind.File, entry, destination,
+                    FileLayerPlan.GetDisplayName(layer), layer.Order, MonitorChanges: false, CreateTarget: false));
+        }
+    }
+
+    private static void AddMissingParentDirectories(
+        List<UsvfsMappingOperation> operations, OverlayManifest manifest, string virtualRoot)
+    {
+        var ordered = operations.OrderBy(operation => operation.Order).ToArray();
+        operations.Clear();
+        var directories = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { virtualRoot };
+        string? emptyDirectory = null;
+        foreach (var operation in ordered)
+        {
+            var missing = new Stack<string>();
+            for (var parent = Path.GetDirectoryName(operation.DestinationPath);
+                 parent is not null && FileSystemSafety.IsDirectoryInside(parent, virtualRoot) &&
+                 !directories.Contains(parent) && !Directory.Exists(parent);
+                 parent = Path.GetDirectoryName(parent))
+                missing.Push(parent);
+            while (missing.TryPop(out var parent))
+            {
+                // LinkFile requires existing virtual parents. An empty source cannot expose excluded files.
+                emptyDirectory ??= Path.GetFullPath(Path.Combine(manifest.WriteOverlayRoot, "..", "..", ".usvfs-empty-directory"));
+                FileSystemSafety.EnsureNoDirectoryLinks(emptyDirectory);
+                Directory.CreateDirectory(emptyDirectory);
+                if (Directory.EnumerateFileSystemEntries(emptyDirectory).Any())
+                    throw new InvalidOperationException(LocalizedText.Format(Strings.Error_WorkspaceUnverifiedFormat, emptyDirectory));
+                operations.Add(new UsvfsMappingOperation(UsvfsMappingKind.DirectoryStatic,
+                    emptyDirectory, parent, operation.SourceName, operation.Order));
+                directories.Add(parent);
+            }
+            operations.Add(operation);
+            if (operation.Kind == UsvfsMappingKind.DirectoryStatic) directories.Add(operation.DestinationPath);
         }
     }
 

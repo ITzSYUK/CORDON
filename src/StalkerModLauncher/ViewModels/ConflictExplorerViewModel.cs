@@ -192,8 +192,9 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
         }
 
         _refreshCancellation?.Dispose();
-        _refreshCancellation = new CancellationTokenSource();
-        var cancellationToken = _refreshCancellation.Token;
+        var cancellation = new CancellationTokenSource();
+        _refreshCancellation = cancellation;
+        var cancellationToken = cancellation.Token;
 
         try
         {
@@ -210,6 +211,7 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
             await Task.WhenAll(finalTreeTask, conflictTask);
 
             cancellationToken.ThrowIfCancellationRequested();
+            if (_refreshCancellation != cancellation) return;
             FinalFiles = await finalTreeTask;
 
             PopulateModFiles(await conflictTask);
@@ -221,11 +223,13 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            Summary = LocalizedText.Format(Strings.Conflict_AnalysisFailedFormat, ex.Message);
+            if (_refreshCancellation == cancellation)
+                Summary = LocalizedText.Format(Strings.Conflict_AnalysisFailedFormat, ex.Message);
         }
         finally
         {
-            IsBusy = false;
+            if (_refreshCancellation == cancellation)
+                IsBusy = false;
         }
     }
 

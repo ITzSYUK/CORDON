@@ -101,6 +101,11 @@ public sealed class ModConflictAnalyzer
             }
         }
 
+        var providerDetails = providersByPath.Where(pair => pair.Value.Count > 1).ToDictionary(
+            pair => pair.Key,
+            pair => (Ids: pair.Value.Select(provider => mods[provider].Id).ToArray(),
+                Names: pair.Value.Select(provider => mods[provider].Name).ToArray()),
+            StringComparer.OrdinalIgnoreCase);
         var result = new Dictionary<string, ModConflictState>(StringComparer.OrdinalIgnoreCase);
         for (var index = 0; index < mods.Count; index++)
         {
@@ -117,20 +122,20 @@ public sealed class ModConflictAnalyzer
             foreach (var relativePath in currentFiles.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
             {
                 var providers = providersByPath[relativePath];
-                var lower = providers.Where(provider => provider < index).ToArray();
-                var higher = providers.Where(provider => provider > index).ToArray();
-                if (lower.Length == 0 && higher.Length == 0)
+                if (providers.Count == 1)
                 {
                     continue;
                 }
 
                 var finalProvider = providers[^1];
+                var position = providers.BinarySearch(index);
+                var (ids, names) = providerDetails[relativePath];
                 conflicts.Add(new ModConflictFileState(
                     relativePath,
-                    lower.Select(provider => mods[provider].Id).ToArray(),
-                    lower.Select(provider => mods[provider].Name).ToArray(),
-                    higher.Select(provider => mods[provider].Id).ToArray(),
-                    higher.Select(provider => mods[provider].Name).ToArray(),
+                    new ArraySegment<string>(ids, 0, position),
+                    new ArraySegment<string>(names, 0, position),
+                    new ArraySegment<string>(ids, position + 1, ids.Length - position - 1),
+                    new ArraySegment<string>(names, position + 1, names.Length - position - 1),
                     mods[finalProvider].Id,
                     mods[finalProvider].Name));
             }

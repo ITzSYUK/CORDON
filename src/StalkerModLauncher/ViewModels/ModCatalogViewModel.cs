@@ -24,6 +24,7 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
     private int _loadGeneration;
     private string _searchQuery = string.Empty;
     private string _statusText = string.Empty;
+    private string? _loadError;
 
     public ModCatalogViewModel(ApProCatalogService catalogService)
     {
@@ -124,6 +125,7 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
         try
         {
             SelectedCategory = category;
+            _loadError = null;
             IsLoading = true;
             IsLoadingMore = false;
             _isSearchLoadingAll = false;
@@ -157,7 +159,7 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
         {
             if (generation == _loadGeneration)
             {
-                StatusText = Strings.Catalog_Unavailable;
+                _loadError = Strings.Catalog_Unavailable;
             }
         }
         finally
@@ -189,6 +191,7 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
         try
         {
             IsLoadingMore = true;
+            _loadError = null;
             UpdateEmptyStatus();
             var page = await _catalogService.LoadPageAsync(SelectedCategory, _nextPageNumber, cancellationToken: cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
@@ -209,7 +212,7 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
         {
             if (generation == _loadGeneration)
             {
-                StatusText = Strings.Catalog_PageFailed;
+                _loadError = Strings.Catalog_PageFailed;
                 HasMorePages = false;
             }
         }
@@ -297,6 +300,12 @@ public sealed class ModCatalogViewModel : ObservableObject, IDisposable
 
     private void UpdateEmptyStatus()
     {
+        if (_loadError is not null)
+        {
+            StatusText = _loadError;
+            return;
+        }
+
         if (Items.Count > 0 || IsLoading)
         {
             StatusText = string.Empty;

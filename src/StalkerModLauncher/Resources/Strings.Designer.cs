@@ -16,6 +16,7 @@ public static class Strings
     private static string Get([CallerMemberName] string key = "") => Manager.GetString(key, Culture) ?? key;
 
     public static string Common_Cancel => Get();
+    public static string Safety_DirectoryLinkForbiddenFormat => Get();
     public static string Common_Open => Get();
     public static string Common_Save => Get();
     public static string Settings_AutoCheckUpdates => Get();

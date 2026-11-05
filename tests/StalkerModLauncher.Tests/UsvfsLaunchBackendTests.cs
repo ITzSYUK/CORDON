@@ -912,6 +912,44 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         return path;
     }
 
+    [Theory]
+    [InlineData(WindowsExecutableArchitecture.X64)]
+    [InlineData(WindowsExecutableArchitecture.X86)]
+    public async Task MissingVirtualWorkingDirectoryUsesPhysicalBootstrap(WindowsExecutableArchitecture architecture)
+    {
+        var game = CreateDirectory("virtual-cwd-game");
+        var mod = CreateDirectory("virtual-cwd-mod");
+        var workspace = CreateDirectory("virtual-cwd-workspace");
+        Directory.CreateDirectory(Path.Combine(game, "bin"));
+        CopyExecutable(Path.Combine(game, "bin", "xr_3da.exe"), architecture);
+        Directory.CreateDirectory(Path.Combine(mod, "config"));
+        var config = Path.Combine(mod, "config", "custom.ltx");
+        File.WriteAllText(config, "$app_data_root$ = true | false | userdata\\");
+        CreateUsvfsRuntimeFiles(game);
+        var profile = new ModProfile
+        {
+            GameInstallPath = game,
+            FsgameSourcePath = config,
+            ExecutableRelativePath = @"bin\xr_3da.exe"
+        };
+        profile.Mods.Add(new ModEntry { SourcePath = mod, IsEnabled = true, Order = 1 });
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+        var x64 = new RecordingUsvfsRuntime();
+        var x86 = new RecordingUsvfsRuntime();
+        var plan = await new UsvfsLaunchBackend(x64, game, x86).PrepareAsync(
+            new ProfileLaunchBackendContext(game, profile, layers, manifest), new Progress<string>());
+        try
+        {
+            Assert.True(Directory.Exists(plan.WorkingDirectory));
+            Assert.Contains(".usvfs-bootstrap", plan.WorkingDirectory, StringComparison.Ordinal);
+            Assert.False(Directory.Exists(Path.Combine(game, "config")));
+            Assert.NotNull((architecture == WindowsExecutableArchitecture.X86 ? x86 : x64).MappingPlan);
+            Assert.Null((architecture == WindowsExecutableArchitecture.X86 ? x64 : x86).MappingPlan);
+        }
+        finally { await plan.RuntimeLease!.DisposeAsync(); }
+    }
+
     private ProfileLaunchBackendContext CreatePreparationContext()
     {
         var game = CreateDirectory("background-game");

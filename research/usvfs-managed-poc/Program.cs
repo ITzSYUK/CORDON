@@ -137,6 +137,10 @@ static async Task<int> RunHostAsync(string[] args)
     IUsvfsRuntime runtime = args.Length >= 2
         ? new X86UsvfsHostRuntime(AppContext.BaseDirectory)
         : new UsvfsRuntime(new OfficialUsvfsNativeApi());
+    var commandProcessor = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+        args.Length >= 2 ? "SysWOW64" : "System32", "cmd.exe");
+    await VerifyExclusionsAsync(runtime, root, commandProcessor);
+    await VerifyVirtualWorkingDirectoryAsync(runtime, root, commandProcessor);
     if (args.Length == 1)
     {
         await VerifyWritableDirectoryMappingAsync(runtime, root, childExecutable);
@@ -200,6 +204,80 @@ static async Task<int> RunHostAsync(string[] args)
 
     Console.WriteLine($"Managed USVFS PoC passed {iterations} iteration(s). Files: {root}");
     return 0;
+}
+
+static async Task VerifyExclusionsAsync(IUsvfsRuntime runtime, string root, string commandProcessor)
+{
+    var scenario = Path.Combine(root, "exclusions");
+    var game = Path.Combine(scenario, "game");
+    var first = Path.Combine(scenario, "first");
+    var second = Path.Combine(scenario, "second");
+    var workspace = Path.Combine(scenario, "workspace");
+    Directory.CreateDirectory(game);
+    const string relative = @"gamedata\configs\excluded.ltx";
+    WriteText(Path.Combine(first, relative), "fallback");
+    WriteText(Path.Combine(second, relative), "excluded");
+    WriteText(Path.Combine(second, "gamedata", "configs", "keep.ltx"), "keep");
+    var profile = new ModProfile { GameInstallPath = game };
+    var fallback = new ModEntry { SourcePath = first, Order = 1 };
+    profile.Mods.Add(fallback);
+    profile.Mods.Add(new ModEntry { SourcePath = second, Order = 2, ExcludedFiles = [relative] });
+    foreach (var bootstrap in new[] { false, true })
+    foreach (var enabled in new[] { true, false })
+    {
+        fallback.IsEnabled = enabled;
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+        Directory.CreateDirectory(manifest.WriteOverlayRoot);
+        var virtualRoot = bootstrap ? Path.Combine(scenario, "bootstrap") : game;
+        Directory.CreateDirectory(virtualRoot);
+        var plan = bootstrap
+            ? UsvfsMappingPlanBuilder.BuildAnomalyLauncherBootstrap(layers, manifest, virtualRoot)
+            : UsvfsMappingPlanBuilder.Build(layers, manifest);
+        var virtualFile = Path.Combine(virtualRoot, relative);
+        var keep = Path.Combine(virtualRoot, "gamedata", "configs", "keep.ltx");
+        var readback = Path.Combine(scenario, "readback.txt");
+        var arguments = enabled
+            ? $"/d /c type {Quote(virtualFile)} > {Quote(readback)} & if exist {Quote(keep)} (exit 0) else (exit 42)"
+            : $"/d /c if exist {Quote(virtualFile)} (exit 41) else if exist {Quote(keep)} (exit 0) else (exit 42)";
+        var result = await runtime.RunAsync(plan,
+            new UsvfsProcessLaunchRequest(commandProcessor, arguments, game),
+            new UsvfsRuntimeOptions("cordon_exclusions", LogToConsole: false));
+        if (result.ExitCode != 0 || (enabled && ReadText(readback) != "fallback") || ReadText(Path.Combine(second, relative)) != "excluded")
+            throw new InvalidOperationException($"Exclusion regression failed (fallback={enabled}, bootstrap={bootstrap}, exit={result.ExitCode}).");
+    }
+    Console.WriteLine("USVFS excluded-file fallback/removal regression passed (normal and bootstrap mappings).");
+}
+
+static async Task VerifyVirtualWorkingDirectoryAsync(IUsvfsRuntime runtime, string root, string commandProcessor)
+{
+    var scenario = Path.Combine(root, "virtual-working-directory");
+    var game = Path.Combine(scenario, "game");
+    var mod = Path.Combine(scenario, "mod");
+    var workspace = Path.Combine(scenario, "workspace");
+    Directory.CreateDirectory(Path.Combine(game, "bin"));
+    File.Copy(commandProcessor, Path.Combine(game, "bin", "xr_3da.exe"), overwrite: true);
+    var config = Path.Combine(mod, "config", "custom.ltx");
+    WriteText(config, "$app_data_root$ = true | false | userdata\\");
+    var profile = new ModProfile
+    {
+        GameInstallPath = game, FsgameSourcePath = config, ExecutableRelativePath = @"bin\xr_3da.exe",
+        LaunchArguments = "/d /c if exist custom.ltx (exit 0) else (exit 41)"
+    };
+    profile.Mods.Add(new ModEntry { SourcePath = mod, Order = 1 });
+    var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+    var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+    var plan = await new UsvfsLaunchBackend(runtime, AppContext.BaseDirectory).PrepareAsync(
+        new ProfileLaunchBackendContext(game, profile, layers, manifest), new Progress<string>());
+    try
+    {
+        using var process = plan.ProcessStarter!(plan, null);
+        var exit = await plan.RuntimeCompletion!();
+        if (exit != 0 || !Directory.Exists(plan.WorkingDirectory) || Directory.Exists(Path.Combine(game, "config")))
+            throw new InvalidOperationException($"Virtual working-directory regression failed (exit={exit}).");
+    }
+    finally { await plan.RuntimeLease!.DisposeAsync(); }
+    Console.WriteLine("USVFS virtual working-directory process launch passed without source changes.");
 }
 
 static async Task VerifyWritableDirectoryMappingAsync(

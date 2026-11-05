@@ -1073,4 +1073,7 @@ Original files have been preserved. You can retry.</value></data>
   <data name="Migration_CopyingFormat" xml:space="preserve"><value>Importing profiles: {0}</value></data>
   <data name="Migration_ProfilesOnly" xml:space="preserve"><value>Transfer profile information</value></data>
   <data name="Migration_DestinationHeading" xml:space="preserve"><value>Launcher settings and profiles folder:</value></data>
+  <data name="Safety_DirectoryLinkForbiddenFormat" xml:space="preserve">
+    <value>Operation through a directory link is forbidden: {0}</value>
+  </data>
 </root>

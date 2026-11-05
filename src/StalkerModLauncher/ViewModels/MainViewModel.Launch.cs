@@ -22,6 +22,7 @@ public sealed partial class MainViewModel
 
     public async Task LaunchProfileAsync(ModProfile profile)
     {
+        if (IsBuilding) return;
         try
         {
             if (IsBuilding ||

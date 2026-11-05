@@ -226,12 +226,16 @@ public sealed class ApProCatalogService : IDisposable
         return await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
     }
 
-    private static async Task<byte[]> ReadContentWithLimitAsync(
+    private async Task<byte[]> ReadContentWithLimitAsync(
         HttpContent content,
         int maximumBytes,
         string description,
         CancellationToken cancellationToken)
     {
+        var callerToken = cancellationToken;
+        using var bodyCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        bodyCancellation.CancelAfter(_httpClient.Timeout);
+        cancellationToken = bodyCancellation.Token;
         var contentLength = content.Headers.ContentLength;
         if (contentLength.HasValue && contentLength.Value > maximumBytes)
         {
@@ -239,7 +243,6 @@ public sealed class ApProCatalogService : IDisposable
                 LocalizedText.Format(Strings.Catalog_ContentTooLargeFormat, description, maximumBytes));
         }
 
-        await using var stream = await content.ReadAsStreamAsync(cancellationToken);
         using var output = new MemoryStream(
             contentLength is > 0 and <= int.MaxValue
                 ? (int)Math.Min(contentLength.Value, maximumBytes)
@@ -247,6 +250,7 @@ public sealed class ApProCatalogService : IDisposable
         var buffer = ArrayPool<byte>.Shared.Rent(64 * 1024);
         try
         {
+            await using var stream = await content.ReadAsStreamAsync(cancellationToken);
             while (true)
             {
                 var read = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken);
@@ -263,6 +267,10 @@ public sealed class ApProCatalogService : IDisposable
 
                 await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
             }
+        }
+        catch (OperationCanceledException ex) when (!callerToken.IsCancellationRequested)
+        {
+            throw new HttpRequestException(Strings.Catalog_Unavailable, ex);
         }
         finally
         {

@@ -119,13 +119,16 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                                          AnomalyLauncherLocator.IsLauncherExecutable(
                                              launchTarget.ExecutablePath);
         var isAnomalyEngine = IsAnomalyEngine(launchTarget.ExecutableRelativePath);
+        var hasPhysicalWorkingDirectory = Directory.Exists(launchTarget.WorkingDirectory);
         var useSharedAnomalyBootstrap = layerPlan.UsesSharedGameData && isAnomalyEngine;
-        var usePhysicalAnomalyRoot = isAnomalyEngine && !useSharedAnomalyBootstrap;
+        var usePhysicalAnomalyRoot = isAnomalyEngine && !useSharedAnomalyBootstrap && hasPhysicalWorkingDirectory;
         var usePhysicalBaseGameRoot = !useAnomalyLauncherBootstrap &&
                                       !useSharedAnomalyBootstrap &&
+                                      hasPhysicalWorkingDirectory &&
                                       ShouldUsePhysicalBaseGameRoot(layerPlan, launchTarget);
         var usePhysicalArchiveRoot = !useAnomalyLauncherBootstrap &&
                                      !useSharedAnomalyBootstrap &&
+                                     hasPhysicalWorkingDirectory &&
                                      RequiresPhysicalArchiveRoot(layerPlan);
         UsvfsBootstrapPathResolver.DeleteLegacySharedProfile(
             profileWorkspace,
