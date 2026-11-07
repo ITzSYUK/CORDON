@@ -1,0 +1,134 @@
+<UserControl x:Class="StalkerModLauncher.Views.Controls.ModImportListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:res="clr-namespace:StalkerModLauncher.Resources">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/CORDON;component/Themes/Palette.xaml"/>
+                <ResourceDictionary Source="/CORDON;component/Themes/SharedStyles.xaml"/>
+                <ResourceDictionary Source="/CORDON;component/Themes/Mo2ImportStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+            <Grid Grid.Row="0" Margin="{DynamicResource Mo2FiltersMargin}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                    <!-- Hint aligned to the TextBox text origin (19,11): 1px border plus doubled 8,5 padding, verified by render test. -->
+                    <TextBlock Text="{x:Static res:Strings.Mo2_SearchPlaceholder}" Margin="19,11,0,0" VerticalAlignment="Top">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Mo2PlaceholderTextStyle}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SearchText}" Value="">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+                <CheckBox x:Name="ProblemFilter" Grid.Row="1" Content="{x:Static res:Strings.Mo2_ShowOnlyProblems}" IsChecked="{Binding ShowOnlyProblems}" Margin="{DynamicResource Mo2ProblemFilterMargin}" VerticalAlignment="Center" FontSize="10" Style="{DynamicResource Mo2ContentCheckBoxStyle}" />
+            </Grid>
+            <DataGrid x:Name="ModsGrid" Grid.Row="1" ItemsSource="{Binding VisibleEntries}" AutoGenerateColumns="False" Style="{StaticResource Mo2DataGridStyle}" IsReadOnly="True" CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal" SelectionMode="Single">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="#" Binding="{Binding Order}" Width="38" x:Name="OrderColumn" />
+                    <DataGridCheckBoxColumn Header="{x:Static res:Strings.Mo2_Enabled}" Binding="{Binding IsEnabled, Mode=OneWay}" Width="60" x:Name="EnabledColumn" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Common_Mod}" Binding="{Binding Name}" Width="2*" />
+                    <DataGridTextColumn x:Name="GroupColumn" Header="{x:Static res:Strings.Mo2_Group}" Binding="{Binding GroupName}" Width="*" />
+                    <DataGridTemplateColumn Header="{x:Static res:Strings.Common_Status}" Width="160" SortMemberPath="Status" x:Name="StatusColumn">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding Status}">
+                                    <TextBlock Text="●" Margin="{DynamicResource Mo2StatusMarkerMargin}" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource AccentGreenBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsAmbiguous}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsAvailable}" Value="False">
+                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Status}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="{x:Static res:Strings.Common_Folder}" Width="2*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid ToolTip="{Binding SourcePath}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding PathDisplay}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip="{Binding SourcePath}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasMultipleCandidates}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <Grid Grid.ColumnSpan="2">
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasMultipleCandidates}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <ComboBox ItemsSource="{Binding CandidateOptions}" SelectedValuePath="Path" SelectedValue="{Binding SourcePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="{x:Static res:Strings.Mo2_SelectMatchingFolder}">
+                                            <ComboBox.Style>
+                                                <Style TargetType="ComboBox" BasedOn="{StaticResource Mo2ComboBoxStyle}">
+                                                    <Setter Property="MinHeight" Value="{DynamicResource Mo2CandidateMinHeight}" />
+                                                    <Setter Property="Padding" Value="{DynamicResource Mo2CandidatePadding}" />
+                                                </Style>
+                                            </ComboBox.Style>
+                                        </ComboBox>
+                                        <TextBlock Text="{x:Static res:Strings.Mo2_SelectFolderPlaceholder}" IsHitTestVisible="False" VerticalAlignment="Center" Margin="{DynamicResource Mo2CandidatePlaceholderMargin}" Foreground="{DynamicResource MutedTextBrush}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsAvailable}" Value="False">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                    <Button Grid.Column="1" Content="{x:Static res:Strings.Mo2Service_SelectFolder}" Command="{Binding DataContext.BrowseMissingModFolderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Margin="{DynamicResource Mo2FolderBrowseButtonMargin}" Padding="{DynamicResource Mo2FolderBrowseButtonPadding}" Style="{DynamicResource Mo2FolderBrowseButtonStyle}" />
+                                </Grid>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+    </Grid>
+</UserControl>

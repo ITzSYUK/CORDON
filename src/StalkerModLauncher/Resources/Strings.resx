@@ -250,12 +250,11 @@
   <data name="Mo2_SelectProfilePlaceholder" xml:space="preserve"><value>Select an MO2 profile…</value></data>
   <data name="Mo2_RequiredFieldsHint" xml:space="preserve"><value>* — required fields.</value></data>
   <data name="Mo2_PathNotFound" xml:space="preserve"><value>Folder not found</value></data>
-  <data name="Mo2_SearchPlaceholder" xml:space="preserve"><value>Search mods…</value></data>
+  <data name="Mo2_SearchPlaceholder" xml:space="preserve"><value>Search by name or group</value></data>
   <data name="Mo2_NextBlockedNoProfile" xml:space="preserve"><value>Select an MO2 profile and existing game and mods folders.</value></data>
   <data name="Mo2_ImportBlockedAmbiguousFormat" xml:space="preserve"><value>Resolve {0} ambiguous mods in the Folder column.</value></data>
   <data name="Mo2_ImportBlockedName" xml:space="preserve"><value>Enter a profile name.</value></data>
   <data name="Mo2_ImportBlockedEmpty" xml:space="preserve"><value>No found mods to import.</value></data>
-  <data name="Mo2_LaunchModeHint" xml:space="preserve"><value>The imported profile launches through USVFS. Source folders are retained.</value></data>
   <data name="Mo2_EnabledReadOnlyHint" xml:space="preserve"><value>State from modlist.txt. Change it in MO2 or after import.</value></data>
   <data name="Mo2_SelectFolderPlaceholder" xml:space="preserve"><value>Select a folder…</value></data>
   <data name="Catalog_CallOfPripyat" xml:space="preserve"><value>Call of Pripyat</value></data>
@@ -1076,4 +1075,10 @@ Original files have been preserved. You can retry.</value></data>
   <data name="Safety_DirectoryLinkForbiddenFormat" xml:space="preserve">
     <value>Operation through a directory link is forbidden: {0}</value>
   </data>
+  <data name="ProfileImport_SummaryFormat" xml:space="preserve"><value>Found mods: {0}; enabled: {1}; missing: {2}.</value></data>
+  <data name="ProfileImport_Group" xml:space="preserve"><value>Group</value></data>
+  <data name="ProfileImport_EnabledHint" xml:space="preserve"><value>State from the profile file. Change it after import.</value></data>
+  <data name="ProfileImport_MissingEnabledMods" xml:space="preserve"><value>Select folders for the missing enabled mods before importing.</value></data>
+  <data name="ProfileImport_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="ProfileImport_BaseGameMissing" xml:space="preserve"><value>Base-game folder not found</value></data>
 </root>

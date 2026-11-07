@@ -730,6 +730,7 @@ public sealed partial class MainViewModel
         _launchCoordinator.Dispose();
         ProfileCreationRequested = null;
         Mo2ImportRequested = null;
+        ProfileImportRequested = null;
         ModScanSelectionRequested = null;
         ConflictExplorerRequested = null;
     }

@@ -12,13 +12,23 @@ public static class ProfileTransferService
         PropertyNameCaseInsensitive = true
     };
 
-    public static void Export(string filePath, ModProfile profile)
+    public static void Export(string filePath, ModProfile profile, AppPaths? paths = null)
     {
+        paths ??= AppPaths.Current;
         var exported = ToExportedProfile(profile);
+        var managedMods = Path.Combine(paths.ConfigDirectory, "Mods");
+        string ToPortableModPath(string? path) => !string.IsNullOrWhiteSpace(path) &&
+            FileSystemSafety.IsDirectoryInside(path, managedMods) ? paths.ToStoredPath(path) : path ?? string.Empty;
+        exported.ExecutableSourcePath = ToPortableModPath(exported.ExecutableSourcePath);
+        exported.FsgameSourcePath = ToPortableModPath(exported.FsgameSourcePath);
+        foreach (var mod in exported.Mods)
+        {
+            mod.SourcePath = ToPortableModPath(mod.SourcePath);
+        }
         File.WriteAllText(filePath, JsonSerializer.Serialize(exported, JsonOptions));
     }
 
-    public static ModProfile Import(string filePath)
+    public static ModProfile Import(string filePath, AppPaths? paths = null)
     {
         var json = File.ReadAllText(filePath);
         ExportedProfile? exported;
@@ -46,6 +56,13 @@ public static class ProfileTransferService
             throw new InvalidDataException(string.Join(Environment.NewLine, validation.Messages));
         }
 
+        paths ??= AppPaths.Current;
+        exported.ExecutableSourcePath = paths.FromStoredPath(exported.ExecutableSourcePath ?? string.Empty);
+        exported.FsgameSourcePath = paths.FromStoredPath(exported.FsgameSourcePath ?? string.Empty);
+        foreach (var mod in exported.Mods)
+        {
+            mod.SourcePath = paths.FromStoredPath(mod.SourcePath);
+        }
         return ToModProfile(exported);
     }
 

@@ -1,0 +1,9 @@
+<Window x:Class="StalkerModLauncher.Views.ProfileImportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+        Title="{x:Static res:Strings.Profile_ImportTitle}"
+        Width="940" Height="640" MinWidth="780" MinHeight="520"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}" Foreground="{StaticResource TextBrush}"
+        SourceInitialized="Window_OnSourceInitialized"/>

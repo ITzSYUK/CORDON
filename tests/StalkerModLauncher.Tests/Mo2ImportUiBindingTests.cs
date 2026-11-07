@@ -90,7 +90,8 @@ public sealed class Mo2ImportUiBindingTests
                 };
                 // This binding test has no Application; decorative checkbox images are covered by the app smoke test.
                 view.Resources["Mo2ContentCheckBoxStyle"] = new Style(typeof(CheckBox));
-                var enabledColumn = (DataGridCheckBoxColumn)view.FindName("EnabledColumn");
+                ((ModImportListView)view.FindName("ModList")).Resources["Mo2ContentCheckBoxStyle"] = new Style(typeof(CheckBox));
+                var enabledColumn = (DataGridCheckBoxColumn)((ModImportListView)view.FindName("ModList")).FindName("EnabledColumn");
                 enabledColumn.ElementStyle = new Style(typeof(CheckBox));
                 view.Measure(new Size(900, 550));
                 view.Arrange(new Rect(0, 0, 900, 550));
@@ -153,7 +154,9 @@ public sealed class Mo2ImportUiBindingTests
         var shell = XDocument.Load(Path.Combine(projectRoot, relativePath));
         XNamespace controls = "clr-namespace:StalkerModLauncher.Views.Controls";
         Assert.Single(shell.Descendants(controls + "Mo2ImportContentView"));
-        return XDocument.Load(Path.Combine(projectRoot, "Views", "Controls", "Mo2ImportContentView.xaml"));
+        var content = XDocument.Load(Path.Combine(projectRoot, "Views", "Controls", "Mo2ImportContentView.xaml"));
+        Assert.Single(content.Descendants(controls + "ModImportListView"));
+        return XDocument.Load(Path.Combine(projectRoot, "Views", "Controls", "ModImportListView.xaml"));
     }
 
     private static string FindProjectRoot()

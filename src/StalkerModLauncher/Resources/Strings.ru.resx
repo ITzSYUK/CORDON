@@ -250,12 +250,11 @@
   <data name="Mo2_SelectProfilePlaceholder" xml:space="preserve"><value>Выберите профиль MO2…</value></data>
   <data name="Mo2_RequiredFieldsHint" xml:space="preserve"><value>* — обязательные поля.</value></data>
   <data name="Mo2_PathNotFound" xml:space="preserve"><value>Папка не найдена</value></data>
-  <data name="Mo2_SearchPlaceholder" xml:space="preserve"><value>Поиск модов…</value></data>
+  <data name="Mo2_SearchPlaceholder" xml:space="preserve"><value>Поиск по названию или группе</value></data>
   <data name="Mo2_NextBlockedNoProfile" xml:space="preserve"><value>Выберите профиль MO2 и существующие папки игры и mods.</value></data>
   <data name="Mo2_ImportBlockedAmbiguousFormat" xml:space="preserve"><value>Разрешите {0} неоднозначных модов в столбце «Папка».</value></data>
   <data name="Mo2_ImportBlockedName" xml:space="preserve"><value>Введите название профиля.</value></data>
   <data name="Mo2_ImportBlockedEmpty" xml:space="preserve"><value>Нет найденных модов для импорта.</value></data>
-  <data name="Mo2_LaunchModeHint" xml:space="preserve"><value>Импортированный профиль запускается через USVFS. Исходные папки сохраняются.</value></data>
   <data name="Mo2_EnabledReadOnlyHint" xml:space="preserve"><value>Состояние из modlist.txt. Меняется в MO2 или после импорта.</value></data>
   <data name="Mo2_SelectFolderPlaceholder" xml:space="preserve"><value>Выберите папку…</value></data>
   <data name="Catalog_CallOfPripyat" xml:space="preserve"><value>Зов Припяти</value></data>
@@ -1076,4 +1075,10 @@
   <data name="Safety_DirectoryLinkForbiddenFormat" xml:space="preserve">
     <value>Операция через ссылку на каталог запрещена: {0}</value>
   </data>
+  <data name="ProfileImport_SummaryFormat" xml:space="preserve"><value>Найдено модов: {0}; включено: {1}; отсутствует: {2}.</value></data>
+  <data name="ProfileImport_Group" xml:space="preserve"><value>Группа</value></data>
+  <data name="ProfileImport_EnabledHint" xml:space="preserve"><value>Состояние из файла профиля. Его можно изменить после импорта.</value></data>
+  <data name="ProfileImport_MissingEnabledMods" xml:space="preserve"><value>Перед импортом выберите папки для отсутствующих включённых модов.</value></data>
+  <data name="ProfileImport_Name" xml:space="preserve"><value>Название</value></data>
+  <data name="ProfileImport_BaseGameMissing" xml:space="preserve"><value>Папка базовой игры не найдена</value></data>
 </root>

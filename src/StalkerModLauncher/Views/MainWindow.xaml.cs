@@ -31,6 +31,8 @@ public partial class MainWindow : Window
         viewModel.StorageMigrationRequested += ViewModel_StorageMigrationRequested;
         Closed += (_, _) => viewModel.StorageMigrationRequested -= ViewModel_StorageMigrationRequested;
         viewModel.Mo2ImportRequested += ViewModel_Mo2ImportRequested;
+        viewModel.ProfileImportRequested += ViewModel_ProfileImportRequested;
+        Closed += (_, _) => viewModel.ProfileImportRequested -= ViewModel_ProfileImportRequested;
         viewModel.ConflictExplorerRequested += ViewModel_ConflictExplorerRequested;
         DataContext = viewModel;
     }
@@ -69,6 +71,11 @@ public partial class MainWindow : Window
         {
             _navigation.ShowMo2Import(this, ViewModel);
         }
+    }
+
+    private void ViewModel_ProfileImportRequested(object? sender, ProfileImportViewModel viewModel)
+    {
+        if (_pdaWindow is null) new ProfileImportWindow(viewModel) { Owner = this }.ShowDialog();
     }
 
     private void ActivityLog_PropertyChanged(object? sender, PropertyChangedEventArgs e)

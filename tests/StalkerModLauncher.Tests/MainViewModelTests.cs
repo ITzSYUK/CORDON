@@ -744,6 +744,31 @@ public sealed class MainViewModelTests
     }
 
     [Fact]
+    public async Task ProfileImportPreviewAddsAndSavesProfileOnlyAfterConfirmation()
+    {
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            var imported = new ModProfile { Name = "Imported", GameInstallPath = Path.Combine(root, "old-game") };
+            using var preview = viewModel.CreateProfileImportViewModel(imported);
+            preview.ProfileName = "Renamed";
+            preview.GamePath = Path.Combine(root, "new-game");
+            Assert.Empty(viewModel.Profiles);
+            Assert.Null(viewModel.SelectedProfile);
+            var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            preview.Completed += (_, _) => completion.SetResult();
+
+            preview.ImportCommand.Execute(null);
+            await completion.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.Same(imported, Assert.Single(viewModel.Profiles));
+            Assert.Same(imported, viewModel.SelectedProfile);
+            Assert.Equal("Renamed", imported.Name);
+            Assert.Equal(Path.Combine(root, "new-game"), imported.GameInstallPath);
+            Assert.True(File.Exists(Path.Combine(root, "config", "settings.json")));
+        });
+    }
+
+    [Fact]
     public async Task TryAddImportedProfileAsyncRollsBackWhenSettingsCannotBeSaved()
     {
         var dialogService = new CapturingDialogService();

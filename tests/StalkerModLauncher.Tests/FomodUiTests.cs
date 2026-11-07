@@ -37,6 +37,10 @@ public sealed class FomodUiTests
             {
                 try
                 {
+                    ProfileImportUiTests.VerifyPreview(false, false, 900, 550);
+                    ProfileImportUiTests.VerifyPreview(true, false, 908, 521);
+                    ProfileImportUiTests.VerifyPreview(true, true, 959, 424);
+                    PdaThemeSelector.UseNewTheme = false;
                     StorageMigrationWindowRenders();
                     await StorageMigrationPageBlocksNavigationDuringTransferAsync();
                     ScreenshotsViewsUseViewportLoading();

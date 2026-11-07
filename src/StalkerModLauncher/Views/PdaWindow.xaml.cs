@@ -22,6 +22,7 @@ public partial class PdaWindow : Window
         DataContext = viewModel;
         viewModel.ProfileCreationRequested += ViewModel_ProfileCreationRequested;
         viewModel.Mo2ImportRequested += ViewModel_Mo2ImportRequested;
+        viewModel.ProfileImportRequested += ViewModel_ProfileImportRequested;
         viewModel.FomodInstallRequested += ViewModel_FomodInstallRequested;
         viewModel.StorageMigrationRequested += ViewModel_StorageMigrationRequested;
         Closing += (_, e) => { if (PdaView.IsMigrationActive) e.Cancel = true; };
@@ -32,6 +33,7 @@ public partial class PdaWindow : Window
         {
             viewModel.ProfileCreationRequested -= ViewModel_ProfileCreationRequested;
             viewModel.Mo2ImportRequested -= ViewModel_Mo2ImportRequested;
+            viewModel.ProfileImportRequested -= ViewModel_ProfileImportRequested;
             viewModel.FomodInstallRequested -= ViewModel_FomodInstallRequested;
             viewModel.StorageMigrationRequested -= ViewModel_StorageMigrationRequested;
             viewModel.ModScanSelectionRequested -= ViewModel_ModScanSelectionRequested;
@@ -115,6 +117,14 @@ public partial class PdaWindow : Window
     }
 
     private MainViewModel? ViewModel => DataContext as MainViewModel;
+
+    private void ViewModel_ProfileImportRequested(object? sender, ProfileImportViewModel viewModel)
+    {
+        var page = new ProfileImportContentView(usePdaTheme: true) { DataContext = viewModel };
+        viewModel.Completed += (_, _) => PdaView.ShowProfilePage();
+        page.Cancelled += (_, _) => PdaView.ShowProfilePage();
+        PdaView.ShowPage(page, Strings.Profile_ImportTitle, lifetime: viewModel);
+    }
 
     private void ViewModel_ProfileCreationRequested(object? sender, EventArgs e)
     {

@@ -8,6 +8,12 @@ namespace StalkerModLauncher.Resources;
 
 public static class Strings
 {
+    public static string ProfileImport_BaseGameMissing => Get();
+    public static string ProfileImport_Name => Get();
+    public static string ProfileImport_SummaryFormat => Get();
+    public static string ProfileImport_Group => Get();
+    public static string ProfileImport_EnabledHint => Get();
+    public static string ProfileImport_MissingEnabledMods => Get();
     private static readonly ResourceManager Manager = new("StalkerModLauncher.Resources.Strings", typeof(Strings).Assembly);
 
     public static ResourceManager ResourceManager => Manager;
@@ -281,7 +287,6 @@ public static class Strings
     public static string Mo2_ImportBlockedAmbiguousFormat => Get();
     public static string Mo2_ImportBlockedName => Get();
     public static string Mo2_ImportBlockedEmpty => Get();
-    public static string Mo2_LaunchModeHint => Get();
     public static string Mo2_EnabledReadOnlyHint => Get();
     public static string Mo2_SelectFolderPlaceholder => Get();
     public static string Catalog_CallOfPripyat => Get();

@@ -44,7 +44,7 @@ public sealed partial class MainViewModel
 
         try
         {
-            ProfileTransferService.Export(dialog.FileName, profile);
+            ProfileTransferService.Export(dialog.FileName, profile, _paths);
             Log(LocalizedText.Format(Strings.Log_ProfileExportedFormat, profile.Name));
         }
         catch (Exception ex)
@@ -70,13 +70,8 @@ public sealed partial class MainViewModel
 
         try
         {
-            var profile = ProfileTransferService.Import(dialog.FileName);
-            _profileManager.PrepareImported(Profiles, profile);
-
-            Profiles.Add(profile);
-            SelectedProfile = profile;
-            _ = SaveAsync();
-            Log(LocalizedText.Format(Strings.Log_ProfileImportedFormat, profile.Name));
+            var profile = ProfileTransferService.Import(dialog.FileName, _paths);
+            ProfileImportRequested?.Invoke(this, CreateProfileImportViewModel(profile));
         }
         catch (Exception ex)
         {
@@ -148,7 +143,17 @@ public sealed partial class MainViewModel
                 _autoSave.Schedule();
             });
 
-    public async Task<bool> TryAddImportedProfileAsync(ModProfile profile)
+    public ProfileImportViewModel CreateProfileImportViewModel(ModProfile profile) =>
+        new(profile, imported =>
+        {
+            _profileManager.PrepareImported(Profiles, imported);
+            return TryAddImportedProfileAsync(imported, fromMo2: false);
+        });
+
+    public Task<bool> TryAddImportedProfileAsync(ModProfile profile) =>
+        TryAddImportedProfileAsync(profile, fromMo2: true);
+
+    private async Task<bool> TryAddImportedProfileAsync(ModProfile profile, bool fromMo2)
     {
         var previousSelection = SelectedProfile;
         profile.Name = ProfileManager.GetUniqueName(Profiles, profile.Name);
@@ -158,7 +163,7 @@ public sealed partial class MainViewModel
         try
         {
             await SaveOrThrowAsync();
-            Log(LocalizedText.Format(Strings.Log_Mo2ProfileImportedFormat, profile.Name));
+            Log(LocalizedText.Format(fromMo2 ? Strings.Log_Mo2ProfileImportedFormat : Strings.Log_ProfileImportedFormat, profile.Name));
             return true;
         }
         catch (Exception ex)
@@ -167,10 +172,10 @@ public sealed partial class MainViewModel
             SelectedProfile = previousSelection is not null && Profiles.Contains(previousSelection)
                 ? previousSelection
                 : Profiles.FirstOrDefault();
-            Log(LocalizedText.Format(Strings.Log_Mo2ImportRolledBackFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
+            Log(LocalizedText.Format(fromMo2 ? Strings.Log_Mo2ImportRolledBackFormat : Strings.Log_ImportFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
             _dialogService.ShowError(
-                Strings.Mo2_TransferFailed,
-                LocalizedText.Format(Strings.Mo2_TransferCancelledFormat, Environment.NewLine, ex.Message));
+                fromMo2 ? Strings.Mo2_TransferFailed : Strings.Profile_ImportError,
+                fromMo2 ? LocalizedText.Format(Strings.Mo2_TransferCancelledFormat, Environment.NewLine, ex.Message) : ex.Message);
             return false;
         }
     }
