@@ -24,14 +24,11 @@
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Margin="0,0,0,8" Text="{Binding StepTitle}" Style="{StaticResource Mo2StepTitleStyle}" VerticalAlignment="Center"/>
-
-        <Border Grid.Row="1" Style="{StaticResource Mo2MessageBorderStyle}" Margin="0,0,0,12">
+        <Border Style="{StaticResource Mo2MessageBorderStyle}" Margin="0,0,0,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -65,12 +62,12 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="2" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource StrokeBrush}"
+        <Border Grid.Row="1" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource StrokeBrush}"
                 BorderThickness="1" CornerRadius="6" Padding="16">
             <controls:Mo2ImportContentView x:Name="ImportContent"/>
         </Border>
 
-        <Grid Grid.Row="3" Margin="0,12,0,0">
+        <Grid Grid.Row="2" Margin="0,12,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>

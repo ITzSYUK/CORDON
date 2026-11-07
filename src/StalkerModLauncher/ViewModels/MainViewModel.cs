@@ -186,6 +186,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public event EventHandler? ProfileCreationRequested;
     public event EventHandler? Mo2ImportRequested;
+    public event EventHandler<ProfileImportViewModel>? ProfileImportRequested;
     public event EventHandler<ModScanSelectionEventArgs>? ModScanSelectionRequested;
     public event EventHandler<ModEntry?>? ConflictExplorerRequested;
 

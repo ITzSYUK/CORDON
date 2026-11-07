@@ -63,6 +63,77 @@ public sealed class ProfileTransferServiceTests : IDisposable
         Assert.Null(imported.LastPlayedAt);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ManagedModPathsArePortableBetweenLauncherDirectories(bool isStandalone)
+    {
+        Directory.CreateDirectory(_root);
+        var sourcePaths = new AppPaths(Path.Combine(_root, "source"));
+        var targetPaths = new AppPaths(Path.Combine(_root, "target"));
+        var filePath = Path.Combine(_root, "profile.stalkerprofile");
+        var relativePath = Path.Combine("Data", "CordonModLauncher", "Mods", "Большая Зона", "Fixes");
+        var managedPath = Path.Combine(sourcePaths.ExecutableDirectory, relativePath);
+        var externalPath = Path.Combine(sourcePaths.ConfigDirectory, "Mods-other", "External");
+        var source = new ModProfile
+        {
+            Name = "Zona",
+            IsStandalone = isStandalone,
+            ExecutableSourcePath = managedPath,
+            FsgameSourcePath = Path.Combine(managedPath, "config", "custom.ltx")
+        };
+        source.Mods.Add(new ModEntry { Name = "Managed", SourcePath = managedPath, Order = 1 });
+        source.Mods.Add(new ModEntry { Name = "External", SourcePath = externalPath, Order = 2 });
+
+        ProfileTransferService.Export(filePath, source, sourcePaths);
+
+        using var document = JsonDocument.Parse(File.ReadAllText(filePath));
+        var mods = document.RootElement.GetProperty("Mods");
+        Assert.Equal(relativePath, mods[0].GetProperty("SourcePath").GetString());
+        Assert.Equal(externalPath, mods[1].GetProperty("SourcePath").GetString());
+        Assert.Equal(relativePath, document.RootElement.GetProperty("ExecutableSourcePath").GetString());
+        Assert.Equal(Path.Combine(relativePath, "config", "custom.ltx"), document.RootElement.GetProperty("FsgameSourcePath").GetString());
+        Assert.Equal(managedPath, source.Mods[0].SourcePath);
+        Assert.Equal(managedPath, source.ExecutableSourcePath);
+
+        var imported = ProfileTransferService.Import(filePath, targetPaths);
+
+        Assert.Equal(Path.Combine(targetPaths.ExecutableDirectory, relativePath), imported.Mods[0].SourcePath);
+        Assert.Equal(externalPath, imported.Mods[1].SourcePath);
+        Assert.Equal(imported.Mods[0].SourcePath, imported.ExecutableSourcePath);
+        Assert.Equal(Path.Combine(imported.Mods[0].SourcePath, "config", "custom.ltx"), imported.FsgameSourcePath);
+        Assert.Equal(isStandalone, imported.IsStandalone);
+    }
+
+    [Fact]
+    public void ImportRejectsModPathEscapingLauncherDirectory()
+    {
+        Directory.CreateDirectory(_root);
+        var filePath = Path.Combine(_root, "unsafe-mod.stalkerprofile");
+        File.WriteAllText(filePath,
+            """{"Name":"Unsafe","Mods":[{"Name":"Mod","SourcePath":"..\\outside"}]}""");
+
+        Assert.Throws<InvalidDataException>(() =>
+            ProfileTransferService.Import(filePath, new AppPaths(Path.Combine(_root, "launcher"))));
+    }
+
+    [Theory]
+    [InlineData(nameof(ExportedProfile.ExecutableSourcePath))]
+    [InlineData(nameof(ExportedProfile.FsgameSourcePath))]
+    public void ImportRejectsManualSourcePathEscapingLauncherDirectory(string property)
+    {
+        Directory.CreateDirectory(_root);
+        var filePath = Path.Combine(_root, "unsafe-manual-source.stalkerprofile");
+        File.WriteAllText(filePath, JsonSerializer.Serialize(new Dictionary<string, string>
+        {
+            ["Name"] = "Unsafe",
+            [property] = @"..\outside"
+        }));
+
+        Assert.Throws<InvalidDataException>(() =>
+            ProfileTransferService.Import(filePath, new AppPaths(Path.Combine(_root, "launcher"))));
+    }
+
     [Fact]
     public void ImportRejectsUnsafeExecutablePath()
     {
