@@ -17,7 +17,11 @@ Run from the repository root after building dependencies with
 
 The script uses the main runtime in `.external\usvfs-pr99` by default, runs five sessions for each
 architecture, and checks changed overlay contents, child lifetime and writable
-directory behavior. See the [technical documentation](../../docs/TECHNICAL_EN.md)
+directory behavior. MISERY coverage switches all three classes through native USVFS,
+reprepares and relaunches, checks a second profile and source hashes, exercises
+initially absent targets, and disables the mod to detect stale class mappings.
+It covers physical/bootstrap roots and local/shared user data on both architectures.
+See the [technical documentation](../../docs/TECHNICAL_EN.md)
 for dependency preparation and release checks.
 
 This project is not part of the normal launcher runtime. It remains an isolated

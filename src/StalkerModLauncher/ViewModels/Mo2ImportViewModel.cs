@@ -26,6 +26,7 @@ public sealed class Mo2ImportViewModel : ObservableObject
     private bool _includeOverwrite;
     private bool _showOnlyProblems;
     private string _searchText = string.Empty;
+    private LaunchBackendKind _launchBackendKind = LaunchBackendKind.VirtualFileSystem;
 
     public Mo2ImportViewModel(
         Func<Models.ModProfile, Task<bool>> commitProfileAsync,
@@ -250,6 +251,30 @@ public sealed class Mo2ImportViewModel : ObservableObject
         }
     }
 
+    public bool UseLinkedWorkspace
+    {
+        get => _launchBackendKind == LaunchBackendKind.LinkedWorkspace;
+        set
+        {
+            if (value)
+            {
+                SetLaunchBackend(LaunchBackendKind.LinkedWorkspace);
+            }
+        }
+    }
+
+    public bool UseVirtualFileSystem
+    {
+        get => _launchBackendKind == LaunchBackendKind.VirtualFileSystem;
+        set
+        {
+            if (value)
+            {
+                SetLaunchBackend(LaunchBackendKind.VirtualFileSystem);
+            }
+        }
+    }
+
     public bool IncludeOverwrite
     {
         get => _includeOverwrite;
@@ -450,7 +475,8 @@ public sealed class Mo2ImportViewModel : ObservableObject
             var profile = Mo2ImportService.CreateProfile(
                 Preview,
                 ProfileName,
-                IncludeOverwrite);
+                IncludeOverwrite,
+                _launchBackendKind);
             if (await _commitProfileAsync(profile))
             {
                 Completed?.Invoke(this, EventArgs.Empty);
@@ -505,6 +531,18 @@ public sealed class Mo2ImportViewModel : ObservableObject
         }
 
         RaiseCommandStates();
+    }
+
+    private void SetLaunchBackend(LaunchBackendKind launchBackendKind)
+    {
+        if (_launchBackendKind == launchBackendKind)
+        {
+            return;
+        }
+
+        _launchBackendKind = launchBackendKind;
+        OnPropertyChanged(nameof(UseLinkedWorkspace));
+        OnPropertyChanged(nameof(UseVirtualFileSystem));
     }
 
     private void RaiseCommandStates()

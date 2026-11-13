@@ -184,7 +184,7 @@ public sealed class ProfileSettingsViewModelTests : IDisposable
             GameInstallPath = _root,
             ExecutableRelativePath = @"bin\game.exe",
             LaunchArguments = "-saved",
-            LaunchBackendKind = LaunchBackendKind.LegacyWorkspace
+            LaunchBackendKind = LaunchBackendKind.LinkedWorkspace
         };
         var dialogs = new RecordingDialogService();
         var viewModel = new ProfileSettingsViewModel(
@@ -208,7 +208,7 @@ public sealed class ProfileSettingsViewModelTests : IDisposable
         Assert.Equal("Original", profile.Name);
         Assert.Equal("Saved description", profile.Description);
         Assert.Equal("-saved", profile.LaunchArguments);
-        Assert.Equal(LaunchBackendKind.LegacyWorkspace, profile.LaunchBackendKind);
+        Assert.Equal(LaunchBackendKind.LinkedWorkspace, profile.LaunchBackendKind);
         Assert.Equal("Не удалось сохранить настройки профиля", dialogs.ErrorTitle);
         Assert.Contains("settings.json is locked", dialogs.ErrorMessage);
     }

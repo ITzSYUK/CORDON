@@ -18,9 +18,9 @@ public sealed class SettingsStoreProfileTests : IDisposable
     }
 
     [Theory]
-    [InlineData(LaunchBackendKind.LegacyWorkspace, false)]
+    [InlineData(LaunchBackendKind.LinkedWorkspace, false)]
     [InlineData(LaunchBackendKind.VirtualFileSystem, false)]
-    [InlineData(LaunchBackendKind.LegacyWorkspace, true)]
+    [InlineData(LaunchBackendKind.LinkedWorkspace, true)]
     public async Task StoresAllProfileSettingsSeparately(LaunchBackendKind backend, bool standalone)
     {
         var profile = new ModProfile
@@ -75,6 +75,7 @@ public sealed class SettingsStoreProfileTests : IDisposable
         var loaded = await _store.LoadAsync();
         var profile = Assert.Single(loaded.Profiles);
         Assert.Equal("old", profile.Id);
+        Assert.Equal(LaunchBackendKind.LinkedWorkspace, profile.LaunchBackendKind);
         Assert.Equal("-test", profile.LaunchArguments);
         Assert.Equal(90, profile.TotalPlaytimeSeconds);
         Assert.Equal("en", loaded.UiLanguage);

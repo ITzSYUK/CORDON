@@ -40,7 +40,7 @@ public sealed class GameDataStorageTests : IDisposable
     }
 
     [Fact]
-    public async Task ManualFsgameOverridesLayerPriorityAndDifferentFsltxTargetForUsvfs()
+    public async Task ManualFsgameOverridesLayerPriorityAndDifferentFsltxTargetInBothModes()
     {
         var game = Path.Combine(_root, "manual-game");
         var main = Path.Combine(_root, "manual-main");
@@ -65,7 +65,7 @@ public sealed class GameDataStorageTests : IDisposable
         profile.Mods.Add(new ModEntry { Name = "Patch", SourcePath = patch, IsEnabled = true, Order = 2 });
 
         var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
-        var built = await ProfileDataTestFixture.PrepareAsync(new WorkspaceBuilder(paths), game, profile);
+        var built = await new WorkspaceBuilder(paths).BuildAsync(game, profile, new Progress<string>(), layers);
         var workspaceFsgame = Path.Combine(built.WorkspaceRoot, "bin_x64", "fsgame_ogsr.ltx");
         var workspaceFallbackFsgame = Path.Combine(built.WorkspaceRoot, "bin_x64", "fsgame.ltx");
         var workspaceLaunchFsgame = Path.Combine(built.WorkspaceRoot, "fsgame_coc.ltx");

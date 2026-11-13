@@ -164,7 +164,7 @@ public sealed class MainViewModelTests
     [InlineData(true, true)]
     public async Task LoadsSplitProfilesForEachInterface(bool pda, bool newPda)
     {
-        var first = new ModProfile { Name = "Workspace", LaunchArguments = "-workspace", LaunchBackendKind = LaunchBackendKind.LegacyWorkspace };
+        var first = new ModProfile { Name = "Workspace", LaunchArguments = "-workspace", LaunchBackendKind = LaunchBackendKind.LinkedWorkspace };
         var second = new ModProfile { Name = "USVFS", LaunchArguments = "-virtual", LaunchBackendKind = LaunchBackendKind.VirtualFileSystem };
         await RunWithViewModelAsync((viewModel, _) =>
         {

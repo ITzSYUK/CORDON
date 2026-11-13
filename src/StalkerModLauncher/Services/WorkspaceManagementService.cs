@@ -1,3 +1,4 @@
+using System.Text.Json;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Resources;
 
@@ -15,6 +16,31 @@ public sealed class WorkspaceManagementService
     public static Task<WorkspaceStatus> InspectAsync(ModProfile profile, CancellationToken cancellationToken = default)
     {
         return Task.Run(() => Inspect(profile, cancellationToken), cancellationToken);
+    }
+
+    public void ClearCache(ModProfile profile, IProgress<string>? progress = null)
+    {
+        EnsureIdle(profile);
+        _workspaceBuilder.ClearProfileWorkspaceCache(profile, profile.GameInstallPath, progress);
+    }
+
+    public async Task RebuildAsync(ModProfile profile, IProgress<string> progress, CancellationToken cancellationToken = default)
+    {
+        EnsureIdle(profile);
+        profile.IsPreparing = true;
+        try
+        {
+            _workspaceBuilder.ClearProfileWorkspaceCache(profile, profile.GameInstallPath, progress);
+            var result = await _workspaceBuilder.BuildAsync(
+                profile.GameInstallPath, profile, progress, cancellationToken: cancellationToken);
+            profile.WorkspacePath = result.ProfileWorkspacePath;
+            profile.ExecutableRelativePath = result.ExecutableRelativePath;
+            profile.WorkingDirectoryRelative = result.WorkingDirectoryRelative;
+        }
+        finally
+        {
+            profile.IsPreparing = false;
+        }
     }
 
     public Task<WorkspaceMoveResult> MoveAsync(
@@ -176,6 +202,8 @@ public sealed class WorkspaceManagementService
                     Path.Combine(oldWorkspace, ".usvfs-bootstrap"),
                     oldWorkspace,
                     progress);
+                ProfileWritableGameFileStore.CaptureLinkedWorkspace(
+                    oldWorkspace, oldWorkspace, profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace, progress);
             }
 
             var sourceUserData = string.IsNullOrWhiteSpace(oldWorkspace) ? string.Empty : Path.Combine(oldWorkspace, "userdata");
@@ -197,6 +225,8 @@ public sealed class WorkspaceManagementService
                 FileSystemSafety.EnsureNoDirectoryLinks(oldWorkspace);
                 ProfileWritableGameFileStore.CaptureFromWorkspace(
                     Path.Combine(oldWorkspace, ".usvfs-bootstrap"), temporary, progress);
+                ProfileWritableGameFileStore.CaptureLinkedWorkspace(
+                    oldWorkspace, temporary, profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace, progress);
             }
 
             var diagnostics = string.IsNullOrWhiteSpace(oldWorkspace) ? string.Empty : Path.Combine(oldWorkspace, "diagnostics");
@@ -317,8 +347,47 @@ public sealed class WorkspaceManagementService
 
     private static WorkspaceStatus Inspect(ModProfile profile, CancellationToken cancellationToken)
     {
+        var workspace = profile.WorkspacePath;
+        var current = string.IsNullOrWhiteSpace(workspace) ? string.Empty : Path.Combine(workspace, "current");
+        var rootExists = !string.IsNullOrWhiteSpace(workspace) && Directory.Exists(workspace);
+        var currentExists = !string.IsNullOrWhiteSpace(current) && Directory.Exists(current);
+        var manifestExists = rootExists && File.Exists(Path.Combine(workspace, "build-manifest.json"));
+        if (string.IsNullOrWhiteSpace(current) || !currentExists)
+        {
+            return WorkspaceStatus.Missing(workspace);
+        }
+
         cancellationToken.ThrowIfCancellationRequested();
-        return WorkspaceStatus.Missing(profile.WorkspacePath);
+        var manifest = ReadManifest(workspace);
+        return manifest is null
+            ? new WorkspaceStatus(workspace, true, 0, 0, 0, 0, 0, 0, null, false, rootExists, currentExists, manifestExists)
+            : new WorkspaceStatus(
+                workspace,
+                true,
+                manifest.LogicalSizeBytes,
+                manifest.PhysicalSizeBytes,
+                manifest.FileCount,
+                manifest.SymbolicLinkCount,
+                manifest.HardLinkCount,
+                manifest.LocalFileCount,
+                manifest.BuiltAtUtc,
+                manifest.HasStatistics,
+                rootExists,
+                currentExists,
+                manifestExists);
+    }
+
+    private static WorkspaceBuildManifest? ReadManifest(string workspace)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<WorkspaceBuildManifest>(
+                File.ReadAllText(Path.Combine(workspace, "build-manifest.json")));
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
 

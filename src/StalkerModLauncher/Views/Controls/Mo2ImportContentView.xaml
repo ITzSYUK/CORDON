@@ -125,6 +125,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -140,7 +141,13 @@
                 <TextBlock Text="{Binding Preview.OverwriteSummary}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="{DynamicResource Mo2SummaryDetailMargin}" HorizontalAlignment="Stretch" ToolTip="{Binding Preview.OverwriteSummary}" FontSize="{DynamicResource Mo2SummaryFontSize}" />
             </StackPanel>
             <controls:ModImportListView x:Name="ModList" Grid.Row="2" Grid.RowSpan="2"/>
-            <CheckBox Grid.Row="4" Content="{x:Static res:Strings.Mo2_EnableOverwrite}" IsChecked="{Binding IncludeOverwrite}" Margin="{DynamicResource Mo2OverwriteOptionMargin}" FontSize="10" IsEnabled="{Binding Preview.HasOverwriteContent}" Style="{DynamicResource Mo2ContentCheckBoxStyle}" />
+            <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="{DynamicResource Mo2LaunchModeMargin}" VerticalAlignment="Center">
+                <TextBlock Text="{x:Static res:Strings.SettingsProfile_LaunchMode}" Foreground="{DynamicResource MutedTextBrush}" Margin="{DynamicResource Mo2LaunchModeLabelMargin}" VerticalAlignment="Center" ToolTip="{x:Static res:Strings.Mo2_LaunchModeHint}" FontSize="{DynamicResource Mo2LaunchModeFontSize}" />
+                <RadioButton Content="{x:Static res:Strings.Launch_ModeWorkspace}" IsChecked="{Binding UseLinkedWorkspace}" Margin="{DynamicResource Mo2WorkspaceOptionMargin}" VerticalAlignment="Center" Style="{StaticResource Mo2LaunchRadioButtonStyle}" FontSize="{DynamicResource Mo2LaunchModeFontSize}" />
+                <RadioButton Content="{x:Static res:Strings.Launch_ModeUsvfs}" IsChecked="{Binding UseVirtualFileSystem}" VerticalAlignment="Center" Style="{StaticResource Mo2LaunchRadioButtonStyle}" FontSize="{DynamicResource Mo2LaunchModeFontSize}" />
+                <TextBlock Text="?" Foreground="{DynamicResource MutedTextBrush}" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip="{x:Static res:Strings.Mo2_LaunchModeHint}" FontWeight="Bold" FontSize="{DynamicResource Mo2LaunchHelpFontSize}" />
+            </StackPanel>
+            <CheckBox Grid.Row="5" Content="{x:Static res:Strings.Mo2_EnableOverwrite}" IsChecked="{Binding IncludeOverwrite}" Margin="{DynamicResource Mo2OverwriteOptionMargin}" FontSize="10" IsEnabled="{Binding Preview.HasOverwriteContent}" Style="{DynamicResource Mo2ContentCheckBoxStyle}" />
         </Grid>
     </Grid>
 </UserControl>

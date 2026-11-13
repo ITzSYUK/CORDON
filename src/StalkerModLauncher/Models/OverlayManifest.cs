@@ -30,4 +30,7 @@ public sealed record OverlayManifest(
     IReadOnlyList<OverlaySystemFileSnapshot> SystemFiles,
     string WriteOverlayRoot,
     IReadOnlyList<OverlayWritableFileSnapshot> WritableFiles,
-    IReadOnlyList<FileLayerOverwrite> Overwrites);
+    IReadOnlyList<FileLayerOverwrite> Overwrites)
+{
+    public bool UsesMiseryClasses { get; init; }
+}

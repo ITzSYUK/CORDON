@@ -70,7 +70,7 @@ If there are problems, the wizard initially shows only missing and ambiguous mod
 
 ## Step 5. Create and check the profile
 
-The imported profile launches through **USVFS**.
+Select **Workspace** or **USVFS** in the import preview. **USVFS** is selected by default.
 
 Click **Create profile**. The operation is transactional: if settings cannot be saved, the incomplete profile is removed and the wizard stays open.
 

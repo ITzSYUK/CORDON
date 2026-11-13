@@ -152,12 +152,13 @@ public static class UsvfsMappingPlanBuilder
             var missing = new Stack<string>();
             for (var parent = Path.GetDirectoryName(operation.DestinationPath);
                  parent is not null && FileSystemSafety.IsDirectoryInside(parent, virtualRoot) &&
-                 !directories.Contains(parent) && !Directory.Exists(parent);
+                 !directories.Contains(parent);
                  parent = Path.GetDirectoryName(parent))
                 missing.Push(parent);
             while (missing.TryPop(out var parent))
             {
-                // LinkFile requires existing virtual parents. An empty source cannot expose excluded files.
+                // Physical parents can be hidden by a sparse mod mapping. LinkFile
+                // needs mapped parents even when those directories exist on disk.
                 emptyDirectory ??= Path.GetFullPath(Path.Combine(manifest.WriteOverlayRoot, "..", "..", ".usvfs-empty-directory"));
                 FileSystemSafety.EnsureNoDirectoryLinks(emptyDirectory);
                 Directory.CreateDirectory(emptyDirectory);
@@ -177,31 +178,22 @@ public static class UsvfsMappingPlanBuilder
         string virtualRoot,
         OverlayManifest manifest)
     {
-        var writableFiles = manifest.WritableFiles
-            .Where(file => File.Exists(file.StoragePath))
-            .ToArray();
-        if (writableFiles.Length == 0)
+        // Only active paths belong in this launch. Mapping the entire store would
+        // expose old class copies even after MISERY or a class template is disabled.
+        foreach (var writableFile in manifest.WritableFiles)
         {
-            return;
-        }
-
-        foreach (var writableFile in writableFiles)
-        {
+            if (!File.Exists(writableFile.StoragePath))
+                continue;
             FileSystemSafety.EnsureRelativePath(writableFile.RelativePath, Strings.Safety_UsvfsWritableFile);
+            operations.Add(new UsvfsMappingOperation(
+                UsvfsMappingKind.File,
+                Path.GetFullPath(writableFile.StoragePath),
+                Path.Combine(virtualRoot, writableFile.RelativePath),
+                Strings.Layer_ProfileWritableData,
+                int.MaxValue - 1,
+                MonitorChanges: false,
+                CreateTarget: false));
         }
-
-        var profileWorkspace = Path.GetFullPath(Path.Combine(manifest.WriteOverlayRoot, "..", ".."));
-        var writableRoot = Path.Combine(
-            profileWorkspace,
-            ProfileWritableGameFiles.WritableGameFilesRootRelativePath);
-        operations.Add(new UsvfsMappingOperation(
-            UsvfsMappingKind.DirectoryStatic,
-            writableRoot,
-            virtualRoot,
-            Strings.Layer_ProfileWritableData,
-            int.MaxValue - 1,
-            MonitorChanges: false,
-            CreateTarget: false));
     }
 
     private static void AddProfileOverwrite(

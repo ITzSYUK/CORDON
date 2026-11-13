@@ -9,6 +9,99 @@ internal static class ProfileDataConfigurator
     internal static string MissingFsgameMessage =>
         LocalizedText.Format(Strings.Fsgame_NotFoundHelpFormat, Environment.NewLine);
 
+    public static string Configure(
+        string gamePath,
+        string currentWorkspace,
+        string profileWorkspace,
+        IProgress<string> progress,
+        FileLayerPlan? layerPlan = null,
+        bool usesMiseryClasses = false,
+        CancellationToken cancellationToken = default)
+    {
+        var manualSource = layerPlan?.ManualFsgameSource;
+        var selectedSource = manualSource ??
+                             (layerPlan?.UsesFsgameLaunchArgument == true ? layerPlan.FindFsgameSource() : null);
+        var fsgamePath = selectedSource is null
+            ? FindFileDirectory(currentWorkspace, "fsgame.ltx") is { } directory
+                ? Path.Combine(directory, "fsgame.ltx")
+                : null
+            : FileSystemSafety.ResolvePathInside(
+                currentWorkspace,
+                selectedSource.RelativePath,
+                Strings.Safety_ProfileFsgame);
+        if (fsgamePath is null)
+        {
+            throw new FileNotFoundException(MissingFsgameMessage);
+        }
+
+        var fsgameDir = Path.GetDirectoryName(fsgamePath)!;
+        var relativeDir = Path.GetRelativePath(currentWorkspace, fsgameDir);
+        var workingDirectoryRelative = layerPlan?.UsesFsgameLaunchArgument == true || relativeDir == "."
+            ? string.Empty
+            : relativeDir;
+        if (workingDirectoryRelative.Length > 0)
+        {
+            progress.Report(LocalizedText.Format(Strings.Progress_FsgameDetectedFormat, relativeDir));
+        }
+
+        var profileDataPath = layerPlan?.GameDataRoot ?? Path.Combine(profileWorkspace, "userdata");
+        if (layerPlan is not null)
+        {
+            MigrateLegacyManualData(
+                layerPlan,
+                Path.Combine(profileWorkspace, "userdata", "overwrite"),
+                progress);
+        }
+        var sourcePath = selectedSource?.FullPath ?? fsgamePath;
+        WriteProfileFsgame(sourcePath, fsgamePath, profileDataPath, usesMiseryClasses);
+        if (layerPlan?.UsesFsgameLaunchArgument == true)
+        {
+            var launchArgumentPath = FileSystemSafety.ResolvePathInside(
+                currentWorkspace,
+                layerPlan.FsgameLaunchRelativePath,
+                Strings.Fsgame_ArgumentFile);
+            if (!launchArgumentPath.Equals(fsgamePath, StringComparison.OrdinalIgnoreCase))
+            {
+                WriteProfileFsgame(sourcePath, launchArgumentPath, profileDataPath, usesMiseryClasses);
+            }
+        }
+        if (manualSource is not null)
+        {
+            progress.Report(LocalizedText.Format(Strings.Fsgame_ManualUsingFormat, manualSource.FullPath));
+        }
+        Directory.CreateDirectory(profileDataPath);
+        if (layerPlan?.UsesSharedGameData == true)
+        {
+            if (layerPlan.UsesAnomalyAppDataAlias)
+            {
+                AnomalyAppDataAlias.Prepare(currentWorkspace, layerPlan);
+                AnomalyAppDataAlias.ArchiveLegacyUserFiles(profileWorkspace, profileDataPath);
+            }
+            progress.Report(LocalizedText.Format(Strings.ProfileData_SharedFormat, profileDataPath));
+            return workingDirectoryRelative;
+        }
+        if (layerPlan is null)
+        {
+            EnsureProfileUserLtx(gamePath, profileDataPath, progress);
+        }
+        else
+        {
+            EnsureProfileUserLtx(layerPlan, profileDataPath, progress);
+        }
+        if (layerPlan is not null)
+        {
+            ProfileShaderCacheSeeder.Seed(layerPlan, profileDataPath, progress, cancellationToken);
+            if (layerPlan.UsesAnomalyAppDataAlias)
+            {
+                AnomalyAppDataAlias.Prepare(currentWorkspace, layerPlan);
+                AnomalyAppDataAlias.ArchiveLegacyUserFiles(profileWorkspace, profileDataPath);
+            }
+        }
+
+        progress.Report(Strings.Progress_FsgameRewritten);
+        return workingDirectoryRelative;
+    }
+
     internal static void MigrateLegacyManualData(
         FileLayerPlan layerPlan,
         string writeOverlayRoot,
@@ -49,23 +142,34 @@ internal static class ProfileDataConfigurator
             LocalizedText.Format(Strings.ProfileData_MigratedFormat, result.Copied, result.Skipped));
     }
 
-    internal static void WriteProfileFsgame(string sourcePath, string destinationPath, string profileDataPath)
+    internal static void WriteProfileFsgame(
+        string sourcePath,
+        string destinationPath,
+        string profileDataPath,
+        bool usesMiseryClasses = false)
     {
         var appDataDefinition = $"true | false| {profileDataPath}";
-        WriteProfileFsgameDefinition(sourcePath, destinationPath, appDataDefinition);
+        WriteProfileFsgameDefinition(sourcePath, destinationPath, appDataDefinition, usesMiseryClasses);
         if (!Path.GetFileName(destinationPath).Equals("fsgame.ltx", StringComparison.OrdinalIgnoreCase))
         {
             WriteProfileFsgameDefinition(
                 sourcePath,
                 Path.Combine(Path.GetDirectoryName(destinationPath)!, "fsgame.ltx"),
-                appDataDefinition);
+                appDataDefinition,
+                usesMiseryClasses);
         }
     }
 
-    private static void WriteProfileFsgameDefinition(string sourcePath, string destinationPath, string appDataDefinition)
+    private static void WriteProfileFsgameDefinition(
+        string sourcePath,
+        string destinationPath,
+        string appDataDefinition,
+        bool usesMiseryClasses)
     {
         var (lines, appDataLineIndex) = ReadValidatedFsgame(sourcePath);
         lines[appDataLineIndex] = $"$app_data_root$ = {appDataDefinition}";
+        if (usesMiseryClasses)
+            lines = MiseryClassSupport.AddMissingAliases(lines);
         Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
         if (File.Exists(destinationPath))
         {
