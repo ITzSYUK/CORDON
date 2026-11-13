@@ -205,7 +205,9 @@ public sealed class ConflictExplorerViewModel : ObservableObject, IDisposable
                 ? Path.Combine(AppPaths.Current.TempDirectory, "analysis", _profile.Id)
                 : _profile.WorkspacePath;
             var plan = FileLayerPlan.CreateForProfile(_profile.GameInstallPath, _profile, workspace);
-            var launch = ProfileLaunchPlanResolver.PreviewVirtualFileSystem(_profile, plan);
+            var launch = _profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem
+                ? ProfileLaunchPlanResolver.PreviewVirtualFileSystem(_profile, plan)
+                : ProfileLaunchPlanResolver.PreviewLinkedWorkspace(_profile, plan, workspace);
             var finalTreeTask = FileLayerExplorerService.BuildFinalTreeAsync(plan, workspace, launch.Executable, cancellationToken);
             var conflictTask = AnalyzeSelectedModAsync(cancellationToken);
             await Task.WhenAll(finalTreeTask, conflictTask);

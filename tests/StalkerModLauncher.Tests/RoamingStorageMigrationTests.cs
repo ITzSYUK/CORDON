@@ -30,9 +30,9 @@ public sealed class RoamingStorageMigrationTests : IDisposable
     }
 
     [Theory]
-    [InlineData(false, LaunchBackendKind.LegacyWorkspace)]
+    [InlineData(false, LaunchBackendKind.LinkedWorkspace)]
     [InlineData(false, LaunchBackendKind.VirtualFileSystem)]
-    [InlineData(true, LaunchBackendKind.LegacyWorkspace)]
+    [InlineData(true, LaunchBackendKind.LinkedWorkspace)]
     [InlineData(true, LaunchBackendKind.VirtualFileSystem)]
     public async Task MigratesBothFormatsOnceWithoutChangingSource(bool split, LaunchBackendKind backend)
     {

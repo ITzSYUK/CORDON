@@ -197,8 +197,8 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
     }
 
     [Theory]
-    [InlineData(LaunchBackendKind.LegacyWorkspace, true)]
-    [InlineData(LaunchBackendKind.LegacyWorkspace, false)]
+    [InlineData(LaunchBackendKind.LinkedWorkspace, true)]
+    [InlineData(LaunchBackendKind.LinkedWorkspace, false)]
     [InlineData(LaunchBackendKind.VirtualFileSystem, true)]
     [InlineData(LaunchBackendKind.VirtualFileSystem, false)]
     public async Task MoveAsyncPreservesNewestBootstrapSettings(LaunchBackendKind backend, bool workspaceIsNewer)

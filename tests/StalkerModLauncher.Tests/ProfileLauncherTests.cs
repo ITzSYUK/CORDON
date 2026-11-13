@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 using Xunit;
 
@@ -59,7 +60,7 @@ public sealed class ProfileLauncherTests
     public async Task LaunchAsyncReportsVirtualFileSystemFailureWithoutSilentFallback()
     {
         using var process = Process.GetCurrentProcess();
-        var linkedBackend = new RecordingLaunchBackend(LaunchBackendKind.Standalone);
+        var linkedBackend = new RecordingLaunchBackend(LaunchBackendKind.LinkedWorkspace);
         var launcher = new ProfileLauncher(
             [linkedBackend, new ThrowingLaunchBackend(LaunchBackendKind.VirtualFileSystem)],
             new RecordingLaunchPlanExecutor(process));
@@ -71,9 +72,7 @@ public sealed class ProfileLauncherTests
 
         Assert.Equal("overlay setup failed", error.Message);
         Assert.Contains("Ошибка запуска USVFS: overlay setup failed", progress.Messages);
-        Assert.Contains(
-            progress.Messages,
-            message => message.Contains("Другой режим запуска не использовался", StringComparison.Ordinal));
+        Assert.Contains(Strings.Launch_UsvfsNoAutoFallback, progress.Messages);
         Assert.Equal(LaunchBackendKind.VirtualFileSystem, profile.LaunchBackendKind);
         Assert.Null(linkedBackend.Profile);
     }
@@ -157,10 +156,10 @@ public sealed class ProfileLauncherTests
     }
 
     [Fact]
-    public async Task LegacyWorkspaceIsRejectedWithoutPreparingOrStartingAnyBackend()
+    public async Task UnregisteredWorkspaceDoesNotFallBackToUsvfs()
     {
         var backend = new RecordingLaunchBackend(LaunchBackendKind.VirtualFileSystem);
-        var profile = new ModProfile { LaunchBackendKind = LaunchBackendKind.LegacyWorkspace };
+        var profile = new ModProfile { LaunchBackendKind = LaunchBackendKind.LinkedWorkspace };
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new ProfileLauncher([backend]).LaunchAsync("game", profile, new ListProgress()));
         Assert.Null(backend.Context);

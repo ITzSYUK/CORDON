@@ -21,9 +21,10 @@ public static class ProfileExecutableSourceResolver
 {
     public static ProfileExecutableSelection? TryCreateSelection(
         ModProfile profile,
-        string selectedPath)
+        string selectedPath,
+        bool includeWorkspace = false)
     {
-        var roots = GetSourceRoots(profile)
+        var roots = GetSourceRoots(profile, includeWorkspace)
             .Where(root => Directory.Exists(root.RootPath))
             .OrderByDescending(root => root.RootPath.Length);
 
@@ -87,7 +88,7 @@ public static class ProfileExecutableSourceResolver
             return null;
         }
 
-        var sourceRoots = GetSourceRoots(profile)
+        var sourceRoots = GetSourceRoots(profile, includeWorkspace: false)
             .Where(root => Directory.Exists(root.RootPath))
             .ToArray();
         foreach (var root in sourceRoots.Where(root => root.IsBaseGameRoot))
@@ -131,7 +132,7 @@ public static class ProfileExecutableSourceResolver
         }
 
         var pinnedPath = Path.GetFullPath(profile.ExecutableSourcePath);
-        return GetSourceRoots(profile)
+        return GetSourceRoots(profile, includeWorkspace: false)
             .Where(root => root.CanPinExecutableSource && Directory.Exists(root.RootPath))
             .FirstOrDefault(root => FileSystemSafety.IsSameDirectory(root.RootPath, pinnedPath));
     }
@@ -144,7 +145,7 @@ public static class ProfileExecutableSourceResolver
             : LocalizedText.Format(Strings.Executable_ManualSourceFormat, root.DisplayName);
     }
 
-    public static IReadOnlyList<ProfileFileSourceRoot> GetSourceRoots(ModProfile profile)
+    public static IReadOnlyList<ProfileFileSourceRoot> GetSourceRoots(ModProfile profile, bool includeWorkspace = false)
     {
         var roots = new List<ProfileFileSourceRoot>();
         if (!profile.IsStandalone && Directory.Exists(profile.GameInstallPath))
@@ -167,6 +168,19 @@ public static class ProfileExecutableSourceResolver
                 true,
                 IsBaseGameRoot: profile.IsStandalone,
                 Mod: profile.IsStandalone ? null : mod)));
+
+        if (includeWorkspace && !string.IsNullOrWhiteSpace(profile.WorkspacePath))
+        {
+            var currentWorkspace = Path.Combine(profile.WorkspacePath, "current");
+            if (Directory.Exists(currentWorkspace))
+            {
+                roots.Add(new ProfileFileSourceRoot(
+                    Path.GetFullPath(currentWorkspace),
+                    "workspace",
+                    int.MaxValue,
+                    false));
+            }
+        }
 
         return roots;
     }

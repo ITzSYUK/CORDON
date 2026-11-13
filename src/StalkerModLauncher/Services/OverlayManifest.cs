@@ -1,4 +1,5 @@
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
 
@@ -11,6 +12,22 @@ public static class OverlayManifestBuilder
         Path.Combine("gamedata", "configs", "localization.ltx"),
         Path.Combine("gamedata", "configs", "axr_options.ltx")
     ];
+
+    public static OverlayManifest BuildLinkedWorkspace(
+        ModProfile profile,
+        FileLayerPlan layerPlan,
+        string profileWorkspace,
+        bool includeOverwrites = false,
+        CancellationToken cancellationToken = default)
+    {
+        var launch = ProfileLaunchPlanResolver.PreviewLinkedWorkspace(profile, layerPlan, profileWorkspace);
+        return Build(
+            layerPlan,
+            profileWorkspace,
+            launch,
+            includeOverwrites,
+            cancellationToken);
+    }
 
     public static OverlayManifest BuildVirtualFileSystem(
         ModProfile profile,
@@ -44,6 +61,24 @@ public static class OverlayManifestBuilder
                 launch.Executable.IsPinned,
                 launch.Executable.UsedRequestedRelativePath);
 
+        var miseryPaths = MiseryClassSupport.FindWritablePaths(layerPlan, cancellationToken);
+        var writableFiles = ProfileWritableGameFiles.Rules
+            .Select(rule => new OverlayWritableFileSnapshot(
+                rule.RelativePath,
+                Path.Combine(profileWorkspace, rule.StorageRelativePath),
+                rule.Reason))
+            .ToList();
+        var knownPaths = writableFiles.Select(file => file.RelativePath)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var relativePath in miseryPaths)
+        {
+            if (knownPaths.Add(relativePath))
+                writableFiles.Add(new OverlayWritableFileSnapshot(
+                    relativePath,
+                    ProfileWritableGameFileStore.GetStoredFilePath(profileWorkspace, relativePath),
+                    Strings.Writable_MiseryClassReason));
+        }
+
         return new OverlayManifest(
             layerPlan.Layers
                 .Select(layer => new OverlayLayerSnapshot(
@@ -61,16 +96,14 @@ public static class OverlayManifestBuilder
                     layerPlan.FindFinalFile(relativePath)))
                 .ToArray(),
             Path.Combine(profileWorkspace, ProfileWritableGameFiles.DefaultOverwriteRootRelativePath),
-            ProfileWritableGameFiles.Rules
-                .Select(rule => new OverlayWritableFileSnapshot(
-                    rule.RelativePath,
-                    Path.Combine(profileWorkspace, rule.StorageRelativePath),
-                    rule.Reason))
-                .ToArray(),
+            writableFiles,
             includeOverwrites
                 ? layerPlan.Mods
                     .SelectMany(layer => layerPlan.GetOverwrittenFiles(layer, cancellationToken))
                     .ToArray()
-                : []);
+                : [])
+        {
+            UsesMiseryClasses = miseryPaths.Count > 0
+        };
     }
 }

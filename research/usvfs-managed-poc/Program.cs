@@ -141,6 +141,7 @@ static async Task<int> RunHostAsync(string[] args)
         args.Length >= 2 ? "SysWOW64" : "System32", "cmd.exe");
     await VerifyExclusionsAsync(runtime, root, commandProcessor);
     await VerifyVirtualWorkingDirectoryAsync(runtime, root, commandProcessor);
+    await VerifyMiseryClassesAsync(runtime, root, commandProcessor);
     if (args.Length == 1)
     {
         await VerifyWritableDirectoryMappingAsync(runtime, root, childExecutable);
@@ -278,6 +279,112 @@ static async Task VerifyVirtualWorkingDirectoryAsync(IUsvfsRuntime runtime, stri
     }
     finally { await plan.RuntimeLease!.DisposeAsync(); }
     Console.WriteLine("USVFS virtual working-directory process launch passed without source changes.");
+}
+
+static async Task VerifyMiseryClassesAsync(IUsvfsRuntime runtime, string root, string commandProcessor)
+{
+    var scenario = Path.Combine(root, "misery-classes");
+    var game = Path.Combine(scenario, "game");
+    var mod = Path.Combine(scenario, "misery");
+    const string actor = @"gamedata\configs\creatures\actor.ltx";
+    const string weapon = @"gamedata\configs\weapons\class.ltx";
+    const string newFile = @"gamedata\configs\new-directory\class.ltx";
+    string[] classes = ["assaulter", "recon", "sniper"];
+    WriteText(Path.Combine(game, "fsgame.ltx"),
+        "$app_data_root$ = true | false | $fs_root$ | userdata\\\n$game_data$ = false | true | $fs_root$ | gamedata\\");
+    WriteText(Path.Combine(game, actor), "base actor");
+    WriteText(Path.Combine(game, "gamedata", "configs", "localization.ltx"), "base localization");
+    WriteText(Path.Combine(mod, actor), "assaulter");
+    WriteText(Path.Combine(mod, weapon), "assaulter weapon");
+    foreach (var specialization in classes)
+    {
+        var classRoot = Path.Combine(mod, "gamedata", "class_diversity", specialization);
+        WriteText(Path.Combine(classRoot, actor), specialization);
+        WriteText(Path.Combine(classRoot, weapon), specialization + " weapon");
+        WriteText(Path.Combine(classRoot, newFile), specialization + " new");
+    }
+    var sourceHashes = Directory.EnumerateFiles(scenario, "*", SearchOption.AllDirectories)
+        .ToDictionary(path => path, path => Convert.ToHexString(
+            System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))));
+
+    foreach (var bootstrap in new[] { false, true })
+    foreach (var shared in new[] { false, true })
+    {
+        var first = Path.Combine(scenario, $"profile-a-{bootstrap}-{shared}");
+        var second = Path.Combine(scenario, $"profile-b-{bootstrap}-{shared}");
+        var profile = new ModProfile { GameInstallPath = game, UseBaseGameData = shared };
+        profile.Mods.Add(new ModEntry { SourcePath = mod, Order = 1 });
+
+        foreach (var specialization in new[] { "recon", "sniper", "assaulter" })
+        {
+            var layers = FileLayerPlan.CreateForProfile(game, profile, first);
+            var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, first);
+            UsvfsProfileDataPreparer.Prepare(layers, manifest, first);
+            var config = ReadText(Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx"));
+            if (classes.Any(name =>
+                    !config.Contains("$game_class_" + name + "$", StringComparison.Ordinal)))
+                throw new InvalidOperationException("MISERY aliases are missing before the first game launch.");
+            var virtualRoot = bootstrap ? Path.Combine(first, "virtual-root") : game;
+            Directory.CreateDirectory(virtualRoot);
+            var classRoot = Path.Combine(virtualRoot, "gamedata", "class_diversity", specialization);
+            var script = Path.Combine(first, "switch.cmd");
+            var commands = new List<string> { "@echo off" };
+            foreach (var relative in new[] { actor, weapon, newFile })
+                commands.Add($"copy /b /y {Quote(Path.Combine(classRoot, relative))} {Quote(Path.Combine(virtualRoot, relative))} >nul || exit /b 71");
+            commands.Add("exit /b 0");
+            WriteText(script, string.Join("\r\n", commands));
+            var result = await runtime.RunAsync(
+                UsvfsMappingPlanBuilder.Build(layers, manifest, virtualRoot),
+                new UsvfsProcessLaunchRequest(commandProcessor, $"/d /c \"{Quote(script)}\"", game),
+                new UsvfsRuntimeOptions("cordon_misery_switch", LogToConsole: false));
+            if (result.ExitCode != 0)
+                throw new InvalidOperationException($"MISERY switch failed (bootstrap={bootstrap}, shared={shared}, exit={result.ExitCode}).");
+
+            // A new preparation must not replace files written by the previous session.
+            layers = FileLayerPlan.CreateForProfile(game, profile, first);
+            manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, first);
+            UsvfsProfileDataPreparer.Prepare(layers, manifest, first);
+            var readback = Path.Combine(first, "readback.txt");
+            result = await runtime.RunAsync(
+                UsvfsMappingPlanBuilder.Build(layers, manifest, virtualRoot),
+                new UsvfsProcessLaunchRequest(commandProcessor,
+                    $"/d /c type {Quote(Path.Combine(virtualRoot, actor))} > {Quote(readback)}" +
+                    $" && fc /b {Quote(Path.Combine(classRoot, weapon))} {Quote(Path.Combine(virtualRoot, weapon))} >nul" +
+                    $" && fc /b {Quote(Path.Combine(classRoot, newFile))} {Quote(Path.Combine(virtualRoot, newFile))} >nul", game),
+                new UsvfsRuntimeOptions("cordon_misery_readback", LogToConsole: false));
+            if (result.ExitCode != 0 || ReadText(readback) != specialization)
+                throw new InvalidOperationException("MISERY specialization did not survive preparation and a new session.");
+            var otherLayers = FileLayerPlan.CreateForProfile(game, profile, second);
+            var otherManifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, otherLayers, second);
+            UsvfsProfileDataPreparer.Prepare(otherLayers, otherManifest, second);
+            var otherActor = otherManifest.WritableFiles.Single(file => file.RelativePath == actor);
+            if (ReadText(otherActor.StoragePath) != "assaulter")
+                throw new InvalidOperationException("MISERY specialization leaked into another profile.");
+            foreach (var source in sourceHashes)
+            {
+                var current = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(source.Key)));
+                if (current != source.Value)
+                    throw new InvalidOperationException($"MISERY source was changed: {source.Key}");
+            }
+            if (Directory.EnumerateFiles(game, "*", SearchOption.AllDirectories).Count() +
+                Directory.EnumerateFiles(mod, "*", SearchOption.AllDirectories).Count() != sourceHashes.Count)
+                throw new InvalidOperationException("MISERY wrote a new file into a source directory.");
+        }
+        profile.Mods[0].IsEnabled = false;
+        var disabledLayers = FileLayerPlan.CreateForProfile(game, profile, first);
+        var disabledManifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, disabledLayers, first);
+        UsvfsProfileDataPreparer.Prepare(disabledLayers, disabledManifest, first);
+        var disabledRoot = bootstrap ? Path.Combine(first, "virtual-root") : game;
+        var disabledReadback = Path.Combine(first, "disabled-readback.txt");
+        var disabledResult = await runtime.RunAsync(
+            UsvfsMappingPlanBuilder.Build(disabledLayers, disabledManifest, disabledRoot),
+            new UsvfsProcessLaunchRequest(commandProcessor,
+                $"/d /c type {Quote(Path.Combine(disabledRoot, actor))} > {Quote(disabledReadback)}", game),
+            new UsvfsRuntimeOptions("cordon_misery_disabled", LogToConsole: false));
+        if (disabledResult.ExitCode != 0 || ReadText(disabledReadback) != "base actor")
+            throw new InvalidOperationException("Stored MISERY class files remained active after disabling the mod.");
+    }
+    Console.WriteLine("USVFS MISERY class switching passed: three classes, restart, two profiles, unchanged source hashes (physical/bootstrap and local/shared data).");
 }
 
 static async Task VerifyWritableDirectoryMappingAsync(

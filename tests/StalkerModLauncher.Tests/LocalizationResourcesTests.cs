@@ -16,6 +16,8 @@ public sealed partial class LocalizationResourcesTests
         var russian = Read(CultureInfo.GetCultureInfo("ru"));
         var intentionallyShared = new HashSet<string>(StringComparer.Ordinal)
         {
+            nameof(Strings.Launch_ModeUsvfs),
+            nameof(Strings.Launch_ModeWorkspace),
             nameof(Strings.Settings_ClassicUi),
             nameof(Strings.Settings_LanguageEnglish),
             nameof(Strings.Settings_PdaUi),

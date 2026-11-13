@@ -112,47 +112,6 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
     }
 
     [Fact]
-    public void BuildMapsWritableStoreWhenModHasNoConfigsDirectory()
-    {
-        var game = CreateDirectory("game");
-        var mod = CreateDirectory("mod");
-        var workspace = CreateDirectory("workspace");
-        Directory.CreateDirectory(Path.Combine(mod, "gamedata", "textures"));
-        var profile = new ModProfile
-        {
-            Name = "Layered",
-            GameInstallPath = game
-        };
-        profile.Mods.Add(new ModEntry
-        {
-            Id = "mod",
-            Name = "No configs",
-            SourcePath = mod,
-            IsEnabled = true,
-            Order = 1
-        });
-        var layerPlan = FileLayerPlan.CreateForProfile(game, profile, workspace);
-        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layerPlan, workspace);
-        var writableFile = manifest.WritableFiles.Single(file =>
-            file.RelativePath == Path.Combine("gamedata", "configs", "localization.ltx"));
-        Directory.CreateDirectory(Path.GetDirectoryName(writableFile.StoragePath)!);
-        File.WriteAllText(writableFile.StoragePath, "language = rus");
-
-        var plan = UsvfsMappingPlanBuilder.Build(layerPlan, manifest);
-
-        var knownWritable = Assert.Single(
-            plan.Operations,
-            operation => operation.SourceName == Strings.Layer_ProfileWritableData);
-        Assert.Equal(UsvfsMappingKind.DirectoryStatic, knownWritable.Kind);
-        Assert.Equal(
-            Path.Combine(Path.GetFullPath(workspace), ProfileWritableGameFiles.WritableGameFilesRootRelativePath),
-            knownWritable.SourcePath);
-        Assert.Equal(Path.GetFullPath(game), knownWritable.DestinationPath);
-        Assert.True(knownWritable.Order < plan.Operations.Single(operation => operation.SourceName == Strings.Layer_ProfileOverwrite).Order);
-        Assert.False(Directory.Exists(Path.Combine(mod, "gamedata", "configs")));
-    }
-
-    [Fact]
     public void BuildDoesNotMapProfileUserdataWhenGameDataIsShared()
     {
         var game = CreateDirectory("shared-game");

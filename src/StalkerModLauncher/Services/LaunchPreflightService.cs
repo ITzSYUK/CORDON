@@ -137,6 +137,8 @@ public sealed class LaunchPreflightService
         if (!profile.IsStandalone)
         {
             AddWorkspaceChecks(checks, profile);
+            if (profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace)
+                AddLinkSupportCheck(checks, profile, fileLayerPlan, enabledMods, cancellationToken);
         }
 
         return new LaunchPreflightReport(checks, launchPlan?.Plan, overlayManifest);
@@ -163,7 +165,9 @@ public sealed class LaunchPreflightService
             return null;
         }
 
-        return ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, fileLayerPlan);
+        return profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem
+            ? ProfileLaunchPlanResolver.PreviewVirtualFileSystem(profile, fileLayerPlan)
+            : ProfileLaunchPlanResolver.PreviewLinkedWorkspace(profile, fileLayerPlan, workspace);
     }
 
     private OverlayManifest? TryCreateOverlayManifest(
@@ -182,7 +186,13 @@ public sealed class LaunchPreflightService
             return null;
         }
 
-        return OverlayManifestBuilder.BuildVirtualFileSystem(
+        return profile.LaunchBackendKind == LaunchBackendKind.VirtualFileSystem
+            ? OverlayManifestBuilder.BuildVirtualFileSystem(
+                profile,
+                fileLayerPlan,
+                workspace,
+                cancellationToken: cancellationToken)
+            : OverlayManifestBuilder.BuildLinkedWorkspace(
                 profile,
                 fileLayerPlan,
                 workspace,
@@ -276,6 +286,61 @@ public sealed class LaunchPreflightService
         catch (Exception ex)
         {
             checks.Add(Error("USVFS runtime", ex.Message));
+        }
+    }
+
+    private void AddLinkSupportCheck(
+        List<ProfileHealthCheck> checks,
+        ModProfile profile,
+        FileLayerPlan? fileLayerPlan,
+        IReadOnlyList<ModEntry> enabledMods,
+        CancellationToken cancellationToken)
+    {
+        var workspace = _profileManager.GetProfileFolderPath(profile);
+        if (string.IsNullOrWhiteSpace(workspace))
+        {
+            return;
+        }
+
+        try
+        {
+            var workspaceVolume = Path.GetPathRoot(Path.GetFullPath(workspace));
+            var sourcePaths = fileLayerPlan is null
+                ? enabledMods.Select(mod => mod.SourcePath)
+                : fileLayerPlan.Mods.Select(layer => layer.RootPath);
+            var source = sourcePaths
+                .Where(Directory.Exists)
+                .Where(path => !string.Equals(Path.GetPathRoot(Path.GetFullPath(path)), workspaceVolume, StringComparison.OrdinalIgnoreCase))
+                .SelectMany(path => Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories).Take(1))
+                .FirstOrDefault();
+            if (source is null)
+            {
+                return;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            WorkspaceBuilder.ValidateProfileLocation(profile, workspace, profile.GameInstallPath);
+            if (!Directory.Exists(workspace)) return;
+
+            var testLink = Path.Combine(workspace, $".preflight-link-{Guid.NewGuid():N}");
+            try
+            {
+                File.CreateSymbolicLink(testLink, source);
+                checks.Add(new ProfileHealthCheck(
+                    ProfileHealthStatus.Healthy,
+                    Strings.Preflight_CrossDriveLinks,
+                    LocalizedText.Format(Strings.Preflight_CrossDriveAllowedFormat, Path.GetPathRoot(source))));
+            }
+            finally
+            {
+                File.Delete(testLink);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            checks.Add(Error(
+                Strings.Preflight_CrossDriveLinks,
+                LocalizedText.Format(Strings.Preflight_CrossDriveDeniedFormat, ex.Message)));
         }
     }
 

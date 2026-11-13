@@ -6,8 +6,11 @@ using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Models;
 
-public sealed class ModProfile : ObservableObject
+public sealed class ModProfile : ObservableObject, IJsonOnDeserializing
 {
+    // Workspace profiles from 1.5.5 omit the default backend value.
+    void IJsonOnDeserializing.OnDeserializing() => _launchBackendKind = LaunchBackendKind.LinkedWorkspace;
+
     private string _id = Guid.NewGuid().ToString("N");
     private string _name = Strings.Creation_DefaultName;
     private string _description = string.Empty;

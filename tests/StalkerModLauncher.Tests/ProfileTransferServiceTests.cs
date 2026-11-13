@@ -152,7 +152,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
     }
 
     [Theory]
-    [InlineData(LaunchBackendKind.LegacyWorkspace)]
+    [InlineData(LaunchBackendKind.LinkedWorkspace)]
     [InlineData(LaunchBackendKind.VirtualFileSystem)]
     public void ExportThenImportPreservesLaunchBackend(LaunchBackendKind backend)
     {
@@ -181,7 +181,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
 
         var imported = ProfileTransferService.Import(filePath);
 
-        Assert.Equal(LaunchBackendKind.LegacyWorkspace, imported.LaunchBackendKind);
+        Assert.Equal(LaunchBackendKind.LinkedWorkspace, imported.LaunchBackendKind);
         Assert.Empty(imported.Description);
         Assert.Empty(imported.Mods);
     }

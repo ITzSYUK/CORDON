@@ -48,6 +48,9 @@ public sealed class FomodUiTests
                     ProfileCreationRendersAndNavigates("classic");
                     ProfileCreationRendersAndNavigates("pda");
                     ProfileCreationRendersAndNavigates("pda-new");
+                    ProfileSettingsSelectsWorkspace("classic");
+                    ProfileSettingsSelectsWorkspace("pda");
+                    ProfileSettingsSelectsWorkspace("pda-new");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("classic");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("pda");
                     WizardRendersNavigatesAndInstallsThroughBoundControls("pda-new");
@@ -252,6 +255,53 @@ public sealed class FomodUiTests
             host.Child = null;
             classic?.Close();
             Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static void ProfileSettingsSelectsWorkspace(string theme)
+    {
+        PdaThemeSelector.UseNewTheme = theme == "pda-new";
+        var model = new ProfileSettingsViewModel(
+            new ModProfile(), new DialogService(), () => Task.CompletedTask,
+            _ => null, () => null, _ => false, usvfsAvailable: true);
+        var classic = theme == "classic" ? new ProfileSettingsWindow(model) : null;
+        var view = (FrameworkElement?)classic ?? new PdaProfileSettingsView { DataContext = model };
+        var host = new Border { Resources = ReadAppResources() };
+        if (classic is null)
+        {
+            host.Resources.MergedDictionaries.Add(new ResourceDictionary
+            {
+                Source = new Uri(theme == "pda-new" ? "/CORDON;component/Themes/NewPdaTheme.xaml" : "/CORDON;component/Themes/PdaTheme.xaml", UriKind.Relative)
+            });
+            host.Child = view;
+        }
+        else
+        {
+            var content = (UIElement)classic.Content;
+            classic.Content = null;
+            host.Child = content;
+            host.DataContext = model;
+        }
+
+        try
+        {
+            var tabs = Assert.IsType<TabControl>(view.FindName("SettingsTabs"));
+            tabs.SelectedItem = Assert.Single(tabs.Items.OfType<TabItem>(), item => Equals(item.Header, Strings.SettingsProfile_LaunchTab));
+            Layout(host, 900, 550);
+            var selector = Assert.IsType<StackPanel>(view.FindName("LaunchModePanel"));
+            var options = Assert.Single(selector.Children.OfType<WrapPanel>()).Children.OfType<RadioButton>().ToArray();
+            Assert.Equal(2, options.Length);
+            Assert.True(options[0].ActualWidth > 0);
+            Assert.True(options[1].IsChecked);
+            options[0].SetCurrentValue(System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty, true);
+            Assert.True(model.UseLinkedWorkspace);
+            Assert.False(options[1].IsChecked);
+            model.IsStandalone = true;
+            Assert.False(selector.IsEnabled);
+        }
+        finally
+        {
+            classic?.Close();
         }
     }
 

@@ -61,7 +61,7 @@ Both launch modes use the same high-level sequence:
 1. Game and mod folders, EXE, working directory, and launch-mode availability are validated.
 2. A managed workspace is assigned to the ID of a standard profile.
 3. One shared layer plan is created and the winning file for every overlapping path is resolved.
-4. USVFS prepares the final launch parameters.
+4. Workspace or USVFS prepares the final launch parameters.
 5. The game starts with the selected EXE, arguments, and working directory.
 6. The launcher tracks process exit, playtime, and Discord Rich Presence.
 7. After exit, it looks for a new game log and crash dump.
@@ -87,7 +87,7 @@ The launcher uses this plan to answer four main questions:
 - which EXE files are available and where they come from;
 - which earlier files are overridden by a mod.
 
-USVFS consumes this plan instead of implementing separate priority rules.
+Workspace and USVFS use this plan to resolve mod priority.
 
 ### Final overlay snapshot
 
@@ -100,7 +100,7 @@ After analysis, the launcher keeps a compact snapshot of the important results:
 - the `userdata\overwrite` root;
 - overlap information when requested.
 
-This in-memory snapshot describes the USVFS launch overlay.
+This in-memory snapshot describes the planned overlay. The Workspace build manifest records the last physical build of `current`.
 
 ## 5. Executable resolution
 
@@ -124,17 +124,57 @@ Automatic mode always prefers the base-game Anomaly Launcher over engine executa
 
 Automatic EXE selection applies mod file exclusions through the same `FileLayerPlan` rules as the final overlay. A manually pinned source remains an explicit choice of that EXE and takes precedence over its exclusion. Workspace movement validates the entire target path for USVFS compatibility before copying data or saving settings.
 
-## 6. Profile storage
+## 6. Workspace
 
-Standard profiles launch only through USVFS. Standalone builds launch directly. The Workspace builder and backend selector have been removed. Explicit legacy Workspace recipes are rejected without migration: `current` is neither imported nor automatically deleted.
+New standard profiles use USVFS by default. Select Workspace in profile settings or during MO2 import. Profiles from 1.5.5 whose JSON omits the backend field use Workspace.
 
-Storage retains the path `<EXE directory>\Data\CordonModLauncher\Workspaces\profile-<ID>`. It contains `userdata`, `diagnostics`, a safety marker and, when needed, `.usvfs-bootstrap`. No full `current` tree or `build-manifest.json` is created. Display names do not affect the ASCII path.
+By default, CORDON creates `<EXE directory>\Data\CordonModLauncher\Workspaces\profile-<ID>`. A saved workspace path takes precedence. Use a short ASCII path for X-Ray builds that fail to start from a path containing Cyrillic characters or long parent directories.
+
+```text
+<workspace>\
+  .stalker-launcher-workspace
+  build-manifest.json
+  current\
+  userdata\
+  diagnostics\
+```
+
+### Building current
+
+Before building, the launcher snapshots the base game and mods. It then creates a signature from source paths, file state, directory structure (including empty directories), mod order, selected EXE, and relevant profile options. `build-manifest.json` also stores the detailed inputs of that signature, so a mismatch can name the exact changed file, EXE, EXE source, layer set, or layer order in the log.
+
+When the signature matches `build-manifest.json`, the selected EXE and all expected source files and directories must still exist in `current` before it is reused. Excluded mod files are checked through the shared layer plan. Missing entries trigger a rebuild that preserves profile writable files and user data. Cached file contents are not compared with their sources, so independent profile configuration edits remain valid. Older cache formats are rebuilt automatically on the next launch.
+
+When sources have changed, the workspace is rebuilt:
+
+1. known writable files are collected from the old `current`;
+2. the old `current` contents are removed through guarded deletion;
+3. the base game is materialized;
+4. enabled mods are applied in order;
+5. profile `fsgame.ltx`, `user.ltx`, and writable files are prepared;
+6. a manually pinned EXE source is enforced when required;
+7. a new `build-manifest.json` is written.
+
+### File strategy
+
+The launcher chooses how to materialize each file:
+
+- hard link when the source and workspace are on the same NTFS volume;
+- symbolic link when a cross-volume link is needed;
+- local file for configuration that must change independently;
+- an independent local copy where linking would be unsafe for the source.
+
+There is no silent fallback that copies the whole game. If a safe link cannot be created, preparation stops with an actionable error.
+
+A hard link shares physical data with its source, so writing through it would also change the source. Files that may be modified are therefore never left as ordinary writable hard links. Attributes and local copies protect the original folders.
+
+Explorer counts hard-linked files toward the visible logical size. The Status window estimates additional disk usage from local files and displays it alongside logical size.
 
 ## 7. USVFS: stable virtual mode
 
 USVFS mode uses the official [ModOrganizer2/usvfs](https://github.com/ModOrganizer2/usvfs) runtime. Instead of creating `current`, it presents one merged virtual tree to the launched game.
 
-Standard profiles use USVFS. Standalone builds use a separate direct-launch backend and do not require the virtual runtime. Legacy Workspace recipes are not converted automatically.
+New standard profiles default to USVFS. The backend is selected in profile settings or during MO2 import. Standalone builds use a separate direct-launch backend.
 
 The shared layer plan is converted into this mapping order:
 
@@ -201,7 +241,7 @@ StalkerModLauncher.UsvfsX86Host.exe
 
 Standard profiles have a **User data** setting: profile-local data (default), or a shared configured directory. Shared mode resolves `$app_data_root$` and referenced aliases from the base game's `fsgame.ltx` by default; a manually selected configuration or an automatically resolved `-fsltx` source takes precedence. Missing, unknown, cyclic, and unsafe paths block launch. Only the prepared configuration is rewritten. Standalone profiles keep their direct-launch behavior.
 
-USVFS writes the resolved absolute path into the prepared configuration. A manually selected file keeps its original name and relative path. If its name differs from `fsgame.ltx`, the prepared working layer also gets a sibling `fsgame.ltx` compatibility copy with identical content; the source file in the game or mod is neither renamed nor changed. `$fs_root$` resolves from the game or virtual root rather than the configuration directory. With USVFS, the shared directory stays outside the virtual bootstrap root and is not mapped through `CreateTarget`, so X-Ray accesses the base game's directory directly. This is an explicit write exception for that directory only. Service stores, diagnostics, writable game-tree files, and overwrite remain inside the profile. Save/log/screenshot discovery and folder opening follow the selected location; deleting a profile never deletes shared data.
+Workspace and USVFS write the resolved absolute path into the prepared configuration. A manually selected file keeps its original name and relative path. If its name differs from `fsgame.ltx`, the prepared working layer also gets a sibling `fsgame.ltx` compatibility copy with identical content; the source file in the game or mod is neither renamed nor changed. `$fs_root$` resolves from the game or virtual root rather than the configuration directory. With USVFS, the shared directory stays outside the virtual bootstrap root and is not mapped through `CreateTarget`, so X-Ray accesses the base game's directory directly. This is an explicit write exception for that directory only. Service stores, diagnostics, writable game-tree files, and overwrite remain inside the profile. Save/log/screenshot discovery and folder opening follow the selected location; deleting a profile never deletes shared data.
 
 The `-fsltx` launch argument selects its relative `.ltx` path through normal layer priority. A manual source controls the contents; when `-fsltx` names another path, a prepared copy of that manual file is also written there. Readiness checks and profile-data discovery use the same source as the actual launch.
 
@@ -237,7 +277,7 @@ On first preparation, the source is selected from the highest-priority layer dow
 
 If the profile copy still equals the previous lower-layer source, a new `user.ltx` from a higher-priority patch may safely replace it.
 
-For AnomalyLauncher profiles, bootstrap `appdata` is an NTFS junction to the selected `GameDataRoot`. Atomic replacement and deletion/recreation of `user.ltx` therefore use one active file. Cleanup detaches the junction before deleting bootstrap files. USVFS does not recursively map the selected data directory.
+For AnomalyLauncher profiles, `current\appdata` in Workspace and `appdata` in the USVFS bootstrap are NTFS junctions to the selected `GameDataRoot`. Atomic replacement and deletion/recreation of `user.ltx` therefore use one active file. Cleanup detaches the junction before deleting `current` or bootstrap files. USVFS does not recursively map the selected data directory.
 
 For AnomalyLauncher, the selected file-system configuration must be outside `appdata`. An overlapping configuration is rejected before preparation so redirecting shared data cannot overwrite the original configuration.
 
@@ -247,9 +287,11 @@ Prepared shader caches are merged by layer priority only for missing profile ent
 
 ### Writable files inside the game tree
 
-Known mutable game-tree paths, including `gamedata\configs\localization.ltx` and `gamedata\configs\axr_options.ltx`, are seeded from the final source layer into independent files under `userdata\writable-game-files` and mapped into the virtual game tree.
+Known mutable game-tree paths, including `gamedata\configs\localization.ltx` and `gamedata\configs\axr_options.ltx`, are seeded from the final source layer into independent files under `userdata\writable-game-files`. Only writable paths active in the current manifest are mapped into the virtual game tree; stored files from disabled class support do not remain active. Missing virtual parents are mapped explicitly, including when a sparse mod layer hides an existing physical directory.
 
-Legacy known-file copies under `userdata\overwrite` are consolidated into the writable store before mappings are created. No files are collected from old `current` trees.
+Legacy known-file copies under `userdata\overwrite` are consolidated into the writable store before mappings are created. Workspace restores known writable files into `current` and captures changes before rebuilding or moving it. USVFS captures changes from `current` when its initial file state was recorded.
+
+In USVFS and Workspace, MISERY class switching is supported when all three `gamedata\class_diversity\assaulter`, `recon`, and `sniper` trees contain effective, non-excluded game-data files. Preparation adds missing `$game_class_assaulter$`, `$game_class_recon$`, and `$game_class_sniper$` aliases to the generated file-system configuration and its compatibility copies, preserving existing definitions and the selected `$app_data_root$`. Source configurations are unchanged. The target-path union across all three classes becomes profile-writable: initial contents come from the final active game/mod layer, not class templates, and existing profile selections survive subsequent preparation. USVFS exposes the parent of a missing target in the profile overwrite. Workspace creates the parent in `current` and puts writable targets there as independent copies. It captures changed and newly created class files into the profile store before the next launch, cache cleanup or move. Existing MISERY workspaces rebuild once to replace the old links. Class state remains profile-local even with shared user data. MISERY's normal exit/restart after selecting a class is retained.
 
 ### Standalone profiles
 
@@ -312,7 +354,7 @@ Settings files:
 <EXE directory>\Data\CordonModLauncher\profiles\profile-<ID>.backup.json
 ```
 
-`settings.json` contains general launcher settings and `ProfileIds`, the profile IDs in display order. Each separate JSON stores the complete `ModProfile`: name, description, USVFS or a retained legacy Workspace identifier, standalone mode, launch arguments and sources, paths, statistics, groups, and mods with priorities and exclusions. Transient UI properties are omitted. File names use a safe representation of the existing ID; renaming a profile does not rename its file. In memory, callers still use `AppSettings.Profiles`.
+`settings.json` contains general launcher settings and `ProfileIds`, the profile IDs in display order. Each separate JSON stores the complete `ModProfile`: name, description, Workspace or USVFS, standalone mode, launch arguments and sources, paths, statistics, groups, and mods with priorities and exclusions. Transient UI properties are omitted. File names use a safe representation of the existing ID; renaming a profile does not rename its file. In memory, callers still use `AppSettings.Profiles`.
 
 The settings schema version is `10`. Legacy JSON with embedded `Profiles` migrates automatically on load. The original is copied to `settings.legacy.json` before writing the new format; subsequent saves never replace this copy. While loading, the launcher:
 
@@ -363,7 +405,7 @@ Preflight validates:
 
 Errors block launch. Warnings describe unusual layouts that may still be valid.
 
-The Status window uses the same layer model and shows layer count and profile-data readiness. Workspace cache statistics, clearing and rebuilding are no longer offered.
+The Status window uses the same layer model and shows layer count and profile-data readiness. In Workspace mode, Status also shows the cache size and file counts and offers clearing and rebuilding of `current`.
 
 The **fsgame.ltx source** check reports whether the file was found automatically, resolved through `-fsltx`, or selected manually, together with the final path. A missing automatic source is a warning; an inaccessible or invalid selected file is an error.
 
@@ -408,7 +450,7 @@ Grouped movement preserves the relative order of selected mods. The UI supports 
 
 The MO2 transfer wizard accepts a Mod Organizer 2 root, an MO2 profile directory, or `modlist.txt`. The last successfully selected source is saved and loaded when the wizard is opened again; MO2 installations are not scanned automatically. It reads `ModOrganizer.ini`, supports standard and relative paths, and discovers `profiles`, `mods`, the base game, and `overwrite` without writing to any source directory.
 
-The preview matches `modlist.txt` entries to physical directories, can show only missing and ambiguous matches, and lets the user select an individual folder for a missing mod. After all ambiguities are resolved, it transfers enabled state and converts MO2 order to the launcher's lower-is-higher priority rule. MO2 separators are persisted in `ModEntry.GroupName` and do not participate in the layer plan. A non-empty `overwrite` directory can be connected through `ModProfile.Mo2OverwritePath` as a separate layer after regular mods; it is hidden from the user-facing mod list and can be disconnected in profile settings. The user selects USVFS, with USVFS selected by default. The executable is selected only through the existing detection over actual layers; MO2 launch arguments are not copied automatically.
+The preview matches `modlist.txt` entries to physical directories, can show only missing and ambiguous matches, and lets the user select an individual folder for a missing mod. After all ambiguities are resolved, it transfers enabled state and converts MO2 order to the launcher's lower-is-higher priority rule. MO2 separators are persisted in `ModEntry.GroupName` and do not participate in the layer plan. A non-empty `overwrite` directory can be connected through `ModProfile.Mo2OverwritePath` as a separate layer after regular mods; it is hidden from the user-facing mod list and can be disconnected in profile settings. The user can select Workspace or USVFS, with USVFS selected by default. The executable is selected only through the existing detection over actual layers; MO2 launch arguments are not copied automatically.
 
 Profile creation is transactional with respect to settings: the profile is first added in memory and then explicitly saved through the atomic settings store. On failure it is removed, the previous selection is restored, and the wizard remains open. Saves and `user.ltx` are not copied in the current version.
 

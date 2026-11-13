@@ -51,7 +51,7 @@ CORDON помогает держать несколько модификаций
 - Анализ конфликтов: победившие, заменённые и уникальные файлы, итоговое дерево сборки и исключение отдельного файла без изменения исходного мода.
 - Импорт готовых игровых профилей из `Mod Organizer 2`.
 - Автоматический поиск итогового EXE с возможностью выбрать файл вручную; учитываются движки из включённых модов.
-- Обычные профили используют USVFS от Mod Organizer 2 для виртуального наложения файлов. Автономные сборки запускаются напрямую.
+- Обычные профили поддерживают USVFS от Mod Organizer 2 и Workspace. Автономные сборки запускаются напрямую.
 - Проверка готовности профиля, состояния USVFS, последнего игрового лога и crash dump; перенос данных профиля и копирование диагностического отчёта.
 - Импорт, экспорт, копирование и переименование профилей.
 - Классический интерфейс и две темы интерфейса в стиле КПК S.T.A.L.K.E.R., русский и английский языки.
@@ -63,6 +63,7 @@ CORDON помогает держать несколько модификаций
 
 | Режим | Статус | Когда использовать |
 | --- | --- | --- |
+| **Workspace** | Стабильный | Собирает изолированный профиль с помощью NTFS-ссылок, не копируя игру целиком. Подходит для сборок, несовместимых с USVFS. |
 | **USVFS** | Стабильный | Режим по умолчанию для новых обычных профилей. Виртуально объединяет файлы через компоненты Mod Organizer 2; поддерживает x64 и x86. |
 | **Автономный профиль** | Стабильный | Запускает уже готовую самостоятельную сборку из её собственной папки. |
 
@@ -152,7 +153,7 @@ It supports the original trilogy, Anomaly, OGSR, iX-Ray and other X-Ray projects
 - Conflict analysis: winning, replaced and unique files, the resulting build tree, and excluding one file without changing the source mod.
 - Import ready-made game profiles from `Mod Organizer 2`.
 - Automatically find the final EXE or choose it manually; engines from enabled mods are included.
-- Regular profiles use USVFS from Mod Organizer 2 for virtual overlays. Standalone builds launch directly.
+- Regular profiles support Mod Organizer 2 USVFS and Workspace. Standalone builds launch directly.
 - Profile readiness checks, USVFS status, the latest game log and crash dump; profile data movement and diagnostic report copying.
 - Import, export, duplicate and rename profiles.
 - Classic UI and two alternative S.T.A.L.K.E.R.-inspired PDA UI themes, with Russian and English languages.
@@ -164,6 +165,7 @@ It supports the original trilogy, Anomaly, OGSR, iX-Ray and other X-Ray projects
 
 | Mode | Status | When to use |
 | --- | --- | --- |
+| **Workspace** | Stable | Builds an isolated profile with NTFS links without copying the entire game. Useful for builds incompatible with USVFS. |
 | **USVFS** | Stable | The default for new regular profiles. Virtually combines files through Mod Organizer 2 components; supports x64 and x86. |
 | **Standalone profile** | Stable | Starts an already assembled standalone build from its own folder. |
 

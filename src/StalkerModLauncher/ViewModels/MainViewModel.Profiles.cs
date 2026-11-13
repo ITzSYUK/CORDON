@@ -274,7 +274,8 @@ public sealed partial class MainViewModel
 
         return ProfileExecutableSourceResolver.TryCreateSelection(
             SelectedProfile,
-            selectedPath);
+            selectedPath,
+            includeWorkspace: SelectedProfile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace);
     }
 
     public ProfileSettingsViewModel? CreateProfileSettingsViewModel()
@@ -291,7 +292,8 @@ public sealed partial class MainViewModel
             () => SaveOrThrowAsync(),
             selectedPath => ProfileExecutableSourceResolver.TryCreateSelection(
                 profile,
-                selectedPath),
+                selectedPath,
+                includeWorkspace: profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace),
             () => ProfileExecutableSourceResolver.DetectAutomaticSelection(
                 profile),
             name => Profiles.Any(p => p != profile && p.Name.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase)),

@@ -24,8 +24,8 @@ internal static class UsvfsProfileDataPreparer
             source.RelativePath,
             Strings.Safety_ProfileFsgame);
         ProfileDataConfigurator.MigrateLegacyManualData(layerPlan, manifest.WriteOverlayRoot, progress);
-        ProfileWritableGameFileStore.Prepare(layerPlan, profileWorkspace, progress);
-        ProfileDataConfigurator.WriteProfileFsgame(source.FullPath, destination, profileDataPath);
+        ProfileWritableGameFileStore.Prepare(layerPlan, manifest, profileWorkspace, progress, cancellationToken: cancellationToken);
+        ProfileDataConfigurator.WriteProfileFsgame(source.FullPath, destination, profileDataPath, manifest.UsesMiseryClasses);
         var launchDestination = layerPlan.UsesFsgameLaunchArgument
             ? FileSystemSafety.ResolvePathInside(
                 manifest.WriteOverlayRoot,
@@ -34,7 +34,7 @@ internal static class UsvfsProfileDataPreparer
             : destination;
         if (!launchDestination.Equals(destination, StringComparison.OrdinalIgnoreCase))
         {
-            ProfileDataConfigurator.WriteProfileFsgame(source.FullPath, launchDestination, profileDataPath);
+            ProfileDataConfigurator.WriteProfileFsgame(source.FullPath, launchDestination, profileDataPath, manifest.UsesMiseryClasses);
         }
         Directory.CreateDirectory(layerPlan.GameDataRoot);
         if (layerPlan.UsesSharedGameData)
