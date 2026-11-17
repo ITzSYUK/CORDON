@@ -316,8 +316,15 @@ public sealed partial class MainViewModel
             return;
         }
 
-        if (e.PropertyName is nameof(ModProfile.HasLaunchError) or nameof(ModProfile.LaunchErrorSummary))
+        if (e.PropertyName is nameof(ModProfile.HasLaunchError) or nameof(ModProfile.LaunchErrorSummary)
+            or nameof(ModProfile.ExecutableFileName))
         {
+            return;
+        }
+
+        if (e.PropertyName == nameof(ModProfile.Badge))
+        {
+            _autoSave.Schedule();
             return;
         }
 

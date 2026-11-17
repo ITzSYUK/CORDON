@@ -13,12 +13,14 @@
             <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
         </Style>
         <Style x:Key="OverviewValueStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Margin" Value="0,4,0,0"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
         </Style>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -189,41 +191,35 @@
                 BorderThickness="1"
                 CornerRadius="6"
                 Padding="12,5">
-            <Grid>
+            <Grid VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="0.75*"/>
-                    <ColumnDefinition Width="70"/>
-                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="0.85*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1.4*"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                    <TextBlock Text="{x:Static res:Strings.Common_Binary}" Style="{StaticResource OverviewLabelStyle}"/>
-                    <TextBlock Text="{Binding SelectedProfile.ExecutableRelativePath}"
+                <StackPanel>
+                    <TextBlock Text="{x:Static res:Strings.Classic_Exe}" Style="{StaticResource OverviewLabelStyle}"/>
+                    <TextBlock Text="{Binding SelectedProfile.ExecutableFileName}"
                                ToolTip="{Binding SelectedProfile.ExecutableRelativePath}"
                                ToolTipService.InitialShowDelay="600"
                                ToolTipService.BetweenShowDelay="0"
                                Style="{StaticResource OverviewValueStyle}"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1" Margin="0,0,12,0">
-                    <TextBlock Text="{x:Static res:Strings.Common_Arguments}" Style="{StaticResource OverviewLabelStyle}"/>
-                    <TextBlock Text="{Binding SelectedProfile.LaunchArguments}"
-                               ToolTip="{Binding SelectedProfile.LaunchArguments}"
-                               ToolTipService.InitialShowDelay="600"
-                               ToolTipService.BetweenShowDelay="0"
+                <Border Grid.Column="1" Width="1" Margin="10,0" Background="{DynamicResource StrokeBrush}"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="{x:Static res:Strings.Common_ModCount}" TextAlignment="Center"
+                               Style="{StaticResource OverviewLabelStyle}"/>
+                    <TextBlock Text="{Binding SelectedProfile.Mods.Count}" TextAlignment="Center"
                                Style="{StaticResource OverviewValueStyle}"/>
                 </StackPanel>
-                <StackPanel Grid.Column="2" Margin="0,0,12,0">
-                    <TextBlock Text="{x:Static res:Strings.Common_ModCount}" Style="{StaticResource OverviewLabelStyle}"/>
-                    <TextBlock Text="{Binding SelectedProfile.Mods.Count}" Style="{StaticResource OverviewValueStyle}"/>
-                </StackPanel>
-                <StackPanel Grid.Column="3">
-                    <TextBlock Text="{x:Static res:Strings.Common_PlayTime}" Style="{StaticResource OverviewLabelStyle}"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                        <TextBlock Text="{Binding SelectedProfile.PlaytimeDisplay}" FontSize="13"/>
-                        <TextBlock Text="{Binding SelectedProfile.LastPlayedDisplay}" Margin="10,1,0,0"
-                                   Foreground="{DynamicResource MutedTextBrush}" FontSize="11"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
+                <Border Grid.Column="3" Width="1" Margin="10,0" Background="{DynamicResource StrokeBrush}"/>
+                <StackPanel Grid.Column="4">
+                    <TextBlock Text="{x:Static res:Strings.Classic_PlayTime}" Style="{StaticResource OverviewLabelStyle}"/>
+                    <TextBlock Text="{Binding SelectedProfile.PlaytimeDisplay}"
+                               ToolTip="{Binding SelectedProfile.LastPlayedDisplay}"
+                               Style="{StaticResource OverviewValueStyle}"/>
                 </StackPanel>
             </Grid>
         </Border>

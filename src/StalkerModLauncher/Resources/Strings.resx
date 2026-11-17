@@ -188,7 +188,20 @@
   <data name="Main_OpenLauncher" xml:space="preserve"><value>Open launcher</value></data>
   <data name="Main_ProfileList" xml:space="preserve"><value>Profile list</value></data>
   <data name="Profile_EmptyFirstHint" xml:space="preserve"><value>Create your first profile to add a game and mods.</value></data>
-  <data name="Profile_ModBrowser" xml:space="preserve"><value>Mod browser</value></data>
+  <data name="Profile_ModBrowser" xml:space="preserve"><value>Mod catalog</value></data>
+  <data name="Classic_Exe" xml:space="preserve"><value>EXE</value></data>
+  <data name="Classic_PlayTime" xml:space="preserve"><value>Play time</value></data>
+  <data name="Profile_ChooseBadge" xml:space="preserve"><value>Choose profile badge</value></data>
+  <data name="Profile_DefaultBadge" xml:space="preserve"><value>Default icon</value></data>
+  <data name="Profile_LonersBadge" xml:space="preserve"><value>Loners</value></data>
+  <data name="Profile_BanditsBadge" xml:space="preserve"><value>Bandits</value></data>
+  <data name="Profile_MonolithBadge" xml:space="preserve"><value>Monolith</value></data>
+  <data name="Profile_DutyBadge" xml:space="preserve"><value>Duty</value></data>
+  <data name="Profile_FreedomBadge" xml:space="preserve"><value>Freedom</value></data>
+  <data name="Profile_MercenariesBadge" xml:space="preserve"><value>Mercenaries</value></data>
+  <data name="Profile_ClearSkyBadge" xml:space="preserve"><value>Clear Sky</value></data>
+  <data name="Profile_RenegadesBadge" xml:space="preserve"><value>Renegades</value></data>
+  <data name="Profile_ScientistsBadge" xml:space="preserve"><value>Scientists</value></data>
   <data name="Profile_NoneSelected" xml:space="preserve"><value>No profile selected</value></data>
   <data name="Profile_Profiles" xml:space="preserve"><value>Profiles</value></data>
   <data name="Profile_RegularTooltip" xml:space="preserve"><value>Base game + mods</value></data>

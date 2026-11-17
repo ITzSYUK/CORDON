@@ -22,6 +22,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
         {
             Name = "Zona",
             Description = "Описание профиля\nSecond line",
+            Badge = ProfileBadge.Monolith,
             IsStandalone = true,
             IsDiscordStatusEnabled = false,
             ExecutableRelativePath = @"bin_x64\xrEngine.exe",
@@ -48,6 +49,7 @@ public sealed class ProfileTransferServiceTests : IDisposable
 
         Assert.Equal(source.Name, imported.Name);
         Assert.Equal(source.Description, imported.Description);
+        Assert.Equal(source.Badge, imported.Badge);
         Assert.False(imported.IsDiscordStatusEnabled);
         Assert.Equal(source.ExecutableRelativePath, imported.ExecutableRelativePath);
         Assert.Equal(source.FsgameSourcePath, imported.FsgameSourcePath);

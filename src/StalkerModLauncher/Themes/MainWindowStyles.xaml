@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:res="clr-namespace:StalkerModLauncher.Resources">
+                    xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+                    xmlns:controls="clr-namespace:StalkerModLauncher.Views.Controls">
         <Style x:Key="ProfileActionsToggleButtonStyle"
                TargetType="ToggleButton">
             <Setter Property="Width" Value="38"/>
@@ -312,40 +313,42 @@
                                         BorderThickness="0,1"
                                         Cursor="Hand"
                                         Visibility="Collapsed">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Border x:Name="GroupToggleCircle"
-                                                Width="16"
-                                                Height="16"
-                                                Margin="0,0,7,0"
-                                                VerticalAlignment="Center"
-                                                Background="{DynamicResource AccentBrush}"
-                                                CornerRadius="8">
-                                            <Path x:Name="GroupToggleChevron"
-                                                  Width="10"
-                                                  Height="10"
-                                                  Data="M2,4 L5,7 L8,4"
-                                                  Stroke="{DynamicResource FieldBackgroundBrush}"
-                                                  StrokeThickness="2"
-                                                  StrokeStartLineCap="Round"
-                                                  StrokeEndLineCap="Round"
-                                                  Stretch="None"
-                                                  RenderTransformOrigin="0.5,0.5">
-                                                <Path.RenderTransform>
-                                                    <RotateTransform Angle="180"/>
-                                                </Path.RenderTransform>
-                                            </Path>
-                                        </Border>
-                                        <TextBlock Grid.Column="1"
-                                                   Text="{Binding GroupName}"
-                                                   Foreground="{DynamicResource AccentBrush}"
-                                                   FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   VerticalAlignment="Center"/>
-                                    </Grid>
+                                    <Border x:Name="GroupTab">
+                                        <Grid x:Name="GroupTabBody">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border x:Name="GroupToggleCircle"
+                                                    Width="16"
+                                                    Height="16"
+                                                    Margin="0,0,7,0"
+                                                    VerticalAlignment="Center"
+                                                    Background="{DynamicResource AccentBrush}"
+                                                    CornerRadius="8">
+                                                <Path x:Name="GroupToggleChevron"
+                                                      Width="10"
+                                                      Height="10"
+                                                      Data="M2,4 L5,7 L8,4"
+                                                      Stroke="{DynamicResource FieldBackgroundBrush}"
+                                                      StrokeThickness="2"
+                                                      StrokeStartLineCap="Round"
+                                                      StrokeEndLineCap="Round"
+                                                      Stretch="None"
+                                                      RenderTransformOrigin="0.5,0.5">
+                                                    <Path.RenderTransform>
+                                                        <RotateTransform Angle="180"/>
+                                                    </Path.RenderTransform>
+                                                </Path>
+                                            </Border>
+                                            <TextBlock x:Name="GroupTitle" Grid.Column="1"
+                                                       Text="{Binding GroupName}"
+                                                       Foreground="{DynamicResource AccentBrush}"
+                                                       FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
                                 </Border>
 
                                 <Grid x:Name="ModBody" ClipToBounds="True">
@@ -471,6 +474,28 @@
                             <DataTrigger Binding="{Binding ViewGroupKey.IsGroup}" Value="True">
                                 <Setter TargetName="RowContent" Property="Margin" Value="22,4,4,4"/>
                                 <Setter TargetName="GroupGuide" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:ModPanelView}}" Value="False">
+                                <Setter TargetName="ModGroupHeader" Property="Padding" Value="0"/>
+                                <Setter TargetName="GroupTab" Property="HorizontalAlignment" Value="Left"/>
+                                <Setter TargetName="GroupTab" Property="Background">
+                                    <Setter.Value>
+                                        <DrawingBrush Stretch="Fill">
+                                            <DrawingBrush.Drawing>
+                                                <GeometryDrawing Brush="{DynamicResource AccentBrush}"
+                                                                 Geometry="M0,24 V8 L8,0 H123 L135,12 123,24 Z"/>
+                                            </DrawingBrush.Drawing>
+                                        </DrawingBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="GroupTabBody" Property="MinWidth" Value="115"/>
+                                <Setter TargetName="GroupTabBody" Property="Margin" Value="8,0,12,0"/>
+                                <Setter TargetName="GroupToggleCircle" Property="Margin" Value="4,0,7,0"/>
+                                <Setter TargetName="GroupToggleCircle" Property="Background" Value="{DynamicResource FieldBackgroundBrush}"/>
+                                <Setter TargetName="GroupToggleChevron" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="GroupTitle" Property="Foreground" Value="{DynamicResource FieldBackgroundBrush}"/>
+                                <Setter TargetName="GroupTitle" Property="Margin" Value="0,0,8,0"/>
+                                <Setter TargetName="GroupTitle" Property="ToolTip" Value="{Binding GroupName}"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding ShowsGroupHeader}" Value="True">
                                 <Setter TargetName="ModGroupHeader" Property="Visibility" Value="Visible"/>
