@@ -14,6 +14,7 @@ public sealed class ModProfile : ObservableObject, IJsonOnDeserializing
     private string _id = Guid.NewGuid().ToString("N");
     private string _name = Strings.Creation_DefaultName;
     private string _description = string.Empty;
+    private ProfileBadge _badge;
     private bool _isEnabled = true;
     private bool _isDiscordStatusEnabled = true;
     private bool _isStandalone;
@@ -59,6 +60,13 @@ public sealed class ModProfile : ObservableObject, IJsonOnDeserializing
         set => SetProperty(ref _description, value);
     }
 
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public ProfileBadge Badge
+    {
+        get => _badge;
+        set => SetProperty(ref _badge, Enum.IsDefined(value) ? value : ProfileBadge.Default);
+    }
+
     public bool IsEnabled
     {
         get => _isEnabled;
@@ -96,8 +104,17 @@ public sealed class ModProfile : ObservableObject, IJsonOnDeserializing
     public string ExecutableRelativePath
     {
         get => _executableRelativePath;
-        set => SetProperty(ref _executableRelativePath, value);
+        set
+        {
+            if (SetProperty(ref _executableRelativePath, value))
+            {
+                OnPropertyChanged(nameof(ExecutableFileName));
+            }
+        }
     }
+
+    [JsonIgnore]
+    public string ExecutableFileName => Path.GetFileName(ExecutableRelativePath);
 
     public string ExecutableSourcePath
     {

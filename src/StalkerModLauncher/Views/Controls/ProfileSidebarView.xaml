@@ -2,9 +2,108 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:res="clr-namespace:StalkerModLauncher.Resources"
+             xmlns:infrastructure="clr-namespace:StalkerModLauncher.Infrastructure"
              x:Name="Root"
              Background="Transparent">
     <UserControl.Resources>
+        <infrastructure:ProfileBadgeImageConverter x:Key="ProfileBadgeImages"/>
+        <Style x:Key="ProfileBadgeMenuStyle" TargetType="ContextMenu" BasedOn="{StaticResource {x:Type ContextMenu}}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer Height="190" VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled" CanContentScroll="True">
+                                <ScrollViewer.Resources>
+                                    <Style TargetType="ScrollBar" BasedOn="{StaticResource {x:Type ScrollBar}}">
+                                        <Setter Property="Width" Value="8"/>
+                                        <Setter Property="MinWidth" Value="8"/>
+                                        <Setter Property="Margin" Value="4,0,0,0"/>
+                                    </Style>
+                                </ScrollViewer.Resources>
+                                <ItemsPresenter/>
+                            </ScrollViewer>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <DataTemplate x:Key="DefaultProfileBadge">
+            <Grid Width="17" Height="17" IsHitTestVisible="False">
+                <Canvas Width="15"
+                        Height="15"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        RenderTransformOrigin="0.5,0.5">
+                    <Canvas.RenderTransform>
+                        <ScaleTransform ScaleX="1.1"
+                                        ScaleY="1.1"/>
+                    </Canvas.RenderTransform>
+                    <Canvas.Style>
+                        <Style TargetType="Canvas">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsStandalone}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Canvas.Style>
+                    <Path Data="M7.5,2 L13,5.2 L7.5,8.4 L2,5.2 Z"
+                          Fill="#282D1F"
+                          Stroke="{DynamicResource AccentBrush}"
+                          StrokeThickness="1.1"
+                          StrokeLineJoin="Round"/>
+                    <Path Data="M2.5,7.7 L7.5,10.7 L12.5,7.7"
+                          Stroke="{DynamicResource AccentBrush}"
+                          StrokeThickness="1.1"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          StrokeLineJoin="Round"/>
+                    <Path Data="M2.5,10.3 L7.5,13.3 L12.5,10.3"
+                          Stroke="{DynamicResource AccentBrush}"
+                          StrokeThickness="1.1"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          StrokeLineJoin="Round"/>
+                </Canvas>
+                <Canvas Width="15"
+                        Height="15"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        RenderTransformOrigin="0.5,0.5">
+                    <Canvas.RenderTransform>
+                        <ScaleTransform ScaleX="1.1"
+                                        ScaleY="1.1"/>
+                    </Canvas.RenderTransform>
+                    <Canvas.Style>
+                        <Style TargetType="Canvas">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsStandalone}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Canvas.Style>
+                    <Path Data="M3,5 L7.5,2.7 L12,5 L7.5,7.3 Z"
+                          Fill="#2E301F"
+                          Stroke="{DynamicResource AccentBrush}"
+                          StrokeThickness="1.1"
+                          StrokeLineJoin="Round"/>
+                    <Path Data="M3,5 V10.6 L7.5,13.3 L12,10.6 V5 M7.5,7.3 V13.3"
+                          Stroke="{DynamicResource AccentBrush}"
+                          StrokeThickness="1.1"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          StrokeLineJoin="Round"/>
+                </Canvas>
+            </Grid>
+        </DataTemplate>
         <Style x:Key="TrayProfileListBoxItemStyle" TargetType="ListBoxItem">
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -275,93 +374,77 @@
                         <DataTemplate>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="22"/>
+                                    <ColumnDefinition Width="Auto" MinWidth="22"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Grid Width="17"
-                                      Height="17"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Top"
-                                      Margin="0,0,6,0">
-                                    <Grid.Style>
-                                        <Style TargetType="Grid">
+                                <ContentControl Content="{Binding}"
+                                                ContentTemplate="{StaticResource DefaultProfileBadge}"
+                                                HorizontalAlignment="Center" VerticalAlignment="Top"
+                                                Margin="0,0,5,0" Focusable="False">
+                                    <ContentControl.Style>
+                                        <Style TargetType="ContentControl">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
                                             <Setter Property="ToolTip" Value="{x:Static res:Strings.Profile_RegularTooltip}"/>
                                             <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsTrayMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsStandalone}" Value="True">
                                                     <Setter Property="ToolTip" Value="{x:Static res:Strings.Profile_Standalone}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </Grid.Style>
-                                    <Canvas Width="15"
-                                            Height="15"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            RenderTransformOrigin="0.5,0.5">
-                                        <Canvas.RenderTransform>
-                                            <ScaleTransform ScaleX="1.1"
-                                                            ScaleY="1.1"/>
-                                        </Canvas.RenderTransform>
-                                        <Canvas.Style>
-                                            <Style TargetType="Canvas">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsStandalone}" Value="True">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Canvas.Style>
-                                        <Path Data="M7.5,2 L13,5.2 L7.5,8.4 L2,5.2 Z"
-                                              Fill="#282D1F"
-                                              Stroke="{DynamicResource AccentBrush}"
-                                              StrokeThickness="1.1"
-                                              StrokeLineJoin="Round"/>
-                                        <Path Data="M2.5,7.7 L7.5,10.7 L12.5,7.7"
-                                              Stroke="{DynamicResource AccentBrush}"
-                                              StrokeThickness="1.1"
-                                              StrokeStartLineCap="Round"
-                                              StrokeEndLineCap="Round"
-                                              StrokeLineJoin="Round"/>
-                                        <Path Data="M2.5,10.3 L7.5,13.3 L12.5,10.3"
-                                              Stroke="{DynamicResource AccentBrush}"
-                                              StrokeThickness="1.1"
-                                              StrokeStartLineCap="Round"
-                                              StrokeEndLineCap="Round"
-                                              StrokeLineJoin="Round"/>
-                                    </Canvas>
-                                    <Canvas Width="15"
-                                            Height="15"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            RenderTransformOrigin="0.5,0.5">
-                                        <Canvas.RenderTransform>
-                                            <ScaleTransform ScaleX="1.1"
-                                                            ScaleY="1.1"/>
-                                        </Canvas.RenderTransform>
-                                        <Canvas.Style>
-                                            <Style TargetType="Canvas">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsStandalone}" Value="True">
-                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Canvas.Style>
-                                        <Path Data="M3,5 L7.5,2.7 L12,5 L7.5,7.3 Z"
-                                              Fill="#2E301F"
-                                              Stroke="{DynamicResource AccentBrush}"
-                                              StrokeThickness="1.1"
-                                              StrokeLineJoin="Round"/>
-                                        <Path Data="M3,5 V10.6 L7.5,13.3 L12,10.6 V5 M7.5,7.3 V13.3"
-                                              Stroke="{DynamicResource AccentBrush}"
-                                              StrokeThickness="1.1"
-                                              StrokeStartLineCap="Round"
-                                              StrokeEndLineCap="Round"
-                                              StrokeLineJoin="Round"/>
-                                    </Canvas>
-                                </Grid>
+                                    </ContentControl.Style>
+                                </ContentControl>
+                                <Button Width="32" Height="32" MinHeight="32" Padding="1"
+                                        HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        Margin="0,-7.5,5,-7.5" Click="ProfileBadgeButton_OnClick"
+                                        ToolTip="{x:Static res:Strings.Profile_ChooseBadge}"
+                                        AutomationProperties.Name="{x:Static res:Strings.Profile_ChooseBadge}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource ModToolbarIconButtonStyle}">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="FocusVisualStyle" Value="{DynamicResource {x:Static SystemParameters.FocusVisualStyleKey}}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsTrayMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Grid>
+                                        <Image Source="{Binding Badge, Converter={StaticResource ProfileBadgeImages}}"
+                                               Width="28" Height="28" RenderOptions.BitmapScalingMode="Fant"
+                                               RenderTransformOrigin="0.5,0.5">
+                                            <Image.Style>
+                                                <Style TargetType="Image">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Badge}" Value="Monolith">
+                                                            <Setter Property="RenderTransform">
+                                                                <Setter.Value><ScaleTransform ScaleX="1.15" ScaleY="1.15"/></Setter.Value>
+                                                            </Setter>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Image.Style>
+                                        </Image>
+                                        <ContentControl Content="{Binding}"
+                                                        ContentTemplate="{StaticResource DefaultProfileBadge}"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Focusable="False">
+                                            <ContentControl.Style>
+                                                <Style TargetType="ContentControl">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Badge}" Value="Default">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ContentControl.Style>
+                                        </ContentControl>
+                                    </Grid>
+                                </Button>
                                 <StackPanel Grid.Column="1">
                                     <Grid>
                                         <Grid.ColumnDefinitions>

@@ -105,7 +105,7 @@
             <Border Grid.Column="0"
                     Height="40"
                     HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
+                    VerticalAlignment="Center"
                     ClipToBounds="True"
                     Margin="0,0,4,8"
                     Width="0"
@@ -156,7 +156,7 @@
                 <StackPanel Height="38"
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
-                            VerticalAlignment="Top">
+                            VerticalAlignment="Center">
                     <Button Content="{x:Static res:Strings.Common_Status}"
                             Click="ProfileHealthButton_OnClick"
                             Margin="0,0,8,0"/>
@@ -177,6 +177,7 @@
                           IsChecked="True"
                           infrastructure:UiSound.Kind="ProfileActionsToggle"
                           Style="{DynamicResource ProfileActionsToggleButtonStyle}"
+                          VerticalAlignment="Center"
                           ToolTip="{x:Static res:Strings.Profile_ActionsTooltip}"
                           Margin="0,0,6,8"/>
 
@@ -184,6 +185,7 @@
                     Content="{x:Static res:Strings.Common_Launch}"
                     Command="{Binding LaunchCommand}"
                     Style="{StaticResource PrimaryButtonStyle}"
+                    FontSize="15"
                     Margin="0,0,0,8"
                     MinWidth="112"/>
         </Grid>

@@ -34,6 +34,7 @@ public sealed class ProfileManager
         {
             Name = GetUniqueName(profiles, LocalizedText.Format(Strings.Profile_CopyNameFormat, source.Name)),
             Description = source.Description,
+            Badge = source.Badge,
             IsEnabled = source.IsEnabled,
             IsDiscordStatusEnabled = source.IsDiscordStatusEnabled,
             IsStandalone = source.IsStandalone,

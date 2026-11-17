@@ -27,6 +27,8 @@
     <Using Remove="System.Windows.Forms" />
     <Resource Include="..\..\assets\icons\mod-actions\add_mods.png" Link="Resources\add_mods.png" />
     <Resource Include="..\..\assets\icons\mod-actions\scan_add_mods.png" Link="Resources\scan_add_mods.png" />
+    <Resource Include="..\..\assets\icons\profile-badges-optimized\*.png" Link="Resources\ProfileBadges\%(Filename)%(Extension)" />
+    <Resource Include="..\..\assets\icons\profile-badges-optimized\panel-backgrounds\cordon-checkpoint.png" Link="Resources\ClassicCheckpoint.png" />
     <Resource Include="..\..\assets\ui\pda\PdaShell.HD.png" Link="Resources\PdaShell.HD.png" />
     <Resource Include="..\..\assets\ui\pda\AltPdaShell.png" Link="Resources\AltPdaShell.png" />
     <Resource Include="..\..\assets\ui\pda\PdaUiAtlas.png" Link="Resources\PdaUiAtlas.png" />

@@ -72,6 +72,7 @@ public static class ProfileTransferService
         {
             Name = profile.Name,
             Description = profile.Description,
+            Badge = profile.Badge,
             IsEnabled = profile.IsEnabled,
             IsDiscordStatusEnabled = profile.IsDiscordStatusEnabled,
             IsStandalone = profile.IsStandalone,
@@ -104,6 +105,7 @@ public static class ProfileTransferService
         {
             Name = exported.Name.Trim(),
             Description = exported.Description ?? string.Empty,
+            Badge = exported.Badge,
             IsEnabled = exported.IsEnabled,
             IsDiscordStatusEnabled = exported.IsDiscordStatusEnabled,
             IsStandalone = exported.IsStandalone,

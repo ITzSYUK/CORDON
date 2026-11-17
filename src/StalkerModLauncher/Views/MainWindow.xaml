@@ -54,10 +54,22 @@
                     Background="{StaticResource PanelBrush}"
                     BorderBrush="{StaticResource StrokeBrush}"
                     BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="14">
+                    CornerRadius="6">
                 <Grid>
-                    <Grid>
+                    <Border Height="230" VerticalAlignment="Top" CornerRadius="5,5,0,0" IsHitTestVisible="False">
+                        <Border.Background>
+                            <ImageBrush ImageSource="/CORDON;component/Resources/ClassicCheckpoint.png"
+                                        Stretch="UniformToFill" AlignmentY="Center"/>
+                        </Border.Background>
+                        <Border.OpacityMask>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#EFFFFFFF" Offset="0"/>
+                                <GradientStop Color="#BFFFFFFF" Offset="0.45"/>
+                                <GradientStop Color="#00FFFFFF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.OpacityMask>
+                    </Border>
+                    <Grid Margin="14">
                         <Grid.Style>
                             <Style TargetType="Grid">
                                 <Setter Property="Visibility" Value="Visible"/>
@@ -89,6 +101,7 @@
                     </Grid>
 
                     <Border Background="{StaticResource FieldBackgroundBrush}"
+                            Margin="14"
                             BorderBrush="{StaticResource StrokeBrush}"
                             BorderThickness="1"
                             CornerRadius="6"

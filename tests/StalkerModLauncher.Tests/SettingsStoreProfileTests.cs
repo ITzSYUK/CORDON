@@ -27,6 +27,7 @@ public sealed class SettingsStoreProfileTests : IDisposable
         {
             Name = "Profile",
             Description = "Description",
+            Badge = ProfileBadge.Freedom,
             LaunchBackendKind = backend,
             IsStandalone = standalone,
             LaunchArguments = "-nointro -nosplash",
@@ -65,6 +66,29 @@ public sealed class SettingsStoreProfileTests : IDisposable
         Assert.Equal(JsonSerializer.Serialize(profile), JsonSerializer.Serialize(Assert.Single((await _store.LoadAsync()).Profiles)));
     }
 
+    [Theory]
+    [InlineData(ProfileBadge.Mercenaries)]
+    [InlineData(ProfileBadge.ClearSky)]
+    [InlineData(ProfileBadge.Renegades)]
+    [InlineData(ProfileBadge.Scientists)]
+    public async Task StoresFactionBadge(ProfileBadge badge)
+    {
+        var profile = new ModProfile { Name = "Profile", Badge = badge };
+        await _store.SaveAsync(new AppSettings { Profiles = [profile] });
+
+        Assert.Equal(badge, Assert.Single((await _store.LoadAsync()).Profiles).Badge);
+    }
+
+    [Fact]
+    public void RemovedRadiationBadgeFallsBackToDefault()
+    {
+        var profile = JsonSerializer.Deserialize<ModProfile>("""{"Name":"Existing profile","Badge":1}""");
+
+        Assert.NotNull(profile);
+        Assert.Equal("Existing profile", profile.Name);
+        Assert.Equal(ProfileBadge.Default, profile.Badge);
+    }
+
     [Fact]
     public async Task MigratesLegacySettingsOnceAndKeepsOriginalBackup()
     {
@@ -75,6 +99,7 @@ public sealed class SettingsStoreProfileTests : IDisposable
         var loaded = await _store.LoadAsync();
         var profile = Assert.Single(loaded.Profiles);
         Assert.Equal("old", profile.Id);
+        Assert.Equal(ProfileBadge.Default, profile.Badge);
         Assert.Equal(LaunchBackendKind.LinkedWorkspace, profile.LaunchBackendKind);
         Assert.Equal("-test", profile.LaunchArguments);
         Assert.Equal(90, profile.TotalPlaytimeSeconds);

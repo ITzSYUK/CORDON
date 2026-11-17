@@ -1,9 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace StalkerModLauncher.Models;
 
 public sealed class ExportedProfile
 {
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public ProfileBadge Badge { get; set; }
     public bool IsEnabled { get; set; } = true;
     public bool IsDiscordStatusEnabled { get; set; } = true;
     public bool IsStandalone { get; set; }
