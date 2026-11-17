@@ -345,19 +345,17 @@ public partial class ModPanelView : UserControl
             return;
         }
 
-        e.Effects = DragDropEffects.Move;
         e.Handled = true;
         AutoScroll(e.GetPosition(ModsList));
 
-        if (e.OriginalSource is not DependencyObject source)
+        if (!TryGetModDropTarget(e, out var target, out var groupHeader, out var dropAfter))
         {
+            ClearDropHighlight();
+            e.Effects = DragDropEffects.None;
             return;
         }
 
-        var groupHeader = FindAncestor<Border>(source, "ModGroupHeader");
-        var target = groupHeader is null ? FindAncestor<ListViewItem>(source) : null;
-        var dropTarget = (FrameworkElement?)groupHeader ?? target;
-        var dropAfter = dropTarget is not null && e.GetPosition(dropTarget).Y > dropTarget.ActualHeight / 2;
+        e.Effects = DragDropEffects.Move;
         if (target == _dropTargetItem && groupHeader == _dropTargetGroupHeader && dropAfter == _dropAfter)
         {
             return;
@@ -368,6 +366,46 @@ public partial class ModPanelView : UserControl
         _dropTargetGroupHeader = groupHeader;
         _dropAfter = dropAfter;
         SetDropHighlight(_dropTargetItem, _dropTargetGroupHeader, dropAfter);
+    }
+
+    private bool TryGetModDropTarget(DragEventArgs e, out ListViewItem? target, out Border? groupHeader, out bool dropAfter)
+    {
+        target = e.OriginalSource is DependencyObject source ? FindAncestor<ListViewItem>(source) : null;
+        groupHeader = null;
+        dropAfter = false;
+        if (target is null)
+        {
+            return true;
+        }
+
+        var body = target.Template.FindName("ModBody", target) as FrameworkElement ?? target;
+        dropAfter = e.GetPosition(body).Y > body.ActualHeight / 2;
+        if (target.DataContext is ModEntry { ShowsGroupHeader: true } mod &&
+            target.Template.FindName("ModGroupHeader", target) is Border header)
+        {
+            var y = e.GetPosition(header).Y;
+            if (y <= header.ActualHeight / 2)
+            {
+                return false;
+            }
+
+            if (!dropAfter || mod.IsGroupCollapsed)
+            {
+                target = null;
+                groupHeader = header;
+                dropAfter = false;
+                return true;
+            }
+        }
+
+        return !dropAfter || target.DataContext is ModEntry { ViewGroupKey.IsGroup: true } || !IsBeforeModGroupHeader(target);
+    }
+
+    private bool IsBeforeModGroupHeader(ListViewItem item)
+    {
+        var index = ModsList.ItemContainerGenerator.IndexFromContainer(item);
+        return index >= 0 && index + 1 < ModsList.Items.Count &&
+               ModsList.Items[index + 1] is ModEntry { ShowsGroupHeader: true };
     }
 
     private void ModsList_OnDragLeave(object sender, DragEventArgs e)
@@ -385,33 +423,47 @@ public partial class ModPanelView : UserControl
 
         if (e.Data.GetDataPresent(typeof(ModDragPayload)))
         {
+            e.Handled = true;
+            if (!TryGetModDropTarget(e, out var targetItem, out var groupHeader, out var dropAfter))
+            {
+                ClearDropHighlight();
+                e.Effects = DragDropEffects.None;
+                return;
+            }
+
             var payload = (ModDragPayload)e.Data.GetData(typeof(ModDragPayload))!;
-            var targetGroupName = (_dropTargetGroupHeader?.DataContext as ModEntry)?.GroupName;
-            var target = _dropTargetItem?.DataContext as ModEntry;
+            var groupHeaderMod = groupHeader?.DataContext as ModEntry;
+            var target = targetItem?.DataContext as ModEntry;
+            var mods = ViewModel.SelectedProfile?.Mods;
+            if (groupHeaderMod is not null)
+            {
+                target = mods?.FirstOrDefault(mod => mod.ViewGroupKey == groupHeaderMod.ViewGroupKey);
+            }
+            else if (dropAfter && targetItem is not null && target?.ViewGroupKey is { IsGroup: true } groupKey &&
+                     IsBeforeModGroupHeader(targetItem))
+            {
+                target = mods?.LastOrDefault(mod => mod.ViewGroupKey == groupKey) ?? target;
+            }
 
             try
             {
                 if (target is not null)
                 {
-                    var targetIndex = ViewModel.SelectedProfile?.Mods.IndexOf(target) ?? -1;
+                    var targetIndex = mods?.IndexOf(target) ?? -1;
                     if (targetIndex >= 0)
                     {
                         ViewModel.MoveModsToInsertionIndex(
                             payload.Mods,
-                            targetIndex + (_dropAfter ? 1 : 0),
+                            targetIndex + (dropAfter ? 1 : 0),
                             target.GroupName,
                             preserveGroups: false);
                     }
                 }
-                else if (!string.IsNullOrWhiteSpace(targetGroupName))
-                {
-                    ViewModel.MoveModsToGroup(payload.Mods, targetGroupName);
-                }
-                else
+                else if (groupHeaderMod is null)
                 {
                     ViewModel.MoveModsToInsertionIndex(
                         payload.Mods,
-                        ViewModel.SelectedProfile?.Mods.Count ?? 0,
+                        mods?.Count ?? 0,
                         string.Empty,
                         preserveGroups: false);
                 }
@@ -422,7 +474,6 @@ public partial class ModPanelView : UserControl
             {
                 ClearDropHighlight();
             }
-            e.Handled = true;
             return;
         }
 
@@ -436,8 +487,11 @@ public partial class ModPanelView : UserControl
 
     private void ClearDropHighlight()
     {
-        var chrome = _dropTargetItem is null ? null : FindVisualChild<Border>(_dropTargetItem, "RowChrome");
-        if (chrome is not null)
+        if (_dropTargetItem?.Template.FindName("GroupEndDropLine", _dropTargetItem) is Border { Background: not null } line)
+        {
+            line.ClearValue(Border.BackgroundProperty);
+        }
+        else if (_dropTargetItem is not null && FindVisualChild<Border>(_dropTargetItem, "RowChrome") is { } chrome)
         {
             chrome.BorderBrush = Brushes.Transparent;
             chrome.BorderThickness = new Thickness(1);
@@ -799,12 +853,20 @@ public partial class ModPanelView : UserControl
         return item;
     }
 
-    private static void SetDropHighlight(FrameworkElement? item, Border? groupHeader, bool after)
+    private void SetDropHighlight(ListViewItem? item, Border? groupHeader, bool after)
     {
+        var brush = new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0x00));
         if (groupHeader is not null)
         {
-            groupHeader.BorderBrush = new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0x00));
-            groupHeader.BorderThickness = after ? new Thickness(0, 1, 0, 2) : new Thickness(0, 2, 0, 1);
+            groupHeader.BorderBrush = brush;
+            groupHeader.BorderThickness = new Thickness(0, 1, 0, 2);
+            return;
+        }
+
+        if (after && item is not null && IsBeforeModGroupHeader(item) &&
+            item.Template.FindName("GroupEndDropLine", item) is Border line)
+        {
+            line.Background = brush;
             return;
         }
 
@@ -814,7 +876,7 @@ public partial class ModPanelView : UserControl
             return;
         }
 
-        chrome.BorderBrush = new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0x00));
+        chrome.BorderBrush = brush;
         chrome.BorderThickness = after ? new Thickness(0, 0, 0, 2) : new Thickness(0, 2, 0, 0);
     }
 
