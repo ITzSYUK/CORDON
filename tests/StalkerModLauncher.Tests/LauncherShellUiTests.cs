@@ -247,8 +247,6 @@ public sealed class LauncherShellUiTests
         Assert.Contains("PreviewMouseMove=\"ModsList_OnMouseMove\"", panel);
         Assert.Contains("FindAncestor<Border>(source, \"ModGroupHeader\")", code);
         Assert.DoesNotContain("ModGroupHeader_OnPreviewMouseLeftButtonDown", panel);
-        Assert.Contains("_dropTargetGroupHeader?.DataContext as ModEntry", code);
-        Assert.Contains("var target = _dropTargetItem?.DataContext as ModEntry", code);
         Assert.Contains("RestoreSelection(payload.Mods, scrollIntoView: false)", code);
         Assert.DoesNotContain("_preserveScrollDuringDrop", code);
         Assert.DoesNotContain("RestoreScrollAfterDrop", code);

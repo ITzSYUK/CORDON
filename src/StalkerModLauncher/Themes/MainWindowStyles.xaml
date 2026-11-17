@@ -458,6 +458,8 @@
                                         </Border>
                                     </Grid>
                                 </Grid>
+                                <Border x:Name="GroupEndDropLine" Height="2" Margin="0,0,0,2"
+                                        VerticalAlignment="Bottom" IsHitTestVisible="False"/>
                                 </Grid>
                             </StackPanel>
                         </Border>

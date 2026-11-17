@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
@@ -45,6 +46,7 @@ public sealed class FomodUiTests
                     await StorageMigrationPageBlocksNavigationDuringTransferAsync();
                     ScreenshotsViewsUseViewportLoading();
                     await ModListScrollResetsWhenProfileChangesAsync();
+                    await ModListDropsAtGroupBoundariesAsync();
                     ProfileCreationRendersAndNavigates("classic");
                     ProfileCreationRendersAndNavigates("pda");
                     ProfileCreationRendersAndNavigates("pda-new");
@@ -85,6 +87,87 @@ public sealed class FomodUiTests
         await panel.Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
         panel.UpdateLayout();
         Assert.Equal(0, scroll.VerticalOffset);
+    }
+
+    private static async Task ModListDropsAtGroupBoundariesAsync()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "CordonModGroupDrop", Guid.NewGuid().ToString("N"));
+        var model = MainViewModelTests.CreateViewModel(root);
+        try
+        {
+            await MainViewModelTests.WaitForSettingsLoadedAsync(model);
+            foreach (var theme in new[] { "classic", "pda", "pda-new" })
+            {
+                PdaThemeSelector.UseNewTheme = theme == "pda-new";
+                var visibleMain = new ModEntry { Name = "Visible main mod", GroupName = "MAIN" };
+                var lastMain = new ModEntry { Name = "Last main mod", GroupName = "MAIN" };
+                var first = new ModEntry { Name = "First addition", GroupName = "ADDITIONS" };
+                var second = new ModEntry { Name = "Visible second addition", GroupName = "ADDITIONS" };
+                var dragged = new ModEntry { Name = "Visible Old World Uniques", GroupName = "ADDITIONS" };
+                var profile = new ModProfile { Name = "Group drop", Mods = new([visibleMain, lastMain, first, second, dragged]) };
+                model.AddCreatedProfile(profile);
+                model.ModSearchText = theme == "classic" ? string.Empty : "Visible";
+
+                var panel = new ModPanelView { DataContext = model, UsePdaTheme = theme != "classic" };
+                Layout(panel, 800, 500);
+                var list = Assert.IsType<ListView>(panel.FindName("ModsList"));
+                var header = Assert.Single(
+                    Descendants<Border>(list),
+                    border => border.Name == "ModGroupHeader" && border.Visibility == Visibility.Visible &&
+                              border.DataContext is ModEntry { GroupName: "ADDITIONS" });
+                Assert.Same(theme == "classic" ? first : second, header.DataContext);
+
+                var payloadType = typeof(ModPanelView).GetNestedType("ModDragPayload", BindingFlags.NonPublic)!;
+                var payload = Activator.CreateInstance(payloadType, (object)new[] { dragged })!;
+                var data = new DataObject(payloadType, payload);
+                var dragEventConstructor = Assert.Single(typeof(DragEventArgs).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic));
+                DragDropEffects RaiseDragEvent(FrameworkElement element, RoutedEvent routedEvent, double heightFraction)
+                {
+                    var point = new Point(element.ActualWidth / 2, element.ActualHeight * heightFraction);
+                    var args = (DragEventArgs)dragEventConstructor.Invoke([data, DragDropKeyStates.LeftMouseButton, DragDropEffects.Move, element, point]);
+                    args.RoutedEvent = routedEvent;
+                    element.RaiseEvent(args);
+                    Assert.True(args.Handled);
+                    return args.Effects;
+                }
+
+                var headerThickness = header.BorderThickness;
+                Assert.Equal(DragDropEffects.Move, RaiseDragEvent(header, DragDrop.DragOverEvent, 0.75));
+                Assert.Equal(DragDropEffects.None, RaiseDragEvent(header, DragDrop.DropEvent, 0.25));
+                Assert.Equal(DragDropEffects.None, RaiseDragEvent(header, DragDrop.DragOverEvent, 0.25));
+                Assert.Equal(headerThickness, header.BorderThickness);
+                Assert.Equal(new[] { visibleMain, lastMain, first, second, dragged }, profile.Mods);
+
+                var firstRow = Assert.IsType<ListViewItem>(list.ItemContainerGenerator.ContainerFromItem(header.DataContext));
+                var body = Assert.IsType<Grid>(firstRow.Template.FindName("ModBody", firstRow));
+                Assert.Equal(DragDropEffects.Move, RaiseDragEvent(body, DragDrop.DragOverEvent, 0.25));
+                Assert.True(header.BorderThickness.Bottom > header.BorderThickness.Top);
+                Assert.Equal(DragDropEffects.Move, RaiseDragEvent(header, DragDrop.DragOverEvent, 0.75));
+                Assert.True(header.BorderThickness.Bottom > header.BorderThickness.Top);
+                RaiseDragEvent(header, DragDrop.DropEvent, 0.75);
+
+                Assert.Equal(new[] { visibleMain, lastMain, dragged, first, second }, profile.Mods);
+                Assert.Equal("ADDITIONS", dragged.GroupName);
+
+                var precedingRow = Assert.IsType<ListViewItem>(list.ItemContainerGenerator.ContainerFromItem(
+                    theme == "classic" ? lastMain : visibleMain));
+                var precedingBody = Assert.IsType<Grid>(precedingRow.Template.FindName("ModBody", precedingRow));
+                var dropLine = Assert.IsType<Border>(precedingRow.Template.FindName("GroupEndDropLine", precedingRow));
+                Assert.Equal(DragDropEffects.Move, RaiseDragEvent(precedingBody, DragDrop.DragOverEvent, 0.75));
+                Assert.NotNull(dropLine.Background);
+                Assert.True(dropLine.TranslatePoint(new Point(0, dropLine.ActualHeight), precedingBody).Y < precedingBody.ActualHeight);
+                RaiseDragEvent(precedingBody, DragDrop.DropEvent, 0.75);
+                Assert.Null(dropLine.Background);
+                Assert.Equal(new[] { visibleMain, lastMain, dragged, first, second }, profile.Mods);
+                Assert.Equal("MAIN", dragged.GroupName);
+            }
+        }
+        finally
+        {
+            PdaThemeSelector.UseNewTheme = false;
+            await model.CleanupAsync();
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
     }
 
     private static void ScreenshotsViewsUseViewportLoading()
