@@ -313,6 +313,41 @@
         </Setter>
     </Style>
 
+    <DataTemplate x:Key="DefaultProfileBadge">
+        <Grid Width="19" Height="19" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Canvas Width="17" Height="17">
+                <Canvas.Style>
+                    <Style TargetType="Canvas">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsStandalone}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Canvas.Style>
+                <Path Data="M7.5,2 L13,5.2 L7.5,8.4 L2,5.2 Z" Fill="#282D1F" Stroke="#C8952D" StrokeThickness="1.1" StrokeLineJoin="Round"/>
+                <Path Data="M2.5,7.7 L7.5,10.7 L12.5,7.7 M2.5,10.3 L7.5,13.3 L12.5,10.3"
+                      Stroke="#C8952D" StrokeThickness="1.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+            </Canvas>
+            <Canvas Width="17" Height="17">
+                <Canvas.Style>
+                    <Style TargetType="Canvas">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsStandalone}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Canvas.Style>
+                <Path Data="M3,5 L7.5,2.7 L12,5 L7.5,7.3 Z" Fill="#2E301F" Stroke="#C8952D" StrokeThickness="1.1" StrokeLineJoin="Round"/>
+                <Path Data="M3,5 V10.6 L7.5,13.3 L12,10.6 V5 M7.5,7.3 V13.3"
+                      Stroke="#C8952D" StrokeThickness="1.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+            </Canvas>
+        </Grid>
+    </DataTemplate>
+
     <Style TargetType="ContextMenu">
         <Setter Property="Background" Value="{DynamicResource PdaPopupBackgroundBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>

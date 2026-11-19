@@ -11,6 +11,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="{x:Static themes:PdaThemeSelector.CurrentSource}"/>
+                <ResourceDictionary Source="/CORDON;component/Themes/ProfileBadgeMenu.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         <ImageBrush x:Key="PdaTopButtonNormalBrush"
                     ImageSource="/CORDON;component/Resources/PdaUiAtlas.png"
@@ -81,7 +82,7 @@
             <Setter Property="Height" Value="31"/>
             <Setter Property="Margin" Value="0"/>
             <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed"/>
-            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="18"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="#FFF8E7"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -407,33 +408,22 @@
                     BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="0,1,0,1">
                 <Grid Margin="10,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <Grid x:Name="ProfileTypeIcon" Width="20" Height="20" VerticalAlignment="Center">
-                        <Canvas Width="17" Height="17">
-                            <Canvas.Style>
-                                <Style TargetType="Canvas">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding SelectedProfile.IsStandalone}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Canvas.Style>
-                            <Path Data="M8.5,2 L15,5.8 L8.5,9.6 L2,5.8 Z" Fill="#282D1F" Stroke="#C8952D" StrokeThickness="1.2" StrokeLineJoin="Round"/>
-                            <Path Data="M2.6,8.7 L8.5,12.2 L14.4,8.7 M2.6,11.7 L8.5,15.2 L14.4,11.7"
-                                  Stroke="#C8952D" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
-                        </Canvas>
-                        <Canvas Width="17" Height="17">
-                            <Canvas.Style>
-                                <Style TargetType="Canvas">
+                    <Grid x:Name="ProfileTypeIcon" Width="32" Height="32" VerticalAlignment="Center"
+                          DataContext="{Binding SelectedProfile}">
+                        <Image Style="{StaticResource ProfileBadgeImageStyle}"/>
+                        <Viewbox Width="28" Height="28">
+                            <Viewbox.Style>
+                                <Style TargetType="Viewbox">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding SelectedProfile.IsStandalone}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding Badge, FallbackValue=Default}" Value="Default">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </Canvas.Style>
-                            <Path Data="M3,5.7 L8.5,2.8 L14,5.7 L8.5,8.6 Z" Fill="#2E301F" Stroke="#C8952D" StrokeThickness="1.2" StrokeLineJoin="Round"/>
-                            <Path Data="M3,5.7 V12.2 L8.5,15.4 L14,12.2 V5.7 M8.5,8.6 V15.4"
-                                  Stroke="#C8952D" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
-                        </Canvas>
+                            </Viewbox.Style>
+                            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource DefaultProfileBadge}" Focusable="False"/>
+                        </Viewbox>
                     </Grid>
                     <TextBlock x:Name="PageSectionIcon" Text="◇" Foreground="#D09A2E" FontSize="18"
                                VerticalAlignment="Center" Visibility="Collapsed"/>
@@ -598,39 +588,37 @@
                                         <Setter Property="Margin" Value="0,2,0,0"/>
                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                     </Style>
+                                    <Style x:Key="SummarySeparatorStyle" TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
+                                        <Setter Property="BorderThickness" Value="1,0,0,0"/>
+                                        <Setter Property="Padding" Value="8,0,0,0"/>
+                                    </Style>
                                 </Grid.Resources>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="0.75*"/>
                                     <ColumnDefinition Width="45"/>
                                     <ColumnDefinition Width="100"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,9,0">
-                                    <TextBlock Text="{x:Static res:Strings.Common_Binary}" Style="{StaticResource InlineSummaryLabelStyle}"/>
+                                    <TextBlock Text="{x:Static res:Strings.Classic_Exe}" Style="{StaticResource InlineSummaryLabelStyle}"/>
                                     <TextBlock Text="{Binding SelectedProfile.ExecutableRelativePath}"
                                                ToolTip="{Binding SelectedProfile.ExecutableRelativePath}"
                                                Style="{StaticResource InlineSummaryValueStyle}"/>
                                 </StackPanel>
-                                <StackPanel Grid.Column="1" Margin="0,0,9,0">
-                                    <TextBlock Text="{x:Static res:Strings.Common_Arguments}" Style="{StaticResource InlineSummaryLabelStyle}"/>
-                                    <TextBlock Text="{Binding SelectedProfile.LaunchArguments}"
-                                               ToolTip="{Binding SelectedProfile.LaunchArguments}"
-                                               Style="{StaticResource InlineSummaryValueStyle}"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Margin="0,0,9,0">
-                                    <TextBlock Text="{x:Static res:Strings.Common_ModCount}" Style="{StaticResource InlineSummaryLabelStyle}"/>
-                                    <TextBlock Text="{Binding SelectedProfile.Mods.Count}" Style="{StaticResource InlineSummaryValueStyle}"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="3">
-                                    <TextBlock Text="{x:Static res:Strings.Common_PlayTime}" Style="{StaticResource InlineSummaryLabelStyle}"/>
-                                    <TextBlock Text="{Binding SelectedProfile.PlaytimeDisplay}"
-                                               Margin="0,2,0,0"
-                                               Foreground="{StaticResource TextBrush}"
-                                               FontSize="12"/>
-                                    <TextBlock Text="{Binding SelectedProfile.LastPlayedDisplay}"
-                                               Foreground="{StaticResource MutedTextBrush}"
-                                               FontSize="10"/>
-                                </StackPanel>
+                                <Border Grid.Column="1" Style="{StaticResource SummarySeparatorStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Static res:Strings.Common_ModCount}" Style="{StaticResource InlineSummaryLabelStyle}"/>
+                                        <TextBlock Text="{Binding SelectedProfile.Mods.Count}" Style="{StaticResource InlineSummaryValueStyle}"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Style="{StaticResource SummarySeparatorStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Static res:Strings.Classic_PlayTime}" Style="{StaticResource InlineSummaryLabelStyle}"/>
+                                        <TextBlock Text="{Binding SelectedProfile.PlaytimeDisplay}"
+                                                   ToolTip="{Binding SelectedProfile.LastPlayedDisplay}"
+                                                   Style="{StaticResource InlineSummaryValueStyle}"/>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
                         </ContentControl>
 

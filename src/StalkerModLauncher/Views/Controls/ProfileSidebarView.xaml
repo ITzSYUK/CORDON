@@ -2,36 +2,13 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:res="clr-namespace:StalkerModLauncher.Resources"
-             xmlns:infrastructure="clr-namespace:StalkerModLauncher.Infrastructure"
              x:Name="Root"
              Background="Transparent">
     <UserControl.Resources>
-        <infrastructure:ProfileBadgeImageConverter x:Key="ProfileBadgeImages"/>
-        <Style x:Key="ProfileBadgeMenuStyle" TargetType="ContextMenu" BasedOn="{StaticResource {x:Type ContextMenu}}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ContextMenu">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4"
-                                Padding="{TemplateBinding Padding}">
-                            <ScrollViewer Height="190" VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled" CanContentScroll="True">
-                                <ScrollViewer.Resources>
-                                    <Style TargetType="ScrollBar" BasedOn="{StaticResource {x:Type ScrollBar}}">
-                                        <Setter Property="Width" Value="8"/>
-                                        <Setter Property="MinWidth" Value="8"/>
-                                        <Setter Property="Margin" Value="4,0,0,0"/>
-                                    </Style>
-                                </ScrollViewer.Resources>
-                                <ItemsPresenter/>
-                            </ScrollViewer>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/CORDON;component/Themes/ProfileBadgeMenu.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
         <DataTemplate x:Key="DefaultProfileBadge">
             <Grid Width="17" Height="17" IsHitTestVisible="False">
                 <Canvas Width="15"
@@ -245,6 +222,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
     <Border Background="{DynamicResource PanelBrush}"
             BorderBrush="{DynamicResource StrokeBrush}"
@@ -413,21 +391,7 @@
                                         </Style>
                                     </Button.Style>
                                     <Grid>
-                                        <Image Source="{Binding Badge, Converter={StaticResource ProfileBadgeImages}}"
-                                               Width="28" Height="28" RenderOptions.BitmapScalingMode="Fant"
-                                               RenderTransformOrigin="0.5,0.5">
-                                            <Image.Style>
-                                                <Style TargetType="Image">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Badge}" Value="Monolith">
-                                                            <Setter Property="RenderTransform">
-                                                                <Setter.Value><ScaleTransform ScaleX="1.15" ScaleY="1.15"/></Setter.Value>
-                                                            </Setter>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Image.Style>
-                                        </Image>
+                                        <Image Style="{StaticResource ProfileBadgeImageStyle}"/>
                                         <ContentControl Content="{Binding}"
                                                         ContentTemplate="{StaticResource DefaultProfileBadge}"
                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
