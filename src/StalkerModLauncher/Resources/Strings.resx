@@ -283,7 +283,6 @@
   <data name="Catalog_RefreshTooltip" xml:space="preserve"><value>Refresh mod list</value></data>
   <data name="Catalog_Search" xml:space="preserve"><value>Search by name</value></data>
   <data name="Catalog_ShadowOfChernobyl" xml:space="preserve"><value>Shadow of Chernobyl</value></data>
-  <data name="Catalog_Title" xml:space="preserve"><value>Mod browser</value></data>
   <data name="Catalog_ThumbnailDescription" xml:space="preserve"><value>AP-PRO thumbnail</value></data>
   <data name="Catalog_PageDescription" xml:space="preserve"><value>AP-PRO catalog page</value></data>
   <data name="Catalog_ContentTooLargeFormat" xml:space="preserve"><value>{0} is larger than the allowed {1:N0} bytes.</value></data>

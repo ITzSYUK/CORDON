@@ -23,6 +23,9 @@ public partial class PdaProfileDrawerView : UserControl
 
     private MainViewModel? ViewModel => DataContext as MainViewModel;
 
+    private void ProfileBadgeButton_OnClick(object sender, RoutedEventArgs e) =>
+        ProfileBadgeMenu.Open(sender, this, Resources.MergedDictionaries[0]);
+
     private void ProfilesList_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         _draggedProfile = null;

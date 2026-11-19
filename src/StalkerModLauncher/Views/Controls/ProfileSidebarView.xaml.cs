@@ -1,12 +1,8 @@
 using System.Windows;
-using System.Windows.Automation;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using StalkerModLauncher.Infrastructure;
 using StalkerModLauncher.Models;
-using StalkerModLauncher.Resources;
 using StalkerModLauncher.ViewModels;
 
 namespace StalkerModLauncher.Views.Controls;
@@ -52,76 +48,7 @@ public partial class ProfileSidebarView : UserControl
 
     private MainViewModel? ViewModel => DataContext as MainViewModel;
 
-    private void ProfileBadgeButton_OnClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { DataContext: ModProfile { SettingsLoadError.Length: 0 } profile } button)
-        {
-            return;
-        }
-
-        var images = (ProfileBadgeImageConverter)Resources["ProfileBadgeImages"];
-        var choices = new (ProfileBadge Badge, string Label)[]
-        {
-            (ProfileBadge.Default, Strings.Profile_DefaultBadge),
-            (ProfileBadge.Loners, Strings.Profile_LonersBadge),
-            (ProfileBadge.Bandits, Strings.Profile_BanditsBadge),
-            (ProfileBadge.Monolith, Strings.Profile_MonolithBadge),
-            (ProfileBadge.Duty, Strings.Profile_DutyBadge),
-            (ProfileBadge.Freedom, Strings.Profile_FreedomBadge),
-            (ProfileBadge.Mercenaries, Strings.Profile_MercenariesBadge),
-            (ProfileBadge.ClearSky, Strings.Profile_ClearSkyBadge),
-            (ProfileBadge.Renegades, Strings.Profile_RenegadesBadge),
-            (ProfileBadge.Scientists, Strings.Profile_ScientistsBadge)
-        };
-        var menu = new ContextMenu
-        {
-            PlacementTarget = button,
-            Placement = PlacementMode.Bottom,
-            Style = (Style)Resources["ProfileBadgeMenuStyle"]
-        };
-        foreach (var (badge, label) in choices)
-        {
-            var header = new StackPanel { Orientation = Orientation.Horizontal };
-            var icon = new Grid { Width = 26, Height = 26 };
-            if (badge == ProfileBadge.Default)
-            {
-                icon.Children.Add(new ContentControl
-                {
-                    Content = profile,
-                    ContentTemplate = (DataTemplate)Resources["DefaultProfileBadge"],
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Focusable = false
-                });
-            }
-            else
-            {
-                var image = new Image { Source = images.GetImage(badge) };
-                RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.Fant);
-                icon.Children.Add(image);
-            }
-            header.Children.Add(icon);
-            header.Children.Add(new TextBlock
-            {
-                Text = label,
-                Margin = new Thickness(8, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Center
-            });
-            var item = new MenuItem
-            {
-                Header = header,
-                Height = 38,
-                IsCheckable = true,
-                IsChecked = profile.Badge == badge,
-                FontWeight = profile.Badge == badge ? FontWeights.Bold : FontWeights.Normal
-            };
-            AutomationProperties.SetName(item, label);
-            item.Click += (_, _) => profile.Badge = badge;
-            menu.Items.Add(item);
-        }
-
-        menu.IsOpen = true;
-    }
+    private void ProfileBadgeButton_OnClick(object sender, RoutedEventArgs e) => ProfileBadgeMenu.Open(sender, this);
 
     private void ModCatalogButton_OnClick(object sender, RoutedEventArgs e)
     {

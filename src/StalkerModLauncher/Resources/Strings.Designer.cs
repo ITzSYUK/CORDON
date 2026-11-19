@@ -308,7 +308,6 @@ public static class Strings
     public static string Catalog_RefreshTooltip => Get();
     public static string Catalog_Search => Get();
     public static string Catalog_ShadowOfChernobyl => Get();
-    public static string Catalog_Title => Get();
     public static string Catalog_ThumbnailDescription => Get();
     public static string Catalog_PageDescription => Get();
     public static string Catalog_ContentTooLargeFormat => Get();

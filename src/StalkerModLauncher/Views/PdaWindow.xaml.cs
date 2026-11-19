@@ -196,7 +196,7 @@ public partial class PdaWindow : Window
         var catalogVm = _navigation.CreateModCatalogViewModel();
         PdaView.ShowPage(
             new PdaModCatalogView { DataContext = catalogVm },
-            Strings.Catalog_Title,
+            Strings.Main_Catalog,
             "AP-PRO.RU",
             catalogVm);
     }
