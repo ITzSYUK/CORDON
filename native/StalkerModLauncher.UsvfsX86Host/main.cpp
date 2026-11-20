@@ -10,6 +10,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <usvfs.h>
@@ -159,6 +160,33 @@ std::wstring quote(const std::wstring& value)
   result.append(backslashes * 2, L'\\');
   result.push_back(L'\"');
   return result;
+}
+
+int launchVirtualExecutable(const wchar_t* workingDirectory, const wchar_t* executable,
+                            const wchar_t* arguments)
+{
+  std::wstring commandLine = quote(executable);
+  if (*arguments) {
+    commandLine += L" ";
+    commandLine += arguments;
+  }
+
+  STARTUPINFOW startup{};
+  startup.cb = sizeof(startup);
+  PROCESS_INFORMATION process{};
+  if (!CreateProcessW(executable, commandLine.data(), nullptr, nullptr, FALSE, 0,
+                      nullptr, workingDirectory, &startup, &process)) {
+    return static_cast<int>(GetLastError());
+  }
+
+  CloseHandle(process.hThread);
+  DWORD exitCode;
+  if (WaitForSingleObject(process.hProcess, INFINITE) != WAIT_OBJECT_0 ||
+      !GetExitCodeProcess(process.hProcess, &exitCode)) {
+    exitCode = GetLastError();
+  }
+  CloseHandle(process.hProcess);
+  return static_cast<int>(exitCode);
 }
 
 void prepareLogFile(const fs::path& path)
@@ -331,6 +359,10 @@ int runElevated(const fs::path& executablePath, const fs::path& configurationPat
 
 int wmain(int argc, wchar_t* argv[])
 {
+  if (argc == 5 && std::wstring_view(argv[1]) == L"--launch") {
+    return launchVirtualExecutable(argv[2], argv[3], argv[4]);
+  }
+
   if (argc != 2) {
     std::cerr << "Usage: StalkerModLauncher.UsvfsX86Host.exe <configuration>\n";
     return 10;

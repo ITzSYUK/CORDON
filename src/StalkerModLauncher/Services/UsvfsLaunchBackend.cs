@@ -44,6 +44,7 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             ExecutableRelativePath = profile.ExecutableRelativePath,
             ExecutableSourcePath = profile.ExecutableSourcePath,
             LaunchArguments = profile.LaunchArguments,
+            WorkingDirectoryRelative = profile.WorkingDirectoryRelative,
             UsvfsExecutableOverrideRelativePath = profile.UsvfsExecutableOverrideRelativePath,
             Mods = new(profile.Mods.Select(mod => new ModEntry
             {
@@ -120,6 +121,12 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                                              launchTarget.ExecutablePath);
         var isAnomalyEngine = IsAnomalyEngine(launchTarget.ExecutableRelativePath);
         var hasPhysicalWorkingDirectory = Directory.Exists(launchTarget.WorkingDirectory);
+        var useVirtualExecutable = !useAnomalyLauncherBootstrap &&
+                                   !isAnomalyEngine &&
+                                   hasPhysicalWorkingDirectory &&
+                                   layerPlan.FindAllProviders(launchTarget.ExecutableRelativePath).Any(provider =>
+                                       provider.Layer.Kind == FileLayerKind.Mod &&
+                                       string.Equals(provider.FullPath, launchTarget.ExecutablePath, StringComparison.OrdinalIgnoreCase));
         var useSharedAnomalyBootstrap = layerPlan.UsesSharedGameData && isAnomalyEngine;
         var usePhysicalAnomalyRoot = isAnomalyEngine && !useSharedAnomalyBootstrap && hasPhysicalWorkingDirectory;
         var usePhysicalBaseGameRoot = !useAnomalyLauncherBootstrap &&
@@ -150,14 +157,13 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                     launchTarget,
                     bootstrapRoot,
                     progress,
-                    cancellationToken);
-            MaterializeBootstrapFsgame(
-                profileFsgamePath,
-                manifest.WriteOverlayRoot,
-                bootstrap.RootPath);
+                    onlyIfLoaderFilesSpanLayers: useVirtualExecutable,
+                    cancellationToken: cancellationToken);
+            if (bootstrap is not null && !useVirtualExecutable)
+                MaterializeBootstrapFsgame(profileFsgamePath, manifest.WriteOverlayRoot, bootstrap.RootPath);
         }
 
-        var usePhysicalGameRoot = usePhysicalAnomalyRoot || usePhysicalBaseGameRoot || usePhysicalArchiveRoot;
+        var usePhysicalGameRoot = usePhysicalAnomalyRoot || usePhysicalBaseGameRoot || usePhysicalArchiveRoot || useVirtualExecutable;
         var virtualRoot = usePhysicalGameRoot
             ? layerPlan.BaseGame.RootPath
             : bootstrap!.RootPath;
@@ -176,10 +182,29 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                 layerPlan.BaseGame.RootPath,
                 launchTarget.WorkingDirectory,
                 bootstrap!.RootPath);
-        var executablePath = usePhysicalBaseGameRoot
-            ? launchTarget.ExecutablePath
-            : bootstrap!.ExecutablePath;
-        progress.Report(usePhysicalBaseGameRoot
+        var executablePath = useVirtualExecutable
+            ? Path.Combine(virtualRoot, launchTarget.ExecutableRelativePath)
+            : usePhysicalBaseGameRoot ? launchTarget.ExecutablePath : bootstrap!.ExecutablePath;
+        if (useVirtualExecutable)
+        {
+            var operations = mappingPlan.Operations.ToList();
+            if (bootstrap is not null)
+            {
+                operations.Add(new UsvfsMappingOperation(
+                    UsvfsMappingKind.DirectoryStatic, bootstrap.DirectoryPath, Path.GetDirectoryName(executablePath)!,
+                    launchTarget.SourceName, int.MaxValue - 2));
+            }
+
+            // The virtual path must select this image even when another layer provides it.
+            var imagePath = bootstrap?.ExecutablePath ?? launchTarget.ExecutablePath;
+            operations.Add(new UsvfsMappingOperation(
+                UsvfsMappingKind.File, imagePath, executablePath, launchTarget.SourceName, int.MaxValue));
+            mappingPlan = mappingPlan with { Operations = operations };
+        }
+
+        progress.Report(useVirtualExecutable
+            ? Strings.Progress_UsvfsRootVirtualExecutable
+            : usePhysicalBaseGameRoot
             ? Strings.Progress_UsvfsRootBase
             : useAnomalyLauncherBootstrap
                 ? Strings.Progress_UsvfsRootAnomalyBootstrap
@@ -190,11 +215,14 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                 : Strings.Progress_UsvfsRootIsolated);
         progress.Report(LocalizedText.Format(Strings.Progress_UsvfsVirtualRootFormat, mappingPlan.VirtualRoot));
 
-        var launchRequest = new UsvfsProcessLaunchRequest(
-            executablePath,
-            launchTarget.Arguments,
-            workingDirectory);
-        var selectedRuntime = architecture == WindowsExecutableArchitecture.X86
+        var launchRequest = useVirtualExecutable
+            ? new UsvfsProcessLaunchRequest(
+                runtimeFiles.X86HostPath,
+                CommandLineArgumentBuilder.Join("--launch", workingDirectory, executablePath, launchTarget.Arguments ?? string.Empty),
+                runtimeFiles.Directory)
+            : new UsvfsProcessLaunchRequest(executablePath, launchTarget.Arguments, workingDirectory);
+        // Start the x86 helper from the same architecture. USVFS injects the target from there.
+        var selectedRuntime = useVirtualExecutable || architecture == WindowsExecutableArchitecture.X86
             ? _x86Runtime
             : _runtime;
         var diagnosticLogPath = UsvfsDiagnosticPaths.Prepare(profileWorkspace, progress);
@@ -219,15 +247,16 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
 
             return new LaunchPlan(
                 LaunchBackendKind.VirtualFileSystem,
-                launchRequest.ExecutablePath,
-                launchRequest.Arguments,
-                launchRequest.WorkingDirectory,
+                executablePath,
+                launchTarget.Arguments,
+                workingDirectory,
                 session,
                 processStarter,
                 async () =>
                 {
                     var exitCode = await session.GetExitCodeAsync().ConfigureAwait(false);
-                    ProfileWritableGameFileStore.CaptureFromWorkspace(bootstrapRoot, profileWorkspace, progress);
+                    if (bootstrap is not null)
+                        ProfileWritableGameFileStore.CaptureFromWorkspace(bootstrapRoot, profileWorkspace, progress);
                     return exitCode;
                 },
                 session.GetActiveProcessIds);

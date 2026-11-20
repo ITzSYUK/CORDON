@@ -36,15 +36,36 @@ internal static class UsvfsExecutableBootstrapper
         FileSystemSafety.DeleteDirectoryContents(bootstrapRoot, allowedRoot);
     }
 
-    public static UsvfsBootstrapResult Prepare(
+    public static UsvfsBootstrapResult? Prepare(
         FileLayerPlan layerPlan,
         UsvfsLaunchTarget launchTarget,
         string bootstrapRoot,
         IProgress<string>? progress = null,
+        bool onlyIfLoaderFilesSpanLayers = false,
         CancellationToken cancellationToken = default)
     {
         FileSystemSafety.EnsureRelativePath(launchTarget.ExecutableRelativePath, Strings.Safety_UsvfsExecutable);
         var executableDirectoryRelative = Path.GetDirectoryName(launchTarget.ExecutableRelativePath) ?? string.Empty;
+        var selectedRelativeName = Path.GetFileName(launchTarget.ExecutableRelativePath);
+        var files = CollectFinalDirectoryFiles(
+            layerPlan,
+            executableDirectoryRelative,
+            selectedRelativeName,
+            cancellationToken,
+            includeAllExecutables: onlyIfLoaderFilesSpanLayers);
+        if (onlyIfLoaderFilesSpanLayers)
+        {
+            var sourceDirectory = Path.GetDirectoryName(launchTarget.ExecutablePath)!;
+            // The Windows loader can search the physical image directory for imported DLLs.
+            if (!files.Any(file =>
+                    (Path.GetExtension(file.Key).Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
+                     Path.GetExtension(file.Key).Equals(".manifest", StringComparison.OrdinalIgnoreCase)) &&
+                    !FileSystemSafety.IsSameDirectory(sourceDirectory, Path.GetDirectoryName(file.Value)!)))
+            {
+                return null;
+            }
+        }
+
         var bootstrapDirectory = executableDirectoryRelative.Length == 0
             ? bootstrapRoot
             : Path.Combine(bootstrapRoot, executableDirectoryRelative);
@@ -54,12 +75,6 @@ internal static class UsvfsExecutableBootstrapper
         FileSystemSafety.DeleteDirectoryContents(bootstrapRoot, bootstrapCacheRoot);
         Directory.CreateDirectory(bootstrapDirectory);
 
-        var selectedRelativeName = Path.GetFileName(launchTarget.ExecutableRelativePath);
-        var files = CollectFinalDirectoryFiles(
-            layerPlan,
-            executableDirectoryRelative,
-            selectedRelativeName,
-            cancellationToken);
         files[selectedRelativeName] = launchTarget.ExecutablePath;
 
         var stats = new WorkspaceBuildStats();

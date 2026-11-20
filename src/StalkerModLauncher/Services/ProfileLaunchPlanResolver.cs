@@ -179,7 +179,9 @@ internal static class ProfileLaunchPlanResolver
             }
 
             var virtualRoot = Path.GetFullPath(fileLayerPlan.BaseGame.RootPath);
-            var workingDirectoryRelative = FindWorkingDirectoryRelative(fileLayerPlan);
+            var workingDirectoryRelative = string.IsNullOrWhiteSpace(profile.WorkingDirectoryRelative)
+                ? FindWorkingDirectoryRelative(fileLayerPlan)
+                : profile.WorkingDirectoryRelative;
             var workingDirectory = string.IsNullOrWhiteSpace(workingDirectoryRelative)
                 ? virtualRoot
                 : FileSystemSafety.ResolvePathInside(

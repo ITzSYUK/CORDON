@@ -994,6 +994,7 @@
   <data name="Progress_UsvfsRootBase" xml:space="preserve"><value>USVFS root strategy: physical game root for the base executable.</value></data>
   <data name="Progress_UsvfsRootAnomalyBootstrap" xml:space="preserve"><value>USVFS root strategy: isolated Anomaly launcher bootstrap root.</value></data>
   <data name="Progress_UsvfsRootAnomaly" xml:space="preserve"><value>USVFS root strategy: physical Anomaly root.</value></data>
+  <data name="Progress_UsvfsRootVirtualExecutable" xml:space="preserve"><value>USVFS is launching an executable from a mod layer in the game directory.</value></data>
   <data name="Progress_UsvfsRootXray" xml:space="preserve"><value>USVFS root strategy: physical game root for X-Ray archive folders.</value></data>
   <data name="Progress_UsvfsRootIsolated" xml:space="preserve"><value>USVFS root strategy: isolated bootstrap root.</value></data>
   <data name="Progress_UsvfsVirtualRootFormat" xml:space="preserve"><value>USVFS virtual root: {0}</value></data>

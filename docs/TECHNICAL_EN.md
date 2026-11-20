@@ -201,12 +201,15 @@ USVFS captures the profile's launch settings and mod source list on the calling 
 The launcher chooses a virtual-root strategy according to the launch layout:
 
 - the physical base-game root is used when its own EXE starts and mods do not provide loader-time files;
+- an EXE from an active mod layer with an existing working directory is launched at its path inside the physical game root. A helper already connected to USVFS opens the virtual path so the launcher and its child EXEs see the same game tree;
 - the physical Anomaly root is preferred when an `AnomalyDX*.exe` is selected directly;
 - Anomaly automatic mode uses an isolated launcher bootstrap so the base-game Anomaly Launcher can start physically prepared final engine files;
 - a physical X-Ray 1.6 root is used when `$arch_dir_*` entries are present so archives in `patches` and similar directories remain visible;
-- an isolated bootstrap root is used when a mod provides the engine or the selected executable needs its own neighboring DLL set.
+- an isolated bootstrap root is used for compatibility, for example when the working directory exists only in a mod layer.
 
 The physical game directory is never mapped over itself. Doing so can hide real `gamedata.db*` archives from the engine.
+
+When a profile sets `WorkingDirectoryRelative`, USVFS uses that game subdirectory as the working directory. An empty value leaves the directory derived from `fsgame.ltx` and the launch arguments.
 
 ### usvfs-bootstrap
 
@@ -222,6 +225,8 @@ The directory is created only for launch layouts where Windows and the engine mu
 - loader-time DLL files from its directory;
 - profile `fsgame.ltx`;
 - the smallest required set of neighboring files.
+
+For a virtual EXE launch, staging is needed when the winning neighboring DLLs or manifests reside in a different physical directory. USVFS then maps the staged files, including neighboring EXEs, into the corresponding subdirectory of the game. The working directory and profile `fsgame.ltx` remain available through the regular mappings. SWM supplies `luacap.dll` while the base game supplies its dependency `lua.JIT.1.1.4.dll`.
 
 For Anomaly automatic mode, the bootstrap contains final top-level `bin` files. The physical `bin` level is not mapped over again; nested folders and remaining data stay virtual. `AnomalyLauncher.cfg`, `commandline.txt` and `launcherconfig.toml` have independent physical bootstrap copies and persistent profile storage under `userdata\writable-game-files`. A hash baseline records the initial contents. Changed physical copies are collected after session completion and before preparation or movement, even when timestamps are unchanged. Independent conflicting stored versions are archived under `diagnostics`. Unchanged bootstrap copies cannot overwrite virtual writes. Direct Anomaly engine launches also read the profile command line.
 

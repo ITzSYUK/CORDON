@@ -994,6 +994,7 @@
   <data name="Progress_UsvfsRootBase" xml:space="preserve"><value>Корень USVFS: физическая папка игры для базового файла запуска.</value></data>
   <data name="Progress_UsvfsRootAnomalyBootstrap" xml:space="preserve"><value>Корень USVFS: изолированная загрузочная папка лаунчера Anomaly.</value></data>
   <data name="Progress_UsvfsRootAnomaly" xml:space="preserve"><value>Корень USVFS: физическая папка Anomaly.</value></data>
+  <data name="Progress_UsvfsRootVirtualExecutable" xml:space="preserve"><value>USVFS запускает файл из слоя мода в дереве игры.</value></data>
   <data name="Progress_UsvfsRootXray" xml:space="preserve"><value>Корень USVFS: физическая папка игры для архивов X-Ray.</value></data>
   <data name="Progress_UsvfsRootIsolated" xml:space="preserve"><value>Корень USVFS: изолированная загрузочная папка.</value></data>
   <data name="Progress_UsvfsVirtualRootFormat" xml:space="preserve"><value>Виртуальный корень USVFS: {0}</value></data>

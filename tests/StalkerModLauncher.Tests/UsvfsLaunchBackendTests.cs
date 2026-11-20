@@ -65,21 +65,14 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             new Progress<string>());
 
         Assert.Equal(LaunchBackendKind.VirtualFileSystem, plan.BackendKind);
-        Assert.EndsWith(Path.Combine("bin_x64", "xrEngine.exe"), plan.ExecutablePath);
-        Assert.DoesNotContain(
-            Path.Combine(workspace, "userdata", "usvfs-bootstrap"),
-            plan.ExecutablePath,
-            StringComparison.OrdinalIgnoreCase);
-        Assert.True(FileSystemSafety.IsDirectoryInside(
-            plan.ExecutablePath,
-            Path.Combine(workspace, ".usvfs-bootstrap")));
-        Assert.Equal(
-            File.ReadAllBytes(Path.Combine(mod, "bin_x64", "xrEngine.exe")),
-            File.ReadAllBytes(plan.ExecutablePath));
-        var bootstrapRoot = Path.GetDirectoryName(Path.GetDirectoryName(plan.ExecutablePath))!;
-        Assert.Equal(bootstrapRoot, plan.WorkingDirectory);
+        Assert.Equal(Path.Combine(game, profile.ExecutableRelativePath), plan.ExecutablePath);
+        Assert.False(Directory.Exists(Path.Combine(workspace, ".usvfs-bootstrap")));
+        Assert.Equal(game, plan.WorkingDirectory);
         Assert.NotNull(plan.RuntimeLease);
         Assert.NotNull(plan.ProcessStarter);
+        using var process = plan.ProcessStarter(plan, null);
+        Assert.Equal(Path.Combine(game, UsvfsRuntimeFiles.X86HostFileName), runtime.Session.Request?.ExecutablePath);
+        Assert.Contains(plan.ExecutablePath, runtime.Session.Request?.Arguments);
         Assert.NotNull(runtime.MappingPlan);
         Assert.Equal(
             Path.Combine(workspace, "diagnostics", "usvfs.log"),
@@ -89,17 +82,15 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             "legacy diagnostics",
             File.ReadAllText(Path.Combine(workspace, "diagnostics", "usvfs.log")));
         Assert.Equal(
-            [game, mod, manifest.WriteOverlayRoot],
+            [mod, manifest.WriteOverlayRoot, Path.Combine(mod, profile.ExecutableRelativePath)],
             runtime.MappingPlan.Operations.Select(operation => operation.SourcePath).ToArray());
-        Assert.Equal(bootstrapRoot, runtime.MappingPlan.VirtualRoot);
+        Assert.Equal(game, runtime.MappingPlan.VirtualRoot);
         var selectedProfileFsgame = Path.Combine(manifest.WriteOverlayRoot, "fsgame_coc.ltx");
         var profileFsgame = Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx");
         Assert.True(File.Exists(selectedProfileFsgame));
         Assert.True(File.Exists(profileFsgame));
         Assert.Equal(File.ReadAllText(selectedProfileFsgame), File.ReadAllText(profileFsgame));
         Assert.Contains(Path.Combine(workspace, "userdata"), File.ReadAllText(selectedProfileFsgame));
-        Assert.Equal(File.ReadAllText(selectedProfileFsgame), File.ReadAllText(Path.Combine(bootstrapRoot, "fsgame_coc.ltx")));
-        Assert.Equal(File.ReadAllText(profileFsgame), File.ReadAllText(Path.Combine(bootstrapRoot, "fsgame.ltx")));
     }
 
     [Fact]
@@ -580,8 +571,10 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             File.ReadAllText(Path.Combine(workspace, "userdata", "user.ltx")));
     }
 
-    [Fact]
-    public async Task PrepareAsyncUsesPhysicalRootForXRayArchiveDirectoriesWithModEngine()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task PrepareAsyncUsesPhysicalRootForXRayArchiveDirectoriesWithModEngine(bool hasLoaderFileInBase)
     {
         var game = CreateDirectory("archive-root-game");
         var mod = CreateDirectory("archive-root-mod");
@@ -597,6 +590,11 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "cmd.exe"),
             Path.Combine(mod, "bin_x64", "xrEngine.exe"));
         File.WriteAllText(Path.Combine(mod, "bin_x64", "engine_patch.dll"), "mod engine");
+        if (hasLoaderFileInBase)
+        {
+            Directory.CreateDirectory(Path.Combine(game, "bin_x64"));
+            File.WriteAllText(Path.Combine(game, "bin_x64", "engine_dependency.dll"), "base dependency");
+        }
         CreateUsvfsRuntimeFiles(game);
         var profile = new ModProfile
         {
@@ -623,14 +621,16 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             new ProfileLaunchBackendContext(game, profile, layerPlan, manifest),
             new Progress<string>());
 
-        Assert.EndsWith(Path.Combine("bin_x64", "xrEngine.exe"), plan.ExecutablePath);
-        Assert.DoesNotContain(
-            Path.Combine(workspace, "userdata", "usvfs-bootstrap"),
-            plan.ExecutablePath,
-            StringComparison.OrdinalIgnoreCase);
-        Assert.True(FileSystemSafety.IsDirectoryInside(
-            plan.ExecutablePath,
-            Path.Combine(workspace, ".usvfs-bootstrap")));
+        Assert.Equal(Path.Combine(game, profile.ExecutableRelativePath), plan.ExecutablePath);
+        var bootstrap = Path.Combine(workspace, ".usvfs-bootstrap");
+        Assert.Equal(hasLoaderFileInBase, Directory.Exists(bootstrap));
+        var imageRoot = hasLoaderFileInBase ? bootstrap : mod;
+        Assert.Equal(Path.Combine(imageRoot, profile.ExecutableRelativePath), runtime.MappingPlan?.Operations[^1].SourcePath);
+        if (hasLoaderFileInBase)
+        {
+            Assert.Equal("base dependency", File.ReadAllText(Path.Combine(bootstrap, "bin_x64", "engine_dependency.dll")));
+            Assert.Equal("mod engine", File.ReadAllText(Path.Combine(bootstrap, "bin_x64", "engine_patch.dll")));
+        }
         Assert.Equal(game, plan.WorkingDirectory);
         Assert.Equal(game, runtime.MappingPlan?.VirtualRoot);
         Assert.True(File.Exists(Path.Combine(game, "patches", "xpatch_02.db")));
@@ -1084,12 +1084,14 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
     private sealed class FakeUsvfsRuntimeSession : IUsvfsRuntimeSession
     {
         public bool IsDisposed { get; private set; }
+        public UsvfsProcessLaunchRequest? Request { get; private set; }
 
         public Process StartProcess(
             UsvfsProcessLaunchRequest launchRequest,
             IProgress<string>? progress = null,
             CancellationToken cancellationToken = default)
         {
+            Request = launchRequest;
             return Process.GetCurrentProcess();
         }
 
