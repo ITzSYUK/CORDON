@@ -831,6 +831,7 @@
   <data name="Layer_Mo2OverwriteFiles" xml:space="preserve"><value>Файлы overwrite из MO2</value></data>
   <data name="Usvfs_ArchitectureMismatchFormat" xml:space="preserve"><value>{0}: ожидалась архитектура {1}, обнаружена {2}.</value></data>
   <data name="Usvfs_FileVersionMissingFormat" xml:space="preserve"><value>{0}: отсутствует версия файла.</value></data>
+  <data name="Usvfs_HostProtocolMismatchFormat" xml:space="preserve"><value>Хост USVFS x86 по пути {0} не поддерживает протокол этой версии лаунчера. Пересоберите или обновите CORDON вместе с хостом USVFS.</value></data>
   <data name="Usvfs_VersionMismatchFormat" xml:space="preserve"><value>Версии компонентов USVFS не совпадают: {0}.</value></data>
   <data name="Usvfs_FileMissingFormat" xml:space="preserve"><value>не найден {0}</value></data>
   <data name="Usvfs_TargetX86" xml:space="preserve"><value>32-битной игры</value></data>

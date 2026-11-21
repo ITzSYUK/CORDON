@@ -15,8 +15,9 @@ if ([string]::IsNullOrWhiteSpace($RuntimeRoot)) {
 
 $RuntimeRoot = [System.IO.Path]::GetFullPath($RuntimeRoot)
 $managedPoc = Join-Path $repositoryRoot "research\usvfs-managed-poc\StalkerUsvfsManagedPoc.csproj"
-$x86Child = Join-Path $repositoryRoot "research\usvfs-poc\build32\usvfs_overlay_child_x86.exe"
-$x86Launcher = Join-Path $repositoryRoot "research\usvfs-poc\build32\usvfs_overlay_launcher_x86.exe"
+$pocBuild = Join-Path $repositoryRoot "research\usvfs-poc\build32"
+$x86Child = Join-Path $pocBuild "usvfs_overlay_child_x86.exe"
+$x86Launcher = Join-Path $pocBuild "usvfs_overlay_launcher_x86.exe"
 $x86Host = Join-Path $repositoryRoot "native\StalkerModLauncher.UsvfsX86Host\build32\StalkerModLauncher.UsvfsX86Host.exe"
 
 $requiredFiles = @(
@@ -26,7 +27,12 @@ $requiredFiles = @(
     (Join-Path $RuntimeRoot "bin\usvfs_proxy_x86.exe"),
     $x86Host,
     $x86Child,
-    $x86Launcher
+    $x86Launcher,
+    (Join-Path $pocBuild "usvfs_layered_launcher_x86.exe"),
+    (Join-Path $pocBuild "usvfs_smoke_base.dll"),
+    (Join-Path $pocBuild "usvfs_smoke_mod.dll"),
+    (Join-Path $pocBuild "usvfs_layered_child_x86.exe"),
+    (Join-Path $pocBuild "usvfs_smoke_override.dll")
 )
 foreach ($path in $requiredFiles) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {

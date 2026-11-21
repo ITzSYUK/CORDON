@@ -303,19 +303,24 @@ public sealed class ProfileHealthServiceTests : IDisposable
         Assert.Contains("мод: Patch", executableCheck.Details);
     }
 
-    [Fact]
-    public async Task AnalyzeAsyncCreatesLaunchPlanPreviewWithDetectedWorkingDirectory()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AnalyzeAsyncUsesWorkingDirectoryOfEffectiveFsgame(bool selectNestedFsgame)
     {
         var game = CreateGame();
         var mod = Path.Combine(_root, "ogsr-mod");
         CreateFileAtPath(Path.Combine(mod, "bin_x64", "xrEngine.exe"));
-        CreateFileAtPath(Path.Combine(mod, "bin_x64", "fsgame.ltx"));
+        var nestedFsgame = Path.Combine(mod, "bin_x64", "fsgame.ltx");
+        CreateFileAtPath(nestedFsgame);
+        File.Copy(Path.Combine(game, "fsgame.ltx"), nestedFsgame, overwrite: true);
         var profile = new ModProfile
         {
             Name = "OGSR",
             GameInstallPath = game,
             ExecutableRelativePath = @"bin_x64\xrEngine.exe",
-            LaunchArguments = "  -nointro  "
+            LaunchArguments = "  -nointro  ",
+            FsgameSourcePath = selectNestedFsgame ? nestedFsgame : string.Empty
         };
         profile.Mods.Add(new ModEntry { Name = "OGSR", SourcePath = mod, Order = 1 });
 
@@ -328,7 +333,7 @@ public sealed class ProfileHealthServiceTests : IDisposable
         Assert.Equal("-nointro", report.LaunchPlan.Arguments);
         Assert.Equal(report.LaunchPlan.WorkingDirectory, report.OverlayManifest.LaunchPlan?.WorkingDirectory);
         Assert.EndsWith(Path.Combine("bin_x64", "xrEngine.exe"), report.LaunchPlan.ExecutablePath);
-        Assert.EndsWith(Path.Combine(game, "bin_x64"), report.LaunchPlan.WorkingDirectory);
+        Assert.Equal(selectNestedFsgame ? Path.Combine(game, "bin_x64") : game, report.LaunchPlan.WorkingDirectory);
     }
 
     [Fact]

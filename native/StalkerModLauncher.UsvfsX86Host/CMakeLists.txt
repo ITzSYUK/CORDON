@@ -14,7 +14,7 @@ if(NOT USVFS_SOURCE_DIR)
   message(FATAL_ERROR "USVFS_SOURCE_DIR is required")
 endif()
 
-add_executable(StalkerModLauncher.UsvfsX86Host main.cpp)
+add_executable(StalkerModLauncher.UsvfsX86Host main.cpp protocol.rc)
 target_include_directories(
   StalkerModLauncher.UsvfsX86Host
   PRIVATE "${USVFS_SOURCE_DIR}/include/usvfs")

@@ -36,6 +36,31 @@ public sealed class ModConflictAnalyzerTests : IDisposable
         Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public async Task AnalysisSeesNestedFileAddedAndRemovedWithoutChangingModRootTimestamp()
+    {
+        const string relativePath = "gamedata/config/shared.ltx";
+        var first = CreateMod("changing-first", relativePath);
+        var second = CreateMod("changing-second", "gamedata/config/other.ltx");
+        var analyzer = new ModConflictAnalyzer();
+        var mods = new ModConflictInput[]
+        {
+            new("first", "First", first, true, []),
+            new("second", "Second", second, true, [])
+        };
+        var lastWrite = Directory.GetLastWriteTimeUtc(second);
+        Assert.Equal(ModConflictKind.None, (await analyzer.AnalyzeAsync(mods))["second"].ConflictKind);
+
+        var path = Path.Combine(second, relativePath);
+        File.WriteAllText(path, "new");
+        Assert.Equal(lastWrite, Directory.GetLastWriteTimeUtc(second));
+        Assert.Equal(ModConflictKind.Overwrite, (await analyzer.AnalyzeAsync(mods))["second"].ConflictKind);
+
+        File.Delete(path);
+        Assert.Equal(lastWrite, Directory.GetLastWriteTimeUtc(second));
+        Assert.Equal(ModConflictKind.None, (await analyzer.AnalyzeAsync(mods))["second"].ConflictKind);
+    }
+
+    [Fact]
     public async Task AnalyzeAsyncMarksModsThatOverwriteEarlierMods()
     {
         var first = CreateMod("first", "gamedata/config/shared.ltx", "gamedata/config/first.ltx");

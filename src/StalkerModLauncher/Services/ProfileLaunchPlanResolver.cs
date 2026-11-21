@@ -48,13 +48,7 @@ internal static class ProfileLaunchPlanResolver
     {
         try
         {
-            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Safety_LaunchExecutable);
-            var executable = ResolveExecutableSource(
-                profile,
-                FileLayerSourceResolver.CreateExecutableRoots(fileLayerPlan),
-                profile.ExecutableRelativePath,
-                allowPinnedSource: true,
-                allowDedicatedFallback: LaunchExecutableDetector.IsDedicatedExecutable(profile.ExecutableRelativePath));
+            var executable = ResolveLayeredExecutable(profile, fileLayerPlan);
 
             if (executable is null)
             {
@@ -157,13 +151,7 @@ internal static class ProfileLaunchPlanResolver
     {
         try
         {
-            FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Safety_LaunchExecutable);
-            var executable = ResolveExecutableSource(
-                profile,
-                FileLayerSourceResolver.CreateExecutableRoots(fileLayerPlan),
-                profile.ExecutableRelativePath,
-                allowPinnedSource: true,
-                allowDedicatedFallback: LaunchExecutableDetector.IsDedicatedExecutable(profile.ExecutableRelativePath));
+            var executable = ResolveLayeredExecutable(profile, fileLayerPlan);
 
             if (executable is null)
             {
@@ -179,9 +167,9 @@ internal static class ProfileLaunchPlanResolver
             }
 
             var virtualRoot = Path.GetFullPath(fileLayerPlan.BaseGame.RootPath);
-            var workingDirectoryRelative = string.IsNullOrWhiteSpace(profile.WorkingDirectoryRelative)
-                ? FindWorkingDirectoryRelative(fileLayerPlan)
-                : profile.WorkingDirectoryRelative;
+            var workingDirectoryRelative = fileLayerPlan.UsesFsgameLaunchArgument
+                ? null
+                : Path.GetDirectoryName(fileLayerPlan.FindFsgameSource()?.RelativePath);
             var workingDirectory = string.IsNullOrWhiteSpace(workingDirectoryRelative)
                 ? virtualRoot
                 : FileSystemSafety.ResolvePathInside(
@@ -202,6 +190,21 @@ internal static class ProfileLaunchPlanResolver
         {
             return new LaunchPlanResolution(null, null, ex.Message);
         }
+    }
+
+    internal static LaunchExecutableResolution? ResolveLayeredExecutable(
+        ModProfile profile,
+        FileLayerPlan fileLayerPlan,
+        CancellationToken cancellationToken = default)
+    {
+        FileSystemSafety.EnsureRelativePath(profile.ExecutableRelativePath, Strings.Safety_LaunchExecutable);
+        return ResolveExecutableSource(
+            profile,
+            FileLayerSourceResolver.CreateExecutableRoots(fileLayerPlan),
+            profile.ExecutableRelativePath,
+            allowPinnedSource: true,
+            allowDedicatedFallback: LaunchExecutableDetector.IsDedicatedExecutable(profile.ExecutableRelativePath),
+            cancellationToken);
     }
 
     public static LaunchExecutableResolution? ResolveExecutableSource(

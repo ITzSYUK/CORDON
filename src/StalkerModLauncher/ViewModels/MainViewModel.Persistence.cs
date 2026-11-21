@@ -681,7 +681,6 @@ public sealed partial class MainViewModel
 
         SynchronizeProfileFileWatchers();
         RefreshProfileLaunchReadiness(forceRefresh: true);
-        _modConflictAnalyzer.ClearCache();
         RecalculateModOverlayInfo();
     }
 

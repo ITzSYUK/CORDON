@@ -4,18 +4,12 @@ namespace StalkerModLauncher.Services;
 
 public sealed class ModConflictAnalyzer
 {
-    private static readonly TimeSpan CacheLifetime = TimeSpan.FromSeconds(30);
-    private const int MaxCacheEntries = 128;
-    private readonly object _cacheSync = new();
-    private readonly Dictionary<string, FileListCacheEntry> _fileCache = new(StringComparer.OrdinalIgnoreCase);
-
-    internal void ClearCache()
+    private readonly EnumerationOptions _enumerationOptions = new()
     {
-        lock (_cacheSync)
-        {
-            _fileCache.Clear();
-        }
-    }
+        RecurseSubdirectories = true,
+        IgnoreInaccessible = true,
+        AttributesToSkip = FileAttributes.ReparsePoint
+    };
 
     public Task<IReadOnlyDictionary<string, ModConflictState>> AnalyzeAsync(
         IReadOnlyList<ModConflictInput> mods,
@@ -66,9 +60,7 @@ public sealed class ModConflictAnalyzer
         foreach (var mod in mods.Where(mod => mod.IsEnabled && !string.IsNullOrWhiteSpace(mod.SourcePath)))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var files = new HashSet<string>(
-                GetModFileList(mod.SourcePath, cancellationToken),
-                StringComparer.OrdinalIgnoreCase);
+            var files = ReadModFiles(mod.SourcePath, cancellationToken);
             files.ExceptWith(mod.ExcludedFiles.Select(NormalizeRelativePath));
             fileCache[mod.Id] = files;
         }
@@ -207,32 +199,15 @@ public sealed class ModConflictAnalyzer
         return Path.GetExtension(path).ToLowerInvariant() is ".exe" or ".dll";
     }
 
-    private HashSet<string> GetModFileList(string modPath, CancellationToken cancellationToken)
+    private HashSet<string> ReadModFiles(string modPath, CancellationToken cancellationToken)
     {
-        if (!Directory.Exists(modPath))
-        {
-            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        }
-
-        var fullPath = Path.GetFullPath(modPath);
-        var rootWriteTime = Directory.GetLastWriteTimeUtc(fullPath);
-        lock (_cacheSync)
-        {
-            if (_fileCache.TryGetValue(fullPath, out var cached) &&
-                cached.RootWriteTimeUtc == rootWriteTime &&
-                DateTime.UtcNow - cached.CreatedAtUtc < CacheLifetime)
-            {
-                return cached.Files;
-            }
-        }
-
         var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            foreach (var file in Directory.EnumerateFiles(fullPath, "*", SafeEnumerationOptions))
+            foreach (var file in Directory.EnumerateFiles(modPath, "*", _enumerationOptions))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                files.Add(NormalizeRelativePath(Path.GetRelativePath(fullPath, file)));
+                files.Add(Path.GetRelativePath(modPath, file));
             }
         }
         catch (OperationCanceledException)
@@ -242,16 +217,6 @@ public sealed class ModConflictAnalyzer
         catch
         {
             // An inaccessible mod is handled by profile validation; conflict analysis stays best-effort.
-        }
-
-        lock (_cacheSync)
-        {
-            _fileCache[fullPath] = new FileListCacheEntry(files, rootWriteTime, DateTime.UtcNow);
-            if (_fileCache.Count > MaxCacheEntries)
-            {
-                var oldest = _fileCache.MinBy(pair => pair.Value.CreatedAtUtc).Key;
-                _fileCache.Remove(oldest);
-            }
         }
 
         return files;
@@ -264,17 +229,6 @@ public sealed class ModConflictAnalyzer
             : path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar).TrimStart(Path.DirectorySeparatorChar);
     }
 
-    private static EnumerationOptions SafeEnumerationOptions { get; } = new()
-    {
-        RecurseSubdirectories = true,
-        IgnoreInaccessible = true,
-        AttributesToSkip = FileAttributes.ReparsePoint
-    };
-
-    private sealed record FileListCacheEntry(
-        HashSet<string> Files,
-        DateTime RootWriteTimeUtc,
-        DateTime CreatedAtUtc);
 }
 
 public sealed record ModConflictInput(

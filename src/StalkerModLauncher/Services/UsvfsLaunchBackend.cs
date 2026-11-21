@@ -44,7 +44,6 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             ExecutableRelativePath = profile.ExecutableRelativePath,
             ExecutableSourcePath = profile.ExecutableSourcePath,
             LaunchArguments = profile.LaunchArguments,
-            WorkingDirectoryRelative = profile.WorkingDirectoryRelative,
             UsvfsExecutableOverrideRelativePath = profile.UsvfsExecutableOverrideRelativePath,
             Mods = new(profile.Mods.Select(mod => new ModEntry
             {
@@ -114,19 +113,11 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             ? Strings.Progress_UsvfsArchitectureX86
             : Strings.Progress_UsvfsArchitectureX64);
 
-        var useAnomalyLauncherBootstrap = AnomalyLauncherLocator.IsBaseGameLauncher(
-                                             profile.GameInstallPath,
-                                             launchTarget.ExecutablePath) ||
-                                         AnomalyLauncherLocator.IsLauncherExecutable(
-                                             launchTarget.ExecutablePath);
+        var useAnomalyLauncherBootstrap = IsAnomalyLauncher(profile.GameInstallPath, launchTarget.ExecutablePath);
         var isAnomalyEngine = IsAnomalyEngine(launchTarget.ExecutableRelativePath);
         var hasPhysicalWorkingDirectory = Directory.Exists(launchTarget.WorkingDirectory);
-        var useVirtualExecutable = !useAnomalyLauncherBootstrap &&
-                                   !isAnomalyEngine &&
-                                   hasPhysicalWorkingDirectory &&
-                                   layerPlan.FindAllProviders(launchTarget.ExecutableRelativePath).Any(provider =>
-                                       provider.Layer.Kind == FileLayerKind.Mod &&
-                                       string.Equals(provider.FullPath, launchTarget.ExecutablePath, StringComparison.OrdinalIgnoreCase));
+        var useVirtualExecutable = CanUseVirtualExecutablePath(
+            layerPlan, launchTarget, useAnomalyLauncherBootstrap, isAnomalyEngine);
         var useSharedAnomalyBootstrap = layerPlan.UsesSharedGameData && isAnomalyEngine;
         var usePhysicalAnomalyRoot = isAnomalyEngine && !useSharedAnomalyBootstrap && hasPhysicalWorkingDirectory;
         var usePhysicalBaseGameRoot = !useAnomalyLauncherBootstrap &&
@@ -141,11 +132,11 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             profileWorkspace,
             layerPlan.BaseGame.RootPath,
             profile.Id);
-        UsvfsBootstrapResult? bootstrap = null;
+        string? bootstrapExecutable = null;
         UsvfsExecutableBootstrapper.Clear(profileWorkspace, bootstrapRoot);
-        if (!usePhysicalBaseGameRoot)
+        if (!usePhysicalBaseGameRoot && !useVirtualExecutable)
         {
-            bootstrap = useAnomalyLauncherBootstrap
+            bootstrapExecutable = useAnomalyLauncherBootstrap
                 ? UsvfsExecutableBootstrapper.PrepareAnomalyLauncher(
                     layerPlan,
                     launchTarget,
@@ -157,16 +148,14 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                     launchTarget,
                     bootstrapRoot,
                     progress,
-                    onlyIfLoaderFilesSpanLayers: useVirtualExecutable,
-                    cancellationToken: cancellationToken);
-            if (bootstrap is not null && !useVirtualExecutable)
-                MaterializeBootstrapFsgame(profileFsgamePath, manifest.WriteOverlayRoot, bootstrap.RootPath);
+                    cancellationToken);
+            MaterializeBootstrapFsgame(profileFsgamePath, manifest.WriteOverlayRoot, bootstrapRoot);
         }
 
         var usePhysicalGameRoot = usePhysicalAnomalyRoot || usePhysicalBaseGameRoot || usePhysicalArchiveRoot || useVirtualExecutable;
         var virtualRoot = usePhysicalGameRoot
             ? layerPlan.BaseGame.RootPath
-            : bootstrap!.RootPath;
+            : bootstrapRoot;
         var mappingPlan = useAnomalyLauncherBootstrap || useSharedAnomalyBootstrap
             ? UsvfsMappingPlanBuilder.BuildAnomalyLauncherBootstrap(
                 layerPlan,
@@ -181,25 +170,39 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             : ResolveBootstrapWorkingDirectory(
                 layerPlan.BaseGame.RootPath,
                 launchTarget.WorkingDirectory,
-                bootstrap!.RootPath);
+                bootstrapRoot);
         var executablePath = useVirtualExecutable
-            ? Path.Combine(virtualRoot, launchTarget.ExecutableRelativePath)
-            : usePhysicalBaseGameRoot ? launchTarget.ExecutablePath : bootstrap!.ExecutablePath;
+            ? Path.GetFullPath(Path.Combine(virtualRoot, launchTarget.ExecutableRelativePath))
+            : bootstrapExecutable ?? launchTarget.ExecutablePath;
         if (useVirtualExecutable)
         {
-            var operations = mappingPlan.Operations.ToList();
-            if (bootstrap is not null)
+            var imageRoot = hasPhysicalWorkingDirectory ? bootstrapRoot : Path.Combine(bootstrapRoot, "images");
+            var originalOperationCount = mappingPlan.Operations.Count;
+            mappingPlan = UsvfsExecutableBootstrapper.PrepareVirtualExecutables(
+                mappingPlan, launchTarget, imageRoot, progress, cancellationToken);
+            IEnumerable<UsvfsMappingOperation> primaryOperations = mappingPlan.Operations;
+            IReadOnlyList<UsvfsMappingOperation> workingOperations = [];
+            if (!hasPhysicalWorkingDirectory)
             {
-                operations.Add(new UsvfsMappingOperation(
-                    UsvfsMappingKind.DirectoryStatic, bootstrap.DirectoryPath, Path.GetDirectoryName(executablePath)!,
-                    launchTarget.SourceName, int.MaxValue - 2));
+                // Win32 needs a physical CWD. Map the game tree around it so relative paths still see every layer.
+                var workingRoot = Path.Combine(bootstrapRoot, "working-tree");
+                workingDirectory = ResolveBootstrapWorkingDirectory(virtualRoot, workingDirectory, workingRoot);
+                var workingTree = UsvfsMappingPlanBuilder.Build(layerPlan, manifest, workingRoot);
+                var workingFiles = mappingPlan.Operations.Skip(originalOperationCount).Select(operation => operation with
+                {
+                    DestinationPath = Path.Combine(workingRoot, Path.GetRelativePath(virtualRoot, operation.DestinationPath))
+                });
+                workingOperations = UsvfsMappingPlanBuilder.EnsureMappedParents(
+                    workingTree.Operations.Concat(workingFiles), manifest, workingRoot);
+                primaryOperations = UsvfsExecutableBootstrapper.GetPhysicalImageMappings(layerPlan.BaseGame, cancellationToken)
+                    .Concat(primaryOperations);
             }
-
-            // The virtual path must select this image even when another layer provides it.
-            var imagePath = bootstrap?.ExecutablePath ?? launchTarget.ExecutablePath;
-            operations.Add(new UsvfsMappingOperation(
-                UsvfsMappingKind.File, imagePath, executablePath, launchTarget.SourceName, int.MaxValue));
-            mappingPlan = mappingPlan with { Operations = operations };
+            // Register the game-root mappings last at each priority to preserve the reverse image paths.
+            mappingPlan = mappingPlan with
+            {
+                Operations = workingOperations.Concat(
+                    UsvfsMappingPlanBuilder.EnsureMappedParents(primaryOperations, manifest, virtualRoot)).ToArray()
+            };
         }
 
         progress.Report(useVirtualExecutable
@@ -215,12 +218,10 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                 : Strings.Progress_UsvfsRootIsolated);
         progress.Report(LocalizedText.Format(Strings.Progress_UsvfsVirtualRootFormat, mappingPlan.VirtualRoot));
 
-        var launchRequest = useVirtualExecutable
-            ? new UsvfsProcessLaunchRequest(
-                runtimeFiles.X86HostPath,
-                CommandLineArgumentBuilder.Join("--launch", workingDirectory, executablePath, launchTarget.Arguments ?? string.Empty),
-                runtimeFiles.Directory)
-            : new UsvfsProcessLaunchRequest(executablePath, launchTarget.Arguments, workingDirectory);
+        var launchRequest = new UsvfsProcessLaunchRequest(executablePath, launchTarget.Arguments, workingDirectory)
+        {
+            StartFromVirtualPath = useVirtualExecutable
+        };
         // Start the x86 helper from the same architecture. USVFS injects the target from there.
         var selectedRuntime = useVirtualExecutable || architecture == WindowsExecutableArchitecture.X86
             ? _x86Runtime
@@ -255,7 +256,7 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                 async () =>
                 {
                     var exitCode = await session.GetExitCodeAsync().ConfigureAwait(false);
-                    if (bootstrap is not null)
+                    if (bootstrapExecutable is not null)
                         ProfileWritableGameFileStore.CaptureFromWorkspace(bootstrapRoot, profileWorkspace, progress);
                     return exitCode;
                 },
@@ -292,6 +293,26 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             File.Copy(sourcePath, destination, overwrite: true);
         }
     }
+
+    internal static bool RequiresVirtualExecutableHost(ModProfile profile, FileLayerPlan layers, UsvfsLaunchTarget target) =>
+        CanUseVirtualExecutablePath(layers, target,
+            IsAnomalyLauncher(profile.GameInstallPath, target.ExecutablePath),
+            IsAnomalyEngine(target.ExecutableRelativePath));
+
+    private static bool CanUseVirtualExecutablePath(
+        FileLayerPlan layers, UsvfsLaunchTarget target, bool anomalyLauncher, bool anomalyEngine)
+    {
+        if (anomalyLauncher || anomalyEngine)
+            return false;
+
+        var selectedImage = Path.GetFullPath(target.ExecutablePath);
+        return layers.Mods.Any(layer => Path.GetFullPath(Path.Combine(layer.RootPath, target.ExecutableRelativePath))
+            .Equals(selectedImage, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsAnomalyLauncher(string gamePath, string executablePath) =>
+        AnomalyLauncherLocator.IsBaseGameLauncher(gamePath, executablePath) ||
+        AnomalyLauncherLocator.IsLauncherExecutable(executablePath);
 
     private static bool IsAnomalyEngine(string executableRelativePath)
     {

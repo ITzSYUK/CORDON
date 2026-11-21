@@ -45,6 +45,7 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             GameInstallPath = game,
             ExecutableRelativePath = @"bin_x64\xrEngine.exe",
             FsgameSourcePath = selectedFsgame,
+            WorkingDirectoryRelative = "previous-workspace-directory",
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
         profile.Mods.Add(new ModEntry
@@ -71,8 +72,10 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         Assert.NotNull(plan.RuntimeLease);
         Assert.NotNull(plan.ProcessStarter);
         using var process = plan.ProcessStarter(plan, null);
-        Assert.Equal(Path.Combine(game, UsvfsRuntimeFiles.X86HostFileName), runtime.Session.Request?.ExecutablePath);
-        Assert.Contains(plan.ExecutablePath, runtime.Session.Request?.Arguments);
+        Assert.NotNull(runtime.Session.Request);
+        Assert.True(runtime.Session.Request.StartFromVirtualPath);
+        Assert.Equal(plan.ExecutablePath, runtime.Session.Request.ExecutablePath);
+        Assert.Equal(plan.WorkingDirectory, runtime.Session.Request.WorkingDirectory);
         Assert.NotNull(runtime.MappingPlan);
         Assert.Equal(
             Path.Combine(workspace, "diagnostics", "usvfs.log"),
@@ -81,9 +84,10 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         Assert.Equal(
             "legacy diagnostics",
             File.ReadAllText(Path.Combine(workspace, "diagnostics", "usvfs.log")));
-        Assert.Equal(
-            [mod, manifest.WriteOverlayRoot, Path.Combine(mod, profile.ExecutableRelativePath)],
-            runtime.MappingPlan.Operations.Select(operation => operation.SourcePath).ToArray());
+        Assert.Contains(runtime.MappingPlan.Operations, operation => operation.SourcePath == mod && operation.DestinationPath == game);
+        Assert.Contains(runtime.MappingPlan.Operations, operation => operation.SourcePath == manifest.WriteOverlayRoot && operation.CreateTarget);
+        Assert.Equal(Path.Combine(mod, profile.ExecutableRelativePath), runtime.MappingPlan.Operations.Last(
+            operation => operation.DestinationPath == plan.ExecutablePath).SourcePath);
         Assert.Equal(game, runtime.MappingPlan.VirtualRoot);
         var selectedProfileFsgame = Path.Combine(manifest.WriteOverlayRoot, "fsgame_coc.ltx");
         var profileFsgame = Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx");
@@ -572,9 +576,10 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task PrepareAsyncUsesPhysicalRootForXRayArchiveDirectoriesWithModEngine(bool hasLoaderFileInBase)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task PrepareAsyncUsesPhysicalRootForXRayArchiveDirectoriesWithModEngine(bool hasLoaderFileInBase, bool pinWithForwardSlash)
     {
         var game = CreateDirectory("archive-root-game");
         var mod = CreateDirectory("archive-root-mod");
@@ -601,7 +606,8 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             Id = "profile-archive-root",
             Name = "Archive root",
             GameInstallPath = game,
-            ExecutableRelativePath = @"bin_x64\xrEngine.exe",
+            ExecutableRelativePath = pinWithForwardSlash ? "bin_x64/xrEngine.exe" : @"bin_x64\xrEngine.exe",
+            ExecutableSourcePath = pinWithForwardSlash ? mod : string.Empty,
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
         profile.Mods.Add(new ModEntry
@@ -621,11 +627,11 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             new ProfileLaunchBackendContext(game, profile, layerPlan, manifest),
             new Progress<string>());
 
-        Assert.Equal(Path.Combine(game, profile.ExecutableRelativePath), plan.ExecutablePath);
+        Assert.Equal(Path.GetFullPath(Path.Combine(game, profile.ExecutableRelativePath)), plan.ExecutablePath);
         var bootstrap = Path.Combine(workspace, ".usvfs-bootstrap");
         Assert.Equal(hasLoaderFileInBase, Directory.Exists(bootstrap));
         var imageRoot = hasLoaderFileInBase ? bootstrap : mod;
-        Assert.Equal(Path.Combine(imageRoot, profile.ExecutableRelativePath), runtime.MappingPlan?.Operations[^1].SourcePath);
+        Assert.Equal(Path.GetFullPath(Path.Combine(imageRoot, profile.ExecutableRelativePath)), runtime.MappingPlan?.Operations[^1].SourcePath);
         if (hasLoaderFileInBase)
         {
             Assert.Equal("base dependency", File.ReadAllText(Path.Combine(bootstrap, "bin_x64", "engine_dependency.dll")));
@@ -640,6 +646,43 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         Assert.Contains(
             runtime.MappingPlan.Operations,
             operation => FileSystemSafety.IsSameDirectory(operation.SourcePath, mod));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task PrepareAsyncUsesDirectoryOfEffectiveFsgame(bool excludeNestedFile)
+    {
+        var game = CreateDirectory("effective-fsgame-game");
+        var mod = CreateDirectory("effective-fsgame-mod");
+        var workspace = CreateDirectory("effective-fsgame-workspace");
+        var profile = new ModProfile
+        {
+            GameInstallPath = game,
+            ExecutableRelativePath = "xrEngine.exe",
+            LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
+        };
+        var settings = "$app_data_root$ = true | false | userdata" + Path.DirectorySeparatorChar;
+        File.WriteAllText(Path.Combine(game, "fsgame.ltx"), settings);
+        Directory.CreateDirectory(Path.Combine(game, "extra"));
+        Directory.CreateDirectory(Path.Combine(mod, "extra"));
+        File.WriteAllText(Path.Combine(mod, "extra", "fsgame.ltx"), settings);
+        File.Copy(Path.Combine(Environment.SystemDirectory, "cmd.exe"), Path.Combine(mod, profile.ExecutableRelativePath));
+        CreateUsvfsRuntimeFiles(game);
+        var entry = new ModEntry { SourcePath = mod, Order = 1 };
+        if (excludeNestedFile)
+            entry.ExcludedFiles.Add(Path.Combine("extra", "fsgame.ltx"));
+        profile.Mods.Add(entry);
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+        var plan = await new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), game)
+            .PrepareAsync(new ProfileLaunchBackendContext(game, profile, layers, manifest), new Progress<string>());
+        await using var runtimeLease = plan.RuntimeLease!;
+
+        Assert.Equal(game, plan.WorkingDirectory);
+        Assert.Equal(game, manifest.LaunchPlan?.WorkingDirectory);
+        Assert.Contains(Path.Combine(workspace, "userdata"), File.ReadAllText(Path.Combine(manifest.WriteOverlayRoot, "fsgame.ltx")));
+        Assert.False(File.Exists(Path.Combine(manifest.WriteOverlayRoot, "extra", "fsgame.ltx")));
     }
 
     [Fact]
@@ -905,15 +948,18 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
     }
 
     [Theory]
-    [InlineData(WindowsExecutableArchitecture.X64)]
-    [InlineData(WindowsExecutableArchitecture.X86)]
-    public async Task MissingVirtualWorkingDirectoryUsesPhysicalBootstrap(WindowsExecutableArchitecture architecture)
+    [InlineData(WindowsExecutableArchitecture.X64, false)]
+    [InlineData(WindowsExecutableArchitecture.X86, false)]
+    [InlineData(WindowsExecutableArchitecture.X64, true)]
+    [InlineData(WindowsExecutableArchitecture.X86, true)]
+    public async Task MissingVirtualWorkingDirectoryUsesProfileDirectory(WindowsExecutableArchitecture architecture, bool imageFromMod)
     {
         var game = CreateDirectory("virtual-cwd-game");
         var mod = CreateDirectory("virtual-cwd-mod");
         var workspace = CreateDirectory("virtual-cwd-workspace");
-        Directory.CreateDirectory(Path.Combine(game, "bin"));
-        CopyExecutable(Path.Combine(game, "bin", "xr_3da.exe"), architecture);
+        var imageRoot = imageFromMod ? mod : game;
+        Directory.CreateDirectory(Path.Combine(imageRoot, "bin"));
+        CopyExecutable(Path.Combine(imageRoot, "bin", "xr_3da.exe"), architecture);
         Directory.CreateDirectory(Path.Combine(mod, "config"));
         var config = Path.Combine(mod, "config", "custom.ltx");
         File.WriteAllText(config, "$app_data_root$ = true | false | userdata\\");
@@ -936,8 +982,17 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             Assert.True(Directory.Exists(plan.WorkingDirectory));
             Assert.Contains(".usvfs-bootstrap", plan.WorkingDirectory, StringComparison.Ordinal);
             Assert.False(Directory.Exists(Path.Combine(game, "config")));
-            Assert.NotNull((architecture == WindowsExecutableArchitecture.X86 ? x86 : x64).MappingPlan);
-            Assert.Null((architecture == WindowsExecutableArchitecture.X86 ? x64 : x86).MappingPlan);
+            var selectedRuntime = imageFromMod || architecture == WindowsExecutableArchitecture.X86 ? x86 : x64;
+            Assert.NotNull(selectedRuntime.MappingPlan);
+            Assert.Null((selectedRuntime == x86 ? x64 : x86).MappingPlan);
+            if (imageFromMod)
+            {
+                Assert.Equal(Path.Combine(game, profile.ExecutableRelativePath), plan.ExecutablePath);
+                Assert.Equal(game, selectedRuntime.MappingPlan.VirtualRoot);
+                var workingRoot = Path.GetDirectoryName(plan.WorkingDirectory)!;
+                Assert.Contains(selectedRuntime.MappingPlan.Operations,
+                    operation => operation.SourcePath == mod && operation.DestinationPath == workingRoot);
+            }
         }
         finally { await plan.RuntimeLease!.DisposeAsync(); }
     }
@@ -1001,12 +1056,23 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
         if (!pinned) context.Profile.ExecutableSourcePath = string.Empty;
         var expected = pinned ? Path.Combine(context.Profile.Mods[0].SourcePath, relative) : baseExe;
 
-        var plan = await new UsvfsLaunchBackend(new RecordingUsvfsRuntime(), context.GamePath)
+        var runtime = new RecordingUsvfsRuntime();
+        var plan = await new UsvfsLaunchBackend(runtime, context.GamePath)
             .PrepareAsync(context, new Progress<string>());
         try
         {
-            Assert.Contains(".usvfs-bootstrap", plan.ExecutablePath, StringComparison.Ordinal);
-            Assert.Equal(File.ReadAllBytes(expected), File.ReadAllBytes(plan.ExecutablePath));
+            var launchedImage = plan.ExecutablePath;
+            if (pinned)
+            {
+                Assert.Equal(baseExe, plan.ExecutablePath);
+                launchedImage = runtime.MappingPlan!.Operations.Last(
+                    operation => operation.DestinationPath == baseExe).SourcePath;
+            }
+            else
+            {
+                Assert.Contains(".usvfs-bootstrap", plan.ExecutablePath, StringComparison.Ordinal);
+            }
+            Assert.Equal(File.ReadAllBytes(expected), File.ReadAllBytes(launchedImage));
         }
         finally { await plan.RuntimeLease!.DisposeAsync(); }
     }

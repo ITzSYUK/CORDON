@@ -136,7 +136,8 @@ internal static class WorkspaceMaterializer
         string sourceFile,
         string workspaceRoot,
         string relativePath,
-        WorkspaceBuildStats stats)
+        WorkspaceBuildStats stats,
+        bool forceIndependentCopy = false)
     {
         FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_WorkspaceFile);
         var targetFile = Path.Combine(workspaceRoot, relativePath);
@@ -146,7 +147,7 @@ internal static class WorkspaceMaterializer
             File.Delete(targetFile);
         }
 
-        LinkFile(sourceFile, targetFile, relativePath, stats);
+        LinkFile(sourceFile, targetFile, relativePath, stats, forceIndependentCopy);
     }
 
     private static void LinkFile(

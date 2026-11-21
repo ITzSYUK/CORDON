@@ -858,6 +858,7 @@ public static class Strings
     public static string Layer_Mo2OverwriteFiles => Get();
     public static string Usvfs_ArchitectureMismatchFormat => Get();
     public static string Usvfs_FileVersionMissingFormat => Get();
+    public static string Usvfs_HostProtocolMismatchFormat => Get();
     public static string Usvfs_VersionMismatchFormat => Get();
     public static string Usvfs_FileMissingFormat => Get();
     public static string Usvfs_TargetX86 => Get();
