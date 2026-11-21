@@ -174,26 +174,7 @@ public sealed partial class FileLayerPlan
 
     public static FileLayerPlan CreateForProfile(string gamePath, ModProfile profile, string workspaceRoot)
     {
-        if (profile.IsStandalone)
-        {
-            throw new InvalidOperationException(Strings.Error_StandaloneLayerPlanUnsupported);
-        }
-
-        var paths = AppPaths.Current;
-        foreach (var source in new[] { gamePath }.Concat(profile.Mods.Where(mod => mod.IsEnabled).Select(mod => mod.SourcePath)))
-            paths.ValidateSourceDirectory(source);
-        if (!string.IsNullOrWhiteSpace(profile.Mo2OverwritePath)) paths.ValidateSourceDirectory(profile.Mo2OverwritePath);
-
-        var layers = CreateSourceLayers(gamePath, profile);
-
-        layers.Add(new FileLayer(
-            FileLayerKind.UserData,
-            "__userdata",
-            Strings.Layer_ProfileWritableData,
-            Path.Combine(Path.GetFullPath(workspaceRoot), "userdata"),
-            int.MaxValue));
-
-        var plan = new FileLayerPlan(layers) { UsesSharedGameData = profile.UseBaseGameData };
+        var plan = CreateForFileAnalysis(gamePath, profile, workspaceRoot);
         plan.ManualFsgameSource = ResolveManualFsgameSource(profile);
         if (ResolveFsgameLaunchArgument(profile.LaunchArguments) is { } relativePath)
         {
@@ -218,6 +199,30 @@ public sealed partial class FileLayerPlan
             AnomalyAppDataAlias.IsAppDataPath(fsgame.RelativePath))
             throw new InvalidOperationException(Strings.Error_AnomalyFsgameInAppData);
         return plan;
+    }
+
+    internal static FileLayerPlan CreateForFileAnalysis(string gamePath, ModProfile profile, string workspaceRoot)
+    {
+        if (profile.IsStandalone)
+        {
+            throw new InvalidOperationException(Strings.Error_StandaloneLayerPlanUnsupported);
+        }
+
+        var paths = AppPaths.Current;
+        foreach (var source in new[] { gamePath }.Concat(profile.Mods.Where(mod => mod.IsEnabled).Select(mod => mod.SourcePath)))
+            paths.ValidateSourceDirectory(source);
+        if (!string.IsNullOrWhiteSpace(profile.Mo2OverwritePath)) paths.ValidateSourceDirectory(profile.Mo2OverwritePath);
+
+        var layers = CreateSourceLayers(gamePath, profile);
+
+        layers.Add(new FileLayer(
+            FileLayerKind.UserData,
+            "__userdata",
+            Strings.Layer_ProfileWritableData,
+            Path.Combine(Path.GetFullPath(workspaceRoot), "userdata"),
+            int.MaxValue));
+
+        return new FileLayerPlan(layers) { UsesSharedGameData = profile.UseBaseGameData };
     }
 
     internal static string? ResolveFsgameLaunchArgument(string? launchArguments)

@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cwchar>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -10,6 +11,8 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <vector>
 
 #include <usvfs.h>
@@ -21,6 +24,7 @@ namespace
 #pragma comment(lib, "shell32.lib")
 
 constexpr std::uint32_t ConfigMagic = 0x32534656; // VFS2
+constexpr std::uint32_t VirtualExecutableConfigMagic = 0x33534656; // VFS3
 constexpr std::uintmax_t MaxLogFileBytes = 2 * 1024 * 1024;
 
 struct Mapping
@@ -33,6 +37,7 @@ struct Mapping
 
 struct Config
 {
+  bool startFromVirtualPath{};
   std::string instanceName;
   std::wstring executable;
   std::wstring arguments;
@@ -51,6 +56,15 @@ struct ProcessList
 {
   fs::path configurationPath;
   std::optional<std::vector<DWORD>> published;
+};
+
+using UniqueHandle = std::unique_ptr<void, decltype(&CloseHandle)>;
+
+struct StartedProcess
+{
+  UniqueHandle process{nullptr, CloseHandle};
+  UniqueHandle startErrorReader{nullptr, CloseHandle};
+  DWORD error{};
 };
 
 std::uint32_t readUInt32(std::ifstream& input)
@@ -105,11 +119,13 @@ Config readConfig(const fs::path& path)
     throw std::runtime_error("Failed to open USVFS host configuration");
   }
 
-  if (readUInt32(input) != ConfigMagic) {
+  const auto magic = readUInt32(input);
+  if (magic != ConfigMagic && magic != VirtualExecutableConfigMagic) {
     throw std::runtime_error("Unsupported USVFS host configuration format");
   }
 
   Config config;
+  config.startFromVirtualPath = magic == VirtualExecutableConfigMagic;
   config.instanceName = readUtf8(input);
   config.executable = fromUtf8(readUtf8(input));
   config.arguments = fromUtf8(readUtf8(input));
@@ -159,6 +175,116 @@ std::wstring quote(const std::wstring& value)
   result.append(backslashes * 2, L'\\');
   result.push_back(L'\"');
   return result;
+}
+
+StartedProcess startHookedProcess(const Config& config, const fs::path& hostPath)
+{
+  StartedProcess started;
+  HANDLE writer = nullptr;
+  UniqueHandle startErrorWriter{nullptr, CloseHandle};
+  std::vector<unsigned char> attributeBuffer;
+  std::unique_ptr<std::remove_pointer_t<LPPROC_THREAD_ATTRIBUTE_LIST>,
+                  decltype(&DeleteProcThreadAttributeList)> attributes{nullptr, DeleteProcThreadAttributeList};
+  STARTUPINFOEXW startup{};
+  startup.StartupInfo.cb = sizeof(STARTUPINFOW);
+  DWORD creationFlags = 0;
+  auto executable = config.executable;
+  auto arguments = config.arguments;
+  auto workingDirectory = config.workingDirectory;
+  if (config.startFromVirtualPath) {
+    // Report CreateProcess failures separately from the game's exit code.
+    SECURITY_ATTRIBUTES security{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
+    HANDLE reader = nullptr;
+    if (!CreatePipe(&reader, &writer, &security, 0)) {
+      throw std::runtime_error("Failed to create virtual executable status pipe: " + std::to_string(GetLastError()));
+    }
+    started.startErrorReader.reset(reader);
+    startErrorWriter.reset(writer);
+
+    SIZE_T size = 0;
+    InitializeProcThreadAttributeList(nullptr, 1, 0, &size);
+    attributeBuffer.resize(size);
+    auto list = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(attributeBuffer.data());
+    if (!InitializeProcThreadAttributeList(list, 1, 0, &size)) {
+      throw std::runtime_error("Failed to initialize the USVFS launch helper: " + std::to_string(GetLastError()));
+    }
+    attributes.reset(list);
+    if (!UpdateProcThreadAttribute(list, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, &writer, sizeof(writer),
+                                   nullptr, nullptr)) {
+      throw std::runtime_error("Failed to pass the virtual executable status pipe: " + std::to_string(GetLastError()));
+    }
+    startup.StartupInfo.cb = sizeof(startup);
+    startup.lpAttributeList = list;
+    creationFlags = EXTENDED_STARTUPINFO_PRESENT;
+    executable = hostPath.wstring();
+    workingDirectory = hostPath.parent_path().wstring();
+    arguments = L"--launch " + std::to_wstring(reinterpret_cast<std::uintptr_t>(writer)) + L" " +
+        quote(config.workingDirectory) + L" " + quote(config.executable) + L" " + quote(config.arguments);
+  }
+
+  std::wstring commandLine = quote(executable);
+  if (!arguments.empty()) {
+    commandLine += L" " + arguments;
+  }
+  PROCESS_INFORMATION process{};
+  if (!usvfsCreateProcessHooked(executable.c_str(), commandLine.data(), nullptr, nullptr,
+                               config.startFromVirtualPath, creationFlags, nullptr,
+                               workingDirectory.c_str(), &startup.StartupInfo, &process)) {
+    started.error = GetLastError();
+    return started;
+  }
+  CloseHandle(process.hThread);
+  started.process.reset(process.hProcess);
+  return started;
+}
+
+DWORD readVirtualStartError(HANDLE reader)
+{
+  if (reader == nullptr) {
+    return ERROR_SUCCESS;
+  }
+  DWORD error = ERROR_SUCCESS;
+  DWORD bytesRead = 0;
+  if (ReadFile(reader, &error, sizeof(error), &bytesRead, nullptr)) {
+    if (bytesRead == sizeof(error)) {
+      return error;
+    }
+  } else if (GetLastError() == ERROR_BROKEN_PIPE) {
+    return ERROR_SUCCESS;
+  }
+  throw std::runtime_error("Failed to read virtual executable start status");
+}
+
+int launchVirtualExecutable(HANDLE startErrorWriter, const wchar_t* workingDirectory,
+                            const wchar_t* executable, const wchar_t* arguments)
+{
+  UniqueHandle writer{startErrorWriter, CloseHandle};
+  std::wstring commandLine = quote(executable);
+  if (*arguments) {
+    commandLine += L" ";
+    commandLine += arguments;
+  }
+
+  STARTUPINFOW startup{};
+  startup.cb = sizeof(startup);
+  PROCESS_INFORMATION process{};
+  if (!CreateProcessW(executable, commandLine.data(), nullptr, nullptr, FALSE, 0,
+                      nullptr, workingDirectory, &startup, &process)) {
+    const DWORD error = GetLastError();
+    DWORD bytesWritten = 0;
+    WriteFile(writer.get(), &error, sizeof(error), &bytesWritten, nullptr);
+    return static_cast<int>(error);
+  }
+
+  writer.reset();
+  CloseHandle(process.hThread);
+  DWORD exitCode;
+  if (WaitForSingleObject(process.hProcess, INFINITE) != WAIT_OBJECT_0 ||
+      !GetExitCodeProcess(process.hProcess, &exitCode)) {
+    exitCode = GetLastError();
+  }
+  CloseHandle(process.hProcess);
+  return static_cast<int>(exitCode);
 }
 
 void prepareLogFile(const fs::path& path)
@@ -300,7 +426,7 @@ void waitForVfsProcessTree(DiagnosticLog* diagnosticLog, ProcessList& processLis
 int runElevated(const fs::path& executablePath, const fs::path& configurationPath)
 {
   const auto executable = fs::absolute(executablePath).wstring();
-  const auto parameters = quote(configurationPath.wstring());
+  const auto parameters = L"--elevated " + quote(configurationPath.wstring());
   const auto workingDirectory = fs::path(executable).parent_path().wstring();
   SHELLEXECUTEINFOW startInfo{};
   startInfo.cbSize = sizeof(startInfo);
@@ -331,14 +457,25 @@ int runElevated(const fs::path& executablePath, const fs::path& configurationPat
 
 int wmain(int argc, wchar_t* argv[])
 {
-  if (argc != 2) {
+  if (argc == 6 && std::wstring_view(argv[1]) == L"--launch") {
+    wchar_t* end = nullptr;
+    const auto writer = std::wcstoul(argv[2], &end, 10);
+    if (!writer || *end) {
+      return 10;
+    }
+    return launchVirtualExecutable(reinterpret_cast<HANDLE>(writer), argv[3], argv[4], argv[5]);
+  }
+
+  const bool elevatedRetry = argc == 3 && std::wstring_view(argv[1]) == L"--elevated";
+  if (argc != 2 && !elevatedRetry) {
     std::cerr << "Usage: StalkerModLauncher.UsvfsX86Host.exe <configuration>\n";
     return 10;
   }
 
   DiagnosticLog diagnosticLog;
   try {
-    const auto config = readConfig(argv[1]);
+    const fs::path configurationPath(argv[elevatedRetry ? 2 : 1]);
+    const auto config = readConfig(configurationPath);
     if (!config.diagnosticLogPath.empty()) {
       openDiagnosticLog(diagnosticLog, fs::path(config.diagnosticLogPath));
     }
@@ -371,50 +508,41 @@ int wmain(int argc, wchar_t* argv[])
       }
     }
 
-    std::wstring commandLine = quote(config.executable);
-    if (!config.arguments.empty()) {
-      commandLine += L" " + config.arguments;
-    }
-
-    std::vector<wchar_t> commandBuffer(commandLine.begin(), commandLine.end());
-    commandBuffer.push_back(L'\0');
-    STARTUPINFOW startup{};
-    startup.cb = sizeof(startup);
-    PROCESS_INFORMATION process{};
-    if (!usvfsCreateProcessHooked(
-            config.executable.c_str(), commandBuffer.data(), nullptr, nullptr, FALSE, 0,
-            nullptr, config.workingDirectory.c_str(), &startup, &process)) {
-      const DWORD error = GetLastError();
-      if (error == ERROR_ELEVATION_REQUIRED) {
-        usvfsDisconnectVFS();
-        if (diagnosticLog.output.is_open()) {
-          diagnosticLog.output << "Target requires elevation; restarting USVFS x86 host as administrator.\n";
-          diagnosticLog.output.close();
-        }
-        return runElevated(argv[0], argv[1]);
-      }
-
-      throw std::runtime_error("usvfsCreateProcessHooked failed: " + std::to_string(error));
-    }
-
-    ProcessList processList{fs::path(argv[1])};
-    publishProcessIds(processList);
-    waitForProcess(
-        process.hProcess,
-        diagnosticLog.output.is_open() ? &diagnosticLog : nullptr,
-        &processList);
+    const auto hostPath = fs::absolute(argv[0]);
+    auto started = startHookedProcess(config, hostPath);
+    DWORD startError = started.error;
     DWORD exitCode = 1;
-    GetExitCodeProcess(process.hProcess, &exitCode);
-    CloseHandle(process.hThread);
-    CloseHandle(process.hProcess);
-    waitForVfsProcessTree(
-        diagnosticLog.output.is_open() ? &diagnosticLog : nullptr,
-        processList);
+    if (started.process) {
+      ProcessList processList{configurationPath};
+      publishProcessIds(processList);
+      auto* log = diagnosticLog.output.is_open() ? &diagnosticLog : nullptr;
+      waitForProcess(started.process.get(), log, &processList);
+      if (!GetExitCodeProcess(started.process.get(), &exitCode)) {
+        throw std::runtime_error("Failed to read USVFS process exit code: " + std::to_string(GetLastError()));
+      }
+      startError = readVirtualStartError(started.startErrorReader.get());
+      waitForVfsProcessTree(log, processList);
+    }
+
+    const bool needsElevation = startError == ERROR_ELEVATION_REQUIRED && !elevatedRetry;
+    if (startError != ERROR_SUCCESS && !needsElevation) {
+      throw std::runtime_error("Failed to start USVFS target: " + std::to_string(startError));
+    }
     usvfsDisconnectVFS();
     drainLogs(diagnosticLog.output.is_open() ? &diagnosticLog : nullptr);
+    if (needsElevation) {
+      if (diagnosticLog.output.is_open()) {
+        diagnosticLog.output << "Target requires elevation; restarting USVFS x86 host as administrator.\n";
+        diagnosticLog.output.close();
+      }
+      return runElevated(hostPath, configurationPath);
+    }
     return static_cast<int>(exitCode);
   } catch (const std::exception& exception) {
     std::cerr << "USVFS x86 host failed: " << exception.what() << "\n";
+    if (diagnosticLog.output.is_open()) {
+      diagnosticLog.output << "USVFS x86 host failed: " << exception.what() << '\n';
+    }
     usvfsDisconnectVFS();
     return 20;
   }

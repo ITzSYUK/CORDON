@@ -831,6 +831,7 @@
   <data name="Layer_Mo2OverwriteFiles" xml:space="preserve"><value>Файлы overwrite из MO2</value></data>
   <data name="Usvfs_ArchitectureMismatchFormat" xml:space="preserve"><value>{0}: ожидалась архитектура {1}, обнаружена {2}.</value></data>
   <data name="Usvfs_FileVersionMissingFormat" xml:space="preserve"><value>{0}: отсутствует версия файла.</value></data>
+  <data name="Usvfs_HostProtocolMismatchFormat" xml:space="preserve"><value>Хост USVFS x86 по пути {0} не поддерживает протокол этой версии лаунчера. Пересоберите или обновите CORDON вместе с хостом USVFS.</value></data>
   <data name="Usvfs_VersionMismatchFormat" xml:space="preserve"><value>Версии компонентов USVFS не совпадают: {0}.</value></data>
   <data name="Usvfs_FileMissingFormat" xml:space="preserve"><value>не найден {0}</value></data>
   <data name="Usvfs_TargetX86" xml:space="preserve"><value>32-битной игры</value></data>
@@ -994,6 +995,7 @@
   <data name="Progress_UsvfsRootBase" xml:space="preserve"><value>Корень USVFS: физическая папка игры для базового файла запуска.</value></data>
   <data name="Progress_UsvfsRootAnomalyBootstrap" xml:space="preserve"><value>Корень USVFS: изолированная загрузочная папка лаунчера Anomaly.</value></data>
   <data name="Progress_UsvfsRootAnomaly" xml:space="preserve"><value>Корень USVFS: физическая папка Anomaly.</value></data>
+  <data name="Progress_UsvfsRootVirtualExecutable" xml:space="preserve"><value>USVFS запускает файл из слоя мода в дереве игры.</value></data>
   <data name="Progress_UsvfsRootXray" xml:space="preserve"><value>Корень USVFS: физическая папка игры для архивов X-Ray.</value></data>
   <data name="Progress_UsvfsRootIsolated" xml:space="preserve"><value>Корень USVFS: изолированная загрузочная папка.</value></data>
   <data name="Progress_UsvfsVirtualRootFormat" xml:space="preserve"><value>Виртуальный корень USVFS: {0}</value></data>

@@ -9,13 +9,23 @@ public sealed class LaunchPreflightService
     private static readonly string[] EngineDllNames = ["xrCore.dll", "xrGame.dll", "xrEngine.dll"];
     private readonly ProfileManager _profileManager;
     private readonly string _usvfsRuntimeDirectory;
+    private readonly Action<string> _requireVirtualExecutableHost;
 
     public LaunchPreflightService(
         ProfileManager profileManager,
         string? usvfsRuntimeDirectory = null)
+        : this(profileManager, usvfsRuntimeDirectory, UsvfsRuntimeFiles.RequireVirtualExecutableHost)
+    {
+    }
+
+    internal LaunchPreflightService(
+        ProfileManager profileManager,
+        string? usvfsRuntimeDirectory,
+        Action<string> requireVirtualExecutableHost)
     {
         _profileManager = profileManager;
         _usvfsRuntimeDirectory = Path.GetFullPath(usvfsRuntimeDirectory ?? AppContext.BaseDirectory);
+        _requireVirtualExecutableHost = requireVirtualExecutableHost;
     }
 
     public Task<LaunchPreflightReport> AnalyzeAsync(ModProfile profile, CancellationToken cancellationToken = default)
@@ -277,6 +287,9 @@ public sealed class LaunchPreflightService
                     LocalizedText.Format(Strings.Preflight_ArchitectureMissingFormat, target.ExecutablePath)));
                 return;
             }
+
+            if (UsvfsLaunchBackend.RequiresVirtualExecutableHost(profile, fileLayerPlan, target))
+                _requireVirtualExecutableHost(runtimeFiles.X86HostPath);
 
             checks.Add(new ProfileHealthCheck(
                 ProfileHealthStatus.Healthy,

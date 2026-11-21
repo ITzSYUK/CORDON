@@ -57,6 +57,7 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
     private sealed class Session : IUsvfsRuntimeSession
     {
         private const uint ConfigMagic = 0x32534656;
+        private const uint VirtualExecutableConfigMagic = 0x33534656;
         private readonly string _runtimeDirectory;
         private readonly UsvfsMappingPlan _mappingPlan;
         private readonly UsvfsRuntimeOptions _options;
@@ -94,6 +95,11 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
             if (!File.Exists(hostPath))
             {
                 throw new FileNotFoundException(Strings.Error_UsvfsX86HostMissing, hostPath);
+            }
+
+            if (launchRequest.StartFromVirtualPath)
+            {
+                UsvfsRuntimeFiles.RequireVirtualExecutableHost(hostPath);
             }
 
             _configurationPath = Path.Combine(
@@ -181,7 +187,7 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
         {
             using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
             using var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: false);
-            writer.Write(ConfigMagic);
+            writer.Write(request.StartFromVirtualPath ? VirtualExecutableConfigMagic : ConfigMagic);
             WriteUtf8(writer, options.InstanceName);
             WriteUtf8(writer, request.ExecutablePath);
             WriteUtf8(writer, request.Arguments ?? string.Empty);

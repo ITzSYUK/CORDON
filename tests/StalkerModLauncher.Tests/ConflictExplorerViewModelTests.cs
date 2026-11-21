@@ -54,6 +54,27 @@ public sealed class ConflictExplorerViewModelTests : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), "StalkerModLauncherTests", "ConflictExplorer", Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public async Task RefreshShowsConflictsWhenSelectedFsgameIsMissing()
+    {
+        var game = Directory.CreateDirectory(Path.Combine(_root, "missing-fsgame-game")).FullName;
+        var earlier = CreateMod("earlier", 1);
+        var later = CreateMod("later", 2);
+        const string relativePath = "shared.ltx";
+        CreateFile(earlier.SourcePath, relativePath);
+        CreateFile(later.SourcePath, relativePath);
+        var profile = new ModProfile { GameInstallPath = game, FsgameSourcePath = Path.Combine(game, "missing.ltx") };
+        profile.Mods.Add(earlier);
+        profile.Mods.Add(later);
+
+        using var viewModel = new ConflictExplorerViewModel(
+            profile, later, new ModConflictAnalyzer(), new DialogService(), () => Task.CompletedTask, () => { });
+        await viewModel.RefreshAsync();
+
+        Assert.Equal(relativePath, Assert.Single(viewModel.WinningFiles).RelativePath);
+        Assert.True(Assert.Single(viewModel.FinalFiles, file => file.RelativePath == relativePath).HasConflict);
+    }
+
+    [Fact]
     public async Task MixedConflictAppearsInWinningAndLosingLists()
     {
         var game = Directory.CreateDirectory(Path.Combine(_root, "game")).FullName;

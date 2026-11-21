@@ -201,12 +201,17 @@ USVFS captures the profile's launch settings and mod source list on the calling 
 The launcher chooses a virtual-root strategy according to the launch layout:
 
 - the physical base-game root is used when its own EXE starts and mods do not provide loader-time files;
+- the selected EXE from an active mod layer is launched at its path inside the physical game root, including an explicitly pinned EXE excluded from the ordinary overlay. A helper already connected to USVFS opens that path. If the working directory only exists in the overlay, a second mapping of the game tree supplies a physical working directory inside the profile. Relative paths see the same layers, and EXE and DLL paths still resolve to the game root;
 - the physical Anomaly root is preferred when an `AnomalyDX*.exe` is selected directly;
 - Anomaly automatic mode uses an isolated launcher bootstrap so the base-game Anomaly Launcher can start physically prepared final engine files;
 - a physical X-Ray 1.6 root is used when `$arch_dir_*` entries are present so archives in `patches` and similar directories remain visible;
-- an isolated bootstrap root is used when a mod provides the engine or the selected executable needs its own neighboring DLL set.
+- an isolated bootstrap root is used for compatibility, for example when the working directory exists only in a mod layer.
 
 The physical game directory is never mapped over itself. Doing so can hide real `gamedata.db*` archives from the engine.
+
+USVFS determines the working directory from the current `fsgame.ltx` selection and launch arguments. `WorkingDirectoryRelative` stores the last directory computed by Workspace or Standalone.
+
+When Windows requires elevation to start the target EXE, the x86 host retries the same USVFS session through the Windows UAC prompt. The helper reports process creation errors separately from the target's exit code.
 
 ### usvfs-bootstrap
 
@@ -222,6 +227,8 @@ The directory is created only for launch layouts where Windows and the engine mu
 - loader-time DLL files from its directory;
 - profile `fsgame.ltx`;
 - the smallest required set of neighboring files.
+
+For a virtual EXE launch, CORDON checks executable directories from the active mappings, including nested directories. When an EXE’s physical neighbors differ from the effective DLLs and manifests, CORDON stages independent copies of the images and their loader files. Staging follows the final mapping order, including the profile `overwrite`. USVFS exposes virtual paths for the staged EXEs and DLLs and keeps writable and overwrite mappings at their usual priority. This route requires an x86 host that supports VFS3. SWM supplies `luacap.dll` while the base game supplies its dependency `lua.JIT.1.1.4.dll`.
 
 For Anomaly automatic mode, the bootstrap contains final top-level `bin` files. The physical `bin` level is not mapped over again; nested folders and remaining data stay virtual. `AnomalyLauncher.cfg`, `commandline.txt` and `launcherconfig.toml` have independent physical bootstrap copies and persistent profile storage under `userdata\writable-game-files`. A hash baseline records the initial contents. Changed physical copies are collected after session completion and before preparation or movement, even when timestamps are unchanged. Independent conflicting stored versions are archived under `diagnostics`. Unchanged bootstrap copies cannot overwrite virtual writes. Direct Anomaly engine launches also read the profile command line.
 
@@ -510,7 +517,7 @@ research/
 tests/StalkerModLauncher.Tests/
 ```
 
-At startup, shared services register direct standalone launch and USVFS when its runtime is available. There is no Workspace backend; the development USVFS override remains for isolated tests.
+At startup, shared services register Workspace and direct standalone launch, plus USVFS when its runtime is available. The development USVFS override remains for isolated tests.
 
 The UI follows MVVM without an external dependency-injection container. Main-screen logic is divided by user scenario, and major areas of the window are separate controls.
 
@@ -576,7 +583,7 @@ The `.github\workflows\usvfs.yml` workflow repeats the complete build and smoke 
 
 The main runtime pins the validated PR #99 revision `93fcf7af42523d8da8d1436e88920f900e766596` with `scripts\patches\usvfs-pr99-tests.patch` and `scripts\patches\usvfs-pr99-runtime.patch`. Sources live in `.external\usvfs-pr99`; its `runtime` directory contains four validated files and `build-info.json`. The test patch corrects batch-boundary and 8.3-name assumptions, covers early source-scan completion and fixes the test build. The runtime patch replaces the internal I/O guard's compiler `thread_local` storage with Win32 TLS, preserves nesting and `GetLastError`, tests threads without a static TLS vector, and stops scanning once every requested name has a cached record. Missing names and case/8.3 fallbacks retain their full-scan behavior. This revision also rebuilds stale scans after hook-context replacement, avoids a handle-mode query for unmapped directories, expands forwarding/fallback diagnostics, and supplies name matching when Wine lacks `RtlIsNameInExpression`. Known limitation: asynchronous directory enumeration sees only physical entries. The previous revision `57f1ea5e6ad13f7435a7af184748e6c1312c5637` with its MSVC patch is retained as legacy in `.external\usvfs`; the two checkouts are isolated.
 
-- Standard profiles require USVFS compatibility; there is no Workspace fallback.
+- A standard profile uses its configured backend. Switch the profile to Workspace explicitly if a build is incompatible with USVFS.
 - USVFS requires the Microsoft Visual C++ 2015-2022 Redistributable matching the target game's architecture.
 - Bootstrap links across drives depend on Windows configuration.
 - Absolute game and mod paths are not repaired automatically after folders are moved.

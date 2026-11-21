@@ -20,7 +20,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
         var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
         var builder = new WorkspaceBuilder(paths);
         var service = new LaunchPreflightService(
-            new ProfileManager(paths, builder), Path.Combine(_root, "runtime"));
+            new ProfileManager(paths, builder), Path.Combine(_root, "runtime"), _ => { });
         var game = CreateFile("game/fsgame.ltx", ValidFsgame);
         CreateFile("game/bin/xr_3da.exe");
         var patchExecutable = CreateFile("patch/bin/xr_3da.exe");
@@ -47,7 +47,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
         var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
         var builder = new WorkspaceBuilder(paths);
         var service = new LaunchPreflightService(
-            new ProfileManager(paths, builder), Path.Combine(_root, "runtime"));
+            new ProfileManager(paths, builder), Path.Combine(_root, "runtime"), _ => { });
         var game = CreateFile("layered-game/fsgame.ltx", ValidFsgame);
         CreateFile("layered-game/bin/xr_3da.exe");
         var patchExecutable = CreateFile("layered-patch/bin_x64/xrEngine.exe");
@@ -83,7 +83,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
         var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
         var builder = new WorkspaceBuilder(paths);
         var service = new LaunchPreflightService(
-            new ProfileManager(paths, builder), Path.Combine(_root, "runtime"));
+            new ProfileManager(paths, builder), Path.Combine(_root, "runtime"), _ => { });
         var game = CreateFile("game-pinned/fsgame.ltx", ValidFsgame);
         CreateFile("game-pinned/bin/xr_3da.exe");
         var mainExecutable = CreateFile("main/bin_x64/xrEngine.exe");
@@ -141,7 +141,7 @@ public sealed class LaunchPreflightServiceTests : IDisposable
     public async Task AnalyzeAsyncReportsManuallySelectedFsgame()
     {
         var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
-        var service = new LaunchPreflightService(new ProfileManager(paths, new WorkspaceBuilder(paths)), Path.Combine(_root, "runtime"));
+        var service = new LaunchPreflightService(new ProfileManager(paths, new WorkspaceBuilder(paths)), Path.Combine(_root, "runtime"), _ => { });
         var game = Path.Combine(_root, "game-manual-fsgame");
         var selected = CreateFile(
             "game-manual-fsgame/fsgame_coc.ltx",
@@ -280,8 +280,11 @@ public sealed class LaunchPreflightServiceTests : IDisposable
             check => check.Title == "Мод пуст: Empty" && check.Status == ProfileHealthStatus.Warning);
     }
 
-    [Fact]
-    public async Task AnalyzeAsyncUsesVirtualFileSystemPreviewAndValidatesRuntime()
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task AnalyzeAsyncValidatesX86HostProtocolForVirtualExecutable(bool launchFromMod, bool pinExcludedImage)
     {
         var paths = new AppPaths(_root, Path.Combine(_root, "workspaces"), false);
         var builder = new WorkspaceBuilder(paths);
@@ -302,7 +305,31 @@ public sealed class LaunchPreflightServiceTests : IDisposable
             LaunchBackendKind = LaunchBackendKind.VirtualFileSystem
         };
 
+        if (launchFromMod)
+        {
+            var mod = Path.Combine(_root, "usvfs-engine-mod");
+            CopyExecutable(Path.Combine(mod, profile.ExecutableRelativePath), WindowsExecutableArchitecture.X64);
+            var entry = new ModEntry { Name = "Engine", SourcePath = mod, Order = 1 };
+            profile.Mods.Add(entry);
+            if (pinExcludedImage)
+            {
+                entry.ExcludedFiles.Add(profile.ExecutableRelativePath);
+                profile.ExecutableSourcePath = mod;
+                profile.FsgameSourcePath = CreateFile("usvfs-engine-mod/config/custom.ltx", ValidFsgame);
+            }
+        }
+
         var report = await service.AnalyzeAsync(profile);
+
+        if (launchFromMod)
+        {
+            Assert.False(report.CanLaunch);
+            Assert.Contains(report.Checks, check => check.Title == "USVFS runtime" &&
+                check.Status == ProfileHealthStatus.Error &&
+                check.Details.Contains(UsvfsRuntimeFiles.X86HostFileName) &&
+                check.Details.Contains("протокол"));
+            return;
+        }
 
         Assert.True(report.CanLaunch);
         Assert.Equal(LaunchBackendKind.VirtualFileSystem, report.LaunchPlan?.BackendKind);

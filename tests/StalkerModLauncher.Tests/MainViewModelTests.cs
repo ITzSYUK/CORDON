@@ -1263,6 +1263,37 @@ public sealed class MainViewModelTests
     }
 
     [Fact]
+    public async Task ConflictCountsRefreshWhenSelectedFsgameDisappears()
+    {
+        await RunWithViewModelAsync(async (viewModel, root) =>
+        {
+            var game = CreateValidGameRoot(root);
+            var fsgame = Path.Combine(game, "fsgame.ltx");
+            var first = Directory.CreateDirectory(Path.Combine(root, "first-conflict-mod")).FullName;
+            var second = Directory.CreateDirectory(Path.Combine(root, "second-conflict-mod")).FullName;
+            var secondFile = Path.Combine(second, "conflict.ltx");
+            File.WriteAllText(Path.Combine(first, "conflict.ltx"), "initial");
+            File.WriteAllText(secondFile, "winner");
+            var profile = new ModProfile
+            {
+                Name = "Conflict analysis",
+                GameInstallPath = game,
+                ExecutableRelativePath = @"bin\xr_3da.exe",
+                FsgameSourcePath = fsgame
+            };
+            var earlier = new ModEntry { Name = "First", SourcePath = first, Order = 1 };
+            profile.Mods.Add(earlier);
+            profile.Mods.Add(new ModEntry { Name = "Second", SourcePath = second, Order = 2 });
+            viewModel.AddCreatedProfile(profile);
+            await WaitUntilAsync(() => earlier.OverwrittenByFileCount == 1);
+
+            File.Move(fsgame, fsgame + ".bak");
+            File.Move(secondFile, Path.Combine(second, "renamed.ltx"));
+            await WaitUntilAsync(() => earlier.OverwrittenByFileCount == 0);
+        });
+    }
+
+    [Fact]
     public async Task ReplacingModCollectionKeepsAutomaticExecutableSelectionSubscribed()
     {
         await RunWithViewModelAsync((viewModel, root) =>

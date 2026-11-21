@@ -146,6 +146,11 @@ static async Task<int> RunHostAsync(string[] args)
     {
         await VerifyWritableDirectoryMappingAsync(runtime, root, childExecutable);
         await VerifyAppDataAliasAsync(runtime, root, childExecutable);
+        await VerifyVirtualX64ExecutableAsync(runtime, root, commandProcessor);
+    }
+    else if (args.Length == 3)
+    {
+        await VerifyLayeredLauncherAsync(runtime, root, Path.GetFullPath(args[1]), childExecutable);
     }
 
     for (var iteration = 1; iteration <= iterations; iteration++)
@@ -205,6 +210,192 @@ static async Task<int> RunHostAsync(string[] args)
 
     Console.WriteLine($"Managed USVFS PoC passed {iterations} iteration(s). Files: {root}");
     return 0;
+}
+
+static async Task VerifyVirtualX64ExecutableAsync(IUsvfsRuntime runtime, string root, string commandProcessor)
+{
+    var scenario = Path.Combine(root, "virtual x64 executable");
+    var game = Path.Combine(scenario, "game");
+    var mod = Path.Combine(scenario, "mod");
+    var workspace = Path.Combine(scenario, "workspace");
+    var fsgame = Path.Combine(game, "run", "fsgame.ltx");
+    WriteText(fsgame, "$app_data_root$ = true | false | userdata\\");
+    WriteText(Path.Combine(mod, "run", "overlay-only.txt"), "mod");
+    File.Copy(commandProcessor, Path.Combine(mod, "test.exe"));
+    var profile = new ModProfile
+    {
+        Id = "virtual_x64",
+        GameInstallPath = game,
+        ExecutableRelativePath = "test.exe",
+        FsgameSourcePath = fsgame,
+        WorkingDirectoryRelative = "previous-workspace-directory"
+    };
+    profile.Mods.Add(new ModEntry { SourcePath = mod, Order = 1 });
+    var x86Runtime = new X86UsvfsHostRuntime(AppContext.BaseDirectory);
+    var backend = new UsvfsLaunchBackend(runtime, AppContext.BaseDirectory, x86Runtime);
+    foreach (var expectedExitCode in new[] { 0, 740 })
+    {
+        profile.LaunchArguments = $"/d /c if exist \"%CD%\\overlay-only.txt\" (exit {expectedExitCode}) else (exit 41)";
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+        var plan = await backend.PrepareAsync(new ProfileLaunchBackendContext(game, profile, layers, manifest), new Progress<string>());
+        try
+        {
+            using var process = plan.ProcessStarter!(plan, null);
+            var exit = await plan.RuntimeCompletion!();
+            if (exit != expectedExitCode || plan.WorkingDirectory != Path.Combine(game, "run") ||
+                Directory.Exists(Path.Combine(workspace, ".usvfs-bootstrap")))
+                throw new InvalidOperationException($"Virtual x64 executable failed (exit={exit}, expected={expectedExitCode}). PoC files: {root}");
+        }
+        finally
+        {
+            await plan.RuntimeLease!.DisposeAsync();
+        }
+    }
+    Console.WriteLine("USVFS virtual x64 executable used the current fsgame directory and preserved exit codes 0 and 740.");
+}
+
+static async Task VerifyLayeredLauncherAsync(
+    IUsvfsRuntime runtime,
+    string root,
+    string childExecutable,
+    string launcherExecutable)
+{
+    var scenario = Path.Combine(root, "layered launcher");
+    var game = Path.Combine(scenario, "game");
+    var mod = Path.Combine(scenario, "mod");
+    var workspace = Path.Combine(scenario, "workspace");
+    var resultPath = Path.Combine(scenario, "result.txt");
+    const string launcherRelative = @"bin\launcher.exe";
+    Directory.CreateDirectory(Path.Combine(game, "bin"));
+    Directory.CreateDirectory(Path.Combine(mod, "bin"));
+    Directory.CreateDirectory(Path.Combine(mod, "tools"));
+    File.Copy(launcherExecutable, Path.Combine(mod, launcherRelative));
+    File.Copy(childExecutable, Path.Combine(game, "bin", "engine.exe"));
+    File.Copy(childExecutable, Path.Combine(mod, "tools", "engine.exe"));
+    WriteText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true | false | userdata\\\n$arch_dir_patches$ = false | true | $fs_root$ | patches\\");
+    WriteText(Path.Combine(game, "shared.txt"), "base");
+    WriteText(Path.Combine(mod, "shared.txt"), "mod");
+
+    var profile = new ModProfile
+    {
+        Id = "layered_launcher",
+        GameInstallPath = game,
+        ExecutableRelativePath = launcherRelative
+    };
+    var entry = new ModEntry { SourcePath = mod, Order = 1 };
+    profile.Mods.Add(entry);
+    var fixtures = Path.GetDirectoryName(launcherExecutable)!;
+    const string nestedChild = @"..\tools\engine.exe";
+    foreach (var (childRelative, expected, launcherDlls, childLoaderValue) in new[]
+             {
+                 ("engine.exe", "mod", false, 0),
+                 (nestedChild, "base", false, 0),
+                 (nestedChild, "mod", true, 0),
+                 (nestedChild, "mod", false, 97),
+                 (nestedChild, "mod", false, 98)
+             })
+    {
+        File.Copy(
+            launcherDlls ? Path.Combine(fixtures, "usvfs_layered_launcher_x86.exe") : launcherExecutable,
+            Path.Combine(mod, launcherRelative), overwrite: true);
+        var baseLauncherDll = Path.Combine(game, "bin", "usvfs_smoke_base.dll");
+        var modLauncherDll = Path.Combine(mod, "bin", "usvfs_smoke_mod.dll");
+        if (launcherDlls)
+        {
+            File.Copy(Path.Combine(fixtures, "usvfs_smoke_base.dll"), baseLauncherDll);
+            File.Copy(Path.Combine(fixtures, "usvfs_smoke_mod.dll"), modLauncherDll);
+        }
+        else
+        {
+            File.Delete(baseLauncherDll);
+            File.Delete(modLauncherDll);
+        }
+
+        if (childLoaderValue == 97)
+        {
+            Directory.CreateDirectory(Path.Combine(game, "tools"));
+            File.Copy(Path.Combine(fixtures, "usvfs_layered_child_x86.exe"), Path.Combine(mod, "tools", "engine.exe"), overwrite: true);
+            File.Copy(Path.Combine(fixtures, "usvfs_smoke_base.dll"), Path.Combine(game, "tools", "usvfs_smoke_base.dll"));
+            File.Copy(Path.Combine(fixtures, "usvfs_smoke_mod.dll"), Path.Combine(mod, "tools", "usvfs_smoke_mod.dll"));
+        }
+
+        entry.ExcludedFiles.Clear();
+        if (expected == "base")
+            entry.ExcludedFiles.Add("shared.txt");
+        profile.LaunchArguments = CommandLineArgumentBuilder.Join(
+            "--relative", Path.Combine(game, launcherRelative), childRelative, resultPath);
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+        if (childLoaderValue == 98)
+        {
+            var overwrite = Directory.CreateDirectory(Path.Combine(manifest.WriteOverlayRoot, "tools"));
+            File.Copy(Path.Combine(fixtures, "usvfs_smoke_override.dll"), Path.Combine(overwrite.FullName, "usvfs_smoke_base.dll"));
+        }
+
+        var plan = await new UsvfsLaunchBackend(runtime, AppContext.BaseDirectory).PrepareAsync(
+            new ProfileLaunchBackendContext(game, profile, layers, manifest), new Progress<string>());
+        try
+        {
+            using var process = plan.ProcessStarter!(plan, null);
+            var exit = await plan.RuntimeCompletion!();
+            var output = File.Exists(resultPath) ? File.ReadAllText(resultPath) : string.Empty;
+            var stagedRoot = Path.Combine(workspace, ".usvfs-bootstrap");
+            if (exit != 0 || !output.Contains($"shared={expected}\n", StringComparison.Ordinal) ||
+                childLoaderValue != 0 && !output.Contains($"loader={childLoaderValue}\n", StringComparison.Ordinal) ||
+                File.Exists(Path.Combine(stagedRoot, launcherRelative)) != launcherDlls ||
+                File.Exists(Path.Combine(stagedRoot, "tools", "engine.exe")) != (childLoaderValue != 0))
+                throw new InvalidOperationException(
+                    $"Layered launcher failed ({childRelative}, launcher DLLs={launcherDlls}, child loader={childLoaderValue}, exit={exit}). Output: {output} PoC files: {root}");
+        }
+        finally
+        {
+            await plan.RuntimeLease!.DisposeAsync();
+        }
+
+        File.Delete(resultPath);
+    }
+
+    File.Copy(launcherExecutable, Path.Combine(mod, launcherRelative), overwrite: true);
+    var config = Path.Combine(mod, "config", "custom.ltx");
+    WriteText(config, File.ReadAllText(Path.Combine(game, "fsgame.ltx")));
+    WriteText(Path.Combine(game, "base-only.txt"), "base-only");
+    foreach (var onlyVirtualWorkingDirectory in new[] { true, false })
+    {
+        profile.FsgameSourcePath = onlyVirtualWorkingDirectory ? config : string.Empty;
+        profile.ExecutableSourcePath = onlyVirtualWorkingDirectory ? string.Empty : mod;
+        entry.ExcludedFiles.Clear();
+        if (!onlyVirtualWorkingDirectory)
+            entry.ExcludedFiles.Add(launcherRelative);
+        var expectedImage = Path.Combine(game, launcherRelative);
+        profile.LaunchArguments = onlyVirtualWorkingDirectory
+            ? CommandLineArgumentBuilder.Join("--relative", expectedImage, "engine.exe", resultPath, "custom.ltx")
+            : CommandLineArgumentBuilder.Join("--relative", expectedImage, "engine.exe", resultPath);
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+        var plan = await new UsvfsLaunchBackend(runtime, AppContext.BaseDirectory).PrepareAsync(
+            new ProfileLaunchBackendContext(game, profile, layers, manifest), new Progress<string>());
+        try
+        {
+            using var process = plan.ProcessStarter!(plan, null);
+            var exit = await plan.RuntimeCompletion!();
+            const string savedFile = "launch-test-output.txt";
+            if (exit != 0 || !File.Exists(resultPath) || Directory.Exists(Path.Combine(game, "config")) ||
+                !File.ReadAllText(resultPath).Contains("shared=mod\n", StringComparison.Ordinal) ||
+                onlyVirtualWorkingDirectory &&
+                (File.Exists(Path.Combine(mod, "config", savedFile)) ||
+                 ReadText(Path.Combine(manifest.WriteOverlayRoot, "config", savedFile)) != "profile-only"))
+                throw new InvalidOperationException(
+                    $"Virtual launcher path regression (virtual working directory={onlyVirtualWorkingDirectory}, exit={exit}). PoC files: {root}");
+        }
+        finally
+        {
+            await plan.RuntimeLease!.DisposeAsync();
+        }
+        File.Delete(resultPath);
+    }
+    Console.WriteLine("USVFS layered launcher resolved adjacent and nested children, with split loader files and profile DLL overrides.");
+    Console.WriteLine("USVFS preserved the launcher image path with a mod-only working directory and with an excluded, explicitly pinned EXE.");
 }
 
 static async Task VerifyExclusionsAsync(IUsvfsRuntime runtime, string root, string commandProcessor)

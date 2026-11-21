@@ -133,6 +133,15 @@ public static class UsvfsRuntimeFiles
     public const string DllFileName = ControllerDllFileName;
     public const string ProxyFileName = X64ProxyFileName;
 
+    internal static void RequireVirtualExecutableHost(string hostPath)
+    {
+        var version = FileVersionInfo.GetVersionInfo(hostPath);
+        if (version.InternalName != "CORDON USVFS x86 Host" || version.FileMajorPart != 3)
+        {
+            throw new InvalidOperationException(LocalizedText.Format(Strings.Usvfs_HostProtocolMismatchFormat, hostPath));
+        }
+    }
+
     public static UsvfsRuntimeFileStatus Check(string? directory = null)
     {
         var root = Path.GetFullPath(directory ?? AppContext.BaseDirectory);

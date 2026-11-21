@@ -173,6 +173,14 @@ public static class UsvfsMappingPlanBuilder
         }
     }
 
+    internal static IReadOnlyList<UsvfsMappingOperation> EnsureMappedParents(
+        IEnumerable<UsvfsMappingOperation> operations, OverlayManifest manifest, string virtualRoot)
+    {
+        var result = operations.ToList();
+        AddMissingParentDirectories(result, manifest, virtualRoot);
+        return result;
+    }
+
     private static void AddWritableFiles(
         List<UsvfsMappingOperation> operations,
         string virtualRoot,

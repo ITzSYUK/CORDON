@@ -858,6 +858,7 @@ public static class Strings
     public static string Layer_Mo2OverwriteFiles => Get();
     public static string Usvfs_ArchitectureMismatchFormat => Get();
     public static string Usvfs_FileVersionMissingFormat => Get();
+    public static string Usvfs_HostProtocolMismatchFormat => Get();
     public static string Usvfs_VersionMismatchFormat => Get();
     public static string Usvfs_FileMissingFormat => Get();
     public static string Usvfs_TargetX86 => Get();
@@ -1040,6 +1041,7 @@ public static class Strings
     public static string Progress_UsvfsRootBase => Get();
     public static string Progress_UsvfsRootAnomalyBootstrap => Get();
     public static string Progress_UsvfsRootAnomaly => Get();
+    public static string Progress_UsvfsRootVirtualExecutable => Get();
     public static string Progress_UsvfsRootXray => Get();
     public static string Progress_UsvfsRootIsolated => Get();
     public static string Progress_UsvfsVirtualRootFormat => Get();

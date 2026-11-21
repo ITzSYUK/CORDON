@@ -107,6 +107,10 @@ Write-Host 'USVFS test isolation passed: concurrent process rejected, lock relea
 $workflow = [IO.File]::ReadAllText((Join-Path $repositoryRoot ".github\workflows\usvfs.yml"))
 $runtimePaths = @(
     ".gitattributes"
+    "src/StalkerModLauncher/Services/FileLayerPlan.cs"
+    "src/StalkerModLauncher/Services/LaunchPreflightService.cs"
+    "src/StalkerModLauncher/Services/ProfileLaunchPlanResolver.cs"
+    "src/StalkerModLauncher/Services/WorkspaceMaterializer.cs"
     Get-ChildItem -LiteralPath (Join-Path $repositoryRoot "src\StalkerModLauncher\Services") -Filter '*Usvfs*.cs' -File |
         ForEach-Object { "src/StalkerModLauncher/Services/$($_.Name)" }
     Get-ChildItem -LiteralPath (Join-Path $repositoryRoot "src\StalkerModLauncher\Models") -Filter 'Usvfs*.cs' -File |

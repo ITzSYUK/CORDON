@@ -1,15 +1,10 @@
+using System.IO.Enumeration;
 using System.Security.Cryptography;
 using System.Text;
 using StalkerModLauncher.Models;
 using StalkerModLauncher.Resources;
 
 namespace StalkerModLauncher.Services;
-
-internal sealed record UsvfsBootstrapResult(
-    string ExecutablePath,
-    string RootPath,
-    string DirectoryPath,
-    int FileCount);
 
 internal static class UsvfsExecutableBootstrapper
 {
@@ -36,7 +31,7 @@ internal static class UsvfsExecutableBootstrapper
         FileSystemSafety.DeleteDirectoryContents(bootstrapRoot, allowedRoot);
     }
 
-    public static UsvfsBootstrapResult Prepare(
+    public static string Prepare(
         FileLayerPlan layerPlan,
         UsvfsLaunchTarget launchTarget,
         string bootstrapRoot,
@@ -45,6 +40,9 @@ internal static class UsvfsExecutableBootstrapper
     {
         FileSystemSafety.EnsureRelativePath(launchTarget.ExecutableRelativePath, Strings.Safety_UsvfsExecutable);
         var executableDirectoryRelative = Path.GetDirectoryName(launchTarget.ExecutableRelativePath) ?? string.Empty;
+        var selectedRelativeName = Path.GetFileName(launchTarget.ExecutableRelativePath);
+        var files = CollectFinalDirectoryFiles(layerPlan, executableDirectoryRelative, selectedRelativeName, cancellationToken);
+
         var bootstrapDirectory = executableDirectoryRelative.Length == 0
             ? bootstrapRoot
             : Path.Combine(bootstrapRoot, executableDirectoryRelative);
@@ -54,12 +52,6 @@ internal static class UsvfsExecutableBootstrapper
         FileSystemSafety.DeleteDirectoryContents(bootstrapRoot, bootstrapCacheRoot);
         Directory.CreateDirectory(bootstrapDirectory);
 
-        var selectedRelativeName = Path.GetFileName(launchTarget.ExecutableRelativePath);
-        var files = CollectFinalDirectoryFiles(
-            layerPlan,
-            executableDirectoryRelative,
-            selectedRelativeName,
-            cancellationToken);
         files[selectedRelativeName] = launchTarget.ExecutablePath;
 
         var stats = new WorkspaceBuildStats();
@@ -77,10 +69,188 @@ internal static class UsvfsExecutableBootstrapper
 
         progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsBootstrapFormat, files.Count, bootstrapDirectory));
         ProfileWritableGameFileStore.RecordBootstrapState(bootstrapRoot);
-        return new UsvfsBootstrapResult(executablePath, bootstrapRoot, bootstrapDirectory, files.Count);
+        return executablePath;
     }
 
-    public static UsvfsBootstrapResult PrepareAnomalyLauncher(
+    public static UsvfsMappingPlan PrepareVirtualExecutables(
+        UsvfsMappingPlan mappingPlan,
+        UsvfsLaunchTarget launchTarget,
+        string bootstrapRoot,
+        IProgress<string> progress,
+        CancellationToken cancellationToken)
+    {
+        var target = Path.GetFullPath(Path.Combine(mappingPlan.VirtualRoot, launchTarget.ExecutableRelativePath));
+        var targetDirectory = Path.GetDirectoryName(target)!;
+        var filesByDirectory = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+        var directoryMappings = mappingPlan.Operations.Where(operation => operation.Kind == UsvfsMappingKind.DirectoryStatic).ToArray();
+        var explicitDirectories = mappingPlan.Operations
+            .Where(operation => operation.Kind == UsvfsMappingKind.File && IsLoaderOrExecutable(operation.DestinationPath))
+            .Select(operation => Path.GetDirectoryName(operation.DestinationPath)!)
+            .Append(targetDirectory)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var overlappingDirectories = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        AddFile(target, launchTarget.ExecutablePath);
+        foreach (var operation in mappingPlan.Operations)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (operation.Kind == UsvfsMappingKind.File)
+            {
+                if (IsLoaderOrExecutable(operation.DestinationPath))
+                    AddFile(operation.DestinationPath, operation.SourcePath);
+                continue;
+            }
+
+            if (!Directory.Exists(operation.SourcePath))
+                continue;
+
+            var sourceRoot = Path.TrimEndingDirectorySeparator(operation.SourcePath);
+            var loaderFiles = new FileSystemEnumerable<string>(sourceRoot,
+                (ref FileSystemEntry entry) => entry.ToFullPath(), LoaderEnumerationOptions)
+            {
+                ShouldIncludePredicate = (ref FileSystemEntry entry) =>
+                    !entry.IsDirectory && IsLoaderOrExecutable(entry.FileName),
+                ShouldRecursePredicate = (ref FileSystemEntry entry) =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    // shortcut: check the first two levels so dense trees don't pay for a probe in every subdirectory.
+                    if (entry.Directory.Length > sourceRoot.Length &&
+                        entry.Directory[sourceRoot.Length..].TrimStart(Path.DirectorySeparatorChar).Contains(Path.DirectorySeparatorChar))
+                        return true;
+
+                    var relative = Path.GetRelativePath(sourceRoot, entry.ToFullPath());
+                    var destination = Path.Combine(operation.DestinationPath, relative);
+                    if (!overlappingDirectories.TryGetValue(destination, out var overlaps))
+                    {
+                        // A subtree supplied by one recursive mapping already has all of its physical loader neighbors.
+                        overlaps = Directory.Exists(destination) ||
+                            explicitDirectories.Any(path => FileSystemSafety.IsDirectoryInside(path, destination)) ||
+                            directoryMappings.Any(other => !ReferenceEquals(operation, other) &&
+                                (FileSystemSafety.IsDirectoryInside(other.DestinationPath, destination) ||
+                                 FileSystemSafety.IsDirectoryInside(destination, other.DestinationPath) &&
+                                 Directory.Exists(Path.Combine(other.SourcePath, Path.GetRelativePath(other.DestinationPath, destination)))));
+                        overlappingDirectories.Add(destination, overlaps);
+                    }
+                    return overlaps;
+                }
+            };
+            foreach (var sourceFile in loaderFiles)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var relativePath = Path.GetRelativePath(operation.SourcePath, sourceFile);
+                AddFile(Path.Combine(operation.DestinationPath, relativePath), sourceFile);
+            }
+        }
+
+        var operations = mappingPlan.Operations.ToList();
+        var stats = new WorkspaceBuildStats();
+        var selectedImage = launchTarget.ExecutablePath;
+        foreach (var (directory, files) in filesByDirectory)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            // The physical game tree is the fallback beneath the planned mappings.
+            if (Directory.Exists(directory))
+            {
+                foreach (var file in Directory.EnumerateFiles(directory))
+                {
+                    if (IsLoaderOrExecutable(file))
+                        files.TryAdd(Path.GetFileName(file), file);
+                }
+            }
+
+            if (directory.Equals(targetDirectory, StringComparison.OrdinalIgnoreCase))
+                files[Path.GetFileName(target)] = selectedImage;
+
+            var executableDirectories = files.Where(file => IsExecutable(file.Key))
+                .Select(file => Path.GetDirectoryName(file.Value)!)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+            var loaders = files.Where(file => IsLoader(file.Key)).Select(file => Path.GetDirectoryName(file.Value)!).ToArray();
+            if (!executableDirectories.Any(sourceDirectory => RequiresPhysicalNeighbors(sourceDirectory, loaders, files)))
+                continue;
+
+            var relativeDirectory = Path.GetRelativePath(mappingPlan.VirtualRoot, directory);
+            foreach (var (name, original) in files)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var relativePath = Path.Combine(relativeDirectory, name);
+                WorkspaceMaterializer.ReplaceFile(original, bootstrapRoot, relativePath, stats, forceIndependentCopy: true);
+                var destination = Path.Combine(directory, name);
+                var source = Path.GetFullPath(Path.Combine(bootstrapRoot, relativePath));
+                if (destination.Equals(target, StringComparison.OrdinalIgnoreCase))
+                {
+                    selectedImage = source;
+                }
+                else if (IsExecutable(name))
+                {
+                    operations.Add(new UsvfsMappingOperation(UsvfsMappingKind.File, source, destination, launchTarget.SourceName, int.MaxValue));
+                }
+                else if (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Register the staged DLL's reverse path without displacing writable or overwrite mappings.
+                    operations.Add(new UsvfsMappingOperation(UsvfsMappingKind.File, source, destination, launchTarget.SourceName, int.MaxValue - 2));
+                }
+            }
+        }
+
+        // The selected EXE can be pinned to a layer below the ordinary winner.
+        operations.Add(new UsvfsMappingOperation(UsvfsMappingKind.File, selectedImage, target, launchTarget.SourceName, int.MaxValue));
+        if (stats.FileCount > 0)
+            progress.Report(LocalizedText.Format(Strings.Progress_UsvfsBootstrapFormat, stats.FileCount, bootstrapRoot));
+        return mappingPlan with { Operations = operations };
+
+        void AddFile(string destination, string source)
+        {
+            var directory = Path.GetDirectoryName(destination)!;
+            if (!filesByDirectory.TryGetValue(directory, out var files))
+                filesByDirectory.Add(directory, files = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+            files[Path.GetFileName(destination)] = source;
+        }
+    }
+
+    private static bool RequiresPhysicalNeighbors(string directory, string[] loaderDirectories, Dictionary<string, string> files)
+    {
+        return loaderDirectories.Any(loaderDirectory => !FileSystemSafety.IsSameDirectory(directory, loaderDirectory)) ||
+               Directory.EnumerateFiles(directory).Any(file => IsLoader(file) && !files.ContainsKey(Path.GetFileName(file)));
+    }
+
+    public static IEnumerable<UsvfsMappingOperation> GetPhysicalImageMappings(FileLayer baseGame, CancellationToken cancellationToken)
+    {
+        // Mapping the base tree at a second root otherwise redirects GetModuleFileName for its physical images.
+        var images = new FileSystemEnumerable<string>(baseGame.RootPath,
+            (ref FileSystemEntry entry) => entry.ToFullPath(), LoaderEnumerationOptions)
+        {
+            ShouldIncludePredicate = (ref FileSystemEntry entry) => !entry.IsDirectory &&
+                (IsExecutable(entry.FileName) || entry.FileName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)),
+            ShouldRecursePredicate = (ref FileSystemEntry _) =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return true;
+            }
+        };
+        foreach (var image in images)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return new UsvfsMappingOperation(UsvfsMappingKind.File, image, image, FileLayerPlan.GetDisplayName(baseGame), baseGame.Order);
+        }
+    }
+
+    private static bool IsLoaderOrExecutable(ReadOnlySpan<char> path) => IsExecutable(path) || IsLoader(path);
+
+    private static bool IsExecutable(ReadOnlySpan<char> path) =>
+        path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsLoader(ReadOnlySpan<char> path) =>
+        path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
+        path.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase);
+
+    private static EnumerationOptions LoaderEnumerationOptions { get; } = new()
+    {
+        RecurseSubdirectories = true,
+        IgnoreInaccessible = true,
+        AttributesToSkip = FileAttributes.ReparsePoint
+    };
+
+    public static string PrepareAnomalyLauncher(
         FileLayerPlan layerPlan,
         UsvfsLaunchTarget launchTarget,
         string bootstrapRoot,
@@ -141,7 +311,7 @@ internal static class UsvfsExecutableBootstrapper
         AnomalyAppDataAlias.Prepare(bootstrapRoot, layerPlan);
         progress?.Report(LocalizedText.Format(Strings.Progress_UsvfsAnomalyBootstrapFormat, stats.FileCount, bootstrapRoot));
         ProfileWritableGameFileStore.RecordBootstrapState(bootstrapRoot);
-        return new UsvfsBootstrapResult(executablePath, bootstrapRoot, bootstrapRoot, stats.FileCount);
+        return executablePath;
     }
 
     private static void MaterializeFiles(

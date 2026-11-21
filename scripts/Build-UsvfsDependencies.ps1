@@ -238,6 +238,20 @@ try {
         -Arguments @("--build", $buildHostOutput, "--config", "Release") `
         -FailureMessage "USVFS x86 host build failed."
 
+    if (-not $SkipSmokeTest) {
+        $testLock = Enter-UsvfsTestLock
+        try {
+            Invoke-Tool `
+                -FileName (Join-Path (Split-Path -Parent $cmake) "ctest.exe") `
+                -Arguments @("--test-dir", $buildHostOutput, "-C", "Release", "--output-on-failure", "--timeout", "60") `
+                -FailureMessage "USVFS x86 host tests failed."
+        }
+        finally {
+            $testLock.ReleaseMutex()
+            $testLock.Dispose()
+        }
+    }
+
     Invoke-Tool `
         -FileName $cmake `
         -Arguments @(
@@ -256,7 +270,8 @@ try {
         -Arguments @(
             "--build", $buildPocOutput,
             "--config", "Release",
-            "--target", "usvfs_overlay_child_x86", "usvfs_overlay_launcher_x86"
+            "--target", "usvfs_overlay_child_x86", "usvfs_overlay_launcher_x86", "usvfs_layered_launcher_x86",
+            "usvfs_layered_child_x86", "usvfs_smoke_override"
         ) `
         -FailureMessage "USVFS x86 smoke-process build failed."
 }
@@ -272,7 +287,12 @@ finally {
 $requiredFiles = @(
     (Join-Path $hostBuild "StalkerModLauncher.UsvfsX86Host.exe"),
     (Join-Path $pocBuild "usvfs_overlay_child_x86.exe"),
-    (Join-Path $pocBuild "usvfs_overlay_launcher_x86.exe")
+    (Join-Path $pocBuild "usvfs_overlay_launcher_x86.exe"),
+    (Join-Path $pocBuild "usvfs_layered_launcher_x86.exe"),
+    (Join-Path $pocBuild "usvfs_smoke_base.dll"),
+    (Join-Path $pocBuild "usvfs_smoke_mod.dll"),
+    (Join-Path $pocBuild "usvfs_layered_child_x86.exe"),
+    (Join-Path $pocBuild "usvfs_smoke_override.dll")
 )
 foreach ($path in $requiredFiles) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {

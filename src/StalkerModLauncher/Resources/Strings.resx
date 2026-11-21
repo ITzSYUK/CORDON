@@ -831,6 +831,7 @@
   <data name="Layer_Mo2OverwriteFiles" xml:space="preserve"><value>MO2 overwrite files</value></data>
   <data name="Usvfs_ArchitectureMismatchFormat" xml:space="preserve"><value>{0}: expected architecture {1}, detected {2}.</value></data>
   <data name="Usvfs_FileVersionMissingFormat" xml:space="preserve"><value>{0}: file version is missing.</value></data>
+  <data name="Usvfs_HostProtocolMismatchFormat" xml:space="preserve"><value>The USVFS x86 host at {0} does not support this launcher’s protocol. Rebuild or update CORDON and its USVFS host together.</value></data>
   <data name="Usvfs_VersionMismatchFormat" xml:space="preserve"><value>USVFS component versions do not match: {0}.</value></data>
   <data name="Usvfs_FileMissingFormat" xml:space="preserve"><value>{0} not found</value></data>
   <data name="Usvfs_TargetX86" xml:space="preserve"><value>32-bit game</value></data>
@@ -994,6 +995,7 @@
   <data name="Progress_UsvfsRootBase" xml:space="preserve"><value>USVFS root strategy: physical game root for the base executable.</value></data>
   <data name="Progress_UsvfsRootAnomalyBootstrap" xml:space="preserve"><value>USVFS root strategy: isolated Anomaly launcher bootstrap root.</value></data>
   <data name="Progress_UsvfsRootAnomaly" xml:space="preserve"><value>USVFS root strategy: physical Anomaly root.</value></data>
+  <data name="Progress_UsvfsRootVirtualExecutable" xml:space="preserve"><value>USVFS is launching an executable from a mod layer in the game directory.</value></data>
   <data name="Progress_UsvfsRootXray" xml:space="preserve"><value>USVFS root strategy: physical game root for X-Ray archive folders.</value></data>
   <data name="Progress_UsvfsRootIsolated" xml:space="preserve"><value>USVFS root strategy: isolated bootstrap root.</value></data>
   <data name="Progress_UsvfsVirtualRootFormat" xml:space="preserve"><value>USVFS virtual root: {0}</value></data>
