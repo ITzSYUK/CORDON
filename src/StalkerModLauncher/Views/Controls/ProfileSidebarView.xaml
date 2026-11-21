@@ -416,14 +416,14 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="{Binding Name}"
-                                                   TextWrapping="Wrap"
                                                    TextTrimming="CharacterEllipsis"
                                                    LineHeight="17">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
-                                                    <Setter Property="MaxHeight" Value="51"/>
+                                                    <Setter Property="TextWrapping" Value="NoWrap"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsTrayMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                            <Setter Property="TextWrapping" Value="Wrap"/>
                                                             <Setter Property="MaxHeight" Value="34"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>

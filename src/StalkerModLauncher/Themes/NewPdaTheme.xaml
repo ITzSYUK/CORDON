@@ -4,8 +4,10 @@
         <ResourceDictionary Source="/CORDON;component/Themes/PdaTheme.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
+    <Color x:Key="PanelColor">#121310</Color>
+    <Color x:Key="PdaPageBackgroundColor">#0D0E0D</Color>
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#0C0D0C"/>
-    <SolidColorBrush x:Key="PanelBrush" Color="#121310"/>
+    <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource PanelColor}"/>
     <SolidColorBrush x:Key="PanelAltBrush" Color="#181916"/>
     <SolidColorBrush x:Key="CommandPanelBrush" Color="#181916"/>
     <SolidColorBrush x:Key="FieldBackgroundBrush" Color="#0A0B0A"/>
@@ -25,7 +27,9 @@
     <SolidColorBrush x:Key="ModArchiveProgressTrackBrush" Color="#0A0B0A"/>
     <SolidColorBrush x:Key="ModArchiveProgressFillBrush" Color="#B68A3A"/>
 
-    <SolidColorBrush x:Key="PdaPageBackgroundBrush" Color="#0D0E0D"/>
+    <SolidColorBrush x:Key="PdaPageBackgroundBrush" Color="{StaticResource PdaPageBackgroundColor}"/>
+    <SolidColorBrush x:Key="LauncherSettingsPageBrush" Color="{StaticResource PdaPageBackgroundColor}"/>
+    <SolidColorBrush x:Key="LauncherSettingsCardBrush" Color="{StaticResource PanelColor}"/>
     <SolidColorBrush x:Key="PdaControlBackgroundBrush" Color="#1B1C19"/>
     <SolidColorBrush x:Key="PdaControlBorderBrush" Color="#4E5149"/>
     <SolidColorBrush x:Key="PdaControlHoverBrush" Color="#292B27"/>

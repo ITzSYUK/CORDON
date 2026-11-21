@@ -405,16 +405,37 @@ public sealed class FomodUiTests
             confirmInstall: _ => true,
             openMigrationWizard: () => calls++);
         var view = new LauncherSettingsView { DataContext = settings };
-        var host = new Border { Resources = ReadAppResources(), Child = view };
-        if (theme != "classic") host.Resources.MergedDictionaries.Add(new ResourceDictionary
+        var host = new Border { Resources = ReadAppResources() };
+        PdaMainView? settingsShell = null;
+        if (theme == "classic")
         {
-            Source = new Uri(theme == "pda-new" ? "/CORDON;component/Themes/NewPdaTheme.xaml" : "/CORDON;component/Themes/PdaTheme.xaml", UriKind.Relative)
-        });
-        Layout(host, 760, 500);
+            host.Child = view;
+        }
+        else
+        {
+            settingsShell = new PdaMainView { DataContext = new { UseNewPdaInterface = theme == "pda-new" } };
+            settingsShell.ShowPage(view, Strings.Settings_Title);
+            host.Child = settingsShell;
+            Assert.Same(view, settingsShell.CurrentPage);
+        }
+
+        var width = settingsShell is null ? 760 : 1200;
+        var height = settingsShell is null ? 500 : 823;
+        Layout(host, width, height);
+        var settingsTabs = Assert.IsType<TabControl>(view.FindName("SettingsTabs"));
+        for (var index = 0; index < settingsTabs.Items.Count; index++)
+        {
+            settingsTabs.SelectedIndex = index;
+            Layout(host, width, height);
+            SavePreview(view, $"settings-{theme}-{index}");
+        }
+
         var install = Assert.IsType<Button>(view.FindName("DownloadAndInstallButton"));
         Assert.Equal(Visibility.Collapsed, install.Visibility);
+        settingsTabs.SelectedIndex = 1;
         await settings.CheckForUpdatesAsync();
-        Layout(host, 760, 500);
+        settingsTabs.SelectedIndex = 3;
+        Layout(host, width, height);
         Assert.Equal(Visibility.Visible, install.Visibility);
         Assert.Equal(Strings.Settings_DownloadAndInstall, install.Content);
         Assert.Same(settings.DownloadAndInstallCommand, install.Command);
@@ -424,9 +445,9 @@ public sealed class FomodUiTests
         Assert.Equal(1, downloads);
         await Task.Delay(TimeSpan.FromMilliseconds(250));
         Assert.InRange(install.Opacity, 0.99, 1);
-        Descendants<ScrollViewer>(view).First().ScrollToBottom();
-        Layout(host, 760, 500);
-        SavePreview(host, "settings-" + theme);
+        SavePreview(view, "settings-" + theme);
+        settingsTabs.SelectedIndex = 1;
+        Layout(host, width, height);
         var button = Assert.Single(Descendants<Button>(view), item => ReferenceEquals(item.Command, settings.OpenMigrationWizardCommand));
         Assert.True(button.IsEnabled);
         button.Command!.Execute(null);
@@ -438,16 +459,13 @@ public sealed class FomodUiTests
             selected = true;
             return Task.CompletedTask;
         });
-        if (theme == "classic") host.Child = migration;
+        if (settingsShell is null) host.Child = migration;
         else
         {
-            host.Child = null;
-            var shell = new PdaMainView { DataContext = new { UseNewPdaInterface = theme == "pda-new" } };
-            shell.ShowPage(migration, Strings.Settings_MigrationWizard);
-            host.Child = shell;
-            Assert.Same(migration, shell.CurrentPage);
+            settingsShell.ShowPage(migration, Strings.Settings_MigrationWizard);
+            Assert.Same(migration, settingsShell.CurrentPage);
         }
-        Layout(host, theme == "classic" ? 760 : 1200, theme == "classic" ? 500 : 823);
+        Layout(host, width, height);
         var bar = Assert.IsType<ProgressBar>(migration.FindName("MigrationProgressBar"));
         if (theme == "pda")
         {

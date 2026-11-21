@@ -11,7 +11,8 @@
   <data name="Settings_CheckUpdates" xml:space="preserve"><value>Проверить обновления</value></data>
   <data name="Settings_ClassicUi" xml:space="preserve"><value>Classic UI</value></data>
   <data name="Settings_DownloadAndInstall" xml:space="preserve"><value>Скачать и установить</value></data>
-  <data name="Settings_InterfaceHeading" xml:space="preserve"><value>ИНТЕРФЕЙС</value></data>
+  <data name="Settings_DataHeading" xml:space="preserve"><value>Данные</value></data>
+  <data name="Settings_InterfaceHeading" xml:space="preserve"><value>Интерфейс</value></data>
   <data name="Settings_LanguageEnglish" xml:space="preserve"><value>English</value></data>
   <data name="Settings_LanguageLabel" xml:space="preserve"><value>Язык интерфейса</value></data>
   <data name="Settings_LanguageRestartMessage" xml:space="preserve"><value>Настройка языка сохранена. Перезапустите лаунчер, чтобы применить её.</value></data>
@@ -21,7 +22,7 @@
   <data name="Settings_LogDescriptionDetailed" xml:space="preserve"><value>Обычные записи и техническая диагностика запуска, Workspace и USVFS.</value></data>
   <data name="Settings_LogDescriptionErrors" xml:space="preserve"><value>Ошибки запуска и сбои лаунчера.</value></data>
   <data name="Settings_LogDescriptionStandard" xml:space="preserve"><value>Ошибки и основные действия лаунчера.</value></data>
-  <data name="Settings_LoggingHeading" xml:space="preserve"><value>ЖУРНАЛИРОВАНИЕ</value></data>
+  <data name="Settings_LoggingHeading" xml:space="preserve"><value>Журнал</value></data>
   <data name="Settings_LogLevelDetailed" xml:space="preserve"><value>Подробный</value></data>
   <data name="Settings_LogLevelErrors" xml:space="preserve"><value>Только ошибки</value></data>
   <data name="Settings_LogLevelLabel" xml:space="preserve"><value>Уровень записи launcher.log</value></data>
@@ -36,8 +37,8 @@
   <data name="Settings_ShowUpdateNotifications" xml:space="preserve"><value>Показывать системное уведомление о доступном обновлении</value></data>
   <data name="Settings_StartMinimized" xml:space="preserve"><value>При запуске вместе с Windows открывать в трее</value></data>
   <data name="Settings_StartWithWindows" xml:space="preserve"><value>Запускать вместе с Windows</value></data>
-  <data name="Settings_StorageLabel" xml:space="preserve"><value>Настройки</value></data>
-  <data name="Settings_UpdateHeading" xml:space="preserve"><value>ОБНОВЛЕНИЕ</value></data>
+  <data name="Settings_StorageLabel" xml:space="preserve"><value>Папка настроек</value></data>
+  <data name="Settings_UpdateHeading" xml:space="preserve"><value>Обновление</value></data>
   <data name="About_AnswerDeleteProfile" xml:space="preserve"><value>Для обычного профиля удаляются только запись профиля и его workspace с профильными настройками, логами и сохранениями. Папки игры и модов не затрагиваются. Для автономного профиля папка автономной сборки тоже остаётся на месте.</value></data>
   <data name="About_AnswerModOrder" xml:space="preserve"><value>Моды ниже в списке имеют больший приоритет и могут заменить файлы модов выше. Это нормальный способ установить патч поверх основной версии мода. Порядок можно менять перетаскиванием или кнопками в строке мода. При следующем запуске Workspace пересоберёт рабочую среду, а USVFS сформирует виртуальное наложение с новым порядком.</value></data>
   <data name="About_AnswerRemoveMod" xml:space="preserve"><value>Да. «Убрать» исключает мод только из этого профиля. Исходная папка мода на диске остаётся нетронутой.</value></data>
