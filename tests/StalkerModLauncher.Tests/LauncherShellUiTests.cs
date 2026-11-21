@@ -6,8 +6,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml.Linq;
 using StalkerModLauncher.Models;
+using StalkerModLauncher.Resources;
 using StalkerModLauncher.Services;
 using StalkerModLauncher.Themes;
+using StalkerModLauncher.ViewModels;
 using StalkerModLauncher.Views;
 using StalkerModLauncher.Views.Controls;
 using Xunit;
@@ -24,50 +26,12 @@ public sealed class LauncherShellUiTests
         {
             try
             {
-                var host = CreateThemeHost();
-                var model = new StalkerModLauncher.ViewModels.LauncherSettingsViewModel(
+                var model = new LauncherSettingsViewModel(
                     LauncherPreferences.Default, Path.GetTempPath(), _ => Task.CompletedTask,
                     new DialogService(), () => Task.FromResult(new LauncherUpdateResult("1.0", "1.0", string.Empty, false)));
-                var classicSettings = new LauncherSettingsView { DataContext = model };
-                host.Children.Add(classicSettings);
-                host.Measure(new Size(600, 480));
-                host.Arrange(new Rect(0, 0, 600, 480));
-                host.UpdateLayout();
 
-                var classicSettingsDownload = Assert.IsType<Button>(classicSettings.FindName("DownloadAndInstallButton"));
-                Assert.Same(model.DownloadAndInstallCommand, classicSettingsDownload.Command);
-                Assert.False(classicSettingsDownload.IsEnabled);
-                var classicSettingsRelease = Assert.IsType<Button>(classicSettings.FindName("OpenReleaseButton"));
-                Assert.Same(model.OpenReleaseCommand, classicSettingsRelease.Command);
-                Assert.False(classicSettingsRelease.IsEnabled);
-
-                var classicPanel = Assert.IsType<Border>(classicSettings.FindName("SettingsPanelBorder"));
-                Assert.Equal(new CornerRadius(5), classicPanel.CornerRadius);
-
-                var bitmap = new RenderTargetBitmap(600, 480, 96, 96, PixelFormats.Pbgra32);
-                bitmap.Render(host);
-                Assert.Equal(600, bitmap.PixelWidth);
-
-                var pda = CreatePdaThemeHost();
-                var pdaSettings = new LauncherSettingsView { DataContext = model };
-                pda.Children.Add(pdaSettings);
-                pda.Measure(new Size(908, 521));
-                pda.Arrange(new Rect(0, 0, 908, 521));
-                pda.UpdateLayout();
-
-                var pdaSettingsDownload = Assert.IsType<Button>(pdaSettings.FindName("DownloadAndInstallButton"));
-                Assert.Same(model.DownloadAndInstallCommand, pdaSettingsDownload.Command);
-                Assert.False(pdaSettingsDownload.IsEnabled);
-                var pdaSettingsRelease = Assert.IsType<Button>(pdaSettings.FindName("OpenReleaseButton"));
-                Assert.Same(model.OpenReleaseCommand, pdaSettingsRelease.Command);
-                Assert.False(pdaSettingsRelease.IsEnabled);
-
-                var pdaPanel = Assert.IsType<Border>(pdaSettings.FindName("SettingsPanelBorder"));
-                Assert.Equal(new CornerRadius(0), pdaPanel.CornerRadius);
-
-                var pdaBitmap = new RenderTargetBitmap(908, 521, 96, 96, PixelFormats.Pbgra32);
-                pdaBitmap.Render(pda);
-                Assert.Equal(908, pdaBitmap.PixelWidth);
+                AssertLauncherSettingsTabs(CreateThemeHost(), model, isPda: false);
+                AssertLauncherSettingsTabs(CreatePdaThemeHost(), model, isPda: true);
 
                 var originalAtlas = new FormatConvertedBitmap(
                     PdaThemeSelector.CurrentDrawerAtlas,
@@ -91,22 +55,7 @@ public sealed class LauncherShellUiTests
                 var newPda = CreatePdaThemeHost(useNewTheme: true);
                 newPda.Width = 959;
                 newPda.Height = 424;
-                var newPdaSettings = new LauncherSettingsView { DataContext = model };
-                newPda.Children.Add(newPdaSettings);
-                newPda.Measure(new Size(959, 424));
-                newPda.Arrange(new Rect(0, 0, 959, 424));
-                newPda.UpdateLayout();
-
-                var newPdaSettingsDownload = Assert.IsType<Button>(newPdaSettings.FindName("DownloadAndInstallButton"));
-                Assert.Same(model.DownloadAndInstallCommand, newPdaSettingsDownload.Command);
-                Assert.False(newPdaSettingsDownload.IsEnabled);
-                var newPdaSettingsRelease = Assert.IsType<Button>(newPdaSettings.FindName("OpenReleaseButton"));
-                Assert.Same(model.OpenReleaseCommand, newPdaSettingsRelease.Command);
-                Assert.False(newPdaSettingsRelease.IsEnabled);
-
-                var newPdaBitmap = new RenderTargetBitmap(959, 424, 96, 96, PixelFormats.Pbgra32);
-                newPdaBitmap.Render(newPda);
-                Assert.Equal(424, newPdaBitmap.PixelHeight);
+                AssertLauncherSettingsTabs(newPda, model, isPda: true);
             }
             catch (Exception ex)
             {
@@ -123,6 +72,55 @@ public sealed class LauncherShellUiTests
         thread.Join();
 
         Assert.Null(failure);
+    }
+
+    private static void AssertLauncherSettingsTabs(Grid host, LauncherSettingsViewModel model, bool isPda)
+    {
+        var view = new LauncherSettingsView { DataContext = model };
+        host.Children.Add(view);
+        var size = new Size(host.Width, host.Height);
+        host.Measure(size);
+        host.Arrange(new Rect(size));
+
+        var tabs = Assert.IsType<TabControl>(view.FindName("SettingsTabs"));
+        Assert.Equal(Dock.Left, tabs.TabStripPlacement);
+        Assert.Equal(0, tabs.SelectedIndex);
+        Assert.Equal(
+            new[] { Strings.Settings_InterfaceHeading, Strings.Settings_DataHeading, Strings.Settings_LoggingHeading, Strings.Settings_UpdateHeading },
+            tabs.Items.Cast<TabItem>().Select(tab => Assert.IsType<string>(tab.Header)));
+
+        var panel = Assert.IsType<Border>(view.FindName("SettingsPanelBorder"));
+        Assert.Equal(new CornerRadius(isPda ? 0 : 6), panel.CornerRadius);
+        var pageBrush = Assert.IsType<SolidColorBrush>(host.FindResource(isPda ? "PdaPageBackgroundBrush" : "WindowBackgroundBrush"));
+        var cardBrush = Assert.IsType<SolidColorBrush>(host.FindResource(isPda ? "PanelBrush" : "PanelAltBrush"));
+        Assert.Equal(pageBrush.Color, Assert.IsType<SolidColorBrush>(panel.Background).Color);
+
+        for (var index = 0; index < tabs.Items.Count; index++)
+        {
+            tabs.SelectedIndex = index;
+            host.UpdateLayout();
+
+            var page = Assert.IsType<ScrollViewer>(tabs.SelectedContent);
+            Assert.True(view.IsAncestorOf(page));
+            var cards = Assert.IsType<StackPanel>(page.Content);
+            foreach (var card in cards.Children.OfType<Border>())
+            {
+                Assert.Equal(cardBrush.Color, Assert.IsType<SolidColorBrush>(card.Background).Color);
+                Assert.Same(host.FindResource("AccentBrush"), card.BorderBrush);
+                Assert.Equal(isPda ? new CornerRadius(0) : new CornerRadius(0, 6, 6, 0), card.CornerRadius);
+                Assert.True(card.ActualWidth > 0);
+            }
+
+            var bitmap = new RenderTargetBitmap((int)size.Width, (int)size.Height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(host);
+        }
+
+        var download = Assert.IsType<Button>(view.FindName("DownloadAndInstallButton"));
+        Assert.Same(model.DownloadAndInstallCommand, download.Command);
+        Assert.False(download.IsEnabled);
+        var release = Assert.IsType<Button>(view.FindName("OpenReleaseButton"));
+        Assert.Same(model.OpenReleaseCommand, release.Command);
+        Assert.False(release.IsEnabled);
     }
 
     [Fact]

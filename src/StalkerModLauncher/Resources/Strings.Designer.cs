@@ -29,6 +29,7 @@ public static class Strings
     public static string Settings_CheckUpdates => Get();
     public static string Settings_ClassicUi => Get();
     public static string Settings_DownloadAndInstall => Get();
+    public static string Settings_DataHeading => Get();
     public static string Settings_InterfaceHeading => Get();
     public static string Settings_LanguageEnglish => Get();
     public static string Settings_LanguageLabel => Get();

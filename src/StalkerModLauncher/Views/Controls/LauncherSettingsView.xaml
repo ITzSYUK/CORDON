@@ -4,148 +4,133 @@
              xmlns:models="clr-namespace:StalkerModLauncher.Models"
              xmlns:res="clr-namespace:StalkerModLauncher.Resources"
              FontSize="12"
-             Background="Transparent">
+             Background="{DynamicResource LauncherSettingsPageBrush}">
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="SettingsBooleanToVisibilityConverter"/>
-        <Style x:Key="SettingsRadioButtonStyle" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <BulletDecorator Background="Transparent">
-                            <BulletDecorator.Bullet>
-                                <Grid Width="15" Height="15">
-                                    <Ellipse x:Name="OuterCircle" Fill="{DynamicResource FieldBackgroundBrush}"
-                                             Stroke="{DynamicResource MutedTextBrush}"/>
-                                    <Ellipse x:Name="InnerCircle" Width="7" Height="7"
-                                             Fill="{DynamicResource AccentBrush}" Visibility="Collapsed"/>
-                                </Grid>
-                            </BulletDecorator.Bullet>
-                            <ContentPresenter Margin="5,0,0,0" VerticalAlignment="Center"/>
-                        </BulletDecorator>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="OuterCircle" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
-                                <Setter TargetName="InnerCircle" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="OuterCircle" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/CORDON;component/Themes/ProfileSettingsStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
 
-        <Style x:Key="SettingsCheckBoxStyle" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Image x:Name="StateImage" Source="{DynamicResource RadiationOffImage}"
-                                   Width="20" Height="20" Stretch="Uniform" Margin="0,0,6,0"/>
-                            <ContentPresenter VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="StateImage" Property="Source" Value="{DynamicResource RadiationOnImage}"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.38"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <BooleanToVisibilityConverter x:Key="SettingsBooleanToVisibilityConverter"/>
 
-        <Style x:Key="SettingsComboBoxItemStyle" TargetType="ComboBoxItem">
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="Chrome" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PanelAltBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="#3A3325"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <Style x:Key="LauncherSettingsCardStyle" TargetType="Border" BasedOn="{StaticResource ProfileSettingPanelStyle}">
+                <Setter Property="Background" Value="{DynamicResource LauncherSettingsCardBrush}"/>
+            </Style>
 
-        <Style x:Key="SettingsComboBoxStyle" TargetType="ComboBox">
-            <Setter Property="Background" Value="{DynamicResource FieldBackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="MinHeight" Value="32"/>
-            <Setter Property="ItemContainerStyle" Value="{StaticResource SettingsComboBoxItemStyle}"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <ToggleButton Background="{TemplateBinding Background}"
-                                          BorderBrush="{TemplateBinding BorderBrush}"
-                                          BorderThickness="{TemplateBinding BorderThickness}"
-                                          Focusable="False"
-                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
-                                <ToggleButton.Template>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border x:Name="Chrome" Background="{TemplateBinding Background}"
-                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
-                                            <Grid>
-                                                <ContentPresenter Margin="{Binding Padding, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                                  Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                                  ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                                  VerticalAlignment="Center"/>
-                                                <Path Data="M0,0 L4,4 L8,0 Z" Fill="{DynamicResource MutedTextBrush}"
-                                                      Width="8" Height="4" HorizontalAlignment="Right"
-                                                      VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            </Grid>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </ToggleButton.Template>
-                            </ToggleButton>
-                            <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
-                                   Placement="Bottom" AllowsTransparency="True" PopupAnimation="Fade">
-                                <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Background="{DynamicResource FieldBackgroundBrush}"
-                                        BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1" Padding="1">
-                                    <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
-                                        <StackPanel IsItemsHost="True"/>
-                                    </ScrollViewer>
-                                </Border>
-                            </Popup>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <Style x:Key="SettingsRadioButtonStyle" TargetType="RadioButton">
+                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <BulletDecorator Background="Transparent">
+                                <BulletDecorator.Bullet>
+                                    <Grid Width="15" Height="15">
+                                        <Ellipse x:Name="OuterCircle" Fill="{DynamicResource FieldBackgroundBrush}"
+                                                 Stroke="{DynamicResource MutedTextBrush}"/>
+                                        <Ellipse x:Name="InnerCircle" Width="7" Height="7"
+                                                 Fill="{DynamicResource AccentBrush}" Visibility="Collapsed"/>
+                                    </Grid>
+                                </BulletDecorator.Bullet>
+                                <ContentPresenter Margin="5,0,0,0" VerticalAlignment="Center"/>
+                            </BulletDecorator>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="OuterCircle" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+                                    <Setter TargetName="InnerCircle" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="OuterCircle" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="SettingsComboBoxItemStyle" TargetType="ComboBoxItem">
+                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ComboBoxItem">
+                            <Border x:Name="Chrome" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource PanelAltBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource ModSelectionBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="SettingsComboBoxStyle" TargetType="ComboBox">
+                <Setter Property="Background" Value="{DynamicResource FieldBackgroundBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="10,5"/>
+                <Setter Property="MinHeight" Value="36"/>
+                <Setter Property="ItemContainerStyle" Value="{StaticResource SettingsComboBoxItemStyle}"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ComboBox">
+                            <Grid>
+                                <ToggleButton Background="{TemplateBinding Background}"
+                                              BorderBrush="{TemplateBinding BorderBrush}"
+                                              BorderThickness="{TemplateBinding BorderThickness}"
+                                              Focusable="False"
+                                              IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                                                <Grid>
+                                                    <ContentPresenter Margin="{Binding Padding, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                      Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                      ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                      VerticalAlignment="Center"/>
+                                                    <Path Data="M0,0 L4,4 L8,0 Z" Fill="{DynamicResource MutedTextBrush}"
+                                                          Width="8" Height="4" HorizontalAlignment="Right"
+                                                          VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                </Grid>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
+                                       Placement="Bottom" AllowsTransparency="True" PopupAnimation="Fade">
+                                    <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                            Background="{DynamicResource FieldBackgroundBrush}"
+                                            BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1" Padding="1">
+                                        <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                                            <StackPanel IsItemsHost="True"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid Margin="12">
@@ -155,181 +140,193 @@
         </Grid.RowDefinitions>
 
         <Border x:Name="SettingsPanelBorder"
-                Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource StrokeBrush}"
-                BorderThickness="1" CornerRadius="{DynamicResource LauncherSettingsPanelCornerRadius}" Padding="18,16,8,16">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                Background="{DynamicResource LauncherSettingsPageBrush}"
+                BorderBrush="{DynamicResource StrokeBrush}"
+                BorderThickness="1"
+                CornerRadius="{DynamicResource LauncherSettingsPanelCornerRadius}"
+                Padding="14">
+            <TabControl x:Name="SettingsTabs" TabStripPlacement="Left">
+                <TabItem Header="{x:Static res:Strings.Settings_InterfaceHeading}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,8,0">
+                            <Border Style="{StaticResource LauncherSettingsCardStyle}">
+                                <WrapPanel>
+                                    <RadioButton Content="{x:Static res:Strings.Settings_ClassicUi}"
+                                                 Style="{StaticResource SettingsRadioButtonStyle}"
+                                                 GroupName="LauncherInterface" IsChecked="{Binding UseClassicInterface}" Margin="0,0,22,0"/>
+                                    <RadioButton Content="{x:Static res:Strings.Settings_PdaUi}"
+                                                 Style="{StaticResource SettingsRadioButtonStyle}"
+                                                 GroupName="LauncherInterface" IsChecked="{Binding UsePdaInterface}" Margin="0,0,22,0"/>
+                                    <RadioButton Content="{x:Static res:Strings.Settings_PdaUi2}"
+                                                 Style="{StaticResource SettingsRadioButtonStyle}"
+                                                 GroupName="LauncherInterface" IsChecked="{Binding UseNewPdaInterface}"/>
+                                </WrapPanel>
+                            </Border>
 
-                    <StackPanel>
-                        <TextBlock Text="{x:Static res:Strings.Settings_InterfaceHeading}" FontSize="16" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextBrush}" Margin="0,0,0,10"/>
-                        <WrapPanel Margin="0,0,0,15">
-                            <RadioButton Content="{x:Static res:Strings.Settings_ClassicUi}" Style="{StaticResource SettingsRadioButtonStyle}"
-                                         GroupName="LauncherInterface" IsChecked="{Binding UseClassicInterface}" Margin="0,0,22,0"/>
-                            <RadioButton Content="{x:Static res:Strings.Settings_PdaUi}" Style="{StaticResource SettingsRadioButtonStyle}"
-                                         GroupName="LauncherInterface" IsChecked="{Binding UsePdaInterface}" Margin="0,0,22,0"/>
-                            <RadioButton Content="{x:Static res:Strings.Settings_PdaUi2}" Style="{StaticResource SettingsRadioButtonStyle}"
-                                         GroupName="LauncherInterface" IsChecked="{Binding UseNewPdaInterface}"/>
-                        </WrapPanel>
-                        <Grid Margin="0,0,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="{x:Static res:Strings.Settings_LanguageLabel}"
-                                       VerticalAlignment="Center"/>
-                            <ComboBox Grid.Column="1" Width="180" Margin="10,0,0,0" HorizontalAlignment="Left"
-                                      Style="{StaticResource SettingsComboBoxStyle}"
-                                      SelectedValue="{Binding UiLanguage}" SelectedValuePath="Tag">
-                                <ComboBoxItem Content="{x:Static res:Strings.Settings_LanguageSystem}" Tag="system"/>
-                                <ComboBoxItem Content="{x:Static res:Strings.Settings_LanguageRussian}" Tag="ru"/>
-                                <ComboBoxItem Content="{x:Static res:Strings.Settings_LanguageEnglish}" Tag="en"/>
-                            </ComboBox>
-                        </Grid>
-                        <CheckBox Content="{x:Static res:Strings.Settings_StartWithWindows}" Style="{StaticResource SettingsCheckBoxStyle}"
-                                  IsChecked="{Binding StartWithWindows}" Margin="0,0,0,9"/>
-                        <CheckBox Content="{x:Static res:Strings.Settings_StartMinimized}"
-                                  Style="{StaticResource SettingsCheckBoxStyle}"
-                                  IsChecked="{Binding StartMinimizedToTrayOnWindowsStartup}"
-                                  IsEnabled="{Binding CanStartMinimizedToTray}"
-                                  Margin="26,0,0,9"/>
-                        <CheckBox Content="{x:Static res:Strings.Settings_ShowTrayIcon}" Style="{StaticResource SettingsCheckBoxStyle}"
-                                  IsChecked="{Binding ShowTrayIcon}" Margin="0,0,0,9"/>
-                        <CheckBox Content="{x:Static res:Strings.Settings_MinimizeToTray}" Style="{StaticResource SettingsCheckBoxStyle}"
-                                  IsChecked="{Binding MinimizeToTrayOnClose}"
-                                  IsEnabled="{Binding CanUseTray}"
-                                  Margin="26,0,0,0"/>
-                    </StackPanel>
+                            <Border Style="{StaticResource LauncherSettingsCardStyle}">
+                                <StackPanel>
+                                    <Label Content="{x:Static res:Strings.Settings_LanguageLabel}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           Target="{Binding ElementName=LanguageSelector}" Padding="0,0,0,4"/>
+                                    <ComboBox x:Name="LanguageSelector" Width="180" HorizontalAlignment="Left"
+                                              Style="{StaticResource SettingsComboBoxStyle}"
+                                              SelectedValue="{Binding UiLanguage}" SelectedValuePath="Tag">
+                                        <ComboBoxItem Content="{x:Static res:Strings.Settings_LanguageSystem}" Tag="system"/>
+                                        <ComboBoxItem Content="{x:Static res:Strings.Settings_LanguageRussian}" Tag="ru"/>
+                                        <ComboBoxItem Content="{x:Static res:Strings.Settings_LanguageEnglish}" Tag="en"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Border>
 
-                    <StackPanel Grid.Row="1" Margin="0,18">
-                        <Border Height="1" Background="{DynamicResource StrokeBrush}" Margin="0,0,0,18"/>
-                        <Button Content="{x:Static res:Strings.Settings_MigrationWizard}"
-                                Command="{Binding OpenMigrationWizardCommand}" HorizontalAlignment="Left"/>
-                        <Border Height="1" Background="{DynamicResource StrokeBrush}" Margin="0,18,0,0"/>
-                    </StackPanel>
+                            <Border Style="{StaticResource LauncherSettingsCardStyle}">
+                                <StackPanel>
+                                    <CheckBox Content="{x:Static res:Strings.Settings_StartWithWindows}"
+                                              Style="{StaticResource ProfileStandaloneCheckBoxStyle}"
+                                              IsChecked="{Binding StartWithWindows}" Margin="0,0,0,8"/>
+                                    <CheckBox Content="{x:Static res:Strings.Settings_StartMinimized}"
+                                              Style="{StaticResource ProfileStandaloneCheckBoxStyle}"
+                                              IsChecked="{Binding StartMinimizedToTrayOnWindowsStartup}"
+                                              IsEnabled="{Binding CanStartMinimizedToTray}" Margin="26,0,0,0"/>
+                                </StackPanel>
+                            </Border>
 
-                    <Grid Grid.Row="2">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="230"/>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="{x:Static res:Strings.Settings_LoggingHeading}" FontSize="16" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12"/>
-                                <TextBlock Text="{x:Static res:Strings.Settings_LogLevelLabel}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,6"/>
-                                <ComboBox Style="{StaticResource SettingsComboBoxStyle}"
-                                          SelectedValue="{Binding LogLevel}" SelectedValuePath="Tag">
-                                    <ComboBoxItem Content="{x:Static res:Strings.Settings_LogLevelErrors}" Tag="{x:Static models:LauncherLogLevel.ErrorsOnly}"/>
-                                    <ComboBoxItem Content="{x:Static res:Strings.Settings_LogLevelStandard}" Tag="{x:Static models:LauncherLogLevel.Standard}"/>
-                                    <ComboBoxItem Content="{x:Static res:Strings.Settings_LogLevelDetailed}" Tag="{x:Static models:LauncherLogLevel.Detailed}"/>
-                                </ComboBox>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
-                                <TextBlock Text="{Binding StorageDescription}" Foreground="{DynamicResource MutedTextBrush}"
-                                           FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                                <TextBlock Text="{x:Static res:Strings.Settings_StorageLabel}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,6"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Background="{DynamicResource FieldBackgroundBrush}"
-                                            BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1"
-                                            CornerRadius="4" Padding="10,7" Margin="0,0,8,0">
-                                        <TextBlock Text="{Binding SettingsDirectory}" Foreground="{DynamicResource MutedTextBrush}"
-                                                   TextWrapping="NoWrap"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                    <Button Grid.Column="1" Content="{x:Static res:Strings.Common_Open}" Command="{Binding OpenSettingsFolderCommand}" MinWidth="82"/>
-                                </Grid>
-                            </StackPanel>
-                        </Grid>
-                        <TextBlock Grid.Row="1"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   FontSize="11.5"
-                                   Margin="0,10,0,0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{x:Static res:Strings.Settings_LogDescriptionStandard}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding LogLevel}" Value="{x:Static models:LauncherLogLevel.ErrorsOnly}">
-                                            <Setter Property="Text" Value="{x:Static res:Strings.Settings_LogDescriptionErrors}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding LogLevel}" Value="{x:Static models:LauncherLogLevel.Detailed}">
-                                            <Setter Property="Text" Value="{x:Static res:Strings.Settings_LogDescriptionDetailed}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </Grid>
-
-                    <Border Grid.Row="3" Height="1" Background="{DynamicResource StrokeBrush}" Margin="0,18"/>
-
-                    <StackPanel Grid.Row="4">
-                        <TextBlock Text="{x:Static res:Strings.Settings_UpdateHeading}" FontSize="16" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Button Content="{x:Static res:Strings.Settings_CheckUpdates}"
-                                    Command="{Binding CheckForUpdatesCommand}"
-                                    MinWidth="155"/>
-                            <Button x:Name="OpenReleaseButton"
-                                    Content="{x:Static res:Strings.Settings_OpenRelease}"
-                                    Command="{Binding OpenReleaseCommand}"
-                                    Margin="8,0,0,0"
-                                    Opacity="0"
-                                    Visibility="{Binding HasAvailableUpdate, Converter={StaticResource SettingsBooleanToVisibilityConverter}}"/>
-                            <Button x:Name="DownloadAndInstallButton"
-                                    Content="{x:Static res:Strings.Settings_DownloadAndInstall}"
-                                    Command="{Binding DownloadAndInstallCommand}"
-                                    Margin="8,0,0,0"
-                                    Opacity="0"
-                                    Visibility="{Binding HasAvailableUpdate, Converter={StaticResource SettingsBooleanToVisibilityConverter}}"/>
+                            <Border Style="{StaticResource LauncherSettingsCardStyle}">
+                                <StackPanel>
+                                    <CheckBox Content="{x:Static res:Strings.Settings_ShowTrayIcon}"
+                                              Style="{StaticResource ProfileStandaloneCheckBoxStyle}"
+                                              IsChecked="{Binding ShowTrayIcon}" Margin="0,0,0,8"/>
+                                    <CheckBox Content="{x:Static res:Strings.Settings_MinimizeToTray}"
+                                              Style="{StaticResource ProfileStandaloneCheckBoxStyle}"
+                                              IsChecked="{Binding MinimizeToTrayOnClose}"
+                                              IsEnabled="{Binding CanUseTray}" Margin="26,0,0,0"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
-                        <CheckBox Content="{x:Static res:Strings.Settings_AutoCheckUpdates}"
-                                      Style="{StaticResource SettingsCheckBoxStyle}"
-                                      IsChecked="{Binding AutoCheckForUpdates}"
-                                      Margin="0,0,0,9"/>
-                        <CheckBox Content="{x:Static res:Strings.Settings_ShowUpdateNotifications}"
-                                      Style="{StaticResource SettingsCheckBoxStyle}"
-                                      IsChecked="{Binding ShowUpdateNotifications}"
-                                      IsEnabled="{Binding AutoCheckForUpdates}"/>
-                        <TextBlock Text="{Binding UpdateStatus}"
-                                       Foreground="{DynamicResource MutedTextBrush}"
-                                       Margin="0,10,0,0"/>
-                        <Button Content="{x:Static res:Strings.Settings_OpenLauncherFolder}"
-                                Command="{Binding OpenDownloadsCommand}"
-                                HorizontalAlignment="Left"
-                                Margin="0,8,0,0"
-                                Visibility="{Binding HasDownloadedRelease, Converter={StaticResource SettingsBooleanToVisibilityConverter}}"/>
-                    </StackPanel>
-                </Grid>
-            </ScrollViewer>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="{x:Static res:Strings.Settings_DataHeading}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,8,0">
+                            <Border Style="{StaticResource LauncherSettingsCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="{x:Static res:Strings.Settings_StorageLabel}"
+                                               Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Background="{DynamicResource FieldBackgroundBrush}"
+                                                BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1"
+                                                CornerRadius="4" Padding="10,7" Margin="0,0,8,0">
+                                            <TextBlock Text="{Binding SettingsDirectory}" ToolTip="{Binding SettingsDirectory}"
+                                                       TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                        <Button Grid.Column="1" Content="{x:Static res:Strings.Common_Open}"
+                                                Command="{Binding OpenSettingsFolderCommand}" MinWidth="96"/>
+                                    </Grid>
+                                    <TextBlock Text="{Binding StorageDescription}" Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource LauncherSettingsCardStyle}">
+                                <Button Content="{x:Static res:Strings.Settings_MigrationWizard}"
+                                        Command="{Binding OpenMigrationWizardCommand}" HorizontalAlignment="Left"/>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="{x:Static res:Strings.Settings_LoggingHeading}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,8,0">
+                            <Border Style="{StaticResource LauncherSettingsCardStyle}">
+                                <StackPanel>
+                                    <Label Content="{x:Static res:Strings.Settings_LogLevelLabel}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           Target="{Binding ElementName=LogLevelSelector}" Padding="0,0,0,4"/>
+                                    <ComboBox x:Name="LogLevelSelector" Width="230" HorizontalAlignment="Left"
+                                              Style="{StaticResource SettingsComboBoxStyle}"
+                                              SelectedValue="{Binding LogLevel}" SelectedValuePath="Tag">
+                                        <ComboBoxItem Content="{x:Static res:Strings.Settings_LogLevelErrors}" Tag="{x:Static models:LauncherLogLevel.ErrorsOnly}"/>
+                                        <ComboBoxItem Content="{x:Static res:Strings.Settings_LogLevelStandard}" Tag="{x:Static models:LauncherLogLevel.Standard}"/>
+                                        <ComboBoxItem Content="{x:Static res:Strings.Settings_LogLevelDetailed}" Tag="{x:Static models:LauncherLogLevel.Detailed}"/>
+                                    </ComboBox>
+                                    <TextBlock Foreground="{DynamicResource MutedTextBrush}"
+                                               FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="{x:Static res:Strings.Settings_LogDescriptionStandard}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding LogLevel}" Value="{x:Static models:LauncherLogLevel.ErrorsOnly}">
+                                                        <Setter Property="Text" Value="{x:Static res:Strings.Settings_LogDescriptionErrors}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding LogLevel}" Value="{x:Static models:LauncherLogLevel.Detailed}">
+                                                        <Setter Property="Text" Value="{x:Static res:Strings.Settings_LogDescriptionDetailed}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="{x:Static res:Strings.Settings_UpdateHeading}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,8,0">
+                            <Border Style="{StaticResource LauncherSettingsCardStyle}">
+                                <StackPanel>
+                                    <CheckBox Content="{x:Static res:Strings.Settings_AutoCheckUpdates}"
+                                              Style="{StaticResource ProfileStandaloneCheckBoxStyle}"
+                                              IsChecked="{Binding AutoCheckForUpdates}" Margin="0,0,0,8"/>
+                                    <CheckBox Content="{x:Static res:Strings.Settings_ShowUpdateNotifications}"
+                                              Style="{StaticResource ProfileStandaloneCheckBoxStyle}"
+                                              IsChecked="{Binding ShowUpdateNotifications}"
+                                              IsEnabled="{Binding AutoCheckForUpdates}" Margin="26,0,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource LauncherSettingsCardStyle}">
+                                <StackPanel>
+                                    <WrapPanel>
+                                        <Button Content="{x:Static res:Strings.Settings_CheckUpdates}"
+                                                Command="{Binding CheckForUpdatesCommand}" Margin="0,0,8,6"/>
+                                        <Button x:Name="OpenReleaseButton"
+                                                Content="{x:Static res:Strings.Settings_OpenRelease}"
+                                                Command="{Binding OpenReleaseCommand}" Margin="0,0,8,6" Opacity="0"
+                                                Visibility="{Binding HasAvailableUpdate, Converter={StaticResource SettingsBooleanToVisibilityConverter}}"/>
+                                        <Button x:Name="DownloadAndInstallButton"
+                                                Content="{x:Static res:Strings.Settings_DownloadAndInstall}"
+                                                Command="{Binding DownloadAndInstallCommand}" Margin="0,0,0,6" Opacity="0"
+                                                Visibility="{Binding HasAvailableUpdate, Converter={StaticResource SettingsBooleanToVisibilityConverter}}"/>
+                                    </WrapPanel>
+                                    <TextBlock Text="{Binding UpdateStatus}" Foreground="{DynamicResource MutedTextBrush}"
+                                               TextWrapping="Wrap"/>
+                                    <Button Content="{x:Static res:Strings.Settings_OpenLauncherFolder}"
+                                            Command="{Binding OpenDownloadsCommand}" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                            Visibility="{Binding HasDownloadedRelease, Converter={StaticResource SettingsBooleanToVisibilityConverter}}"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
         </Border>
 
-        <Grid Grid.Row="1" Margin="0,10,0,0">
-            <Button Content="{x:Static res:Strings.Settings_Reset}"
-                    Command="{Binding ResetCommand}"
-                    HorizontalAlignment="Left"
-                    MinWidth="150"/>
+        <Grid Grid.Row="1" Margin="0,12,0,0">
+            <Button Content="{x:Static res:Strings.Settings_Reset}" Command="{Binding ResetCommand}"
+                    HorizontalAlignment="Left" MinWidth="150" MinHeight="36"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="{x:Static res:Strings.Common_Cancel}" Click="CancelButton_OnClick" MinWidth="100" Margin="0,0,8,0"/>
+                <Button Content="{x:Static res:Strings.Common_Cancel}" Click="CancelButton_OnClick"
+                        MinWidth="100" MinHeight="36" Margin="0,0,8,0"/>
                 <Button Content="{x:Static res:Strings.Common_Save}" Click="SaveButton_OnClick"
-                        Style="{DynamicResource PrimaryButtonStyle}" MinWidth="110"/>
+                        Style="{DynamicResource PrimaryButtonStyle}" MinWidth="110" MinHeight="36"/>
             </StackPanel>
         </Grid>
     </Grid>

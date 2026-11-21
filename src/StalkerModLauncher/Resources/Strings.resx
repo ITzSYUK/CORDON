@@ -11,7 +11,8 @@
   <data name="Settings_CheckUpdates" xml:space="preserve"><value>Check for updates</value></data>
   <data name="Settings_ClassicUi" xml:space="preserve"><value>Classic UI</value></data>
   <data name="Settings_DownloadAndInstall" xml:space="preserve"><value>Download and install</value></data>
-  <data name="Settings_InterfaceHeading" xml:space="preserve"><value>INTERFACE</value></data>
+  <data name="Settings_DataHeading" xml:space="preserve"><value>Data</value></data>
+  <data name="Settings_InterfaceHeading" xml:space="preserve"><value>Interface</value></data>
   <data name="Settings_LanguageEnglish" xml:space="preserve"><value>English</value></data>
   <data name="Settings_LanguageLabel" xml:space="preserve"><value>Interface language</value></data>
   <data name="Settings_LanguageRestartMessage" xml:space="preserve"><value>Language setting saved. Restart the launcher to apply it.</value></data>
@@ -21,7 +22,7 @@
   <data name="Settings_LogDescriptionDetailed" xml:space="preserve"><value>Standard entries and technical launch, Workspace, and USVFS diagnostics.</value></data>
   <data name="Settings_LogDescriptionErrors" xml:space="preserve"><value>Launch errors and launcher failures.</value></data>
   <data name="Settings_LogDescriptionStandard" xml:space="preserve"><value>Errors and main launcher actions.</value></data>
-  <data name="Settings_LoggingHeading" xml:space="preserve"><value>LOGGING</value></data>
+  <data name="Settings_LoggingHeading" xml:space="preserve"><value>Log</value></data>
   <data name="Settings_LogLevelDetailed" xml:space="preserve"><value>Detailed</value></data>
   <data name="Settings_LogLevelErrors" xml:space="preserve"><value>Errors only</value></data>
   <data name="Settings_LogLevelLabel" xml:space="preserve"><value>launcher.log detail level</value></data>
@@ -36,8 +37,8 @@
   <data name="Settings_ShowUpdateNotifications" xml:space="preserve"><value>Show a system notification when an update is available</value></data>
   <data name="Settings_StartMinimized" xml:space="preserve"><value>Open in the tray when started with Windows</value></data>
   <data name="Settings_StartWithWindows" xml:space="preserve"><value>Start with Windows</value></data>
-  <data name="Settings_StorageLabel" xml:space="preserve"><value>Settings</value></data>
-  <data name="Settings_UpdateHeading" xml:space="preserve"><value>UPDATE</value></data>
+  <data name="Settings_StorageLabel" xml:space="preserve"><value>Settings folder</value></data>
+  <data name="Settings_UpdateHeading" xml:space="preserve"><value>Update</value></data>
   <data name="About_AnswerDeleteProfile" xml:space="preserve"><value>For a regular profile, only the profile entry and its workspace with profile settings, logs, and saves are deleted. Game and mod folders are not affected. A standalone profile's build folder also remains in place.</value></data>
   <data name="About_AnswerModOrder" xml:space="preserve"><value>Mods lower in the list have higher priority and can replace files from mods above them. This is the normal way to install a patch over a main mod. Change the order by dragging or with the buttons in the mod row. On the next launch, Workspace rebuilds the environment, while USVFS creates a virtual overlay in the new order.</value></data>
   <data name="About_AnswerRemoveMod" xml:space="preserve"><value>Yes. Remove only excludes the mod from this profile. The original mod folder remains untouched on disk.</value></data>

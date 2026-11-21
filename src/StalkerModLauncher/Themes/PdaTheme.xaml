@@ -1,7 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="PanelColor">#0C121C</Color>
+    <Color x:Key="PdaPageBackgroundColor">#080D14</Color>
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#080C13"/>
-    <SolidColorBrush x:Key="PanelBrush" Color="#0C121C"/>
+    <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource PanelColor}"/>
     <SolidColorBrush x:Key="PanelAltBrush" Color="#111925"/>
     <SolidColorBrush x:Key="CommandPanelBrush" Color="#111925"/>
     <SolidColorBrush x:Key="FieldBackgroundBrush" Color="#090E16"/>
@@ -21,7 +23,7 @@
     <SolidColorBrush x:Key="ModArchiveProgressPanelBrush" Color="#101923"/>
     <SolidColorBrush x:Key="ModArchiveProgressTrackBrush" Color="#090E16"/>
     <SolidColorBrush x:Key="ModArchiveProgressFillBrush" Color="#CF962C"/>
-    <SolidColorBrush x:Key="PdaPageBackgroundBrush" Color="#080D14"/>
+    <SolidColorBrush x:Key="PdaPageBackgroundBrush" Color="{StaticResource PdaPageBackgroundColor}"/>
     <SolidColorBrush x:Key="PdaControlBackgroundBrush" Color="#151D28"/>
     <SolidColorBrush x:Key="PdaControlBorderBrush" Color="#44515F"/>
     <SolidColorBrush x:Key="PdaControlHoverBrush" Color="#24303D"/>
@@ -101,7 +103,10 @@
     <Color x:Key="PdaDrawerGradientMediumColor">#A8070B11</Color>
     <Color x:Key="PdaDrawerGradientDarkColor">#EE070B11</Color>
     <Color x:Key="PdaDrawerGradientSolidColor">#F8070B11</Color>
+    <SolidColorBrush x:Key="LauncherSettingsPageBrush" Color="{StaticResource PdaPageBackgroundColor}"/>
+    <SolidColorBrush x:Key="LauncherSettingsCardBrush" Color="{StaticResource PanelColor}"/>
     <CornerRadius x:Key="LauncherSettingsPanelCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="ProfileSettingPanelCornerRadius">0</CornerRadius>
 
     <Style x:Key="PdaBaseButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource PdaControlBackgroundBrush}"/>
