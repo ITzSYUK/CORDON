@@ -73,15 +73,15 @@ public sealed class ProfileLauncher : IProfileLauncher
         progress.Report(LocalizedText.Format(Strings.Launch_ExecutableFormat, plan.ExecutablePath));
         try
         {
-            var process = _launchPlanExecutor.Start(plan, progress);
-            Task<int>? completion = null;
+            var launch = _launchPlanExecutor.Start(plan, progress);
+            var completion = launch.Completion;
             if (plan.RuntimeCompletion is not null)
             {
                 completion = plan.RuntimeCompletion();
             }
-            else if (plan.RuntimeLease is not null)
+            else if (plan.RuntimeLease is not null && completion is null)
             {
-                completion = WaitForProcessExitAsync(process);
+                completion = WaitForProcessExitAsync(launch.Process);
             }
 
             if (plan.RuntimeLease is not null && completion is not null)
@@ -89,7 +89,9 @@ public sealed class ProfileLauncher : IProfileLauncher
                 completion = DisposeRuntimeAfterCompletionAsync(completion, plan.RuntimeLease);
             }
 
-            return new ProfileLaunchHandle(process, completion, plan.ActiveProcessIds);
+            return completion == launch.Completion
+                ? launch
+                : new ProfileLaunchHandle(launch.Process, completion, plan.ActiveProcessIds);
         }
         catch
         {

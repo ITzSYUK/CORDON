@@ -406,6 +406,8 @@
   <data name="Profile_DeleteRegularFormat" xml:space="preserve"><value>Удалить профиль '{0}' вместе с его рабочей папкой, сохранениями и логами?</value></data>
   <data name="Profile_DeleteTitle" xml:space="preserve"><value>Удалить профиль</value></data>
   <data name="Profile_DeleteFailed" xml:space="preserve"><value>Не удалось удалить профиль</value></data>
+  <data name="Profile_DeletedCleanupFailedFormat" xml:space="preserve"><value>Профиль «{0}» удалён. Не удалось завершить очистку папки «{1}».{2}{3}</value></data>
+  <data name="Profile_RetryDeletedCleanup" xml:space="preserve"><value>Повторить очистку рабочей папки?</value></data>
   <data name="Profile_StandaloneFolderMissing" xml:space="preserve"><value>Папка включённой автономной сборки не найдена.</value></data>
   <data name="Mod_ScanPickFolder" xml:space="preserve"><value>Выберите папку для поиска модов</value></data>
   <data name="Mod_Scanning" xml:space="preserve"><value>Сканирование модов...</value></data>

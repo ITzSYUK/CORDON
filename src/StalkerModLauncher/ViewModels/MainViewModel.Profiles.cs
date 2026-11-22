@@ -227,18 +227,54 @@ public sealed partial class MainViewModel
     internal async Task DeleteConfirmedProfileAsync(ModProfile profile)
     {
         if (!Profiles.Contains(profile)) return;
+        var previousSelection = SelectedProfile;
         try
         {
-            SelectedProfile = _profileManager.Delete(Profiles, profile);
-            await SaveOrThrowAsync();
+            var result = await _profileManager.DeleteAsync(Profiles, profile, SaveOrThrowAsync);
+            if (SelectedProfile is null || ReferenceEquals(SelectedProfile, profile))
+                SelectedProfile = result.SelectedProfile;
+            if (result.CleanupFailure is not null && !RetryDeletedProfileCleanup(profile, result.CleanupFailure))
+                return;
+
             Log(LocalizedText.Format(
                 profile.IsStandalone || profile.SettingsLoadError.Length > 0 ? Strings.Log_ProfileDeletedFormat : Strings.Log_ProfileWorkspaceDeletedFormat,
                 profile.Name));
         }
         catch (Exception ex)
         {
+            if (ReferenceEquals(previousSelection, profile) && Profiles.Contains(profile))
+                SelectedProfile = profile;
             Log(LocalizedText.Format(Strings.Log_ProfileDeleteFailedFormat, ex.Message), LauncherLogLevel.ErrorsOnly);
             _dialogService.ShowError(Strings.Profile_DeleteFailed, ex.Message);
+        }
+    }
+
+    private bool RetryDeletedProfileCleanup(ModProfile profile, Exception failure)
+    {
+        while (true)
+        {
+            var details = LocalizedText.Format(Strings.Profile_DeletedCleanupFailedFormat,
+                profile.Name, _profileManager.GetProfileFolderPath(profile), Environment.NewLine, failure.Message);
+            Log(details, LauncherLogLevel.ErrorsOnly);
+            if (failure is not (IOException or UnauthorizedAccessException))
+            {
+                _dialogService.ShowError(Strings.Profile_DeleteTitle, details);
+                return false;
+            }
+
+            if (!DialogService.Confirm(Strings.Profile_DeleteTitle, details + Environment.NewLine + Strings.Profile_RetryDeletedCleanup))
+                return false;
+
+            try
+            {
+                _profileManager.DeleteProfileData(profile);
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException
+                                            or ArgumentException or NotSupportedException)
+            {
+                failure = ex;
+            }
         }
     }
 

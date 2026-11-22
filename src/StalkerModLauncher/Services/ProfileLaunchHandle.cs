@@ -5,15 +5,21 @@ namespace StalkerModLauncher.Services;
 public sealed class ProfileLaunchHandle
 {
     private readonly Func<IReadOnlyList<int>>? _activeProcessIds;
+    private readonly Func<bool>? _terminate;
+    private readonly bool _includeRootProcess;
 
     public ProfileLaunchHandle(
         Process process,
         Task<int>? completion = null,
-        Func<IReadOnlyList<int>>? activeProcessIds = null)
+        Func<IReadOnlyList<int>>? activeProcessIds = null,
+        Func<bool>? terminate = null,
+        bool includeRootProcess = true)
     {
         Process = process ?? throw new ArgumentNullException(nameof(process));
         Completion = completion;
         _activeProcessIds = activeProcessIds;
+        _terminate = terminate;
+        _includeRootProcess = includeRootProcess;
     }
 
     public Process Process { get; }
@@ -40,7 +46,7 @@ public sealed class ProfileLaunchHandle
 
         try
         {
-            if (!Process.HasExited)
+            if (_includeRootProcess && !Process.HasExited)
             {
                 ids.Add(Process.Id);
             }
@@ -54,6 +60,8 @@ public sealed class ProfileLaunchHandle
 
     public bool TryTerminate()
     {
+        if (_terminate is not null) return _terminate();
+
         var terminated = false;
         foreach (var processId in GetActiveProcessIds().OrderByDescending(id => id))
         {

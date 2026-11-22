@@ -148,7 +148,7 @@ public sealed class LaunchPreflightService
         {
             AddWorkspaceChecks(checks, profile);
             if (profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace)
-                AddLinkSupportCheck(checks, profile, fileLayerPlan, enabledMods, cancellationToken);
+                AddLinkSupportCheck(checks, profile, fileLayerPlan, cancellationToken);
         }
 
         return new LaunchPreflightReport(checks, launchPlan?.Plan, overlayManifest);
@@ -306,48 +306,26 @@ public sealed class LaunchPreflightService
         List<ProfileHealthCheck> checks,
         ModProfile profile,
         FileLayerPlan? fileLayerPlan,
-        IReadOnlyList<ModEntry> enabledMods,
         CancellationToken cancellationToken)
     {
         var workspace = _profileManager.GetProfileFolderPath(profile);
-        if (string.IsNullOrWhiteSpace(workspace))
+        if (fileLayerPlan is null || string.IsNullOrWhiteSpace(workspace) || !Directory.Exists(workspace))
         {
             return;
         }
 
         try
         {
-            var workspaceVolume = Path.GetPathRoot(Path.GetFullPath(workspace));
-            var sourcePaths = fileLayerPlan is null
-                ? enabledMods.Select(mod => mod.SourcePath)
-                : fileLayerPlan.Mods.Select(layer => layer.RootPath);
-            var source = sourcePaths
-                .Where(Directory.Exists)
-                .Where(path => !string.Equals(Path.GetPathRoot(Path.GetFullPath(path)), workspaceVolume, StringComparison.OrdinalIgnoreCase))
-                .SelectMany(path => Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories).Take(1))
-                .FirstOrDefault();
-            if (source is null)
-            {
-                return;
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
             WorkspaceBuilder.ValidateProfileLocation(profile, workspace, profile.GameInstallPath);
-            if (!Directory.Exists(workspace)) return;
-
-            var testLink = Path.Combine(workspace, $".preflight-link-{Guid.NewGuid():N}");
-            try
-            {
-                File.CreateSymbolicLink(testLink, source);
-                checks.Add(new ProfileHealthCheck(
-                    ProfileHealthStatus.Healthy,
-                    Strings.Preflight_CrossDriveLinks,
-                    LocalizedText.Format(Strings.Preflight_CrossDriveAllowedFormat, Path.GetPathRoot(source))));
-            }
-            finally
-            {
-                File.Delete(testLink);
-            }
+            var sources = WorkspaceMaterializer.FindCrossVolumeLinkSources(
+                fileLayerPlan, workspace, snapshot: null, cancellationToken);
+            if (sources.Length == 0) return;
+            WorkspaceMaterializer.ValidateLinkSupport(sources, workspace);
+            checks.Add(new ProfileHealthCheck(
+                ProfileHealthStatus.Healthy,
+                Strings.Preflight_CrossDriveLinks,
+                LocalizedText.Format(Strings.Preflight_CrossDriveAllowedFormat,
+                    string.Join(", ", sources.Select(Path.GetPathRoot)))));
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

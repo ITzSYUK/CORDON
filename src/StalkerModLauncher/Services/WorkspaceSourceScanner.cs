@@ -147,19 +147,7 @@ internal static class WorkspaceSourceScanner
         var fullRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directoryPath));
         var directories = new List<string>();
         var files = new List<SourceFileSnapshot>();
-        var root = new DirectoryInfo(fullRoot);
-
-        var entries = skipAppData
-            ? new FileSystemEnumerable<FileSystemInfo>(fullRoot,
-                (ref FileSystemEntry entry) => entry.ToFileSystemInfo(), SafeEnumerationOptions)
-            {
-                ShouldIncludePredicate = (ref FileSystemEntry entry) =>
-                    entry.Directory.Length != fullRoot.Length || !entry.FileName.Equals("appdata", StringComparison.OrdinalIgnoreCase),
-                ShouldRecursePredicate = (ref FileSystemEntry entry) =>
-                    entry.Directory.Length != fullRoot.Length || !entry.FileName.Equals("appdata", StringComparison.OrdinalIgnoreCase)
-            }
-            : root.EnumerateFileSystemInfos("*", SafeEnumerationOptions);
-        foreach (var entry in entries)
+        foreach (var entry in EnumerateEntries(fullRoot, skipAppData))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var relativePath = Path.GetRelativePath(fullRoot, entry.FullName);
@@ -183,6 +171,23 @@ internal static class WorkspaceSourceScanner
             fullRoot,
             directories,
             files.OrderBy(file => file.RelativePath, StringComparer.OrdinalIgnoreCase).ToArray());
+    }
+
+    internal static IEnumerable<FileSystemInfo> EnumerateEntries(string root, bool skipAppData)
+    {
+        var fullRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(root));
+        if (!skipAppData)
+            return new DirectoryInfo(fullRoot).EnumerateFileSystemInfos("*", SafeEnumerationOptions);
+
+        return new FileSystemEnumerable<FileSystemInfo>(fullRoot,
+            (ref FileSystemEntry entry) => entry.ToFileSystemInfo(), SafeEnumerationOptions)
+        {
+            ShouldIncludePredicate = KeepEntry,
+            ShouldRecursePredicate = KeepEntry
+        };
+
+        bool KeepEntry(ref FileSystemEntry entry) =>
+            entry.Directory.Length != fullRoot.Length || !entry.FileName.Equals("appdata", StringComparison.OrdinalIgnoreCase);
     }
 
     private static EnumerationOptions SafeEnumerationOptions { get; } = new()

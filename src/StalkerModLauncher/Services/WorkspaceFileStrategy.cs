@@ -6,6 +6,7 @@ public static class WorkspaceFileStrategy
     {
         var normalized = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
         return Path.GetFileName(normalized).Equals("fsgame.ltx", StringComparison.OrdinalIgnoreCase) ||
+               Path.GetFileName(normalized).Equals("AnomalyLauncher.cfg", StringComparison.OrdinalIgnoreCase) ||
                ProfileWritableGameFiles.Rules.Any(rule =>
                    rule.RelativePath.Equals(normalized, StringComparison.OrdinalIgnoreCase));
     }

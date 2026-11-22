@@ -4,7 +4,7 @@ using Xunit;
 
 namespace StalkerModLauncher.Tests;
 
-public sealed class LinkedWorkspaceLaunchBackendTests : IDisposable
+public sealed class LinkedWorkspaceLaunchBackendTests : IAsyncLifetime
 {
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
@@ -75,12 +75,58 @@ public sealed class LinkedWorkspaceLaunchBackendTests : IDisposable
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         var launched = await launcher.LaunchAsync(game, profile, new ProgressLog(), timeout.Token);
         using var process = launched.Process;
-        await process.WaitForExitAsync(timeout.Token);
+        var exitCode = await launched.Completion!.WaitAsync(timeout.Token);
 
         var current = Path.Combine(paths.ExecutableDirectory, "Data", "CordonModLauncher", "Workspaces", $"profile-{profile.Id}", "current");
-        Assert.Equal(0, process.ExitCode);
+        Assert.Equal(0, exitCode);
         Assert.Equal("workspace", (await File.ReadAllTextAsync(Path.Combine(current, "ran.txt"), timeout.Token)).Trim());
         Assert.False(File.Exists(Path.Combine(game, "ran.txt")));
+    }
+
+    [Theory]
+    [InlineData(true, false, false, "", "root")]
+    [InlineData(false, false, false, "bin", "mod")]
+    [InlineData(false, true, false, "bin", "base")]
+    [InlineData(false, false, true, "bin", "mod")]
+    public async Task ReadinessPreviewAndBuildUseTheSameFsgame(
+        bool hasRootFile, bool excluded, bool useAnomalyLauncher, string workingDirectory, string sourceMarker)
+    {
+        const string config = "$app_data_root$ = true | false | appdata";
+        var game = Path.Combine(_root, "game");
+        var mod = Path.Combine(_root, "mod");
+        var paths = new AppPaths(Path.Combine(_root, "config"), Path.Combine(_root, "workspaces"), false);
+        var builder = new WorkspaceBuilder(paths);
+        var profile = new ModProfile { GameInstallPath = game, LaunchBackendKind = LaunchBackendKind.LinkedWorkspace };
+        if (useAnomalyLauncher)
+        {
+            profile.ExecutableRelativePath = "AnomalyLauncher.exe";
+            CreateFile(game, "appdata/fsgame.ltx", config + "\n$test$ = wrong");
+        }
+
+        profile.Mods.Add(new ModEntry { SourcePath = mod, Order = 1, ExcludedFiles = excluded ? [@"bin\fsgame.ltx"] : [] });
+        CreateFile(game, profile.ExecutableRelativePath, "game executable");
+        CreateFile(game, "bin/fsgame.ltx", config + "\n$test$ = base");
+        CreateFile(mod, "bin/fsgame.ltx", config + "\n$test$ = mod");
+        if (hasRootFile)
+            CreateFile(game, "fsgame.ltx", config + "\n$test$ = root");
+
+        Assert.True(ProfileReadinessService.Validate(profile).IsValid);
+        var preview = await new LaunchPreflightService(new ProfileManager(paths, builder)).AnalyzeAsync(profile);
+        Assert.True(preview.CanLaunch, preview.ToErrorMessage());
+
+        var result = await builder.BuildAsync(game, profile, new ProgressLog());
+        try
+        {
+            var effectiveDirectory = Path.Combine(result.WorkspaceRoot, workingDirectory);
+            Assert.Equal(effectiveDirectory, preview.LaunchPlan!.WorkingDirectory);
+            Assert.Equal(workingDirectory, result.WorkingDirectoryRelative);
+            var prepared = File.ReadAllText(Path.Combine(effectiveDirectory, "fsgame.ltx"));
+            Assert.Contains($"$test$ = {sourceMarker}", prepared, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (useAnomalyLauncher) AnomalyAppDataAlias.Detach(result.WorkspaceRoot);
+        }
     }
 
     private static void CreateFile(string root, string relativePath, string content)
@@ -90,11 +136,22 @@ public sealed class LinkedWorkspaceLaunchBackendTests : IDisposable
         File.WriteAllText(path, content);
     }
 
-    public void Dispose()
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
     {
-        if (Directory.Exists(_root))
+        for (var attempt = 0; Directory.Exists(_root); attempt++)
         {
-            Directory.Delete(_root, recursive: true);
+            try
+            {
+                Directory.Delete(_root, recursive: true);
+                return;
+            }
+            catch (Exception ex) when (attempt < 4 && ex is (IOException or UnauthorizedAccessException))
+            {
+                // Windows can briefly hold the executable image after its process exits.
+                await Task.Delay(100);
+            }
         }
     }
 

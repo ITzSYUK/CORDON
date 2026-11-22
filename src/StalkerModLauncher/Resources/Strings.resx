@@ -406,6 +406,8 @@
   <data name="Profile_DeleteRegularFormat" xml:space="preserve"><value>Delete profile '{0}' together with its workspace, saves, and logs?</value></data>
   <data name="Profile_DeleteTitle" xml:space="preserve"><value>Delete profile</value></data>
   <data name="Profile_DeleteFailed" xml:space="preserve"><value>Could not delete profile</value></data>
+  <data name="Profile_DeletedCleanupFailedFormat" xml:space="preserve"><value>Profile '{0}' was removed. Cleanup could not be completed for '{1}'.{2}{3}</value></data>
+  <data name="Profile_RetryDeletedCleanup" xml:space="preserve"><value>Retry workspace cleanup?</value></data>
   <data name="Profile_StandaloneFolderMissing" xml:space="preserve"><value>Enabled standalone setup folder was not found.</value></data>
   <data name="Mod_ScanPickFolder" xml:space="preserve"><value>Select folder to scan for mods</value></data>
   <data name="Mod_Scanning" xml:space="preserve"><value>Scanning for mods...</value></data>

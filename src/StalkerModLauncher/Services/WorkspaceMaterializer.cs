@@ -28,32 +28,56 @@ internal static class WorkspaceMaterializer
         FileSystemSafety.DeleteDirectoryContents(workspaceDirectory, allowedRoot);
     }
 
-    public static void ValidateLinkSupport(WorkspaceSourceSnapshot snapshot, string workspaceRoot, IProgress<string> progress)
+    internal static string[] FindCrossVolumeLinkSources(
+        FileLayerPlan plan,
+        string workspaceRoot,
+        WorkspaceSourceSnapshot? snapshot,
+        CancellationToken cancellationToken)
     {
         var workspaceVolume = Path.GetPathRoot(Path.GetFullPath(workspaceRoot));
-        var crossVolumeFiles = new[] { snapshot.Game }.Concat(snapshot.Mods.Values)
-            .Select(source => source.Files.FirstOrDefault(file => !WorkspaceFileStrategy.MustCopy(file.RelativePath)))
-            .Where(file => file is not null)
-            .Cast<SourceFileSnapshot>()
-            .Where(file => !string.Equals(Path.GetPathRoot(Path.GetFullPath(file.FullPath)), workspaceVolume, StringComparison.OrdinalIgnoreCase))
-            .GroupBy(file => Path.GetPathRoot(Path.GetFullPath(file.FullPath)), StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.First())
-            .ToArray();
-
-        if (crossVolumeFiles.Length == 0)
+        var samples = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var layer in plan.SourceLayers)
         {
-            return;
-        }
+            cancellationToken.ThrowIfCancellationRequested();
+            var volume = Path.GetPathRoot(layer.RootPath)!;
+            if (string.Equals(volume, workspaceVolume, StringComparison.OrdinalIgnoreCase) ||
+                samples.ContainsKey(volume) || !Directory.Exists(layer.RootPath))
+                continue;
 
-        progress.Report(Strings.Materializer_CheckingSymlinks);
+            var files = snapshot is null
+                ? WorkspaceSourceScanner.EnumerateEntries(layer.RootPath, plan.UsesAnomalyAppDataAlias)
+                    .OfType<FileInfo>()
+                    .Select(file => (FullPath: file.FullName, RelativePath: Path.GetRelativePath(layer.RootPath, file.FullName)))
+                : (layer.Kind == FileLayerKind.BaseGame ? snapshot.Game : snapshot.Mods[layer.Id]).Files
+                    .Select(file => (file.FullPath, file.RelativePath));
+            foreach (var (fullPath, relativePath) in files)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (FileLayerPlan.IsExcluded(layer, relativePath) ||
+                    WorkspaceFileStrategy.MustCopy(relativePath, fullPath, Path.Combine(workspaceRoot, relativePath)) ||
+                    (File.GetAttributes(fullPath) & FileAttributes.ReadOnly) != 0)
+                    continue;
+
+                samples.Add(volume, fullPath);
+                break;
+            }
+        }
+        return samples.Values.ToArray();
+    }
+
+    internal static void ValidateLinkSupport(
+        IReadOnlyList<string> crossVolumeFiles, string workspaceRoot, IProgress<string>? progress = null)
+    {
+        if (crossVolumeFiles.Count == 0) return;
+        progress?.Report(Strings.Materializer_CheckingSymlinks);
         foreach (var sourceFile in crossVolumeFiles)
         {
             var testLink = Path.Combine(workspaceRoot, $".stalker-launcher-link-test-{Guid.NewGuid():N}");
             try
             {
-                if (!TryCreateSymbolicFileLink(testLink, sourceFile.FullPath) || !File.Exists(testLink))
+                if (!TryCreateSymbolicFileLink(testLink, sourceFile) || !File.Exists(testLink))
                 {
-                    throw CreateLinkFailureException(sourceFile.FullPath, testLink);
+                    throw CreateLinkFailureException(sourceFile, testLink);
                 }
             }
             finally
@@ -82,7 +106,7 @@ internal static class WorkspaceMaterializer
             cancellationToken.ThrowIfCancellationRequested();
             var targetFile = Path.Combine(targetRoot, file.RelativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
-            LinkFile(file.FullPath, targetFile, file.RelativePath, stats, IsAnomalyLauncherConfiguration(file.RelativePath));
+            LinkFile(file.FullPath, targetFile, file.RelativePath, stats);
 
             if (++fileCount % 500 == 0)
             {
@@ -122,7 +146,7 @@ internal static class WorkspaceMaterializer
                 File.Delete(targetFile);
             }
 
-            LinkFile(file.FullPath, targetFile, file.RelativePath, stats, IsAnomalyLauncherConfiguration(file.RelativePath));
+            LinkFile(file.FullPath, targetFile, file.RelativePath, stats);
         }
 
         progress.Report(LocalizedText.Format(Strings.Materializer_ModConnectedFormat, FileLayerPlan.GetDisplayName(layer), source.Files.Count, source.Directories.Count));
@@ -225,9 +249,6 @@ internal static class WorkspaceMaterializer
             stats.Record(relativePath, WorkspaceFileKind.LocalCopy, length);
         }
     }
-
-    private static bool IsAnomalyLauncherConfiguration(string relativePath) =>
-        Path.GetFileName(relativePath).Equals("AnomalyLauncher.cfg", StringComparison.OrdinalIgnoreCase);
 
     private static int DeleteReadOnlyWorkspaceFiles(string workspaceDirectory)
     {

@@ -107,9 +107,42 @@ public sealed class ProfileManager
         }
     }
 
-    public ModProfile? Delete(ICollection<ModProfile> profiles, ModProfile profile)
+    internal async Task<(ModProfile? SelectedProfile, Exception? CleanupFailure)> DeleteAsync(
+        IList<ModProfile> profiles, ModProfile profile, Func<Task> persistSettings)
     {
         if (profile.IsRunning || profile.IsPreparing) throw new InvalidOperationException(Strings.ProfileStorage_Busy);
+        var index = profiles.IndexOf(profile);
+        if (index < 0) return (profiles.FirstOrDefault(), null);
+
+        if (!profile.IsStandalone && profile.SettingsLoadError.Length == 0)
+            _workspaceManager.ValidateProfileWorkspaceDeletion(profile, profile.GameInstallPath);
+
+        profiles.RemoveAt(index);
+        try
+        {
+            // The settings journal can fail midway. Do not touch workspace data until the save succeeds.
+            await persistSettings();
+        }
+        catch
+        {
+            profiles.Insert(Math.Min(index, profiles.Count), profile);
+            throw;
+        }
+
+        try
+        {
+            DeleteProfileData(profile);
+            return (profiles.FirstOrDefault(), null);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException
+                                        or ArgumentException or NotSupportedException)
+        {
+            return (profiles.FirstOrDefault(), ex);
+        }
+    }
+
+    internal void DeleteProfileData(ModProfile profile)
+    {
         if (!profile.IsStandalone && profile.SettingsLoadError.Length == 0)
         {
             var workspacePath = string.IsNullOrWhiteSpace(profile.WorkspacePath)
@@ -122,9 +155,6 @@ public sealed class ProfileManager
                 profile.GameInstallPath,
                 profile.Id);
         }
-
-        profiles.Remove(profile);
-        return profiles.FirstOrDefault();
     }
 
     public string? GetProfileFolderPath(ModProfile profile)

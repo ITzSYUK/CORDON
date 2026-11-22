@@ -398,6 +398,8 @@ public sealed class ProfileHealthServiceTests : IDisposable
                 : profile.WorkspacePath;
         }
 
+        public void ValidateProfileWorkspaceDeletion(ModProfile profile, string gamePath) { }
+
         public void DeleteProfileWorkspace(ModProfile profile, string gamePath)
         {
         }

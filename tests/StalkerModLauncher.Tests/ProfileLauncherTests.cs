@@ -219,10 +219,10 @@ public sealed class ProfileLauncherTests
     {
         public LaunchPlan? Plan { get; private set; }
 
-        public Process Start(LaunchPlan plan, IProgress<string>? progress = null)
+        public ProfileLaunchHandle Start(LaunchPlan plan, IProgress<string>? progress = null)
         {
             Plan = plan;
-            return process;
+            return new ProfileLaunchHandle(process);
         }
     }
 
@@ -259,7 +259,7 @@ public sealed class ProfileLauncherTests
 
     private sealed class ThrowingLaunchPlanExecutor : ILaunchPlanExecutor
     {
-        public Process Start(LaunchPlan plan, IProgress<string>? progress = null)
+        public ProfileLaunchHandle Start(LaunchPlan plan, IProgress<string>? progress = null)
         {
             throw new InvalidOperationException("Start failed.");
         }
@@ -284,6 +284,8 @@ public sealed class ProfileLauncherTests
                 ? Path.Combine(Path.GetTempPath(), $"profile-{profile.Id}")
                 : profile.WorkspacePath;
         }
+
+        public void ValidateProfileWorkspaceDeletion(ModProfile profile, string gamePath) { }
 
         public void DeleteProfileWorkspace(ModProfile profile, string gamePath)
         {
