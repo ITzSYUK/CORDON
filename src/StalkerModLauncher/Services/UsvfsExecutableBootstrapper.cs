@@ -82,7 +82,8 @@ internal static class UsvfsExecutableBootstrapper
         var target = Path.GetFullPath(Path.Combine(mappingPlan.VirtualRoot, launchTarget.ExecutableRelativePath));
         var targetDirectory = Path.GetDirectoryName(target)!;
         var filesByDirectory = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
-        var directoryMappings = mappingPlan.Operations.Where(operation => operation.Kind == UsvfsMappingKind.DirectoryStatic).ToArray();
+        var directoryMappings = mappingPlan.Operations
+            .Where(operation => operation.Kind == UsvfsMappingKind.DirectoryStatic && operation.Recursive).ToArray();
         var explicitDirectories = mappingPlan.Operations
             .Where(operation => operation.Kind == UsvfsMappingKind.File && IsLoaderOrExecutable(operation.DestinationPath))
             .Select(operation => Path.GetDirectoryName(operation.DestinationPath)!)
@@ -101,7 +102,7 @@ internal static class UsvfsExecutableBootstrapper
                 continue;
             }
 
-            if (!Directory.Exists(operation.SourcePath))
+            if (!operation.Recursive || !Directory.Exists(operation.SourcePath))
                 continue;
 
             var sourceRoot = Path.TrimEndingDirectorySeparator(operation.SourcePath);
@@ -412,11 +413,15 @@ internal static class UsvfsBootstrapPathResolver
     public static void DeleteLegacySharedProfile(
         string profileWorkspace,
         string baseGameRoot,
-        string profileId)
+        string profileId,
+        bool preserveFiles = false,
+        CancellationToken cancellationToken = default)
     {
         foreach (var legacyRoot in GetLegacySharedRoots(profileWorkspace, baseGameRoot))
         {
             var profileRoot = Path.Combine(legacyRoot, GetProfileKey(profileId));
+            if (preserveFiles)
+                UsvfsBootstrapFileStore.PreserveBeforeClear(profileRoot, profileWorkspace, cancellationToken);
             FileSystemSafety.DeleteDirectoryContents(profileRoot, legacyRoot);
             if (Directory.Exists(legacyRoot) &&
                 !Directory.EnumerateFileSystemEntries(legacyRoot).Any())

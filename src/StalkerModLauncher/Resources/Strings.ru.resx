@@ -1207,4 +1207,6 @@
   <data name="ProfileImport_BaseGameMissing" xml:space="preserve"><value>Папка базовой игры не найдена</value></data>
   <data name="Launch_ModeWorkspace" xml:space="preserve"><value>Workspace</value></data>
   <data name="Launch_ModeUsvfs" xml:space="preserve"><value>USVFS</value></data>
+  <data name="Writable_SpatialAnomaliesReason" xml:space="preserve"><value>Spatial Anomalies сохраняет в этом файле идентификаторы созданных ограничителей.</value></data>
+  <data name="Writable_SwmSpeedReason" xml:space="preserve"><value>SWM записывает в этот файл текущую скорость игрового времени.</value></data>
 </root>

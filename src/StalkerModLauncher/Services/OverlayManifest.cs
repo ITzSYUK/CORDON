@@ -78,6 +78,25 @@ public static class OverlayManifestBuilder
                     ProfileWritableGameFileStore.GetStoredFilePath(profileWorkspace, relativePath),
                     Strings.Writable_MiseryClassReason));
         }
+        const string spatialIds = @"gamedata\configs\plugins\spatial_anomalies\srs_id.txt";
+        if (layerPlan.FindFinalFile(@"gamedata\scripts\spatial_anomalies.script")?.Layer.Kind == FileLayerKind.Mod &&
+            layerPlan.FindFinalFile(spatialIds) is not null && knownPaths.Add(spatialIds))
+        {
+            writableFiles.Add(new OverlayWritableFileSnapshot(
+                spatialIds,
+                ProfileWritableGameFileStore.GetStoredFilePath(profileWorkspace, spatialIds),
+                Strings.Writable_SpatialAnomaliesReason));
+        }
+
+        const string swmSpeed = @"gamedata\_EXE\speed.txt";
+        if (layerPlan.FindFinalFile(@"gamedata\scripts\swm_slowmo.script")?.Layer.Kind == FileLayerKind.Mod &&
+            layerPlan.FindFinalFile(swmSpeed) is not null && knownPaths.Add(swmSpeed))
+        {
+            writableFiles.Add(new OverlayWritableFileSnapshot(
+                swmSpeed,
+                ProfileWritableGameFileStore.GetStoredFilePath(profileWorkspace, swmSpeed),
+                Strings.Writable_SwmSpeedReason));
+        }
 
         return new OverlayManifest(
             layerPlan.Layers

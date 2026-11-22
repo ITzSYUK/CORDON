@@ -13,7 +13,8 @@ public sealed record UsvfsMappingOperation(
     string SourceName,
     int Order,
     bool MonitorChanges = false,
-    bool CreateTarget = false);
+    bool CreateTarget = false,
+    bool Recursive = true);
 
 public sealed record UsvfsMappingPlan(
     string VirtualRoot,

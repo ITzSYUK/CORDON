@@ -405,6 +405,8 @@ public sealed class WorkspaceManagementServiceTests : IDisposable
 
         Assert.Null(retryFailure);
         Assert.False(Directory.Exists(oldWorkspace));
+        var recovered = Assert.Single(Directory.GetFiles(Path.Combine(result.DestinationPath, "diagnostics"), "locked.bin", SearchOption.AllDirectories));
+        Assert.Equal("locked", File.ReadAllText(recovered));
     }
 
     [Theory]

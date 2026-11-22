@@ -90,6 +90,7 @@ internal static class WorkspaceMaterializer
     public static void MirrorBaseGame(
         DirectorySnapshot source,
         string targetRoot,
+        IReadOnlySet<string> localFiles,
         IProgress<string> progress,
         WorkspaceBuildStats stats,
         CancellationToken cancellationToken)
@@ -104,6 +105,7 @@ internal static class WorkspaceMaterializer
         foreach (var file in source.Files)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (localFiles.Contains(file.RelativePath)) continue;
             var targetFile = Path.Combine(targetRoot, file.RelativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
             LinkFile(file.FullPath, targetFile, file.RelativePath, stats);
@@ -119,6 +121,7 @@ internal static class WorkspaceMaterializer
         string workspaceRoot,
         FileLayer layer,
         DirectorySnapshot source,
+        IReadOnlySet<string> localFiles,
         IProgress<string> progress,
         WorkspaceBuildStats stats,
         CancellationToken cancellationToken)
@@ -133,7 +136,7 @@ internal static class WorkspaceMaterializer
         foreach (var file in source.Files)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (FileLayerPlan.IsExcluded(layer, file.RelativePath))
+            if (localFiles.Contains(file.RelativePath) || FileLayerPlan.IsExcluded(layer, file.RelativePath))
             {
                 continue;
             }

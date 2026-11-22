@@ -9,12 +9,29 @@ internal static class WorkspaceManifestStore
     private const string ManifestFileName = "build-manifest.json";
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
+    public static WorkspaceBuildManifest? Read(string workspaceRoot)
+    {
+        var path = Path.Combine(workspaceRoot, ManifestFileName);
+        if (!File.Exists(path)) return null;
+        FileSystemSafety.EnsureNoDirectoryLinks(workspaceRoot);
+        try
+        {
+            return JsonSerializer.Deserialize<WorkspaceBuildManifest>(File.ReadAllText(path))
+                ?? throw new InvalidDataException(Strings.WorkspaceManifest_CacheUnreadable);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException(Strings.WorkspaceManifest_CacheUnreadable, ex);
+        }
+    }
+
     public static string? TryGetCachedExecutable(
         string workspaceRoot,
         string currentWorkspace,
         ModProfile profile,
         WorkspaceBuildFingerprint buildFingerprint,
         FileLayerPlan fileLayerPlan,
+        IReadOnlySet<string> deletedPaths,
         IProgress<string> progress,
         CancellationToken cancellationToken)
     {
@@ -66,6 +83,7 @@ internal static class WorkspaceManifestStore
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         if (!FileLayerPlan.IsExcluded(layers[source.LayerId], file.RelativePath) &&
+                            !deletedPaths.Contains(file.RelativePath) &&
                             checkedFiles.Add(file.RelativePath) &&
                             !File.Exists(Path.Combine(currentWorkspace, file.RelativePath)))
                         {

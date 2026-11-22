@@ -72,6 +72,159 @@ public sealed class WorkspaceLifecycleIntegrationTests : IDisposable
         AssertSourcesUnchanged(game, mod, patch);
     }
 
+    [Fact]
+    public async Task CapturesNewFilesByRelativePathAndKeepsNewerUsvfsWrites()
+    {
+        var game = Path.Combine(_root, "game");
+        var paths = new AppPaths(Path.Combine(_root, "config"), Path.Combine(_root, "workspaces"), false);
+        var builder = new WorkspaceBuilder(paths);
+        var profile = new ModProfile { GameInstallPath = game, LaunchBackendKind = LaunchBackendKind.LinkedWorkspace };
+        const string notes = "Interactive_PDA_notes.txt";
+        const string routes = @"gamedata\configs\route_hashes.ltx";
+        CreateFile(game, @"bin\xr_3da.exe", "executable");
+        CreateFile(game, "fsgame.ltx", "$app_data_root$ = true | false | appdata");
+        CreateFile(game, @"gamedata\configs\source.ltx", "source");
+        var built = await builder.BuildAsync(game, profile, new ProgressLog());
+        profile.WorkspacePath = built.ProfileWorkspacePath;
+        CreateFile(built.WorkspaceRoot, notes, "notes");
+        CreateFile(built.WorkspaceRoot, routes, "route hashes");
+
+        profile.LaunchBackendKind = LaunchBackendKind.VirtualFileSystem;
+        var plan = FileLayerPlan.CreateForProfile(game, profile, profile.WorkspacePath);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, plan, profile.WorkspacePath);
+        UsvfsProfileDataPreparer.Prepare(plan, manifest, profile.WorkspacePath);
+        var mapping = UsvfsMappingPlanBuilder.Build(plan, manifest);
+        Assert.Contains(mapping.Operations, operation => operation.CreateTarget &&
+            operation.SourcePath == manifest.WriteOverlayRoot);
+        Assert.Equal("notes", File.ReadAllText(Path.Combine(manifest.WriteOverlayRoot, notes)));
+        Assert.Equal("route hashes", File.ReadAllText(Path.Combine(manifest.WriteOverlayRoot, routes)));
+        Assert.False(File.Exists(Path.Combine(manifest.WriteOverlayRoot, @"gamedata\configs\source.ltx")));
+        Assert.False(File.Exists(Path.Combine(manifest.WriteOverlayRoot, ".writable-baseline.json")));
+
+        CreateFile(manifest.WriteOverlayRoot, notes, "updated by USVFS");
+        UsvfsProfileDataPreparer.Prepare(plan, manifest, profile.WorkspacePath);
+        profile.LaunchBackendKind = LaunchBackendKind.LinkedWorkspace;
+        builder.ClearProfileWorkspaceCache(profile, game);
+        var rebuilt = await builder.BuildAsync(game, profile, new ProgressLog());
+        Assert.Equal("updated by USVFS", File.ReadAllText(Path.Combine(rebuilt.WorkspaceRoot, notes)));
+        Assert.Equal("route hashes", File.ReadAllText(Path.Combine(rebuilt.WorkspaceRoot, routes)));
+
+        CreateFile(rebuilt.WorkspaceRoot, routes, "updated by Workspace");
+        CreateFile(game, "new-source.txt", "trigger automatic rebuild");
+        var updated = await builder.BuildAsync(game, profile, new ProgressLog());
+        Assert.Equal("updated by Workspace", File.ReadAllText(Path.Combine(updated.WorkspaceRoot, routes)));
+        Assert.Equal("updated by Workspace", File.ReadAllText(Path.Combine(manifest.WriteOverlayRoot, routes)));
+        Assert.False(File.Exists(Path.Combine(game, notes)));
+        Assert.False(File.Exists(Path.Combine(game, routes)));
+    }
+
+    [Theory]
+    [InlineData(@"gamedata\scripts\spatial_anomalies.script", @"gamedata\configs\plugins\spatial_anomalies\srs_id.txt")]
+    [InlineData(@"gamedata\scripts\swm_slowmo.script", @"gamedata\_EXE\speed.txt")]
+    public async Task ModWriteRulesUseIndependentCopiesOfWinningFiles(string script, string ids)
+    {
+        var game = Path.Combine(_root, "game");
+        var spatial = Path.Combine(_root, "spatial");
+        var patch = Path.Combine(_root, "patch");
+        var paths = new AppPaths(Path.Combine(_root, "config"), Path.Combine(_root, "workspaces"), false);
+        var builder = new WorkspaceBuilder(paths);
+        var profile = CreateProfile(game, spatial, patch);
+        profile.LaunchBackendKind = LaunchBackendKind.LinkedWorkspace;
+        CreateFile(game, @"bin\xr_3da.exe", "executable");
+        CreateFile(game, "fsgame.ltx", "$app_data_root$ = true | false | appdata");
+        CreateFile(spatial, script, "script");
+        CreateFile(spatial, ids, "original");
+        CreateFile(patch, ids, "winning source");
+
+        var built = await builder.BuildAsync(game, profile, new ProgressLog());
+        profile.WorkspacePath = built.ProfileWorkspacePath;
+        Assert.Equal("winning source", File.ReadAllText(Path.Combine(built.WorkspaceRoot, ids)));
+        var staged = Path.Combine(built.WorkspaceRoot, ids + ".tmp");
+        File.WriteAllText(staged, "profile IDs");
+        File.Move(staged, Path.Combine(built.WorkspaceRoot, ids), overwrite: true);
+        builder.ClearProfileWorkspaceCache(profile, game);
+        Assert.Equal("original", File.ReadAllText(Path.Combine(spatial, ids)));
+        Assert.Equal("winning source", File.ReadAllText(Path.Combine(patch, ids)));
+
+        profile.LaunchBackendKind = LaunchBackendKind.VirtualFileSystem;
+        var plan = FileLayerPlan.CreateForProfile(game, profile, profile.WorkspacePath);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, plan, profile.WorkspacePath);
+        UsvfsProfileDataPreparer.Prepare(plan, manifest, profile.WorkspacePath);
+        var stored = Assert.Single(manifest.WritableFiles, file => file.RelativePath == ids);
+        Assert.Equal("profile IDs", File.ReadAllText(stored.StoragePath));
+        Assert.Contains(UsvfsMappingPlanBuilder.Build(plan, manifest).Operations, operation =>
+            operation.SourcePath == stored.StoragePath && operation.DestinationPath == Path.Combine(game, ids));
+
+        var other = CreateProfile(game, spatial, patch);
+        var otherWorkspace = new ProfileManager(paths, builder).EnsureProfileFolderPath(other);
+        var otherPlan = FileLayerPlan.CreateForProfile(game, other, otherWorkspace);
+        var otherManifest = OverlayManifestBuilder.BuildVirtualFileSystem(other, otherPlan, otherWorkspace);
+        UsvfsProfileDataPreparer.Prepare(otherPlan, otherManifest, otherWorkspace);
+        Assert.Equal("winning source", File.ReadAllText(Assert.Single(otherManifest.WritableFiles,
+            file => file.RelativePath == ids).StoragePath));
+        other.Mods[0].IsEnabled = false;
+        otherPlan = FileLayerPlan.CreateForProfile(game, other, otherWorkspace);
+        Assert.DoesNotContain(OverlayManifestBuilder.BuildVirtualFileSystem(other, otherPlan, otherWorkspace).WritableFiles,
+            file => file.RelativePath == ids);
+    }
+
+    [Fact]
+    public async Task WorkspaceKeepsProtectedDeletionAcrossRebuildAndAcceptsRecreation()
+    {
+        const string relative = @"gamedata\_EXE\speed.txt";
+        var game = Path.Combine(_root, "game");
+        var mod = Path.Combine(_root, "mod");
+        var patch = Path.Combine(_root, "patch");
+        var paths = new AppPaths(Path.Combine(_root, "config"), Path.Combine(_root, "workspaces"), false);
+        var builder = new WorkspaceBuilder(paths);
+        var profile = CreateProfile(game, mod, patch);
+        profile.LaunchBackendKind = LaunchBackendKind.LinkedWorkspace;
+        var progress = new ProgressLog();
+        CreateFile(game, @"bin\xr_3da.exe", "executable");
+        CreateFile(game, "fsgame.ltx", "$app_data_root$ = true | false | appdata");
+        CreateFile(mod, @"gamedata\scripts\swm_slowmo.script", "script");
+        CreateFile(mod, relative, "original");
+        Directory.CreateDirectory(patch);
+
+        var built = await builder.BuildAsync(game, profile, progress);
+        profile.WorkspacePath = built.ProfileWorkspacePath;
+        var current = Path.Combine(built.WorkspaceRoot, relative);
+        File.Delete(current);
+        builder.ClearProfileWorkspaceCache(profile, game);
+        Assert.False(File.Exists(Path.Combine((await builder.BuildAsync(game, profile, progress)).WorkspaceRoot, relative)));
+        Assert.False(File.Exists(Path.Combine((await builder.BuildAsync(game, profile, progress)).WorkspaceRoot, relative)));
+        Assert.Equal("original", File.ReadAllText(Path.Combine(mod, relative)));
+
+        var other = CreateProfile(game, mod, patch);
+        other.LaunchBackendKind = LaunchBackendKind.LinkedWorkspace;
+        Assert.Equal("original", File.ReadAllText(Path.Combine((await builder.BuildAsync(game, other, progress)).WorkspaceRoot, relative)));
+
+        File.WriteAllText(current, "original");
+        builder.ClearProfileWorkspaceCache(profile, game);
+        Assert.Equal("original", File.ReadAllText(Path.Combine((await builder.BuildAsync(game, profile, progress)).WorkspaceRoot, relative)));
+    }
+
+    [Fact]
+    public async Task ClearKeepsCurrentWhenSavingGeneratedFilesFails()
+    {
+        var game = Path.Combine(_root, "game");
+        var paths = new AppPaths(Path.Combine(_root, "config"), Path.Combine(_root, "workspaces"), false);
+        var builder = new WorkspaceBuilder(paths);
+        var profile = new ModProfile { GameInstallPath = game, LaunchBackendKind = LaunchBackendKind.LinkedWorkspace };
+        CreateFile(game, @"bin\xr_3da.exe", "executable");
+        CreateFile(game, "fsgame.ltx", "$app_data_root$ = true | false | appdata");
+        var built = await builder.BuildAsync(game, profile, new ProgressLog());
+        profile.WorkspacePath = built.ProfileWorkspacePath;
+        const string notes = "notes.txt";
+        CreateFile(built.WorkspaceRoot, notes, "keep this");
+        var overwrite = Path.Combine(profile.WorkspacePath, "userdata", "overwrite");
+        Directory.CreateDirectory(Path.Combine(overwrite, notes));
+
+        Assert.NotNull(Record.Exception(() => builder.ClearProfileWorkspaceCache(profile, game)));
+        Assert.Equal("keep this", File.ReadAllText(Path.Combine(built.WorkspaceRoot, notes)));
+        Assert.True(File.Exists(Path.Combine(profile.WorkspacePath, "build-manifest.json")));
+    }
+
     private static ModProfile CreateProfile(string game, string mod, string patch)
     {
         var profile = new ModProfile

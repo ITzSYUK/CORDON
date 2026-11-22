@@ -131,8 +131,12 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
         UsvfsBootstrapPathResolver.DeleteLegacySharedProfile(
             profileWorkspace,
             layerPlan.BaseGame.RootPath,
-            profile.Id);
+            profile.Id,
+            preserveFiles: true,
+            cancellationToken: cancellationToken);
         string? bootstrapExecutable = null;
+        UsvfsBootstrapFileStore.PreserveBeforeClear(bootstrapRoot, profileWorkspace, cancellationToken);
+        UsvfsBootstrapFileStore.PreserveBeforeClear(Path.Combine(profileWorkspace, "userdata", "usvfs-bootstrap"), profileWorkspace, cancellationToken);
         UsvfsExecutableBootstrapper.Clear(profileWorkspace, bootstrapRoot);
         if (!usePhysicalBaseGameRoot && !useVirtualExecutable)
         {
@@ -227,6 +231,7 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             ? _x86Runtime
             : _runtime;
         var diagnosticLogPath = UsvfsDiagnosticPaths.Prepare(profileWorkspace, progress);
+        UsvfsBootstrapFileStore.Record(bootstrapRoot, useVirtualExecutable && !hasPhysicalWorkingDirectory);
         progress.Report(LocalizedText.Format(
             Strings.Progress_UsvfsOverlayPlanFormat,
             mappingPlan.Operations.Count,
@@ -258,6 +263,7 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
                     var exitCode = await session.GetExitCodeAsync().ConfigureAwait(false);
                     if (bootstrapExecutable is not null)
                         ProfileWritableGameFileStore.CaptureFromWorkspace(bootstrapRoot, profileWorkspace, progress);
+                    UsvfsBootstrapFileStore.Capture(bootstrapRoot, profileWorkspace);
                     return exitCode;
                 },
                 session.GetActiveProcessIds);

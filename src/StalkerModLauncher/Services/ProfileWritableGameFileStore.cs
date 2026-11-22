@@ -8,13 +8,15 @@ namespace StalkerModLauncher.Services;
 internal static class ProfileWritableGameFileStore
 {
     private const string StoreDirectoryName = "writable-game-files";
-    private const string BaselineFileName = ".writable-baseline.json";
+    private const string WorkspaceDeletionsFileName = ".workspace-writable-deletions.json";
+    internal const string BaselineFileName = ".writable-baseline.json";
 
-    public static void CaptureFromWorkspace(string currentWorkspace, string profileWorkspace, IProgress<string>? progress = null)
+    public static string[] CaptureFromWorkspace(string currentWorkspace, string profileWorkspace,
+        IProgress<string>? progress = null, bool trackDeletions = false)
     {
         if (!Directory.Exists(currentWorkspace))
         {
-            return;
+            return [];
         }
 
         FileSystemSafety.EnsureNoDirectoryLinks(currentWorkspace);
@@ -34,26 +36,38 @@ internal static class ProfileWritableGameFileStore
         var trackedPaths = builtInPaths.Concat(baseline?.Keys.AsEnumerable() ?? [])
             .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var baselineChanged = false;
+        var deletions = trackDeletions && baseline is not null ? ReadWorkspaceDeletions(profileWorkspace) : null;
+        var deletionsChanged = false;
         var captured = 0;
         var skippedAsStale = 0;
         foreach (var relativePath in trackedPaths)
         {
             var workspaceFile = FileSystemSafety.ResolvePathInside(currentWorkspace, relativePath, Strings.Safety_ProfileWritableFile);
-            var isClassFile = !builtInPaths.Contains(relativePath);
-            if (isClassFile && (!relativePath.StartsWith(@"gamedata\", StringComparison.OrdinalIgnoreCase) || relativePath.Contains(':')))
+            var isModWritableFile = !builtInPaths.Contains(relativePath);
+            if (isModWritableFile && (!relativePath.StartsWith(@"gamedata\", StringComparison.OrdinalIgnoreCase) || relativePath.Contains(':')))
                 throw new InvalidDataException(Strings.Writable_BaselineInvalid);
 
-            if (isClassFile)
+            if (isModWritableFile)
                 FileSystemSafety.EnsureNoDirectoryLinks(Path.GetDirectoryName(workspaceFile)!);
+            var storedFile = GetStoredFilePath(profileWorkspace, relativePath);
             if (!File.Exists(workspaceFile))
             {
+                if (deletions is not null && baseline!.TryGetValue(relativePath, out var deletedHash) && deletedHash is not null)
+                {
+                    if (!File.Exists(storedFile) || Hash(storedFile) == deletedHash)
+                    {
+                        deletions[relativePath] = deletedHash;
+                        deletionsChanged = true;
+                    }
+                    baseline[relativePath] = null;
+                    baselineChanged = true;
+                }
                 continue;
             }
 
-            if (isClassFile && (File.GetAttributes(workspaceFile) & FileAttributes.ReparsePoint) != 0)
+            if (isModWritableFile && (File.GetAttributes(workspaceFile) & FileAttributes.ReparsePoint) != 0)
                 throw new IOException(LocalizedText.Format(Strings.Copy_ThroughLinkForbiddenFormat, workspaceFile));
 
-            var storedFile = GetStoredFilePath(profileWorkspace, relativePath);
             string? runtimeHash = null;
             if (baseline?.TryGetValue(relativePath, out var originalHash) == true)
             {
@@ -66,6 +80,7 @@ internal static class ProfileWritableGameFileStore
                     {
                         baseline[relativePath] = runtimeHash;
                         baselineChanged = true;
+                        deletionsChanged |= deletions?.Remove(relativePath) == true;
                         continue;
                     }
                     if (storedHash != originalHash)
@@ -92,6 +107,7 @@ internal static class ProfileWritableGameFileStore
             }
 
             CopyThroughTemporaryFile(workspaceFile, storedFile);
+            deletionsChanged |= deletions?.Remove(relativePath) == true;
             captured++;
             if (baseline is not null)
             {
@@ -100,6 +116,13 @@ internal static class ProfileWritableGameFileStore
             }
         }
 
+        if (deletionsChanged)
+        {
+            var userData = Path.Combine(profileWorkspace, "userdata");
+            FileSystemSafety.EnsureNoDirectoryLinks(userData);
+            Directory.CreateDirectory(userData);
+            WriteBaselineFile(userData, WorkspaceDeletionsFileName, deletions!);
+        }
         if (baselineChanged && FileSystemSafety.IsDirectoryInside(currentWorkspace, profileWorkspace))
             WriteBaseline(currentWorkspace, baseline!);
         if (captured > 0)
@@ -110,6 +133,7 @@ internal static class ProfileWritableGameFileStore
             progress?.Report(
                 LocalizedText.Format(Strings.Writable_StaleSkippedFormat, skippedAsStale));
         }
+        return trackedPaths;
     }
 
     public static void RecordBootstrapState(string runtimeRoot, IEnumerable<string>? writablePaths = null)
@@ -126,9 +150,12 @@ internal static class ProfileWritableGameFileStore
         WriteBaseline(runtimeRoot, hashes);
     }
 
-    private static void WriteBaseline(string runtimeRoot, Dictionary<string, string?> hashes)
+    private static void WriteBaseline(string runtimeRoot, Dictionary<string, string?> hashes) =>
+        WriteBaselineFile(runtimeRoot, BaselineFileName, hashes);
+
+    internal static void WriteBaselineFile<T>(string runtimeRoot, string fileName, Dictionary<string, T> hashes)
     {
-        var destination = Path.Combine(runtimeRoot, BaselineFileName);
+        var destination = Path.Combine(runtimeRoot, fileName);
         var temporary = destination + $".{Guid.NewGuid():N}.tmp";
         try
         {
@@ -138,7 +165,7 @@ internal static class ProfileWritableGameFileStore
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 
-    private static string Hash(string path)
+    internal static string Hash(string path)
     {
         using var stream = File.OpenRead(path);
         return Convert.ToHexString(SHA256.HashData(stream));
@@ -152,6 +179,8 @@ internal static class ProfileWritableGameFileStore
         bool linkedWorkspace = false,
         CancellationToken cancellationToken = default)
     {
+        var bootstrap = Path.Combine(profileWorkspace, ".usvfs-bootstrap");
+        UsvfsBootstrapFileStore.Capture(bootstrap, profileWorkspace, cancellationToken);
         var seeded = 0;
         var migrated = 0;
         foreach (var file in manifest.WritableFiles)
@@ -207,26 +236,31 @@ internal static class ProfileWritableGameFileStore
 
         if (linkedWorkspace)
             DeleteLegacyStoredFsgame(profileWorkspace, progress);
-        CaptureLinkedWorkspace(profileWorkspace, profileWorkspace, linkedWorkspace, progress);
+        CaptureLinkedWorkspace(profileWorkspace, profileWorkspace, linkedWorkspace, progress, cancellationToken);
 
         // The bootstrap is recreated on launch; collect files replaced there before discarding it.
-        CaptureFromWorkspace(Path.Combine(profileWorkspace, ".usvfs-bootstrap"), profileWorkspace, progress);
+        CaptureFromWorkspace(bootstrap, profileWorkspace, progress);
     }
 
     public static void CaptureLinkedWorkspace(
         string workspace,
         string destination,
         bool includeLegacy,
-        IProgress<string>? progress)
+        IProgress<string>? progress,
+        CancellationToken cancellationToken = default)
     {
         var current = Path.Combine(workspace, "current");
-        if (includeLegacy || File.Exists(Path.Combine(current, BaselineFileName)))
-            CaptureFromWorkspace(current, destination, progress);
+        if (!Directory.Exists(current)) return;
+        var known = includeLegacy || File.Exists(Path.Combine(current, BaselineFileName))
+            ? CaptureFromWorkspace(current, destination, progress, trackDeletions: true)
+            : ProfileWritableGameFiles.Rules.Select(rule => rule.RelativePath).ToArray();
+        WorkspaceOverwriteStore.Capture(workspace, destination, known, cancellationToken);
     }
 
     public static void RestoreToWorkspace(
         string currentWorkspace,
         IReadOnlyList<OverlayWritableFileSnapshot> writableFiles,
+        IReadOnlySet<string> deletedPaths,
         IProgress<string>? progress,
         WorkspaceBuildStats? stats = null)
     {
@@ -239,6 +273,11 @@ internal static class ProfileWritableGameFileStore
             FileSystemSafety.EnsureNoDirectoryLinks(parent);
             Directory.CreateDirectory(parent);
             var storedFile = file.StoragePath;
+            if (deletedPaths.Contains(relativePath))
+            {
+                File.Delete(workspaceFile);
+                continue;
+            }
             if (!File.Exists(storedFile))
             {
                 continue;
@@ -254,6 +293,27 @@ internal static class ProfileWritableGameFileStore
             var message = stats is null ? Strings.Writable_LaunchPreparedFormat : Strings.Writable_WorkspaceRestoredFormat;
             progress?.Report(LocalizedText.Format(message, restored));
         }
+    }
+
+    internal static HashSet<string> GetDeletedWorkspacePaths(string workspace, IReadOnlyList<OverlayWritableFileSnapshot> writableFiles)
+    {
+        var deletions = ReadWorkspaceDeletions(workspace);
+        return writableFiles.Where(file => deletions.TryGetValue(file.RelativePath, out var deletedHash) &&
+                (!File.Exists(file.StoragePath) || Hash(file.StoragePath) == deletedHash))
+            .Select(file => file.RelativePath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static Dictionary<string, string> ReadWorkspaceDeletions(string profileWorkspace)
+    {
+        var path = Path.Combine(profileWorkspace, "userdata", WorkspaceDeletionsFileName);
+        if (!File.Exists(path)) return new(StringComparer.OrdinalIgnoreCase);
+        FileSystemSafety.EnsureNoDirectoryLinks(Path.GetDirectoryName(path)!);
+        try
+        {
+            return new(JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path))
+                ?? throw new InvalidDataException(Strings.Writable_BaselineInvalid), StringComparer.OrdinalIgnoreCase);
+        }
+        catch (JsonException ex) { throw new InvalidDataException(Strings.Writable_BaselineInvalid, ex); }
     }
 
     internal static string GetStoredFilePath(string profileWorkspace, string relativePath)
@@ -275,7 +335,7 @@ internal static class ProfileWritableGameFileStore
         progress?.Report(Strings.Writable_ObsoleteFsgameRemoved);
     }
 
-    private static void CopyThroughTemporaryFile(string sourceFile, string destinationFile)
+    internal static void CopyThroughTemporaryFile(string sourceFile, string destinationFile)
     {
         var destinationDirectory = Path.GetDirectoryName(destinationFile)!;
         FileSystemSafety.EnsureNoDirectoryLinks(destinationDirectory);
