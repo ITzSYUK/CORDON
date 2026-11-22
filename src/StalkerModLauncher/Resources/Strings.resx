@@ -1091,6 +1091,8 @@
   <data name="Writable_OptionsReason" xml:space="preserve"><value>Anomaly writes launcher and runtime option state into axr_options.ltx.</value></data>
   <data name="Writable_LauncherSettingsReason" xml:space="preserve"><value>AnomalyLauncher saves its settings and launch arguments in these files.</value></data>
   <data name="Writable_MiseryClassReason" xml:space="preserve"><value>MISERY replaces these game files when changing specialization; each profile keeps independent writable copies.</value></data>
+  <data name="Writable_SpatialAnomaliesReason" xml:space="preserve"><value>Spatial Anomalies saves its generated restrictor IDs in this file.</value></data>
+  <data name="Writable_SwmSpeedReason" xml:space="preserve"><value>SWM writes the current time scale to this file.</value></data>
   <data name="Error_AppDataAliasFormat" xml:space="preserve"><value>Could not redirect AnomalyLauncher appdata to the selected game-data directory: {0}. Clear the profile workspace cache and try again.</value></data>
   <data name="Error_AnomalyFsgameInAppData" xml:space="preserve"><value>AnomalyLauncher data redirection requires a file-system configuration outside appdata. Select a configuration outside that directory.</value></data>
   <data name="Log_TrayPanelFailedFormat" xml:space="preserve"><value>Tray panel failed: {0}</value></data>

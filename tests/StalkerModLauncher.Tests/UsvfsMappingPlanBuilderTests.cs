@@ -130,10 +130,44 @@ public sealed class UsvfsMappingPlanBuilderTests : IDisposable
 
         var plan = UsvfsMappingPlanBuilder.Build(layerPlan, manifest);
 
-        Assert.DoesNotContain(plan.Operations, operation =>
-            operation.DestinationPath.Equals(Path.Combine(game, "userdata"), StringComparison.OrdinalIgnoreCase));
+        var target = Assert.Single(plan.Operations, operation => operation.DestinationPath == Path.Combine(game, "userdata"));
+        Assert.Equal(Path.Combine(game, "userdata"), Path.TrimEndingDirectorySeparator(target.SourcePath));
+        Assert.True(target.CreateTarget);
+        Assert.False(target.Recursive);
+        var root = Assert.Single(plan.Operations, operation => operation.SourcePath == manifest.WriteOverlayRoot);
+        Assert.True(root.CreateTarget);
+        Assert.False(root.Recursive);
         Assert.Contains(plan.Operations, operation =>
             operation.DestinationPath.Equals(Path.Combine(game, "fsgame.ltx"), StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void BuildKeepsSiblingMappingsAroundNestedSharedData()
+    {
+        var game = CreateDirectory("nested-game");
+        var mod = CreateDirectory("nested-mod");
+        var workspace = CreateDirectory("nested-workspace");
+        File.WriteAllText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true| false| $fs_root$| configs\\shared\\");
+        var profile = new ModProfile { GameInstallPath = game, UseBaseGameData = true };
+        profile.Mods.Add(new ModEntry { SourcePath = mod, IsEnabled = true });
+        var layers = FileLayerPlan.CreateForProfile(game, profile, workspace);
+        var manifest = OverlayManifestBuilder.BuildVirtualFileSystem(profile, layers, workspace);
+        foreach (var root in new[] { mod, manifest.WriteOverlayRoot })
+        {
+            Directory.CreateDirectory(Path.Combine(root, "configs", "shared"));
+            File.WriteAllText(Path.Combine(root, "configs", "shared", "stale.ltx"), "stale");
+            File.WriteAllText(Path.Combine(root, "configs", "keep.ltx"), "sibling");
+        }
+
+        var plan = UsvfsMappingPlanBuilder.Build(layers, manifest);
+
+        var shared = Path.Combine(game, "configs", "shared");
+        var target = Assert.Single(plan.Operations, operation => FileSystemSafety.IsDirectoryInside(operation.DestinationPath, shared));
+        Assert.Equal(shared, target.DestinationPath);
+        Assert.Equal(shared, Path.TrimEndingDirectorySeparator(target.SourcePath));
+        Assert.True(target.CreateTarget);
+        Assert.False(target.Recursive);
+        Assert.Equal(2, plan.Operations.Count(operation => operation.DestinationPath == Path.Combine(game, "configs", "keep.ltx")));
     }
 
     [Fact]

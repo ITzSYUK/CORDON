@@ -73,7 +73,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         var overlayManifest = providedOverlayManifest ?? OverlayManifestBuilder.BuildLinkedWorkspace(
             profile, fileLayerPlan, workspaceRoot, cancellationToken: cancellationToken);
         var writableFiles = overlayManifest.WritableFiles;
-        var trackedPaths = overlayManifest.UsesMiseryClasses ? writableFiles.Select(file => file.RelativePath) : null;
+        var trackedPaths = writableFiles.Select(file => file.RelativePath).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var sourceSnapshot = WorkspaceSourceScanner.Capture(fileLayerPlan, cancellationToken);
         var formatVersion = fileLayerPlan.UsesAnomalyAppDataAlias ? WorkspaceFormatVersion + "-anomaly-appdata-v1" : WorkspaceFormatVersion;
         if (overlayManifest.UsesMiseryClasses)
@@ -82,17 +82,19 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         scanTimer.Stop();
         ProfileWritableGameFileStore.Prepare(fileLayerPlan, overlayManifest, workspaceRoot, progress,
             linkedWorkspace: true, cancellationToken: cancellationToken);
+        var deletedPaths = ProfileWritableGameFileStore.GetDeletedWorkspacePaths(workspaceRoot, writableFiles);
         var cachedExecutable = WorkspaceManifestStore.TryGetCachedExecutable(
             workspaceRoot,
             currentWorkspace,
             profile,
             buildFingerprint,
             fileLayerPlan,
+            deletedPaths,
             progress,
             cancellationToken);
-        if (cachedExecutable is not null)
+        if (cachedExecutable is not null && !WorkspaceOverwriteStore.NeedsRebuild(currentWorkspace, workspaceRoot, fileLayerPlan))
         {
-            ProfileWritableGameFileStore.RestoreToWorkspace(currentWorkspace, writableFiles, progress);
+            ProfileWritableGameFileStore.RestoreToWorkspace(currentWorkspace, writableFiles, deletedPaths, progress);
             var cachedWorkingDirectoryRelative = ProfileDataConfigurator.Configure(
                 gamePath,
                 currentWorkspace,
@@ -101,6 +103,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
                 fileLayerPlan,
                 overlayManifest.UsesMiseryClasses,
                 cancellationToken);
+            WorkspaceOverwriteStore.Restore(currentWorkspace, overlayManifest, fileLayerPlan, cancellationToken);
             ProfileWritableGameFileStore.RecordBootstrapState(currentWorkspace, trackedPaths);
             progress.Report(LocalizedText.Format(Strings.Workspace_ScanCompleteFormat, FormatElapsed(scanTimer.Elapsed)));
             return new WorkspaceBuildResult(
@@ -129,14 +132,14 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
 
         progress.Report(Strings.Workspace_ConnectingGame);
         var baseGameTimer = Stopwatch.StartNew();
-        WorkspaceMaterializer.MirrorBaseGame(sourceSnapshot.Game, currentWorkspace, progress, stats, cancellationToken);
+        WorkspaceMaterializer.MirrorBaseGame(sourceSnapshot.Game, currentWorkspace, trackedPaths, progress, stats, cancellationToken);
         baseGameTimer.Stop();
 
         var modsTimer = Stopwatch.StartNew();
         foreach (var layer in fileLayerPlan.Mods)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            WorkspaceMaterializer.ApplyMod(currentWorkspace, layer, sourceSnapshot.Mods[layer.Id], progress, stats, cancellationToken);
+            WorkspaceMaterializer.ApplyMod(currentWorkspace, layer, sourceSnapshot.Mods[layer.Id], trackedPaths, progress, stats, cancellationToken);
         }
         modsTimer.Stop();
 
@@ -149,7 +152,8 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
             fileLayerPlan,
             overlayManifest.UsesMiseryClasses,
             cancellationToken);
-        ProfileWritableGameFileStore.RestoreToWorkspace(currentWorkspace, writableFiles, progress, stats);
+        ProfileWritableGameFileStore.RestoreToWorkspace(currentWorkspace, writableFiles, deletedPaths, progress, stats);
+        WorkspaceOverwriteStore.Restore(currentWorkspace, overlayManifest, fileLayerPlan, cancellationToken, stats);
         ApplyPinnedExecutableSource(profile, currentWorkspace, progress, stats);
         configurationTimer.Stop();
 
@@ -300,7 +304,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
             allowedRoot);
     }
 
-    private string ValidateProfileWorkspaceDeletion(ModProfile profile, string gamePath, string workspacePath)
+    internal string ValidateProfileWorkspaceDeletion(ModProfile profile, string gamePath, string workspacePath)
     {
         if (profile.IsRunning) throw new InvalidOperationException(Strings.ProfileStorage_Busy);
         ValidateProfileLocation(profile, workspacePath, gamePath);
@@ -350,7 +354,7 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
         var current = Path.Combine(workspacePath, "current");
         if (Directory.Exists(current))
         {
-            ProfileWritableGameFileStore.CaptureFromWorkspace(current, workspacePath, progress);
+            ProfileWritableGameFileStore.CaptureLinkedWorkspace(workspacePath, workspacePath, includeLegacy: true, progress);
             WorkspaceMaterializer.DeleteWorkspaceContents(current, workspacePath, progress);
         }
 

@@ -1135,6 +1135,8 @@ public static class Strings
     public static string Writable_OptionsReason => Get();
     public static string Writable_LauncherSettingsReason => Get();
     public static string Writable_MiseryClassReason => Get();
+    public static string Writable_SpatialAnomaliesReason => Get();
+    public static string Writable_SwmSpeedReason => Get();
     public static string Error_AppDataAliasFormat => Get();
     public static string Error_AnomalyFsgameInAppData => Get();
     public static string Log_TrayPanelFailedFormat => Get();

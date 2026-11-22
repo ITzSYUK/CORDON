@@ -102,7 +102,7 @@ public sealed class UsvfsRuntime(IUsvfsNativeApi nativeApi) : IUsvfsRuntime
 
     private void ApplyMapping(UsvfsMappingOperation operation, IProgress<string>? progress)
     {
-        var flags = UsvfsLinkOptions.Recursive;
+        var flags = operation.Recursive ? UsvfsLinkOptions.Recursive : UsvfsLinkOptions.None;
         if (operation.MonitorChanges)
         {
             flags |= UsvfsLinkOptions.MonitorChanges;

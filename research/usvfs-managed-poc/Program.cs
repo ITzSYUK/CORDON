@@ -20,6 +20,9 @@ if (args.Length > 0 && args[0] == "--read")
 if (args.Length > 0 && args[0] == "--appdata-child")
 {
     var user = Path.Combine(args[1], "appdata", "user.ltx");
+    if (File.Exists(Path.Combine(args[1], "appdata", "stale-overlay.txt"))) return 64;
+    File.WriteAllText(Path.Combine(args[1], "appdata", "new-game-data.txt"), "selected data directory");
+    File.WriteAllText(Path.Combine(args[1], "new-game-root.txt"), "profile overwrite");
     if (File.ReadAllText(user) != "profile settings") return 60;
     File.WriteAllText(user, "written settings");
     File.WriteAllText(Path.Combine(args[1], "appdata", "user.tmp"), "replaced settings");
@@ -661,6 +664,8 @@ static async Task VerifyAppDataAliasAsync(IUsvfsRuntime runtime, string root, st
         var storedToml = Path.Combine(profile.WorkspacePath, "userdata", "writable-game-files", "launcherconfig.toml");
         WriteText(storedToml, "shadow_map = \"Size2048\"\nwindow_mode = \"Fullscreen\"");
         UsvfsProfileDataPreparer.Prepare(layers, manifest, profile.WorkspacePath);
+        WriteText(Path.Combine(manifest.WriteOverlayRoot, "appdata", "stale-overlay.txt"), "stale overwrite");
+        File.Delete(Path.Combine(manifest.WriteOverlayRoot, "new-game-root.txt"));
         var bootstrapRoot = UsvfsBootstrapPathResolver.Resolve(profile.WorkspacePath);
         UsvfsExecutableBootstrapper.Clear(profile.WorkspacePath, bootstrapRoot);
         UsvfsExecutableBootstrapper.PrepareAnomalyLauncher(layers,
@@ -670,7 +675,11 @@ static async Task VerifyAppDataAliasAsync(IUsvfsRuntime runtime, string root, st
             new UsvfsProcessLaunchRequest(childExecutable, $"--appdata-child {Quote(bootstrapRoot)}", AppContext.BaseDirectory),
             new UsvfsRuntimeOptions("stalker_appdata_alias_regression", LogToConsole: false));
         if (result.ExitCode != 0 || ReadText(canonical) != "reset settings" ||
-            File.Exists(Path.Combine(manifest.WriteOverlayRoot, "appdata", "user.ltx")))
+            ReadText(Path.Combine(layers.GameDataRoot, "new-game-data.txt")) != "selected data directory" ||
+            ReadText(Path.Combine(manifest.WriteOverlayRoot, "new-game-root.txt")) != "profile overwrite" ||
+            File.Exists(Path.Combine(bootstrapRoot, "new-game-root.txt")) ||
+            File.Exists(Path.Combine(manifest.WriteOverlayRoot, "appdata", "user.ltx")) ||
+            File.Exists(Path.Combine(manifest.WriteOverlayRoot, "appdata", "new-game-data.txt")))
             throw new InvalidOperationException($"USVFS appdata alias regression failed (shared={shared}, exit={result.ExitCode}).");
         ProfileWritableGameFileStore.CaptureFromWorkspace(bootstrapRoot, profile.WorkspacePath);
         UsvfsExecutableBootstrapper.Clear(profile.WorkspacePath, bootstrapRoot);

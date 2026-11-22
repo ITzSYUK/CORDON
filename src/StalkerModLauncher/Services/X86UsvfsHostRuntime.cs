@@ -199,7 +199,7 @@ public sealed class X86UsvfsHostRuntime(string? runtimeDirectory = null) : IUsvf
             writer.Write((uint)operations.Length);
             foreach (var operation in operations)
             {
-                var flags = UsvfsLinkOptions.Recursive;
+                var flags = operation.Recursive ? UsvfsLinkOptions.Recursive : UsvfsLinkOptions.None;
                 if (operation.MonitorChanges)
                 {
                     flags |= UsvfsLinkOptions.MonitorChanges;

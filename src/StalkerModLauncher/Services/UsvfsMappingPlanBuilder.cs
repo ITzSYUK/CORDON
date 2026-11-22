@@ -13,30 +13,24 @@ public static class UsvfsMappingPlanBuilder
         var baseGameRoot = Path.GetFullPath(layerPlan.BaseGame.RootPath);
         var virtualRoot = Path.GetFullPath(virtualRootOverride ?? baseGameRoot);
         var operations = new List<UsvfsMappingOperation>();
+        var dataTargets = GetDataTargets(layerPlan, virtualRoot, includeAppDataAlias: false);
 
         // Never map the game directory onto itself: USVFS would hide physical files
         // such as gamedata.db*. A separate bootstrap root does need the base layer.
         if (!FileSystemSafety.IsSameDirectory(baseGameRoot, virtualRoot))
         {
-            operations.Add(new UsvfsMappingOperation(
-                UsvfsMappingKind.DirectoryStatic,
-                baseGameRoot,
-                virtualRoot,
-                FileLayerPlan.GetDisplayName(layerPlan.BaseGame),
-                layerPlan.BaseGame.Order,
-                MonitorChanges: false,
-                CreateTarget: false));
+            AddLayerDirectory(operations, layerPlan.BaseGame, baseGameRoot, virtualRoot, dataTargets);
         }
 
         foreach (var layer in layerPlan.Mods)
         {
-            AddLayerDirectory(operations, layer, Path.GetFullPath(layer.RootPath), virtualRoot);
+            AddLayerDirectory(operations, layer, Path.GetFullPath(layer.RootPath), virtualRoot, dataTargets);
         }
 
         AddExcludedFileRestorations(operations, layerPlan, virtualRoot);
         AddWritableFiles(operations, virtualRoot, manifest);
 
-        AddProfileOverwrite(operations, layerPlan, manifest, virtualRoot);
+        AddWriteTargets(operations, layerPlan, manifest, virtualRoot, dataTargets);
         AddMissingParentDirectories(operations, manifest, virtualRoot);
 
         return new UsvfsMappingPlan(
@@ -52,25 +46,23 @@ public static class UsvfsMappingPlanBuilder
     {
         var fullVirtualRoot = Path.GetFullPath(virtualRoot);
         var operations = new List<UsvfsMappingOperation>();
+        var dataTargets = GetDataTargets(layerPlan, fullVirtualRoot, includeAppDataAlias: true);
 
         AddLayerDirectoriesAroundPhysicalBin(
             operations,
             layerPlan.BaseGame,
-            fullVirtualRoot);
+            fullVirtualRoot, dataTargets);
         foreach (var layer in layerPlan.Mods)
         {
             AddLayerDirectoriesAroundPhysicalBin(
                 operations,
                 layer,
-                fullVirtualRoot);
+                fullVirtualRoot, dataTargets);
         }
 
         AddExcludedFileRestorations(operations, layerPlan, fullVirtualRoot);
         AddWritableFiles(operations, fullVirtualRoot, manifest);
-        AddProfileOverwrite(operations, layerPlan, manifest, fullVirtualRoot);
-
-        if (layerPlan.UsesAnomalyAppDataAlias)
-            operations.RemoveAll(operation => AnomalyAppDataAlias.IsAppDataPath(Path.GetRelativePath(fullVirtualRoot, operation.DestinationPath)));
+        AddWriteTargets(operations, layerPlan, manifest, fullVirtualRoot, dataTargets);
         AddMissingParentDirectories(operations, manifest, fullVirtualRoot);
 
         return new UsvfsMappingPlan(
@@ -82,7 +74,8 @@ public static class UsvfsMappingPlanBuilder
     private static void AddLayerDirectoriesAroundPhysicalBin(
         List<UsvfsMappingOperation> operations,
         FileLayer layer,
-        string virtualRoot)
+        string virtualRoot,
+        string[] dataTargets)
     {
         var sourceRoot = Path.GetFullPath(layer.RootPath);
         if (!Directory.Exists(sourceRoot))
@@ -95,7 +88,7 @@ public static class UsvfsMappingPlanBuilder
             var directoryName = Path.GetFileName(sourceDirectory);
             if (!directoryName.Equals("bin", StringComparison.OrdinalIgnoreCase))
             {
-                AddLayerDirectory(operations, layer, sourceDirectory, Path.Combine(virtualRoot, directoryName));
+                AddLayerDirectory(operations, layer, sourceDirectory, Path.Combine(virtualRoot, directoryName), dataTargets);
                 continue;
             }
 
@@ -105,19 +98,21 @@ public static class UsvfsMappingPlanBuilder
                          SearchOption.TopDirectoryOnly))
             {
                 AddLayerDirectory(operations, layer, binSubdirectory,
-                    Path.Combine(virtualRoot, "bin", Path.GetFileName(binSubdirectory)));
+                    Path.Combine(virtualRoot, "bin", Path.GetFileName(binSubdirectory)), dataTargets);
             }
         }
     }
 
     private static void AddLayerDirectory(
-        List<UsvfsMappingOperation> operations, FileLayer layer, string sourceDirectory, string destinationDirectory)
+        List<UsvfsMappingOperation> operations, FileLayer layer, string sourceDirectory, string destinationDirectory,
+        string[] dataTargets)
     {
+        if (dataTargets.Any(target => FileSystemSafety.IsDirectoryInside(destinationDirectory, target))) return;
         var exclusions = (layer.Mod?.ExcludedFiles ?? [])
             .Select(path => FileSystemSafety.ResolvePathInside(layer.RootPath, path, Strings.Safety_ExcludedModFile))
             .Where(path => FileSystemSafety.IsDirectoryInside(path, sourceDirectory))
             .ToArray();
-        if (exclusions.Length == 0)
+        if (exclusions.Length == 0 && !dataTargets.Any(target => FileSystemSafety.IsDirectoryInside(target, destinationDirectory)))
         {
             operations.Add(new UsvfsMappingOperation(
                 UsvfsMappingKind.DirectoryStatic, sourceDirectory, destinationDirectory,
@@ -132,7 +127,7 @@ public static class UsvfsMappingPlanBuilder
             if (exclusions.Contains(entry, StringComparer.OrdinalIgnoreCase)) continue;
             var destination = Path.Combine(destinationDirectory, Path.GetFileName(entry));
             if (Directory.Exists(entry))
-                AddLayerDirectory(operations, layer, entry, destination);
+                AddLayerDirectory(operations, layer, entry, destination, dataTargets);
             else
                 operations.Add(new UsvfsMappingOperation(
                     UsvfsMappingKind.File, entry, destination,
@@ -204,43 +199,56 @@ public static class UsvfsMappingPlanBuilder
         }
     }
 
-    private static void AddProfileOverwrite(
+    private static string[] GetDataTargets(FileLayerPlan layerPlan, string virtualRoot, bool includeAppDataAlias)
+    {
+        var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (FileSystemSafety.IsDirectoryInside(layerPlan.GameDataRoot, virtualRoot))
+            targets.Add(Path.TrimEndingDirectorySeparator(layerPlan.GameDataRoot));
+        if (includeAppDataAlias && layerPlan.UsesAnomalyAppDataAlias)
+            targets.Add(Path.Combine(virtualRoot, "appdata"));
+        return targets.ToArray();
+    }
+
+    private static void AddWriteTargets(
         List<UsvfsMappingOperation> operations,
         FileLayerPlan layerPlan,
         OverlayManifest manifest,
-        string virtualRoot)
+        string virtualRoot,
+        string[] dataTargets)
     {
         var overwriteRoot = Path.GetFullPath(manifest.WriteOverlayRoot);
-        if (!layerPlan.UsesSharedGameData)
-        {
-            operations.Add(new UsvfsMappingOperation(
-                UsvfsMappingKind.DirectoryStatic,
-                overwriteRoot,
-                virtualRoot,
-                Strings.Layer_ProfileOverwrite,
-                int.MaxValue,
-                MonitorChanges: true,
-                CreateTarget: true));
-            return;
-        }
+        var split = dataTargets.Length > 0;
+        operations.Add(new UsvfsMappingOperation(UsvfsMappingKind.DirectoryStatic,
+            overwriteRoot, virtualRoot, Strings.Layer_ProfileOverwrite, int.MaxValue,
+            MonitorChanges: !split, CreateTarget: true, Recursive: !split));
+        if (!split) return;
 
-        // In shared-data mode userdata belongs to the game installation. Mapping it
-        // from the profile overlay makes USVFS silently capture saves and logs again.
-        foreach (var entry in Directory.EnumerateFileSystemEntries(overwriteRoot, "*", SearchOption.TopDirectoryOnly))
+        AddOverwriteChildren(overwriteRoot, virtualRoot);
+        operations.RemoveAll(operation => dataTargets.Any(target =>
+            FileSystemSafety.IsDirectoryInside(operation.DestinationPath, target)));
+        foreach (var destination in dataTargets)
+            operations.Add(new UsvfsMappingOperation(UsvfsMappingKind.DirectoryStatic,
+                Path.TrimEndingDirectorySeparator(layerPlan.GameDataRoot), destination, Strings.Layer_ProfileWritableData, int.MaxValue,
+                CreateTarget: true, Recursive: false));
+
+        void AddOverwriteChildren(string source, string destination)
         {
-            if (Path.GetFileName(entry).Equals("userdata", StringComparison.OrdinalIgnoreCase))
+            foreach (var entry in Directory.EnumerateFileSystemEntries(source))
             {
-                continue;
-            }
+                var targetPath = Path.Combine(destination, Path.GetFileName(entry));
+                if (dataTargets.Any(target => FileSystemSafety.IsDirectoryInside(targetPath, target))) continue;
+                var directory = Directory.Exists(entry);
+                if (directory && dataTargets.Any(target => FileSystemSafety.IsDirectoryInside(target, targetPath)))
+                {
+                    FileSystemSafety.EnsureNoDirectoryLinks(entry);
+                    AddOverwriteChildren(entry, targetPath);
+                    continue;
+                }
 
-            operations.Add(new UsvfsMappingOperation(
-                Directory.Exists(entry) ? UsvfsMappingKind.DirectoryStatic : UsvfsMappingKind.File,
-                entry,
-                Path.Combine(virtualRoot, Path.GetFileName(entry)),
-                Strings.Layer_ProfileOverwrite,
-                int.MaxValue,
-                MonitorChanges: true,
-                CreateTarget: true));
+                operations.Add(new UsvfsMappingOperation(
+                    directory ? UsvfsMappingKind.DirectoryStatic : UsvfsMappingKind.File,
+                    entry, targetPath, Strings.Layer_ProfileOverwrite, int.MaxValue));
+            }
         }
     }
 

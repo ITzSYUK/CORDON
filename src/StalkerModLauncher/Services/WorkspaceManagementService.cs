@@ -202,8 +202,9 @@ public sealed class WorkspaceManagementService
                     Path.Combine(oldWorkspace, ".usvfs-bootstrap"),
                     oldWorkspace,
                     progress);
+                UsvfsBootstrapFileStore.Capture(Path.Combine(oldWorkspace, ".usvfs-bootstrap"), oldWorkspace, cancellationToken);
                 ProfileWritableGameFileStore.CaptureLinkedWorkspace(
-                    oldWorkspace, oldWorkspace, profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace, progress);
+                    oldWorkspace, oldWorkspace, profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace, progress, cancellationToken);
             }
 
             var sourceUserData = string.IsNullOrWhiteSpace(oldWorkspace) ? string.Empty : Path.Combine(oldWorkspace, "userdata");
@@ -225,8 +226,9 @@ public sealed class WorkspaceManagementService
                 FileSystemSafety.EnsureNoDirectoryLinks(oldWorkspace);
                 ProfileWritableGameFileStore.CaptureFromWorkspace(
                     Path.Combine(oldWorkspace, ".usvfs-bootstrap"), temporary, progress);
+                UsvfsBootstrapFileStore.Capture(Path.Combine(oldWorkspace, ".usvfs-bootstrap"), temporary, cancellationToken);
                 ProfileWritableGameFileStore.CaptureLinkedWorkspace(
-                    oldWorkspace, temporary, profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace, progress);
+                    oldWorkspace, temporary, profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace, progress, cancellationToken);
             }
 
             var diagnostics = string.IsNullOrWhiteSpace(oldWorkspace) ? string.Empty : Path.Combine(oldWorkspace, "diagnostics");
@@ -266,9 +268,13 @@ public sealed class WorkspaceManagementService
 
         try
         {
+            var cleanupProfile = CreateCleanupProfile(profile, oldWorkspace);
+            _ = _workspaceBuilder.ValidateProfileWorkspaceDeletion(cleanupProfile, profile.GameInstallPath, oldWorkspace);
+            UsvfsBootstrapFileStore.PreserveBeforeClear(Path.Combine(oldWorkspace, ".usvfs-bootstrap"), profile.WorkspacePath, default);
+            UsvfsBootstrapFileStore.PreserveBeforeClear(Path.Combine(oldWorkspace, "userdata", "usvfs-bootstrap"), profile.WorkspacePath, default);
             LegacyProfileDataAlias.Delete(oldWorkspace, profile.Id);
             _workspaceBuilder.DeleteProfileWorkspaceAtPath(
-                CreateCleanupProfile(profile, oldWorkspace),
+                cleanupProfile,
                 profile.GameInstallPath,
                 oldWorkspace);
             return null;
