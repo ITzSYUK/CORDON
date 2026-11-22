@@ -29,6 +29,12 @@ public sealed partial class App : Application, IDisposable
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (e.Args.FirstOrDefault() == ProcessLauncher.ElevatedLaunchArgument)
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            _ = RunElevatedGameAsync(e.Args);
+            return;
+        }
         if (LauncherSelfUpdateService.TryParseRequest(e.Args, out var updateRequest))
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -153,6 +159,19 @@ public sealed partial class App : Application, IDisposable
             splash.BeginAnimation(UIElement.OpacityProperty, timer);
         };
         splash.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+    }
+
+    private async Task RunElevatedGameAsync(string[] arguments)
+    {
+        try
+        {
+            Shutdown(await ProcessLauncher.RunElevatedGameAsync(arguments));
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, Strings.Launch_Failed, MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(-1);
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

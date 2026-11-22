@@ -16,7 +16,7 @@ public sealed class ReviewRegressionTests : IDisposable
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void ParentJunctionCannotAuthorizeWorkspaceOrDeleteSource(bool legacy)
+    public async Task ParentJunctionCannotAuthorizeWorkspaceOrDeleteSource(bool legacy)
     {
         var sourceRoot = Directory.CreateDirectory(Path.Combine(_root, "sources")).FullName;
         var directoryName = legacy ? "old-probe" : "profile-probe";
@@ -40,7 +40,8 @@ public sealed class ReviewRegressionTests : IDisposable
             profile.Mods.Add(new ModEntry { SourcePath = source });
             var profiles = new List<ModProfile> { profile };
             Assert.Throws<InvalidOperationException>(() => builder.EnsureProfileWorkspace(profile, string.Empty));
-            Assert.Throws<InvalidOperationException>(() => new ProfileManager(paths, builder).Delete(profiles, profile));
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                new ProfileManager(paths, builder).DeleteAsync(profiles, profile, () => Task.CompletedTask));
             Assert.Throws<InvalidOperationException>(() => FileSystemSafety.DeleteDirectoryContents(workspace, link));
             Assert.Throws<InvalidOperationException>(() => WorkspaceMaterializer.DeleteWorkspaceContents(workspace, link));
             Assert.Throws<InvalidOperationException>(() => LegacyProfileDataAlias.Delete(workspace, profile.Id));

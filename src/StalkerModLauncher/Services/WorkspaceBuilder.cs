@@ -8,6 +8,7 @@ namespace StalkerModLauncher.Services;
 public interface IProfileWorkspaceManager
 {
     string EnsureProfileWorkspace(ModProfile profile, string gamePath, IProgress<string>? progress = null);
+    void ValidateProfileWorkspaceDeletion(ModProfile profile, string gamePath);
     void DeleteProfileWorkspace(ModProfile profile, string gamePath);
 }
 
@@ -110,7 +111,9 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
                 cachedWorkingDirectoryRelative);
         }
 
-        WorkspaceMaterializer.ValidateLinkSupport(sourceSnapshot, workspaceRoot, progress);
+        WorkspaceMaterializer.ValidateLinkSupport(
+            WorkspaceMaterializer.FindCrossVolumeLinkSources(fileLayerPlan, workspaceRoot, sourceSnapshot, cancellationToken),
+            workspaceRoot, progress);
 
         progress.Report(Strings.Workspace_Preparing);
         var cleanupTimer = Stopwatch.StartNew();
@@ -249,16 +252,25 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
 
     public void DeleteProfileWorkspace(ModProfile profile, string gamePath)
     {
+        foreach (var workspacePath in GetWorkspaceDeletionPaths(profile, gamePath))
+            DeleteProfileWorkspaceAtPath(profile, gamePath, workspacePath);
+    }
+
+    public void ValidateProfileWorkspaceDeletion(ModProfile profile, string gamePath)
+    {
+        foreach (var workspacePath in GetWorkspaceDeletionPaths(profile, gamePath))
+            _ = ValidateProfileWorkspaceDeletion(profile, gamePath, workspacePath);
+    }
+
+    private HashSet<string> GetWorkspaceDeletionPaths(ModProfile profile, string gamePath)
+    {
         var workspacePaths = FindGeneratedWorkspacePaths(profile, gamePath).ToHashSet(StringComparer.OrdinalIgnoreCase);
         if (!string.IsNullOrWhiteSpace(profile.WorkspacePath) && Directory.Exists(profile.WorkspacePath))
         {
             workspacePaths.Add(Path.GetFullPath(profile.WorkspacePath));
         }
 
-        foreach (var workspacePath in workspacePaths)
-        {
-            DeleteProfileWorkspaceAtPath(profile, gamePath, workspacePath);
-        }
+        return workspacePaths;
     }
 
     internal void DeleteProfileWorkspaceAtPath(
@@ -271,33 +283,36 @@ public sealed class WorkspaceBuilder : IProfileWorkspaceManager
             return;
         }
 
-        if (profile.IsRunning) throw new InvalidOperationException(Strings.ProfileStorage_Busy);
-        ValidateProfileLocation(profile, workspacePath, gamePath);
         var fullWorkspacePath = Path.GetFullPath(workspacePath);
-        var allowedRoot = FindAllowedWorkspaceParent(profile, fullWorkspacePath, gamePath);
-        if (allowedRoot is null)
-        {
-            throw new InvalidOperationException(LocalizedText.Format(
-                Strings.Error_WorkspaceDeleteOutsideRootFormat,
-                fullWorkspacePath));
-        }
+        var allowedRoot = ValidateProfileWorkspaceDeletion(profile, gamePath, fullWorkspacePath);
 
         var markerPath = Path.Combine(fullWorkspacePath, MarkerFileName);
         if (!File.Exists(markerPath))
         {
             RestoreGeneratedWorkspaceMarker(profile, fullWorkspacePath, allowedRoot);
         }
-
         if (!File.Exists(markerPath))
-        {
             throw new InvalidOperationException(LocalizedText.Format(
-                Strings.Error_WorkspaceMarkerMissingFormat,
-                fullWorkspacePath));
-        }
+                Strings.Error_WorkspaceMarkerMissingFormat, fullWorkspacePath));
 
         WorkspaceMaterializer.DeleteWorkspaceContents(
             fullWorkspacePath,
             allowedRoot);
+    }
+
+    private string ValidateProfileWorkspaceDeletion(ModProfile profile, string gamePath, string workspacePath)
+    {
+        if (profile.IsRunning) throw new InvalidOperationException(Strings.ProfileStorage_Busy);
+        ValidateProfileLocation(profile, workspacePath, gamePath);
+        var allowedRoot = FindAllowedWorkspaceParent(profile, workspacePath, gamePath)
+            ?? throw new InvalidOperationException(LocalizedText.Format(
+                Strings.Error_WorkspaceDeleteOutsideRootFormat, workspacePath));
+        if (!File.Exists(Path.Combine(workspacePath, MarkerFileName)) &&
+            !IsGeneratedWorkspaceOwnedByProfile(profile, workspacePath))
+            throw new InvalidOperationException(LocalizedText.Format(
+                Strings.Error_WorkspaceMarkerMissingFormat, workspacePath));
+
+        return allowedRoot;
     }
 
     public void ClearProfileWorkspaceCache(ModProfile profile, string gamePath)

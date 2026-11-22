@@ -21,7 +21,7 @@ public sealed class ProfileManagerTests
     }
 
     [Fact]
-    public void DeleteProfileWithCyrillicWorkspaceRemovesBootstrapWithoutApplyingLaunchRestriction()
+    public async Task DeleteProfileWithCyrillicWorkspaceRemovesBootstrapWithoutApplyingLaunchRestriction()
     {
         var workspace = Path.Combine(_paths.WorkspaceRoot, "Документы", "profile-test");
         var cache = Path.Combine(workspace, ".usvfs-bootstrap");
@@ -35,7 +35,7 @@ public sealed class ProfileManagerTests
         try
         {
             Assert.Throws<InvalidOperationException>(() => UsvfsBootstrapPathResolver.Resolve(workspace));
-            _manager.Delete(profiles, profile);
+            Assert.Null((await _manager.DeleteAsync(profiles, profile, () => Task.CompletedTask)).CleanupFailure);
             Assert.Empty(profiles);
             Assert.Contains(profile, _workspaceManager.DeletedProfiles);
             Assert.False(Directory.Exists(cache));
@@ -45,7 +45,7 @@ public sealed class ProfileManagerTests
     }
 
     [Fact]
-    public void DeleteProfileUnderCyrillicLauncherDirectoryRemovesWorkspaceAndKeepsSources()
+    public async Task DeleteProfileUnderCyrillicLauncherDirectoryRemovesWorkspaceAndKeepsSources()
     {
         var root = Path.Combine(_paths.ConfigDirectory, "Документы");
         var game = Path.Combine(root, "game");
@@ -65,7 +65,7 @@ public sealed class ProfileManagerTests
             File.WriteAllText(Path.Combine(workspace, ".usvfs-bootstrap", "runtime.tmp"), "cache");
             // Keep drive-wide legacy cache cleanup outside this fixture.
             profile.GameInstallPath = string.Empty;
-            manager.Delete(profiles, profile);
+            Assert.Null((await manager.DeleteAsync(profiles, profile, () => Task.CompletedTask)).CleanupFailure);
             Assert.Empty(profiles);
             Assert.False(Directory.Exists(workspace));
             Assert.Equal("source", File.ReadAllText(Path.Combine(game, "source.txt")));
@@ -89,7 +89,7 @@ public sealed class ProfileManagerTests
     }
 
     [Fact]
-    public void DeleteUnverifiedWorkspaceDoesNotRemoveItsBootstrapOrUserData()
+    public async Task DeleteUnverifiedWorkspaceDoesNotRemoveItsBootstrapOrUserData()
     {
         var root = Path.Combine(_paths.ConfigDirectory, "Unrelated");
         var workspace = Path.Combine(root, "profile-test");
@@ -102,7 +102,7 @@ public sealed class ProfileManagerTests
         var manager = new ProfileManager(_paths, new WorkspaceBuilder(_paths));
         try
         {
-            Assert.Throws<InvalidOperationException>(() => manager.Delete(profiles, profile));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => manager.DeleteAsync(profiles, profile, () => Task.CompletedTask));
             Assert.Single(profiles);
             Assert.Equal("keep bootstrap", File.ReadAllText(Path.Combine(workspace, ".usvfs-bootstrap", "valuable.dll")));
             Assert.Equal("keep save", File.ReadAllText(Path.Combine(workspace, "userdata", "save")));
@@ -158,12 +158,13 @@ public sealed class ProfileManagerTests
     }
 
     [Fact]
-    public void DeleteStandaloneProfileNeverDeletesModOrWorkspace()
+    public async Task DeleteStandaloneProfileNeverDeletesModOrWorkspace()
     {
         var profile = new ModProfile { Name = "Standalone", IsStandalone = true, WorkspacePath = @"D:\Mods\Standalone" };
         var profiles = new List<ModProfile> { profile };
 
-        var selected = _manager.Delete(profiles, profile);
+        var (selected, failure) = await _manager.DeleteAsync(profiles, profile, () => Task.CompletedTask);
+        Assert.Null(failure);
 
         Assert.Null(selected);
         Assert.Empty(profiles);
@@ -171,25 +172,26 @@ public sealed class ProfileManagerTests
     }
 
     [Fact]
-    public void DeleteUnavailableProfileDoesNotGuessOrDeleteWorkspace()
+    public async Task DeleteUnavailableProfileDoesNotGuessOrDeleteWorkspace()
     {
         var profile = new ModProfile { SettingsLoadError = "missing settings", WorkspacePath = @"D:\unknown-workspace" };
         var profiles = new List<ModProfile> { profile };
 
-        _manager.Delete(profiles, profile);
+        Assert.Null((await _manager.DeleteAsync(profiles, profile, () => Task.CompletedTask)).CleanupFailure);
 
         Assert.Empty(profiles);
         Assert.Empty(_workspaceManager.DeletedProfiles);
     }
 
     [Fact]
-    public void DeleteOverlayProfileDeletesOnlyItsWorkspaceThenSelectsRemainder()
+    public async Task DeleteOverlayProfileDeletesOnlyItsWorkspaceThenSelectsRemainder()
     {
         var removed = new ModProfile { Name = "Removed", GameInstallPath = @"D:\Game" };
         var remaining = new ModProfile { Name = "Remaining" };
         var profiles = new List<ModProfile> { removed, remaining };
 
-        var selected = _manager.Delete(profiles, removed);
+        var (selected, failure) = await _manager.DeleteAsync(profiles, removed, () => Task.CompletedTask);
+        Assert.Null(failure);
 
         Assert.Same(remaining, selected);
         Assert.Single(_workspaceManager.DeletedProfiles);
@@ -197,7 +199,7 @@ public sealed class ProfileManagerTests
     }
 
     [Fact]
-    public void DeleteOverlayProfileDeletesItsLocalAndLegacyUsvfsBootstrap()
+    public async Task DeleteOverlayProfileDeletesItsLocalAndLegacyUsvfsBootstrap()
     {
         var root = Path.Combine(
             Path.GetTempPath(),
@@ -236,7 +238,7 @@ public sealed class ProfileManagerTests
             File.WriteAllText(Path.Combine(remainingLegacyBootstrap, "engine.dll"), "remaining legacy");
             var profiles = new List<ModProfile> { removed, remaining };
 
-            manager.Delete(profiles, removed);
+            Assert.Null((await manager.DeleteAsync(profiles, removed, () => Task.CompletedTask)).CleanupFailure);
 
             Assert.False(Directory.Exists(removedBootstrap));
             Assert.True(Directory.Exists(remainingBootstrap));
@@ -255,16 +257,62 @@ public sealed class ProfileManagerTests
     }
 
     [Fact]
-    public void DeleteKeepsProfileWhenWorkspaceDeletionFails()
+    public async Task DeleteReportsCleanupFailureAfterPersistingRemoval()
     {
         var profile = new ModProfile { Name = "Keep me" };
         var profiles = new List<ModProfile> { profile };
         _workspaceManager.DeleteException = new IOException("Workspace is busy");
 
-        Assert.Throws<IOException>(() => _manager.Delete(profiles, profile));
+        var result = await _manager.DeleteAsync(profiles, profile, () =>
+        {
+            Assert.Empty(profiles);
+            Assert.Empty(_workspaceManager.DeletedProfiles);
+            return Task.CompletedTask;
+        });
 
-        Assert.Single(profiles);
-        Assert.Same(profile, profiles[0]);
+        Assert.IsType<IOException>(result.CleanupFailure);
+        Assert.Empty(profiles);
+    }
+
+    [Fact]
+    public async Task FailedSettingsSaveKeepsProfileOrderAndWorkspaceSave()
+    {
+        var builder = new WorkspaceBuilder(_paths);
+        var manager = new ProfileManager(_paths, builder);
+        var kept = new ModProfile { Name = "Keep" };
+        var profile = new ModProfile { Name = "Remove" };
+        var profiles = new List<ModProfile> { kept, profile };
+        using var store = new SettingsStore(_paths);
+        try
+        {
+            profile.WorkspacePath = builder.EnsureProfileWorkspace(profile, string.Empty);
+            var save = Path.Combine(profile.WorkspacePath, "userdata", "savedgames", "keep.sav");
+            Directory.CreateDirectory(Path.GetDirectoryName(save)!);
+            File.WriteAllText(save, "saved game");
+            await store.SaveAsync(new AppSettings { Profiles = [.. profiles] });
+            using (var locked = new FileStream(_paths.SettingsFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                await Assert.ThrowsAsync<SettingsPersistenceException>(() => manager.DeleteAsync(
+                    profiles, profile, () => store.SaveAsync(new AppSettings { Profiles = [.. profiles] })));
+
+            Assert.Equal(new[] { kept, profile }, profiles);
+            Assert.Equal("saved game", File.ReadAllText(save));
+            using var reopened = new SettingsStore(_paths);
+            Assert.Contains((await reopened.LoadAsync()).Profiles, loaded => loaded.Id == profile.Id);
+
+            var deletion = await manager.DeleteAsync(profiles, profile, async () =>
+            {
+                await reopened.SaveAsync(new AppSettings { Profiles = [.. profiles] });
+                Assert.True(File.Exists(save));
+            });
+            Assert.Null(deletion.CleanupFailure);
+            Assert.False(Directory.Exists(profile.WorkspacePath));
+            Assert.Equal(kept.Id, Assert.Single((await reopened.LoadAsync()).Profiles).Id);
+        }
+        finally
+        {
+            if (Directory.Exists(_paths.ConfigDirectory))
+                Directory.Delete(_paths.ConfigDirectory, recursive: true);
+        }
     }
 
     [Fact]
@@ -363,6 +411,8 @@ public sealed class ProfileManagerTests
                 ? Path.Combine(Path.GetTempPath(), $"profile-{profile.Id}")
                 : profile.WorkspacePath;
         }
+
+        public void ValidateProfileWorkspaceDeletion(ModProfile profile, string gamePath) { }
 
         public void DeleteProfileWorkspace(ModProfile profile, string gamePath)
         {

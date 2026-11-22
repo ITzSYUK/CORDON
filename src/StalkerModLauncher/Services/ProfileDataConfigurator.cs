@@ -19,8 +19,9 @@ internal static class ProfileDataConfigurator
         CancellationToken cancellationToken = default)
     {
         var manualSource = layerPlan?.ManualFsgameSource;
-        var selectedSource = manualSource ??
-                             (layerPlan?.UsesFsgameLaunchArgument == true ? layerPlan.FindFsgameSource() : null);
+        var selectedSource = layerPlan?.FindFsgameSource();
+        if (layerPlan is not null && selectedSource is null)
+            throw new FileNotFoundException(MissingFsgameMessage);
         var fsgamePath = selectedSource is null
             ? FindFileDirectory(currentWorkspace, "fsgame.ltx") is { } directory
                 ? Path.Combine(directory, "fsgame.ltx")

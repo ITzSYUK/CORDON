@@ -433,6 +433,8 @@ public static class Strings
     public static string Profile_DeleteRegularFormat => Get();
     public static string Profile_DeleteTitle => Get();
     public static string Profile_DeleteFailed => Get();
+    public static string Profile_DeletedCleanupFailedFormat => Get();
+    public static string Profile_RetryDeletedCleanup => Get();
     public static string Profile_StandaloneFolderMissing => Get();
     public static string Mod_ScanPickFolder => Get();
     public static string Mod_Scanning => Get();

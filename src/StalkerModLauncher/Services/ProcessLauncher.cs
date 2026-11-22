@@ -7,16 +7,16 @@ namespace StalkerModLauncher.Services;
 
 public interface ILaunchPlanExecutor
 {
-    Process Start(LaunchPlan plan, IProgress<string>? progress = null);
+    ProfileLaunchHandle Start(LaunchPlan plan, IProgress<string>? progress = null);
 }
 
 public sealed class LaunchPlanExecutor : ILaunchPlanExecutor
 {
-    public Process Start(LaunchPlan plan, IProgress<string>? progress = null)
+    public ProfileLaunchHandle Start(LaunchPlan plan, IProgress<string>? progress = null)
     {
         if (plan.ProcessStarter is not null)
         {
-            return plan.ProcessStarter(plan, progress);
+            return new ProfileLaunchHandle(plan.ProcessStarter(plan, progress), activeProcessIds: plan.ActiveProcessIds);
         }
 
         return ProcessLauncher.Start(plan);
@@ -26,50 +26,67 @@ public sealed class LaunchPlanExecutor : ILaunchPlanExecutor
 public static class ProcessLauncher
 {
     private const int ErrorElevationRequired = 740;
+    internal const string ElevatedLaunchArgument = "--run-elevated-game";
+    private const string JobPrefix = @"Local\CORDON-Game-";
 
-    public static Process Start(LaunchPlan plan)
+    public static ProfileLaunchHandle Start(LaunchPlan plan)
     {
-        return Start(plan.ExecutablePath, plan.Arguments, plan.WorkingDirectory);
-    }
-
-    public static Process Start(string executablePath, string? launchArguments, string workingDir)
-    {
+        var job = WindowsGameJob.Create();
         try
         {
-            return StartCore(executablePath, launchArguments, workingDir, useShellExecute: false, verb: null);
+            return job.Track(job.Start(plan.ExecutablePath, plan.Arguments, plan.WorkingDirectory));
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorElevationRequired)
         {
-            return StartCore(executablePath, launchArguments, workingDir, useShellExecute: true, verb: "runas");
+            job.Dispose();
+            return StartElevated(plan);
+        }
+        catch
+        {
+            job.Dispose();
+            throw;
         }
     }
 
-    private static Process StartCore(
-        string executablePath,
-        string? launchArguments,
-        string workingDir,
-        bool useShellExecute,
-        string? verb)
+    private static ProfileLaunchHandle StartElevated(LaunchPlan plan)
     {
+        var jobName = JobPrefix + Guid.NewGuid().ToString("N");
         var startInfo = new ProcessStartInfo
         {
-            FileName = executablePath,
-            Arguments = launchArguments?.Trim() ?? string.Empty,
-            WorkingDirectory = workingDir,
-            UseShellExecute = useShellExecute
+            FileName = Environment.ProcessPath ?? throw new InvalidOperationException(Strings.Startup_ExecutablePathMissing),
+            WorkingDirectory = AppContext.BaseDirectory,
+            UseShellExecute = true,
+            Verb = "runas"
         };
+        startInfo.ArgumentList.Add(ElevatedLaunchArgument);
+        startInfo.ArgumentList.Add(jobName);
+        startInfo.ArgumentList.Add(plan.ExecutablePath);
+        startInfo.ArgumentList.Add(plan.Arguments);
+        startInfo.ArgumentList.Add(plan.WorkingDirectory);
 
-        if (!string.IsNullOrWhiteSpace(verb))
+        var job = WindowsGameJob.Create(jobName);
+        try
         {
-            startInfo.Verb = verb;
+            var helper = Process.Start(startInfo) ?? throw new InvalidOperationException(Strings.Error_WindowsDidNotStartGame);
+            return job.Track(helper);
         }
-
-        var process = Process.Start(startInfo);
-        if (process is null)
+        catch
         {
+            job.Dispose();
+            throw;
+        }
+    }
+
+    internal static async Task<int> RunElevatedGameAsync(string[] arguments)
+    {
+        if (arguments is not [ElevatedLaunchArgument, var jobName, var executable, var commandLine, var workingDirectory] ||
+            !jobName.StartsWith(JobPrefix, StringComparison.Ordinal) ||
+            !Guid.TryParseExact(jobName[JobPrefix.Length..], "N", out _) ||
+            !Path.IsPathFullyQualified(executable) || !Path.IsPathFullyQualified(workingDirectory))
             throw new InvalidOperationException(Strings.Error_WindowsDidNotStartGame);
-        }
 
-        return process;
+        using var job = WindowsGameJob.Open(jobName);
+        using var game = job.Start(executable, commandLine, workingDirectory);
+        return await job.WaitForCompletionAsync(game);
     }
 }

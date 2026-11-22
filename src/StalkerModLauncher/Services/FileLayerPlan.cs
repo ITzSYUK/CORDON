@@ -7,6 +7,7 @@ namespace StalkerModLauncher.Services;
 public sealed partial class FileLayerPlan
 {
     private string _automaticFsgameRelativePath = "fsgame.ltx";
+    private bool _useWorkspaceFsgameSearch;
 
     private FileLayerPlan(IReadOnlyList<FileLayer> layers)
     {
@@ -55,27 +56,32 @@ public sealed partial class FileLayerPlan
             return ManualFsgameSource;
         }
 
-        return FindFinalFsgameSource(SourceLayers, _automaticFsgameRelativePath);
+        return FindFinalFsgameSource(SourceLayers, _automaticFsgameRelativePath,
+            _useWorkspaceFsgameSearch && !UsesFsgameLaunchArgument, UsesAnomalyAppDataAlias);
     }
 
     internal static ProfileFsgameSource? ResolveFsgameSource(ModProfile profile)
     {
-        var relativePath = ResolveFsgameLaunchArgument(profile.LaunchArguments) ?? "fsgame.ltx";
+        var relativePath = ResolveFsgameLaunchArgument(profile.LaunchArguments);
         var manualSource = ResolveManualFsgameSource(profile);
         if (manualSource is not null)
         {
             return manualSource;
         }
 
-        return FindFinalFsgameSource(
-            CreateSourceLayers(profile.GameInstallPath, profile),
-            relativePath);
+        var layers = CreateSourceLayers(profile.GameInstallPath, profile);
+        var searchNested = relativePath is null && profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace;
+        return FindFinalFsgameSource(layers, relativePath ?? "fsgame.ltx", searchNested,
+            searchNested && UsesAnomalyLauncher(profile.GameInstallPath, layers, profile.ExecutableRelativePath));
     }
 
-    public IReadOnlyList<FileLayerFile> FindAllProviders(string relativePath)
+    public IReadOnlyList<FileLayerFile> FindAllProviders(string relativePath) =>
+        FindProviders(SourceLayers, relativePath).ToArray();
+
+    private static IEnumerable<FileLayerFile> FindProviders(IEnumerable<FileLayer> layers, string relativePath)
     {
         FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_LayerFile);
-        return SourceLayers
+        return layers
             .Where(layer => Directory.Exists(layer.RootPath))
             .Where(layer => !IsExcluded(layer, relativePath))
             .Select(layer => new FileLayerFile(
@@ -83,8 +89,7 @@ public sealed partial class FileLayerPlan
                 relativePath,
                 GetDisplayName(layer),
                 layer))
-            .Where(source => File.Exists(source.FullPath))
-            .ToArray();
+            .Where(source => File.Exists(source.FullPath));
     }
 
     public IReadOnlyList<FileLayerExecutableCandidate> GetExecutableCandidates(CancellationToken cancellationToken = default)
@@ -175,6 +180,8 @@ public sealed partial class FileLayerPlan
     public static FileLayerPlan CreateForProfile(string gamePath, ModProfile profile, string workspaceRoot)
     {
         var plan = CreateForFileAnalysis(gamePath, profile, workspaceRoot);
+        plan._useWorkspaceFsgameSearch = profile.LaunchBackendKind == LaunchBackendKind.LinkedWorkspace;
+        plan.UsesAnomalyAppDataAlias = UsesAnomalyLauncher(gamePath, plan.SourceLayers, profile.ExecutableRelativePath);
         plan.ManualFsgameSource = ResolveManualFsgameSource(profile);
         if (ResolveFsgameLaunchArgument(profile.LaunchArguments) is { } relativePath)
         {
@@ -191,14 +198,18 @@ public sealed partial class FileLayerPlan
             workspaceRoot,
             gamePath,
             launchArgumentSource?.FullPath);
-        var executable = plan.FindFinalFile(profile.ExecutableRelativePath);
-        plan.UsesAnomalyAppDataAlias = executable is not null &&
-            (AnomalyLauncherLocator.IsLauncherExecutable(executable.FullPath) ||
-             AnomalyLauncherLocator.IsBaseGameLauncher(gamePath, executable.FullPath));
         if (plan.UsesAnomalyAppDataAlias && plan.FindFsgameSource() is { } fsgame &&
             AnomalyAppDataAlias.IsAppDataPath(fsgame.RelativePath))
             throw new InvalidOperationException(Strings.Error_AnomalyFsgameInAppData);
         return plan;
+    }
+
+    private static bool UsesAnomalyLauncher(string gamePath, IEnumerable<FileLayer> layers, string executablePath)
+    {
+        var executable = FindProviders(layers, executablePath).LastOrDefault();
+        return executable is not null &&
+               (AnomalyLauncherLocator.IsLauncherExecutable(executable.FullPath) ||
+                AnomalyLauncherLocator.IsBaseGameLauncher(gamePath, executable.FullPath));
     }
 
     internal static FileLayerPlan CreateForFileAnalysis(string gamePath, ModProfile profile, string workspaceRoot)
@@ -331,18 +342,52 @@ public sealed partial class FileLayerPlan
 
     private static ProfileFsgameSource? FindFinalFsgameSource(
         IEnumerable<FileLayer> layers,
-        string relativePath)
+        string relativePath,
+        bool searchNested,
+        bool skipAppData)
     {
         FileSystemSafety.EnsureRelativePath(relativePath, Strings.Safety_ProfileFsgame);
-        return layers
-            .Where(layer => layer.Kind != FileLayerKind.UserData && Directory.Exists(layer.RootPath))
+        var available = layers
+            .Where(layer => layer.Kind != FileLayerKind.UserData && Directory.Exists(layer.RootPath));
+        var exact = available
             .Where(layer => !IsExcluded(layer, relativePath))
             .OrderBy(layer => layer.Order)
             .Select(layer => new ProfileFsgameSource(
                 Path.Combine(layer.RootPath, relativePath),
                 relativePath,
                 GetDisplayName(layer)))
-            .LastOrDefault(source => File.Exists(source.FullPath));
+            .LastOrDefault(source => File.Exists(source.FullPath) &&
+                (!searchNested || (File.GetAttributes(source.FullPath) & FileAttributes.ReparsePoint) == 0));
+        if (exact is not null || !searchNested)
+            return exact;
+
+        return available
+            .OrderBy(layer => layer.Order)
+            .Reverse()
+            .SelectMany(layer => EnumerateNestedFsgamePaths(layer.RootPath, skipAppData)
+                .Where(path => !IsExcluded(layer, path))
+                .Select(path => new ProfileFsgameSource(
+                    Path.Combine(layer.RootPath, path), path, GetDisplayName(layer))))
+            .OrderBy(source => source.RelativePath.Count(character => character == Path.DirectorySeparatorChar))
+            .ThenBy(source => source.RelativePath, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+    }
+
+    private static IEnumerable<string> EnumerateNestedFsgamePaths(string root, bool skipAppData)
+    {
+        var options = new EnumerationOptions { AttributesToSkip = FileAttributes.ReparsePoint };
+        foreach (var directory in Directory.EnumerateDirectories(root, "*", options))
+        {
+            if (skipAppData && Path.GetFileName(directory).Equals("appdata", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            foreach (var candidate in new[] { directory }.Concat(Directory.EnumerateDirectories(directory, "*", options)))
+            {
+                var file = new FileInfo(Path.Combine(candidate, "fsgame.ltx"));
+                if (file.Exists && (file.Attributes & FileAttributes.ReparsePoint) == 0)
+                    yield return Path.GetRelativePath(root, file.FullName);
+            }
+        }
     }
 
     private static IEnumerable<FileLayerFile> EnumerateLayerFiles(FileLayer layer, CancellationToken cancellationToken)

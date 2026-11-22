@@ -309,25 +309,7 @@ internal static class ProfileLaunchPlanResolver
             return string.Empty;
         }
 
-        if (plan.ManualFsgameSource is { } manualSource)
-        {
-            return Path.GetDirectoryName(manualSource.RelativePath) ?? string.Empty;
-        }
-
-        string? result = null;
-        foreach (var layer in plan.SourceLayers.Where(layer => Directory.Exists(layer.RootPath)))
-        {
-            var directory = ProfileDataConfigurator.FindFileDirectory(layer.RootPath, "fsgame.ltx");
-            if (directory is null)
-            {
-                continue;
-            }
-
-            var relative = Path.GetRelativePath(layer.RootPath, directory);
-            result = relative == "." ? string.Empty : relative;
-        }
-
-        return result ?? string.Empty;
+        return Path.GetDirectoryName(plan.FindFsgameSource()?.RelativePath) ?? string.Empty;
     }
 
     private static string FindWorkingDirectoryRelative(string root, string currentRelative)

@@ -433,6 +433,7 @@ public sealed class MainViewModelTests
 
             await viewModel.DeleteConfirmedProfileAsync(Assert.Single(viewModel.Profiles));
 
+            Assert.Same(Assert.Single(viewModel.Profiles), viewModel.SelectedProfile);
             Assert.Contains(Strings.Profile_DeleteFailed, dialogs.LastError, StringComparison.Ordinal);
             Assert.DoesNotContain(viewModel.ActivityLog.Entries, entry => entry.Contains(
                 LocalizedText.Format(Strings.Log_ProfileDeletedFormat, profile.Name), StringComparison.Ordinal));
@@ -1460,6 +1461,8 @@ public sealed class MainViewModelTests
                 ? Path.Combine(Path.GetTempPath(), $"profile-{profile.Id}")
                 : profile.WorkspacePath;
         }
+
+        public void ValidateProfileWorkspaceDeletion(ModProfile profile, string gamePath) { }
 
         public void DeleteProfileWorkspace(ModProfile profile, string gamePath)
         {
