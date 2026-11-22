@@ -232,13 +232,24 @@ public sealed class MainViewModelTests
             loaded.IsPreparing = false;
             loaded.Description = "Edited after reload";
             loaded.Mods[0].Name = "Edited mod";
+            const int sharingViolation = unchecked((int)0x80070020);
             await WaitUntilAsync(() =>
             {
-                using var reader = new StreamReader(new FileStream(paths.GetProfileFile(existing.Id), FileMode.Open,
-                    FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
-                var json = reader.ReadToEnd();
-                return !File.Exists(paths.SettingsPendingFile) &&
-                    json.Contains("Edited after reload", StringComparison.Ordinal) && json.Contains("Edited mod", StringComparison.Ordinal);
+                if (File.Exists(paths.SettingsPendingFile)) return false;
+
+                try
+                {
+                    using var reader = new StreamReader(new FileStream(paths.GetProfileFile(existing.Id), FileMode.Open,
+                        FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
+                    var json = reader.ReadToEnd();
+                    return !File.Exists(paths.SettingsPendingFile) &&
+                        json.Contains("Edited after reload", StringComparison.Ordinal) && json.Contains("Edited mod", StringComparison.Ordinal);
+                }
+                catch (IOException ex) when (ex.HResult == sharingViolation)
+                {
+                    // An autosave may start after the pending-file check and replace this profile.
+                    return false;
+                }
             });
             Assert.True(viewModel.IsGameValid);
             Directory.Delete(modRoot);
