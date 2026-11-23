@@ -36,11 +36,11 @@
                 <DataTemplate>
                     <Grid x:Name="SaveRow" Height="78" Background="Transparent" ClipToBounds="True">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="96"/>
+                            <ColumnDefinition Width="140"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border Background="{DynamicResource FieldBackgroundBrush}" Margin="6" CornerRadius="3">
-                            <Image Source="{Binding Thumbnail}" Stretch="Uniform"/>
+                        <Border Background="{DynamicResource FieldBackgroundBrush}" Margin="6,3" CornerRadius="3">
+                            <Image Source="{Binding Thumbnail}" Width="128" Height="72" Stretch="Fill"/>
                         </Border>
                         <TextBlock Grid.Column="1" Margin="6,0,12,0" VerticalAlignment="Center"
                                    Text="{Binding Name}" TextWrapping="NoWrap"
