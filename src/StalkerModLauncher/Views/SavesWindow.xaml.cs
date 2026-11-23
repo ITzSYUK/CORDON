@@ -59,7 +59,7 @@ public partial class SavesWindow : Window
         }
     }
 
-    private static BitmapImage? ReadThumbnail(string savePath)
+    private static BitmapSource? ReadThumbnail(string savePath)
     {
         var imagePath = Path.ChangeExtension(savePath, ".dds");
         if (!File.Exists(imagePath)) return null;
@@ -68,7 +68,7 @@ public partial class SavesWindow : Window
         {
             return ScreenshotImageLoader.LoadSaveThumbnail(imagePath);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or System.Runtime.InteropServices.COMException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FileFormatException or NotSupportedException or System.Runtime.InteropServices.COMException)
         {
             return null;
         }
@@ -107,5 +107,5 @@ public partial class SavesWindow : Window
         DialogResult = true;
     }
 
-    private sealed record SaveRow(string Name, string FilePath, BitmapImage? Thumbnail);
+    private sealed record SaveRow(string Name, string FilePath, BitmapSource? Thumbnail);
 }
