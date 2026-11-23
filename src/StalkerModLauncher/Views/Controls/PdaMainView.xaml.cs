@@ -63,6 +63,7 @@ public partial class PdaMainView : UserControl
         PageSectionIcon.Visibility = showProfileTypeIcon ? Visibility.Collapsed : Visibility.Visible;
         SetActiveNavigationButton(page switch
         {
+            SavesView => SavesNavButton,
             PdaScreenshotsView => ScreenshotsNavButton,
             PdaHealthView => StatusNavButton,
             PdaProfileSettingsView => SettingsNavButton,
@@ -88,6 +89,7 @@ public partial class PdaMainView : UserControl
 
     private void SetActiveNavigationButton(Button? activeButton)
     {
+        SavesNavButton.Tag = ReferenceEquals(activeButton, SavesNavButton) ? "Active" : null;
         ScreenshotsNavButton.Tag = ReferenceEquals(activeButton, ScreenshotsNavButton) ? "Active" : null;
         StatusNavButton.Tag = ReferenceEquals(activeButton, StatusNavButton) ? "Active" : null;
         SettingsNavButton.Tag = ReferenceEquals(activeButton, SettingsNavButton) ? "Active" : null;
