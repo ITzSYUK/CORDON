@@ -179,6 +179,60 @@ public sealed class ProfileLauncherTests
         Assert.Null(backend.Context!.FileLayerPlan);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task LaunchFromSaveAddsOneTimeArgumentsAndUsesOnlySaveFiles(bool standalone)
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var game = Path.Combine(root, "game");
+        Directory.CreateDirectory(game);
+        try
+        {
+            File.WriteAllText(Path.Combine(game, "game.exe"), "engine");
+            File.WriteAllText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true | false | appdata");
+            var profile = new ModProfile
+            {
+                IsStandalone = standalone,
+                GameInstallPath = game,
+                ExecutableRelativePath = "game.exe",
+                LaunchArguments = "-nointro",
+                LaunchBackendKind = LaunchBackendKind.LinkedWorkspace
+            };
+            var paths = new AppPaths(Path.Combine(root, "config"), Path.Combine(root, "workspaces"), false);
+            var builder = new WorkspaceBuilder(paths);
+            var manager = new ProfileManager(paths, builder);
+            if (standalone)
+                profile.Mods.Add(new ModEntry { IsEnabled = true, SourcePath = game });
+            else
+                manager.EnsureProfileFolderPath(profile);
+
+            var directories = ProfileDataPathResolver.GetSavedGameDirectories(profile);
+            var saves = directories[0];
+            Directory.CreateDirectory(saves);
+            var savePath = Path.Combine(saves, "Сталкер - quicksave.scop");
+            File.WriteAllText(savePath, "save");
+            File.WriteAllText(Path.ChangeExtension(savePath, ".dds"), "thumbnail");
+            File.WriteAllText(Path.Combine(saves, "unsafe)name.sav"), "save");
+            using var process = Process.GetCurrentProcess();
+            var executor = new RecordingLaunchPlanExecutor(process);
+            var launcher = new ProfileLauncher(
+                [new StandaloneLaunchBackend(), new LinkedWorkspaceLaunchBackend(builder)], executor, manager);
+            var savesFound = SavedGameLaunch.Enumerate(directories);
+            Assert.Equal(2, savesFound.Count());
+            await launcher.LaunchAsync(game, profile, new ListProgress(), savedGamePath: savePath);
+            Assert.Equal("-nointro -start server(Сталкер - quicksave/single/alife/load) client(localhost)", executor.Plan!.Arguments);
+            Assert.Equal("-nointro", profile.LaunchArguments);
+
+            await launcher.LaunchAsync(game, profile, new ListProgress());
+            Assert.Equal("-nointro", executor.Plan!.Arguments);
+            Assert.Throws<InvalidDataException>(() => SavedGameLaunch.GetSaveName(profile, Path.Combine(saves, "unsafe)name.sav")));
+            Assert.Throws<FileNotFoundException>(() => SavedGameLaunch.GetSaveName(profile, Path.Combine(saves, "missing.sav")));
+            Assert.Throws<InvalidOperationException>(() => SavedGameLaunch.AppendArguments("-start server(existing)", "selected"));
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
+
     private sealed class RecordingLaunchBackend(LaunchBackendKind kind) : IProfileLaunchBackend
     {
         public LaunchBackendKind Kind { get; } = kind;

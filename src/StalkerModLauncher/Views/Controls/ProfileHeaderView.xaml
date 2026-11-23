@@ -22,7 +22,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <ThicknessAnimation Storyboard.TargetProperty="Margin"
-                                                            To="0,0,600,0"
+                                                            To="0,0,670,0"
                                                             Duration="0:0:0.46">
                                             <ThicknessAnimation.EasingFunction>
                                                 <CubicEase EasingMode="EaseOut"/>
@@ -120,7 +120,7 @@
                                     <BeginStoryboard>
                                         <Storyboard>
                                             <DoubleAnimation Storyboard.TargetProperty="Width"
-                                                             To="440"
+                                                             To="500"
                                                              Duration="0:0:0.46">
                                                 <DoubleAnimation.EasingFunction>
                                                     <CubicEase EasingMode="EaseOut"/>
@@ -168,6 +168,9 @@
                             Margin="0,0,8,0"/>
                     <Button Content="{x:Static res:Strings.Screenshots_Title}"
                             Click="ScreenshotsButton_OnClick"
+                            Margin="0,0,8,0"/>
+                    <Button Content="{x:Static res:Strings.Saves_Title}"
+                            Click="SavesButton_OnClick"
                             Margin="0,0,12,0"/>
                 </StackPanel>
             </Border>

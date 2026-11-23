@@ -8,6 +8,18 @@ namespace StalkerModLauncher.Resources;
 
 public static class Strings
 {
+    public static string Saves_Title => Get();
+    public static string Saves_TitleFormat => Get();
+    public static string Saves_Loading => Get();
+    public static string Saves_Empty => Get();
+    public static string Saves_ReadFailedFormat => Get();
+    public static string Saves_FileUnavailable => Get();
+    public static string Saves_UnsupportedName => Get();
+    public static string Saves_ConflictingArguments => Get();
+    public static string Saves_AnomalyEngineUnknown => Get();
+    public static string Saves_AnomalyLaunchFormat => Get();
+    public static string Saves_SwmRequiresLauncher => Get();
+    public static string Saves_OpenSwmLauncher => Get();
     public static string ProfileImport_BaseGameMissing => Get();
     public static string ProfileImport_Name => Get();
     public static string ProfileImport_SummaryFormat => Get();

@@ -90,7 +90,8 @@
                                                     Margin="0,0,0,10"
                                                     ProfileHealthRequested="ProfileHealthButton_OnClick"
                                                     ProfileSettingsRequested="EditProfileButton_OnClick"
-                                                    ScreenshotsRequested="ScreenshotsButton_OnClick"/>
+                                                    ScreenshotsRequested="ScreenshotsButton_OnClick"
+                                                    SavesRequested="SavesButton_OnClick"/>
 
                         <controls:ClassicProfileOverviewBar Grid.Row="1"
                                                             Margin="0,0,0,12"/>

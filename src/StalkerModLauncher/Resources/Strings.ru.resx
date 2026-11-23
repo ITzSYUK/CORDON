@@ -1209,4 +1209,16 @@
   <data name="Launch_ModeUsvfs" xml:space="preserve"><value>USVFS</value></data>
   <data name="Writable_SpatialAnomaliesReason" xml:space="preserve"><value>Spatial Anomalies сохраняет в этом файле идентификаторы созданных ограничителей.</value></data>
   <data name="Writable_SwmSpeedReason" xml:space="preserve"><value>SWM записывает в этот файл текущую скорость игрового времени.</value></data>
+  <data name="Saves_Title" xml:space="preserve"><value>Сохранения</value></data>
+  <data name="Saves_TitleFormat" xml:space="preserve"><value>Сохранения — {0}</value></data>
+  <data name="Saves_Loading" xml:space="preserve"><value>Загрузка списка сохранений…</value></data>
+  <data name="Saves_Empty" xml:space="preserve"><value>У этого профиля пока нет сохранений.</value></data>
+  <data name="Saves_ReadFailedFormat" xml:space="preserve"><value>Не удалось прочитать сохранения. {0}</value></data>
+  <data name="Saves_FileUnavailable" xml:space="preserve"><value>Выбранное сохранение больше недоступно в этом профиле.</value></data>
+  <data name="Saves_UnsupportedName" xml:space="preserve"><value>Движок не может принять такое имя сохранения в командной строке.</value></data>
+  <data name="Saves_ConflictingArguments" xml:space="preserve"><value>Удалите существующий аргумент -start или -load перед запуском из сохранения.</value></data>
+  <data name="Saves_AnomalyEngineUnknown" xml:space="preserve"><value>Выберите рендерер в лаунчере Anomaly и повторите запуск из сохранения.</value></data>
+  <data name="Saves_AnomalyLaunchFormat" xml:space="preserve"><value>Запуск сохранения с выбранным движком Anomaly — {0}.</value></data>
+  <data name="Saves_SwmRequiresLauncher" xml:space="preserve"><value>Для загрузки сохранений этого профиля используйте лаунчер SWM.</value></data>
+  <data name="Saves_OpenSwmLauncher" xml:space="preserve"><value>Открыть лаунчер SWM</value></data>
 </root>

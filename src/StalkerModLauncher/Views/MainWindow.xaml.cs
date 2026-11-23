@@ -150,6 +150,16 @@ public partial class MainWindow : Window
         _navigation.ShowScreenshots(this, profile);
     }
 
+    private async void SavesButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { SelectedProfile: { } profile } viewModel)
+            return;
+
+        var window = new SavesWindow(profile, viewModel.CanLaunchProfile(profile)) { Owner = this };
+        if (window.ShowDialog() == true)
+            await viewModel.LaunchProfileAsync(profile, window.SelectedSavePath);
+    }
+
     private void ModCatalogButton_OnClick(object sender, RoutedEventArgs e)
     {
         _navigation.ShowModCatalog(this);

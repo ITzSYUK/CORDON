@@ -12,6 +12,8 @@ public static class ScreenshotImageLoader
         return Load(filePath, ThumbnailDecodeWidth);
     }
 
+    internal static BitmapImage LoadSaveThumbnail(string filePath) => Load(filePath, 160);
+
     public static BitmapImage LoadForDisplay(string filePath)
     {
         return Load(filePath, DisplayDecodeWidth);

@@ -10,6 +10,7 @@ public interface IProfileLauncher
         string gamePath,
         ModProfile profile,
         IProgress<string> progress,
+        string? savedGamePath = null,
         CancellationToken cancellationToken = default);
 }
 
@@ -34,6 +35,7 @@ public sealed class ProfileLauncher : IProfileLauncher
         string gamePath,
         ModProfile profile,
         IProgress<string> progress,
+        string? savedGamePath = null,
         CancellationToken cancellationToken = default)
     {
         if (profile.IsRunning || profile.IsPreparing)
@@ -41,7 +43,8 @@ public sealed class ProfileLauncher : IProfileLauncher
         profile.IsPreparing = true;
         try
         {
-            return await LaunchCoreAsync(gamePath, profile, progress, cancellationToken);
+            var saveName = savedGamePath is null ? null : SavedGameLaunch.GetSaveName(profile, savedGamePath);
+            return await LaunchCoreAsync(gamePath, profile, progress, saveName, cancellationToken);
         }
         catch (Exception ex) when (
             !profile.IsStandalone &&
@@ -59,6 +62,7 @@ public sealed class ProfileLauncher : IProfileLauncher
         string gamePath,
         ModProfile profile,
         IProgress<string> progress,
+        string? saveName,
         CancellationToken cancellationToken)
     {
         var backend = ResolveBackend(profile.IsStandalone ? LaunchBackendKind.Standalone : profile.LaunchBackendKind);
@@ -68,11 +72,14 @@ public sealed class ProfileLauncher : IProfileLauncher
             LaunchBackendKind.LinkedWorkspace => Strings.Launch_ModeWorkspace,
             _ => Strings.Profile_Standalone
         }));
-        var context = CreateBackendContext(gamePath, profile, progress);
+        var context = CreateBackendContext(gamePath, profile, progress) with { SaveName = saveName };
         var plan = await backend.PrepareAsync(context, progress, cancellationToken);
-        progress.Report(LocalizedText.Format(Strings.Launch_ExecutableFormat, plan.ExecutablePath));
         try
         {
+            if (saveName is not null && backend.Kind != LaunchBackendKind.VirtualFileSystem)
+                plan = SavedGameLaunch.ApplyToPhysicalPlan(plan, saveName);
+
+            progress.Report(LocalizedText.Format(Strings.Launch_ExecutableFormat, plan.ExecutablePath));
             var launch = _launchPlanExecutor.Start(plan, progress);
             var completion = launch.Completion;
             if (plan.RuntimeCompletion is not null)

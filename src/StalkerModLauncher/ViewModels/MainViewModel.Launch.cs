@@ -20,7 +20,7 @@ public sealed partial class MainViewModel
         ? LaunchProfileAsync(profile)
         : Task.CompletedTask;
 
-    public async Task LaunchProfileAsync(ModProfile profile)
+    public async Task LaunchProfileAsync(ModProfile profile, string? savedGamePath = null)
     {
         if (IsBuilding) return;
         try
@@ -55,7 +55,7 @@ public sealed partial class MainViewModel
                 BuildProgressText = message;
             });
 
-            var session = await _launchCoordinator.StartAsync(profile.GameInstallPath, profile, progress);
+            var session = await _launchCoordinator.StartAsync(profile.GameInstallPath, profile, progress, savedGamePath: savedGamePath);
             profile.IsRunning = true;
             Log(LocalizedText.Format(Strings.Launch_ProcessCreatedFormat, session.ProcessId), LauncherLogLevel.Detailed);
             RaiseCommandStates();

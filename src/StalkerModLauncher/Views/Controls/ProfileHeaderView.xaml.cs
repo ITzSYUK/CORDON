@@ -13,6 +13,7 @@ public partial class ProfileHeaderView : UserControl
     public event RoutedEventHandler? ProfileHealthRequested;
     public event RoutedEventHandler? ProfileSettingsRequested;
     public event RoutedEventHandler? ScreenshotsRequested;
+    public event RoutedEventHandler? SavesRequested;
 
     private void ProfileHealthButton_OnClick(object sender, RoutedEventArgs e)
     {
@@ -29,4 +30,8 @@ public partial class ProfileHeaderView : UserControl
         ScreenshotsRequested?.Invoke(this, e);
     }
 
+    private void SavesButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        SavesRequested?.Invoke(this, e);
+    }
 }

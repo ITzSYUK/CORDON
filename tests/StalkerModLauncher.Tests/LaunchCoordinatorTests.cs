@@ -65,6 +65,7 @@ public sealed class LaunchCoordinatorTests
             string gamePath,
             ModProfile profile,
             IProgress<string> progress,
+            string? savedGamePath = null,
             CancellationToken cancellationToken = default)
         {
             GamePath = gamePath;
