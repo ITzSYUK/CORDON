@@ -8,9 +8,6 @@
         <Style x:Key="SaveLaunchButtonStyle" TargetType="Button" BasedOn="{StaticResource InlineProfileActionButtonStyle}">
             <Setter Property="Width" Value="84"/>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True">
-                    <Setter Property="BorderThickness" Value="0"/>
-                </DataTrigger>
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True"/>
