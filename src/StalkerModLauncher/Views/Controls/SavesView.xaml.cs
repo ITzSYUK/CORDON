@@ -22,7 +22,6 @@ public partial class SavesView : UserControl
         {
             var theme = new ResourceDictionary { Source = Themes.PdaThemeSelector.CurrentSource };
             Resources.MergedDictionaries.Add(theme);
-            Resources["SaveLaunchButtonStyle"] = theme["PdaBaseButtonStyle"];
             SetResourceReference(BackgroundProperty, "PdaPageBackgroundBrush");
         }
         if (requiresSwmLauncher)

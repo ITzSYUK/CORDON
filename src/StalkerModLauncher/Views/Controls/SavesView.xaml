@@ -7,19 +7,28 @@
     <UserControl.Resources>
         <Style x:Key="SaveLaunchButtonStyle" TargetType="Button" BasedOn="{StaticResource InlineProfileActionButtonStyle}">
             <Setter Property="Width" Value="84"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True">
+                    <Setter Property="BorderThickness" Value="0"/>
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True"/>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Background" Value="{DynamicResource PdaControlHoverBrush}"/>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True"/>
+                        <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Background" Value="{DynamicResource PdaControlPressedBrush}"/>
+                </MultiDataTrigger>
+            </Style.Triggers>
         </Style>
     </UserControl.Resources>
-    <Grid>
-        <Grid.Style>
-            <Style TargetType="Grid">
-                <Setter Property="Margin" Value="16"/>
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True">
-                        <Setter Property="Margin" Value="9"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-        </Grid.Style>
+    <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
@@ -45,9 +54,6 @@
                                             <Setter Property="CornerRadius" Value="4"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource PanelAltBrush}"/>
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
-                                                    <Setter Property="BorderThickness" Value="1"/>
                                                     <Setter Property="CornerRadius" Value="0"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -108,7 +114,7 @@
                         <Button x:Name="LaunchButton" Grid.Column="1" Opacity="0"
                                 IsHitTestVisible="False"
                                 MinWidth="84" Padding="4,5" Margin="0,0,7,0"
-                                Style="{DynamicResource SaveLaunchButtonStyle}"
+                                Style="{StaticResource SaveLaunchButtonStyle}"
                                 HorizontalAlignment="Right" VerticalAlignment="Center"
                                 AutomationProperties.Name="{x:Static res:Strings.Common_Launch}"
                                 Click="LaunchButton_OnClick">
