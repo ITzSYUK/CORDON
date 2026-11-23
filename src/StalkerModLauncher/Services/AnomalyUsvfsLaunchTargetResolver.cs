@@ -16,7 +16,8 @@ internal static class AnomalyUsvfsLaunchTargetResolver
     public static UsvfsLaunchTarget Resolve(
         ModProfile profile,
         FileLayerPlan layerPlan,
-        LaunchPlanResolution launchResolution)
+        LaunchPlanResolution launchResolution,
+        string? saveName = null)
     {
         var plan = launchResolution.Plan
             ?? throw new InvalidOperationException(Strings.Error_UsvfsLaunchPlanNotReady);
@@ -42,6 +43,14 @@ internal static class AnomalyUsvfsLaunchTargetResolver
                 ?? throw new FileNotFoundException(
                     LocalizedText.Format(Strings.Usvfs_AnomalyEngineMissingFormat, profile.UsvfsExecutableOverrideRelativePath));
             return CreateEngineTarget(profile, layerPlan, plan, selectedEngine, isLauncher);
+        }
+
+        if (saveName is not null && isLauncher)
+        {
+            var enginePath = SavedGameLaunch.ResolveAnomalyEngine(relativePath => FindProfileFile(layerPlan, relativePath));
+            var engine = layerPlan.FindFinalFile(enginePath)
+                ?? throw new FileNotFoundException(LocalizedText.Format(Strings.Usvfs_AnomalyEngineMissingFormat, enginePath));
+            return CreateEngineTarget(profile, layerPlan, plan, engine, BypassedLauncher: true);
         }
 
         if (!isLauncher)
@@ -74,11 +83,7 @@ internal static class AnomalyUsvfsLaunchTargetResolver
         FileLayerFile engine,
         bool BypassedLauncher)
     {
-        var storedCommandLine = ProfileWritableGameFileStore.GetStoredFilePath(
-            Path.GetDirectoryName(layerPlan.UserData.RootPath)!, "commandline.txt");
-        var commandLine = File.Exists(storedCommandLine)
-            ? storedCommandLine
-            : layerPlan.FindFinalFile("commandline.txt")?.FullPath;
+        var commandLine = FindProfileFile(layerPlan, "commandline.txt");
         var launcherArguments = commandLine is null
             ? string.Empty
             : File.ReadAllText(commandLine).Trim();
@@ -90,6 +95,13 @@ internal static class AnomalyUsvfsLaunchTargetResolver
             plan.WorkingDirectory,
             engine.SourceName,
             BypassedLauncher);
+    }
+
+    private static string? FindProfileFile(FileLayerPlan layerPlan, string relativePath)
+    {
+        var stored = ProfileWritableGameFileStore.GetStoredFilePath(
+            Path.GetDirectoryName(layerPlan.UserData.RootPath)!, relativePath);
+        return File.Exists(stored) ? stored : layerPlan.FindFinalFile(relativePath)?.FullPath;
     }
 
     private static string CombineArguments(string first, string second)

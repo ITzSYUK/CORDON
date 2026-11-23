@@ -24,6 +24,7 @@ public partial class PdaMainView : UserControl
     public event RoutedEventHandler? ProfileHealthRequested;
     public event RoutedEventHandler? ProfileSettingsRequested;
     public event RoutedEventHandler? ScreenshotsRequested;
+    public event RoutedEventHandler? SavesRequested;
     public event RoutedEventHandler? ModCatalogRequested;
     public event RoutedEventHandler? AboutRequested;
     public event RoutedEventHandler? LogRequested;
@@ -62,6 +63,7 @@ public partial class PdaMainView : UserControl
         PageSectionIcon.Visibility = showProfileTypeIcon ? Visibility.Collapsed : Visibility.Visible;
         SetActiveNavigationButton(page switch
         {
+            SavesView => SavesNavButton,
             PdaScreenshotsView => ScreenshotsNavButton,
             PdaHealthView => StatusNavButton,
             PdaProfileSettingsView => SettingsNavButton,
@@ -87,6 +89,7 @@ public partial class PdaMainView : UserControl
 
     private void SetActiveNavigationButton(Button? activeButton)
     {
+        SavesNavButton.Tag = ReferenceEquals(activeButton, SavesNavButton) ? "Active" : null;
         ScreenshotsNavButton.Tag = ReferenceEquals(activeButton, ScreenshotsNavButton) ? "Active" : null;
         StatusNavButton.Tag = ReferenceEquals(activeButton, StatusNavButton) ? "Active" : null;
         SettingsNavButton.Tag = ReferenceEquals(activeButton, SettingsNavButton) ? "Active" : null;
@@ -111,6 +114,7 @@ public partial class PdaMainView : UserControl
     private void SettingsTab_OnClick(object sender, RoutedEventArgs e) => ProfileSettingsRequested?.Invoke(this, e);
     private void StatusButton_OnClick(object sender, RoutedEventArgs e) => ProfileHealthRequested?.Invoke(this, e);
     private void ScreenshotsButton_OnClick(object sender, RoutedEventArgs e) => ScreenshotsRequested?.Invoke(this, e);
+    private void SavesButton_OnClick(object sender, RoutedEventArgs e) => SavesRequested?.Invoke(this, e);
     private void AboutButton_OnClick(object sender, RoutedEventArgs e) => AboutRequested?.Invoke(this, e);
     private void LogButton_OnClick(object sender, RoutedEventArgs e) => LogRequested?.Invoke(this, e);
     private void LauncherSettingsButton_OnClick(object sender, RoutedEventArgs e) => LauncherSettingsRequested?.Invoke(this, e);

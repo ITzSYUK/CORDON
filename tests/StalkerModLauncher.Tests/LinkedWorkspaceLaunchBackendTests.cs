@@ -73,7 +73,7 @@ public sealed class LinkedWorkspaceLaunchBackendTests : IAsyncLifetime
         File.Copy(Path.Combine(Environment.SystemDirectory, "cmd.exe"), executable);
 
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-        var launched = await launcher.LaunchAsync(game, profile, new ProgressLog(), timeout.Token);
+        var launched = await launcher.LaunchAsync(game, profile, new ProgressLog(), cancellationToken: timeout.Token);
         using var process = launched.Process;
         var exitCode = await launched.Completion!.WaitAsync(timeout.Token);
 

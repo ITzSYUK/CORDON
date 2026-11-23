@@ -191,6 +191,20 @@ public partial class PdaWindow : Window
         }
     }
 
+    private void SavesButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (PdaView.IsMigrationActive || ViewModel is not { SelectedProfile: { } profile } viewModel)
+            return;
+
+        var page = new SavesView(profile, viewModel.CanLaunchProfile(profile), usePdaTheme: true);
+        page.LaunchRequested += async (_, path) =>
+        {
+            PdaView.ShowProfilePage();
+            await viewModel.LaunchProfileAsync(profile, path);
+        };
+        PdaView.ShowPage(page, LocalizedText.Format(Strings.Saves_TitleFormat, profile.Name), showProfileTypeIcon: true);
+    }
+
     private void ModCatalogButton_OnClick(object sender, RoutedEventArgs e)
     {
         var catalogVm = _navigation.CreateModCatalogViewModel();

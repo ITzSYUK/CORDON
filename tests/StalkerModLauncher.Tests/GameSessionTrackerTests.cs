@@ -39,7 +39,7 @@ public sealed class GameSessionTrackerTests
                 [new LinkedWorkspaceLaunchBackend(builder), new StandaloneLaunchBackend()],
                 profileManager: new ProfileManager(paths, builder));
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            launch = await launcher.LaunchAsync(game, profile, new Progress<string>(), timeout.Token);
+            launch = await launcher.LaunchAsync(game, profile, new Progress<string>(), cancellationToken: timeout.Token);
             await launch.Process.WaitForExitAsync(timeout.Token);
             var rootId = launch.ProcessId;
 

@@ -27,9 +27,10 @@ public sealed class LaunchCoordinator : IDisposable
         string gamePath,
         ModProfile profile,
         IProgress<string> progress,
+        string? savedGamePath = null,
         CancellationToken cancellationToken = default)
     {
-        var launch = await _profileLauncher.LaunchAsync(gamePath, profile, progress, cancellationToken);
+        var launch = await _profileLauncher.LaunchAsync(gamePath, profile, progress, savedGamePath, cancellationToken);
         var completion = _sessionTracker.TrackAsync(
             launch.Process,
             profile.Name,

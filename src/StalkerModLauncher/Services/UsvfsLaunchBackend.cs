@@ -86,11 +86,18 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             throw new InvalidOperationException(launchResolution.Error ?? Strings.Error_UsvfsLaunchPlanNotReady);
         }
 
-        var launchTarget = AnomalyUsvfsLaunchTargetResolver.Resolve(profile, layerPlan, launchResolution);
+        if (context.SaveName is not null && SavedGameLaunch.IsSwmLauncher(launchResolution.Plan.ExecutablePath))
+            throw new InvalidOperationException(Strings.Saves_SwmRequiresLauncher);
+
+        var launchTarget = AnomalyUsvfsLaunchTargetResolver.Resolve(profile, layerPlan, launchResolution, context.SaveName);
+        if (context.SaveName is { } saveName)
+            launchTarget = launchTarget with { Arguments = SavedGameLaunch.AppendArguments(launchTarget.Arguments, saveName) };
         if (launchTarget.BypassedLauncher)
         {
             progress.Report(LocalizedText.Format(
-                Strings.Progress_UsvfsManualEngineFormat,
+                context.SaveName is not null && string.IsNullOrWhiteSpace(profile.UsvfsExecutableOverrideRelativePath)
+                    ? Strings.Saves_AnomalyLaunchFormat
+                    : Strings.Progress_UsvfsManualEngineFormat,
                 Path.GetFileName(launchTarget.ExecutablePath)));
         }
 

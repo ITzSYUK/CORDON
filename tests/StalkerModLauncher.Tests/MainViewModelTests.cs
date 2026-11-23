@@ -1487,6 +1487,7 @@ public sealed class MainViewModelTests
             string gamePath,
             ModProfile profile,
             IProgress<string> progress,
+            string? savedGamePath = null,
             CancellationToken cancellationToken = default)
         {
             throw new NotSupportedException("MainViewModel tests must not launch game processes.");

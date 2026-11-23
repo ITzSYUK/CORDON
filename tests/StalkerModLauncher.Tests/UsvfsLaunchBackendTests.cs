@@ -435,6 +435,16 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
             File.ReadAllText(Path.Combine(workspace, "userdata", "writable-game-files", "AnomalyLauncher.cfg")));
         Assert.Equal("-smap4096 -dbg", overridePlan.Arguments);
         Assert.DoesNotContain(runtime.MappingPlan!.Operations, operation => operation.SourceName == "shared game data");
+
+        profile.UsvfsExecutableOverrideRelativePath = string.Empty;
+        File.WriteAllText(Path.Combine(workspace, "userdata", "writable-game-files", "AnomalyLauncher.cfg"), "DX9\nAVX\n1");
+        var savePlan = await backend.PrepareAsync(
+            new ProfileLaunchBackendContext(game, profile, layerPlan, manifest, SaveName: "quicksave"),
+            new Progress<string>());
+
+        Assert.EndsWith(Path.Combine("bin", "AnomalyDX9AVX.exe"), savePlan.ExecutablePath);
+        Assert.Equal("-smap4096 -dbg -start server(quicksave/single/alife/load) client(localhost)", savePlan.Arguments);
+        Assert.Equal("-dbg", profile.LaunchArguments);
     }
 
     [Fact]
