@@ -3,51 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:infrastructure="clr-namespace:StalkerModLauncher.Infrastructure"
              xmlns:res="clr-namespace:StalkerModLauncher.Resources"
-             Focusable="False">
+             Focusable="False" Loaded="ProfileActions_OnChanged">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <Grid Grid.Column="0"
-              ClipToBounds="True">
-            <Grid.Style>
-                <Style TargetType="Grid">
-                    <Setter Property="Margin" Value="0,0,160,0"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsChecked, ElementName=ProfileActionsToggle}"
-                                     Value="True">
-                            <DataTrigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <ThicknessAnimation Storyboard.TargetProperty="Margin"
-                                                            To="0,0,670,0"
-                                                            Duration="0:0:0.46">
-                                            <ThicknessAnimation.EasingFunction>
-                                                <CubicEase EasingMode="EaseOut"/>
-                                            </ThicknessAnimation.EasingFunction>
-                                        </ThicknessAnimation>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </DataTrigger.EnterActions>
-                            <DataTrigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <ThicknessAnimation Storyboard.TargetProperty="Margin"
-                                                            To="0,0,160,0"
-                                                            Duration="0:0:0.42">
-                                            <ThicknessAnimation.EasingFunction>
-                                                <CubicEase EasingMode="EaseInOut"/>
-                                            </ThicknessAnimation.EasingFunction>
-                                        </ThicknessAnimation>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </DataTrigger.ExitActions>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Grid.Style>
+        <Grid Grid.Column="0" Margin="0,0,8,0" ClipToBounds="True">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -91,8 +54,7 @@
                     </Grid>
             </Grid>
 
-        <Grid Grid.Column="0"
-              Grid.ColumnSpan="2"
+        <Grid Grid.Column="1"
               HorizontalAlignment="Right"
               VerticalAlignment="Top"
               Panel.ZIndex="2">
@@ -102,58 +64,16 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0"
+            <Border x:Name="ProfileActionsViewport" Grid.Column="0"
                     Height="40"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
                     ClipToBounds="True"
                     Margin="0,0,4,8"
                     Width="0"
-                    Opacity="0">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="IsHitTestVisible" Value="False"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsChecked, ElementName=ProfileActionsToggle}" Value="True">
-                                <Setter Property="IsHitTestVisible" Value="True"/>
-                                <DataTrigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Width"
-                                                             To="500"
-                                                             Duration="0:0:0.46">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                             To="1"
-                                                             BeginTime="0:0:0.08"
-                                                             Duration="0:0:0.30"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </DataTrigger.EnterActions>
-                                <DataTrigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Width"
-                                                             To="0"
-                                                             Duration="0:0:0.42">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseInOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                             To="0"
-                                                             Duration="0:0:0.26"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </DataTrigger.ExitActions>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <StackPanel Height="38"
+                    Opacity="0"
+                    IsHitTestVisible="False">
+                <StackPanel x:Name="ProfileActions" Height="38"
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center">
@@ -178,6 +98,8 @@
             <ToggleButton x:Name="ProfileActionsToggle"
                           Grid.Column="1"
                           IsChecked="True"
+                          Checked="ProfileActions_OnChanged"
+                          Unchecked="ProfileActions_OnChanged"
                           infrastructure:UiSound.Kind="ProfileActionsToggle"
                           Style="{DynamicResource ProfileActionsToggleButtonStyle}"
                           VerticalAlignment="Center"
