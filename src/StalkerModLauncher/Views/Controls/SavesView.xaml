@@ -38,15 +38,17 @@
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ListBoxItem">
-                                <Border CornerRadius="4">
+                                <Border>
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="Background" Value="{DynamicResource PanelBrush}"/>
+                                            <Setter Property="CornerRadius" Value="4"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True">
                                                     <Setter Property="Background" Value="{DynamicResource PanelAltBrush}"/>
                                                     <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
                                                     <Setter Property="BorderThickness" Value="1"/>
+                                                    <Setter Property="CornerRadius" Value="0"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -65,21 +67,31 @@
                             <ColumnDefinition Width="140"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border Background="{DynamicResource FieldBackgroundBrush}" Margin="6,3" CornerRadius="3">
+                        <Border Background="{DynamicResource FieldBackgroundBrush}" Margin="6,3">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="3"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True">
+                                            <Setter Property="CornerRadius" Value="0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Image Source="{Binding Thumbnail}" Width="128" Height="72" Stretch="Fill"/>
                         </Border>
                         <TextBlock Grid.Column="1" Margin="6,0,12,0" VerticalAlignment="Center"
                                    Text="{Binding Name}" TextWrapping="NoWrap"
                                    TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
                         <Border x:Name="ActionShade" Grid.Column="1" Opacity="0" Width="155"
-                                CornerRadius="0,4,4,0"
+                                Background="Black"
                                 HorizontalAlignment="Right" IsHitTestVisible="False">
                             <Border.Style>
                                 <Style TargetType="Border">
-                                    <Setter Property="Background" Value="Black"/>
+                                    <Setter Property="CornerRadius" Value="0,4,4,0"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource PdaNavigationBackgroundBrush}"/>
+                                            <Setter Property="CornerRadius" Value="0"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
