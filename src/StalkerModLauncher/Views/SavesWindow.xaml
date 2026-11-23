@@ -14,13 +14,14 @@
         <ListBox x:Name="SavesList" Visibility="Collapsed"
                  Background="Transparent" BorderThickness="0"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 VirtualizingPanel.VirtualizationMode="Recycling"
-                 KeyDown="SavesList_OnKeyDown">
+                 VirtualizingPanel.VirtualizationMode="Recycling">
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
+                    <Setter Property="Focusable" Value="False"/>
+                    <Setter Property="IsTabStop" Value="False"/>
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                     <Setter Property="Padding" Value="0"/>
-                    <Setter Property="Margin" Value="0,0,0,6"/>
+                    <Setter Property="Margin" Value="0,0,8,6"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ListBoxItem">
@@ -46,6 +47,7 @@
                                    Text="{Binding Name}" TextWrapping="NoWrap"
                                    TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
                         <Border x:Name="ActionShade" Grid.Column="1" Opacity="0" Width="155"
+                                CornerRadius="0,4,4,0"
                                 HorizontalAlignment="Right" IsHitTestVisible="False">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
@@ -57,7 +59,7 @@
                             </Border.Background>
                         </Border>
                         <Button x:Name="LaunchButton" Grid.Column="1" Opacity="0"
-                                IsHitTestVisible="False" IsTabStop="False"
+                                IsHitTestVisible="False"
                                 HorizontalAlignment="Right" VerticalAlignment="Center"
                                 AutomationProperties.Name="{x:Static res:Strings.Common_Launch}"
                                 Click="LaunchButton_OnClick">
@@ -86,14 +88,14 @@
                             <Setter TargetName="LaunchButton" Property="Visibility" Value="Collapsed"/>
                             <Setter TargetName="ActionShade" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                        <Trigger SourceName="LaunchButton" Property="IsKeyboardFocused" Value="True">
                             <Setter TargetName="LaunchButton" Property="Opacity" Value="1"/>
                             <Setter TargetName="LaunchButton" Property="IsHitTestVisible" Value="True"/>
                             <Setter TargetName="ActionShade" Property="Opacity" Value="1"/>
                             <Setter TargetName="LaunchButton" Property="RenderTransform">
                                 <Setter.Value><TranslateTransform/></Setter.Value>
                             </Setter>
-                        </DataTrigger>
+                        </Trigger>
                         <EventTrigger RoutedEvent="MouseEnter" SourceName="SaveRow">
                             <BeginStoryboard x:Name="RevealLaunch">
                                 <Storyboard>

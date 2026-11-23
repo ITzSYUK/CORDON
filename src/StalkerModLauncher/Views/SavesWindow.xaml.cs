@@ -76,8 +76,11 @@ public partial class SavesWindow : Window
 
     private void LaunchButton_OnClick(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { DataContext: SaveRow save })
-            SelectSave(save);
+        if (CanLaunch && sender is Button { DataContext: SaveRow save })
+        {
+            SelectedSavePath = save.FilePath;
+            DialogResult = true;
+        }
     }
 
     private void OpenSwmButton_OnClick(object sender, RoutedEventArgs e) => DialogResult = true;
@@ -88,23 +91,6 @@ public partial class SavesWindow : Window
 
         e.Handled = true;
         Close();
-    }
-
-    private void SavesList_OnKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter && SavesList.SelectedItem is SaveRow save)
-        {
-            e.Handled = true;
-            SelectSave(save);
-        }
-    }
-
-    private void SelectSave(SaveRow save)
-    {
-        if (!CanLaunch) return;
-
-        SelectedSavePath = save.FilePath;
-        DialogResult = true;
     }
 
     private sealed record SaveRow(string Name, string FilePath, BitmapSource? Thumbnail);
