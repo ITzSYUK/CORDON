@@ -8,12 +8,28 @@
         <Style x:Key="SaveLaunchButtonStyle" TargetType="Button" BasedOn="{StaticResource InlineProfileActionButtonStyle}">
             <Setter Property="Width" Value="84"/>
             <Style.Triggers>
+                <DataTrigger Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="6" SnapsToDevicePixels="True">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      Margin="{TemplateBinding Padding}" RecognizesAccessKey="True"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding UsePdaTheme, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="True"/>
                         <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
                     </MultiDataTrigger.Conditions>
                     <Setter Property="Background" Value="{DynamicResource PdaControlHoverBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource PdaControlHoverBorderBrush}"/>
                 </MultiDataTrigger>
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
@@ -21,6 +37,7 @@
                         <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}" Value="True"/>
                     </MultiDataTrigger.Conditions>
                     <Setter Property="Background" Value="{DynamicResource PdaControlPressedBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource PdaControlBorderBrush}"/>
                 </MultiDataTrigger>
             </Style.Triggers>
         </Style>
