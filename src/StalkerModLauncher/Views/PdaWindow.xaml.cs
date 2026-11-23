@@ -191,6 +191,16 @@ public partial class PdaWindow : Window
         }
     }
 
+    private async void SavesButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (PdaView.IsMigrationActive || ViewModel is not { SelectedProfile: { } profile } viewModel)
+            return;
+
+        var window = new SavesWindow(profile, viewModel.CanLaunchProfile(profile)) { Owner = this };
+        if (window.ShowDialog() == true)
+            await viewModel.LaunchProfileAsync(profile, window.SelectedSavePath);
+    }
+
     private void ModCatalogButton_OnClick(object sender, RoutedEventArgs e)
     {
         var catalogVm = _navigation.CreateModCatalogViewModel();

@@ -446,18 +446,20 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Button x:Name="ProfilesButton" Content="{x:Static res:Strings.Main_ProfileList}" Width="190"
+                    <Button x:Name="ProfilesButton" Content="{x:Static res:Strings.Main_ProfileList}" Width="170"
                             Style="{StaticResource PdaNavButtonStyle}"
                             Click="ProfilesButton_OnClick"/>
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <Button x:Name="ScreenshotsNavButton" Content="{x:Static res:Strings.Screenshots_Title}" Width="140" Margin="0,0,4,0"
+                        <Button x:Name="SavesNavButton" Content="{x:Static res:Strings.Saves_Title}" Width="124" Margin="0,0,4,0"
+                                Style="{StaticResource PdaNavButtonStyle}" Click="SavesButton_OnClick"/>
+                        <Button x:Name="ScreenshotsNavButton" Content="{x:Static res:Strings.Screenshots_Title}" Width="124" Margin="0,0,4,0"
                                 Style="{StaticResource PdaNavButtonStyle}" Click="ScreenshotsButton_OnClick"/>
-                        <Button Content="{x:Static res:Strings.Common_ProfileFolder}" Width="140" Margin="0,0,4,0"
+                        <Button Content="{x:Static res:Strings.Common_ProfileFolder}" Width="124" Margin="0,0,4,0"
                                 Style="{StaticResource PdaNavButtonStyle}"
                                 Command="{Binding OpenProfileFolderCommand}"/>
-                        <Button x:Name="StatusNavButton" Content="{x:Static res:Strings.Common_Status}" Width="140" Margin="0,0,4,0"
+                        <Button x:Name="StatusNavButton" Content="{x:Static res:Strings.Common_Status}" Width="124" Margin="0,0,4,0"
                                 Style="{StaticResource PdaNavButtonStyle}" Click="StatusButton_OnClick"/>
-                        <Button x:Name="SettingsNavButton" Content="{x:Static res:Strings.Common_Settings}" Width="140"
+                        <Button x:Name="SettingsNavButton" Content="{x:Static res:Strings.Common_Settings}" Width="124"
                                 Style="{StaticResource PdaNavButtonStyle}" Click="SettingsTab_OnClick"/>
                     </StackPanel>
                 </Grid>
