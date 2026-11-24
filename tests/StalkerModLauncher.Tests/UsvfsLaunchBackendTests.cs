@@ -438,13 +438,21 @@ public sealed class UsvfsLaunchBackendTests : IDisposable
 
         profile.UsvfsExecutableOverrideRelativePath = string.Empty;
         File.WriteAllText(Path.Combine(workspace, "userdata", "writable-game-files", "AnomalyLauncher.cfg"), "DX9\nAVX\n1");
+        File.AppendAllText(Path.Combine(game, "fsgame.ltx"), "\n$game_saves$ = true | false | $app_data_root$ | slots\n");
+        var saves = Path.Combine(layerPlan.GameDataRoot, "slots");
+        Directory.CreateDirectory(saves);
+        var savePath = Path.Combine(saves, "quicksave.scop");
+        File.WriteAllText(savePath, "save");
+        var saveContext = new ProfileLaunchBackendContext(game, profile, layerPlan, manifest, SavedGamePath: savePath);
         var savePlan = await backend.PrepareAsync(
-            new ProfileLaunchBackendContext(game, profile, layerPlan, manifest, SaveName: "quicksave"),
+            saveContext,
             new Progress<string>());
 
         Assert.EndsWith(Path.Combine("bin", "AnomalyDX9AVX.exe"), savePlan.ExecutablePath);
-        Assert.Equal("-smap4096 -dbg -start server(quicksave/single/alife/load) client(localhost)", savePlan.Arguments);
+        Assert.Equal("-dbg -start server(quicksave/single/alife/load) client(localhost)", savePlan.Arguments);
         Assert.Equal("-dbg", profile.LaunchArguments);
+        File.WriteAllText(Path.Combine(workspace, "userdata", "writable-game-files", "commandline.txt"), "-smap4096\n-load other");
+        await Assert.ThrowsAsync<InvalidOperationException>(() => backend.PrepareAsync(saveContext, new Progress<string>()));
     }
 
     [Fact]

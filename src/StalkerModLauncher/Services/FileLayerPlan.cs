@@ -236,7 +236,7 @@ public sealed partial class FileLayerPlan
         return new FileLayerPlan(layers) { UsesSharedGameData = profile.UseBaseGameData };
     }
 
-    internal static string? ResolveFsgameLaunchArgument(string? launchArguments)
+    internal static string? ResolveFsgameLaunchArgument(string? launchArguments, bool allowAbsolute = false)
     {
         if (string.IsNullOrWhiteSpace(launchArguments))
         {
@@ -257,13 +257,15 @@ public sealed partial class FileLayerPlan
             throw new InvalidOperationException(Strings.Fsgame_ArgumentPathRequired);
         }
 
-        FileSystemSafety.EnsureRelativePath(relativePath, Strings.Fsgame_ArgumentFile);
+        var absolute = allowAbsolute && Path.IsPathFullyQualified(relativePath);
+        if (!absolute)
+            FileSystemSafety.EnsureRelativePath(relativePath, Strings.Fsgame_ArgumentFile);
         if (!Path.GetExtension(relativePath).Equals(".ltx", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(LocalizedText.Format(Strings.Fsgame_ArgumentExtensionFormat, relativePath));
         }
 
-        return NormalizeRelativePath(relativePath);
+        return absolute ? Path.GetFullPath(relativePath) : NormalizeRelativePath(relativePath);
     }
 
     [GeneratedRegex(

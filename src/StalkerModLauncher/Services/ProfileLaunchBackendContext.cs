@@ -7,4 +7,4 @@ public sealed record ProfileLaunchBackendContext(
     ModProfile Profile,
     FileLayerPlan? FileLayerPlan = null,
     OverlayManifest? OverlayManifest = null,
-    string? SaveName = null);
+    string? SavedGamePath = null);

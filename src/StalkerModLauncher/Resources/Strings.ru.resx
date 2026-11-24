@@ -1219,6 +1219,6 @@
   <data name="Saves_ConflictingArguments" xml:space="preserve"><value>Удалите существующий аргумент -start или -load перед запуском из сохранения.</value></data>
   <data name="Saves_AnomalyEngineUnknown" xml:space="preserve"><value>Выберите рендерер в лаунчере Anomaly и повторите запуск из сохранения.</value></data>
   <data name="Saves_AnomalyLaunchFormat" xml:space="preserve"><value>Запуск сохранения с выбранным движком Anomaly — {0}.</value></data>
-  <data name="Saves_SwmRequiresLauncher" xml:space="preserve"><value>Для загрузки сохранений этого профиля используйте лаунчер SWM.</value></data>
-  <data name="Saves_OpenSwmLauncher" xml:space="preserve"><value>Открыть лаунчер SWM</value></data>
+  <data name="Saves_UseGameMenu" xml:space="preserve"><value>Запустите профиль и выберите сохранение в игре или её лаунчере.</value></data>
+  <data name="Saves_OpenGame" xml:space="preserve"><value>Запустить профиль</value></data>
 </root>

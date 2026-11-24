@@ -10,12 +10,12 @@ namespace StalkerModLauncher.Views.Controls;
 public partial class SavesView : UserControl
 {
     private readonly ModProfile _profile;
+    private readonly bool _canLaunch;
 
     public SavesView(ModProfile profile, bool canLaunch, bool usePdaTheme = false)
     {
         _profile = profile;
-        var requiresSwmLauncher = SavedGameLaunch.IsSwmLauncher(profile.ExecutableRelativePath);
-        CanLaunch = canLaunch && !requiresSwmLauncher;
+        _canLaunch = canLaunch;
         UsePdaTheme = usePdaTheme;
         InitializeComponent();
         if (usePdaTheme)
@@ -24,14 +24,8 @@ public partial class SavesView : UserControl
             Resources.MergedDictionaries.Add(theme);
             SetResourceReference(BackgroundProperty, "PdaPageBackgroundBrush");
         }
-        if (requiresSwmLauncher)
-        {
-            SwmActions.Visibility = Visibility.Visible;
-            OpenSwmButton.IsEnabled = canLaunch;
-        }
     }
 
-    public bool CanLaunch { get; }
     public bool UsePdaTheme { get; }
     public event EventHandler<string?>? LaunchRequested;
 
@@ -39,13 +33,16 @@ public partial class SavesView : UserControl
     {
         try
         {
-            var directories = ProfileDataPathResolver.GetSavedGameDirectories(_profile);
-            var saves = await Task.Run(() => SavedGameLaunch.Enumerate(directories)
+            var catalog = SavedGameCatalog.Preview(_profile);
+            var canLaunchSave = _canLaunch && catalog.Extension is not null;
+            var saves = await Task.Run(() => catalog.Enumerate()
                 .Select(file => new SaveRow(
-                    Path.GetFileNameWithoutExtension(file.Name), file.FullName, ReadThumbnail(file.FullName)))
+                    Path.GetFileNameWithoutExtension(file.Name), file.FullName, ReadThumbnail(file.FullName), canLaunchSave))
                 .ToArray());
             if (!IsLoaded) return;
 
+            GameMenuActions.Visibility = catalog.Extension is null ? Visibility.Visible : Visibility.Collapsed;
+            OpenGameButton.IsEnabled = _canLaunch;
             if (saves.Length == 0)
             {
                 StatusText.Text = Strings.Saves_Empty;
@@ -56,7 +53,7 @@ public partial class SavesView : UserControl
             SavesList.Visibility = Visibility.Visible;
             StatusText.Visibility = Visibility.Collapsed;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
         {
             StatusText.Text = LocalizedText.Format(Strings.Saves_ReadFailedFormat, ex.Message);
         }
@@ -79,11 +76,11 @@ public partial class SavesView : UserControl
 
     private void LaunchButton_OnClick(object sender, RoutedEventArgs e)
     {
-        if (CanLaunch && sender is Button { DataContext: SaveRow save })
+        if (sender is Button { DataContext: SaveRow { CanLaunch: true } save })
             LaunchRequested?.Invoke(this, save.FilePath);
     }
 
-    private void OpenSwmButton_OnClick(object sender, RoutedEventArgs e) => LaunchRequested?.Invoke(this, null);
+    private void OpenGameButton_OnClick(object sender, RoutedEventArgs e) => LaunchRequested?.Invoke(this, null);
 
-    private sealed record SaveRow(string Name, string FilePath, BitmapSource? Thumbnail);
+    private sealed record SaveRow(string Name, string FilePath, BitmapSource? Thumbnail, bool CanLaunch);
 }

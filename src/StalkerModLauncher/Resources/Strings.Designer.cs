@@ -18,8 +18,8 @@ public static class Strings
     public static string Saves_ConflictingArguments => Get();
     public static string Saves_AnomalyEngineUnknown => Get();
     public static string Saves_AnomalyLaunchFormat => Get();
-    public static string Saves_SwmRequiresLauncher => Get();
-    public static string Saves_OpenSwmLauncher => Get();
+    public static string Saves_UseGameMenu => Get();
+    public static string Saves_OpenGame => Get();
     public static string ProfileImport_BaseGameMissing => Get();
     public static string ProfileImport_Name => Get();
     public static string ProfileImport_SummaryFormat => Get();

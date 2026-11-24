@@ -43,8 +43,7 @@ public sealed class ProfileLauncher : IProfileLauncher
         profile.IsPreparing = true;
         try
         {
-            var saveName = savedGamePath is null ? null : SavedGameLaunch.GetSaveName(profile, savedGamePath);
-            return await LaunchCoreAsync(gamePath, profile, progress, saveName, cancellationToken);
+            return await LaunchCoreAsync(gamePath, profile, progress, savedGamePath, cancellationToken);
         }
         catch (Exception ex) when (
             !profile.IsStandalone &&
@@ -62,7 +61,7 @@ public sealed class ProfileLauncher : IProfileLauncher
         string gamePath,
         ModProfile profile,
         IProgress<string> progress,
-        string? saveName,
+        string? savedGamePath,
         CancellationToken cancellationToken)
     {
         var backend = ResolveBackend(profile.IsStandalone ? LaunchBackendKind.Standalone : profile.LaunchBackendKind);
@@ -72,12 +71,12 @@ public sealed class ProfileLauncher : IProfileLauncher
             LaunchBackendKind.LinkedWorkspace => Strings.Launch_ModeWorkspace,
             _ => Strings.Profile_Standalone
         }));
-        var context = CreateBackendContext(gamePath, profile, progress) with { SaveName = saveName };
+        var context = CreateBackendContext(gamePath, profile, progress) with { SavedGamePath = savedGamePath };
         var plan = await backend.PrepareAsync(context, progress, cancellationToken);
         try
         {
-            if (saveName is not null && backend.Kind != LaunchBackendKind.VirtualFileSystem)
-                plan = SavedGameLaunch.ApplyToPhysicalPlan(plan, saveName);
+            if (savedGamePath is not null && backend.Kind != LaunchBackendKind.VirtualFileSystem)
+                plan = SavedGameLaunch.ApplyToPhysicalPlan(plan, savedGamePath);
 
             progress.Report(LocalizedText.Format(Strings.Launch_ExecutableFormat, plan.ExecutablePath));
             var launch = _launchPlanExecutor.Start(plan, progress);

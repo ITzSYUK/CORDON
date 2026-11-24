@@ -189,14 +189,20 @@ public sealed class ProfileLauncherTests
         Directory.CreateDirectory(game);
         try
         {
-            File.WriteAllText(Path.Combine(game, "game.exe"), "engine");
-            File.WriteAllText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true | false | appdata");
+            File.WriteAllText(Path.Combine(game, "game.exe"), "engine\0.scop\0");
+            File.WriteAllText(Path.Combine(game, "fsgame.ltx"), "$app_data_root$ = true | false | fallback");
+            File.WriteAllLines(Path.Combine(game, "custom.ltx"),
+            [
+                "$app_data_root$ = true | false | appdata",
+                "$slots$ = true | false | $app_data_root$ | slots",
+                "$game_saves$ = true | false | $slots$ | campaign"
+            ]);
             var profile = new ModProfile
             {
                 IsStandalone = standalone,
                 GameInstallPath = game,
                 ExecutableRelativePath = "game.exe",
-                LaunchArguments = "-nointro",
+                LaunchArguments = "-nointro -fsltx custom.ltx",
                 LaunchBackendKind = LaunchBackendKind.LinkedWorkspace
             };
             var paths = new AppPaths(Path.Combine(root, "config"), Path.Combine(root, "workspaces"), false);
@@ -207,27 +213,37 @@ public sealed class ProfileLauncherTests
             else
                 manager.EnsureProfileFolderPath(profile);
 
-            var directories = ProfileDataPathResolver.GetSavedGameDirectories(profile);
-            var saves = directories[0];
+            var catalog = SavedGameCatalog.Preview(profile);
+            var data = standalone ? Path.Combine(game, "appdata") : Path.Combine(profile.WorkspacePath, "userdata");
+            var saves = Path.Combine(data, "slots", "campaign");
+            Assert.Equal(saves, catalog.DirectoryPath);
             Directory.CreateDirectory(saves);
             var savePath = Path.Combine(saves, "Сталкер - quicksave.scop");
             File.WriteAllText(savePath, "save");
             File.WriteAllText(Path.ChangeExtension(savePath, ".dds"), "thumbnail");
-            File.WriteAllText(Path.Combine(saves, "unsafe)name.sav"), "save");
+            var wrongFormat = Path.ChangeExtension(savePath, ".sav");
+            File.WriteAllText(wrongFormat, "save");
+            var unrelated = Path.Combine(data, "savedgames", Path.GetFileName(savePath));
+            Directory.CreateDirectory(Path.GetDirectoryName(unrelated)!);
+            File.WriteAllText(unrelated, "save");
             using var process = Process.GetCurrentProcess();
             var executor = new RecordingLaunchPlanExecutor(process);
             var launcher = new ProfileLauncher(
                 [new StandaloneLaunchBackend(), new LinkedWorkspaceLaunchBackend(builder)], executor, manager);
-            var savesFound = SavedGameLaunch.Enumerate(directories);
-            Assert.Equal(2, savesFound.Count());
+            Assert.Equal(savePath, Assert.Single(catalog.Enumerate()).FullName);
+            await Assert.ThrowsAsync<FileNotFoundException>(() => launcher.LaunchAsync(game, profile, new ListProgress(), wrongFormat));
+            await Assert.ThrowsAsync<FileNotFoundException>(() => launcher.LaunchAsync(game, profile, new ListProgress(), unrelated));
+            Assert.Null(executor.Plan);
             await launcher.LaunchAsync(game, profile, new ListProgress(), savedGamePath: savePath);
-            Assert.Equal("-nointro -start server(Сталкер - quicksave/single/alife/load) client(localhost)", executor.Plan!.Arguments);
-            Assert.Equal("-nointro", profile.LaunchArguments);
+            Assert.Equal("-nointro -fsltx custom.ltx -start server(Сталкер - quicksave/single/alife/load) client(localhost)", executor.Plan!.Arguments);
+            Assert.Equal("-nointro -fsltx custom.ltx", profile.LaunchArguments);
 
             await launcher.LaunchAsync(game, profile, new ListProgress());
-            Assert.Equal("-nointro", executor.Plan!.Arguments);
-            Assert.Throws<InvalidDataException>(() => SavedGameLaunch.GetSaveName(profile, Path.Combine(saves, "unsafe)name.sav")));
-            Assert.Throws<FileNotFoundException>(() => SavedGameLaunch.GetSaveName(profile, Path.Combine(saves, "missing.sav")));
+            Assert.Equal(profile.LaunchArguments, executor.Plan!.Arguments);
+            var unsafePath = Path.Combine(saves, "unsafe)name.scop");
+            File.WriteAllText(unsafePath, "save");
+            Assert.Throws<InvalidDataException>(() => SavedGameLaunch.GetSaveName(catalog, unsafePath));
+            Assert.Throws<FileNotFoundException>(() => SavedGameLaunch.GetSaveName(catalog, Path.Combine(saves, "missing.scop")));
             Assert.Throws<InvalidOperationException>(() => SavedGameLaunch.AppendArguments("-start server(existing)", "selected"));
         }
         finally { Directory.Delete(root, recursive: true); }
