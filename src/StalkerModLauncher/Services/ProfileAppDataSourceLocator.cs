@@ -42,7 +42,10 @@ internal static class ProfileAppDataSourceLocator
         return ResolveConfiguredRootFromFile(Path.Combine(configDirectory, "fsgame.ltx"), layerRoot);
     }
 
-    internal static string ResolveConfiguredRootFromFile(string configPath, string fsRoot)
+    internal static string ResolveConfiguredRootFromFile(string configPath, string fsRoot) =>
+        ResolveAlias(ReadAliases(configPath), "$app_data_root$", fsRoot);
+
+    internal static Dictionary<string, string[]> ReadAliases(string configPath)
     {
         var aliases = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
         foreach (var line in File.ReadLines(configPath, XRayTextEncoding.Config))
@@ -53,13 +56,19 @@ internal static class ProfileAppDataSourceLocator
             aliases[content[..assignment].Trim()] = content[(assignment + 1)..]
                 .Split('|', StringSplitOptions.TrimEntries);
         }
+        return aliases;
+    }
 
+    internal static string ResolveAlias(
+        IReadOnlyDictionary<string, string[]> aliases, string name, string fsRoot, string? appDataRoot = null)
+    {
         var visiting = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        return Resolve("$app_data_root$");
+        return Resolve(name);
 
         string Resolve(string alias)
         {
             if (alias.Equals("$fs_root$", StringComparison.OrdinalIgnoreCase)) return Path.GetFullPath(fsRoot);
+            if (appDataRoot is not null && alias.Equals("$app_data_root$", StringComparison.OrdinalIgnoreCase)) return appDataRoot;
             if (!visiting.Add(alias) || !aliases.TryGetValue(alias, out var parts) || parts.Length < 3)
             {
                 throw new InvalidDataException(LocalizedText.Format(Strings.ProfileData_AliasInvalidFormat, alias));

@@ -146,7 +146,7 @@
                         </Button>
                     </Grid>
                     <DataTemplate.Triggers>
-                        <DataTrigger Binding="{Binding CanLaunch, RelativeSource={RelativeSource AncestorType=controls:SavesView}}" Value="False">
+                        <DataTrigger Binding="{Binding CanLaunch}" Value="False">
                             <Setter TargetName="LaunchButton" Property="Visibility" Value="Collapsed"/>
                             <Setter TargetName="ActionShade" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
@@ -179,10 +179,10 @@
         </ListBox>
         <TextBlock x:Name="StatusText" Text="{x:Static res:Strings.Saves_Loading}" TextAlignment="Center"
                    HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}"/>
-        <DockPanel x:Name="SwmActions" Grid.Row="1" Visibility="Collapsed" Margin="0,10,0,0">
-            <Button x:Name="OpenSwmButton" DockPanel.Dock="Right" Margin="12,0,0,0"
-                    Content="{x:Static res:Strings.Saves_OpenSwmLauncher}" Click="OpenSwmButton_OnClick"/>
-            <TextBlock Text="{x:Static res:Strings.Saves_SwmRequiresLauncher}" VerticalAlignment="Center"
+        <DockPanel x:Name="GameMenuActions" Grid.Row="1" Visibility="Collapsed" Margin="0,10,0,0">
+            <Button x:Name="OpenGameButton" DockPanel.Dock="Right" Margin="12,0,0,0"
+                    Content="{x:Static res:Strings.Saves_OpenGame}" Click="OpenGameButton_OnClick"/>
+            <TextBlock Text="{x:Static res:Strings.Saves_UseGameMenu}" VerticalAlignment="Center" TextWrapping="Wrap"
                        Foreground="{DynamicResource MutedTextBrush}"/>
         </DockPanel>
     </Grid>

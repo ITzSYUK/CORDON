@@ -9,7 +9,8 @@ internal sealed record UsvfsLaunchTarget(
     string Arguments,
     string WorkingDirectory,
     string SourceName,
-    bool BypassedLauncher);
+    bool BypassedLauncher,
+    string? EngineCommandLinePath = null);
 
 internal static class AnomalyUsvfsLaunchTargetResolver
 {
@@ -17,7 +18,8 @@ internal static class AnomalyUsvfsLaunchTargetResolver
         ModProfile profile,
         FileLayerPlan layerPlan,
         LaunchPlanResolution launchResolution,
-        string? saveName = null)
+        bool forSavedGame = false,
+        bool allowUnconfiguredLauncher = false)
     {
         var plan = launchResolution.Plan
             ?? throw new InvalidOperationException(Strings.Error_UsvfsLaunchPlanNotReady);
@@ -42,26 +44,18 @@ internal static class AnomalyUsvfsLaunchTargetResolver
             var selectedEngine = layerPlan.FindFinalFile(profile.UsvfsExecutableOverrideRelativePath)
                 ?? throw new FileNotFoundException(
                     LocalizedText.Format(Strings.Usvfs_AnomalyEngineMissingFormat, profile.UsvfsExecutableOverrideRelativePath));
-            return CreateEngineTarget(profile, layerPlan, plan, selectedEngine, isLauncher);
+            return CreateEngineTarget(layerPlan, plan, selectedEngine, isLauncher, forSavedGame);
         }
 
-        if (saveName is not null && isLauncher)
+        if (forSavedGame && isLauncher)
         {
-            var enginePath = SavedGameLaunch.ResolveAnomalyEngine(relativePath => FindProfileFile(layerPlan, relativePath));
-            var engine = layerPlan.FindFinalFile(enginePath)
-                ?? throw new FileNotFoundException(LocalizedText.Format(Strings.Usvfs_AnomalyEngineMissingFormat, enginePath));
-            return CreateEngineTarget(profile, layerPlan, plan, engine, BypassedLauncher: true);
-        }
+            var enginePath = SavedGameLaunch.TryResolveAnomalyEngine(relativePath => FindProfileFile(layerPlan, relativePath));
+            if (enginePath is not null && layerPlan.FindFinalFile(enginePath) is { } engine)
+                return CreateEngineTarget(layerPlan, plan, engine, bypassedLauncher: true, forSavedGame: true);
 
-        if (!isLauncher)
-        {
-            return new UsvfsLaunchTarget(
-                plan.ExecutablePath,
-                executable.RelativePath,
-                plan.Arguments,
-                plan.WorkingDirectory,
-                executable.SourceName,
-                BypassedLauncher: false);
+            if (!allowUnconfiguredLauncher)
+                throw new InvalidOperationException(enginePath is null ? Strings.Saves_AnomalyEngineUnknown
+                    : LocalizedText.Format(Strings.Usvfs_AnomalyEngineMissingFormat, enginePath));
         }
 
         // The official USVFS hook follows child processes and uses its cross-bitness
@@ -73,31 +67,40 @@ internal static class AnomalyUsvfsLaunchTargetResolver
             plan.Arguments,
             plan.WorkingDirectory,
             executable.SourceName,
-            BypassedLauncher: false);
+            BypassedLauncher: false,
+            EngineCommandLinePath: forSavedGame ? FindEngineCommandLine(layerPlan, plan, plan.ExecutablePath, executable.RelativePath) : null);
     }
 
     private static UsvfsLaunchTarget CreateEngineTarget(
-        ModProfile profile,
         FileLayerPlan layerPlan,
         LaunchPlan plan,
         FileLayerFile engine,
-        bool BypassedLauncher)
+        bool bypassedLauncher,
+        bool forSavedGame)
     {
-        var commandLine = FindProfileFile(layerPlan, "commandline.txt");
-        var launcherArguments = commandLine is null
+        var commandLine = forSavedGame
+            ? FindEngineCommandLine(layerPlan, plan, engine.FullPath, engine.RelativePath)
+            : FindProfileFile(layerPlan, "commandline.txt");
+        var launcherArguments = forSavedGame || commandLine is null
             ? string.Empty
             : File.ReadAllText(commandLine).Trim();
 
         return new UsvfsLaunchTarget(
             engine.FullPath,
             engine.RelativePath,
-            CombineArguments(launcherArguments, profile.LaunchArguments),
+            CombineArguments(launcherArguments, plan.Arguments),
             plan.WorkingDirectory,
             engine.SourceName,
-            BypassedLauncher);
+            bypassedLauncher,
+            EngineCommandLinePath: forSavedGame ? commandLine : null);
     }
 
-    private static string? FindProfileFile(FileLayerPlan layerPlan, string relativePath)
+    private static string? FindEngineCommandLine(FileLayerPlan layerPlan, LaunchPlan plan, string executable, string relativeExe) =>
+        SavedGameLaunch.FindEngineCommandLine(executable, relativeExe,
+            Path.GetRelativePath(layerPlan.BaseGame.RootPath, plan.WorkingDirectory), path =>
+                FindProfileFile(layerPlan, path.StartsWith(@".\", StringComparison.Ordinal) ? path[2..] : path));
+
+    internal static string? FindProfileFile(FileLayerPlan layerPlan, string relativePath)
     {
         var stored = ProfileWritableGameFileStore.GetStoredFilePath(
             Path.GetDirectoryName(layerPlan.UserData.RootPath)!, relativePath);

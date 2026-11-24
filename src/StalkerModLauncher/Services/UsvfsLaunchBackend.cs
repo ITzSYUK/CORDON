@@ -86,16 +86,20 @@ public sealed class UsvfsLaunchBackend : IProfileLaunchBackend
             throw new InvalidOperationException(launchResolution.Error ?? Strings.Error_UsvfsLaunchPlanNotReady);
         }
 
-        if (context.SaveName is not null && SavedGameLaunch.IsSwmLauncher(launchResolution.Plan.ExecutablePath))
-            throw new InvalidOperationException(Strings.Saves_SwmRequiresLauncher);
-
-        var launchTarget = AnomalyUsvfsLaunchTargetResolver.Resolve(profile, layerPlan, launchResolution, context.SaveName);
-        if (context.SaveName is { } saveName)
-            launchTarget = launchTarget with { Arguments = SavedGameLaunch.AppendArguments(launchTarget.Arguments, saveName) };
+        var launchTarget = AnomalyUsvfsLaunchTargetResolver.Resolve(profile, layerPlan, launchResolution, forSavedGame: context.SavedGamePath is not null);
+        if (context.SavedGamePath is { } savedGamePath)
+        {
+            var catalog = SavedGameCatalog.ForVirtualTarget(layerPlan, launchTarget, profileFsgamePath);
+            var saveName = SavedGameLaunch.GetSaveName(catalog, savedGamePath);
+            launchTarget = launchTarget with
+            {
+                Arguments = SavedGameLaunch.AppendArguments(launchTarget.Arguments, saveName, launchTarget.EngineCommandLinePath)
+            };
+        }
         if (launchTarget.BypassedLauncher)
         {
             progress.Report(LocalizedText.Format(
-                context.SaveName is not null && string.IsNullOrWhiteSpace(profile.UsvfsExecutableOverrideRelativePath)
+                context.SavedGamePath is not null && string.IsNullOrWhiteSpace(profile.UsvfsExecutableOverrideRelativePath)
                     ? Strings.Saves_AnomalyLaunchFormat
                     : Strings.Progress_UsvfsManualEngineFormat,
                 Path.GetFileName(launchTarget.ExecutablePath)));
