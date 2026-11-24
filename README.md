@@ -1,7 +1,3 @@
-<h1 align="center">CORDON</h1>
-
-<p align="center"><strong>S.T.A.L.K.E.R. Mod Launcher</strong></p>
-
 <p align="center">
   <img src="docs/assets/screenshots/PDAUI_main_window.png" alt="Главное окно CORDON" width="900">
 </p>
