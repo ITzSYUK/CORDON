@@ -1210,7 +1210,7 @@
   <data name="Writable_SpatialAnomaliesReason" xml:space="preserve"><value>Spatial Anomalies сохраняет в этом файле идентификаторы созданных ограничителей.</value></data>
   <data name="Writable_SwmSpeedReason" xml:space="preserve"><value>SWM записывает в этот файл текущую скорость игрового времени.</value></data>
   <data name="Saves_Title" xml:space="preserve"><value>Сохранения</value></data>
-  <data name="Saves_TitleFormat" xml:space="preserve"><value>Сохранения — {0}</value></data>
+  <data name="Saves_TitleFormat" xml:space="preserve"><value>Сохранения: {0}</value></data>
   <data name="Saves_Loading" xml:space="preserve"><value>Загрузка списка сохранений…</value></data>
   <data name="Saves_Empty" xml:space="preserve"><value>У этого профиля пока нет сохранений.</value></data>
   <data name="Saves_ReadFailedFormat" xml:space="preserve"><value>Не удалось прочитать сохранения. {0}</value></data>

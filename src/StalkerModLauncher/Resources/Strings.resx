@@ -1210,7 +1210,7 @@ Original files have been preserved. You can retry.</value></data>
   <data name="Launch_ModeWorkspace" xml:space="preserve"><value>Workspace</value></data>
   <data name="Launch_ModeUsvfs" xml:space="preserve"><value>USVFS</value></data>
   <data name="Saves_Title" xml:space="preserve"><value>Saved games</value></data>
-  <data name="Saves_TitleFormat" xml:space="preserve"><value>Saved games — {0}</value></data>
+  <data name="Saves_TitleFormat" xml:space="preserve"><value>Saved games: {0}</value></data>
   <data name="Saves_Loading" xml:space="preserve"><value>Loading saved games…</value></data>
   <data name="Saves_Empty" xml:space="preserve"><value>This profile has no saved games.</value></data>
   <data name="Saves_ReadFailedFormat" xml:space="preserve"><value>Could not read saved games. {0}</value></data>

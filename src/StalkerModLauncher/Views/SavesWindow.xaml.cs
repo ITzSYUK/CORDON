@@ -12,7 +12,7 @@ public partial class SavesWindow : Window
     public SavesWindow(ModProfile profile, bool canLaunch)
     {
         InitializeComponent();
-        Title = LocalizedText.Format(Strings.Saves_TitleFormat, profile.Name);
+        Title = Strings.Saves_Title;
         var view = new SavesView(profile, canLaunch);
         view.LaunchRequested += (_, path) =>
         {

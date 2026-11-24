@@ -11,6 +11,7 @@ public partial class SavesView : UserControl
 {
     private readonly ModProfile _profile;
     private readonly bool _canLaunch;
+    private int _loadVersion;
 
     public SavesView(ModProfile profile, bool canLaunch, bool usePdaTheme = false)
     {
@@ -31,17 +32,28 @@ public partial class SavesView : UserControl
 
     private async void SavesView_OnLoaded(object sender, RoutedEventArgs e)
     {
+        var loadVersion = ++_loadVersion;
+        StatusText.Text = Strings.Saves_Loading;
+        StatusText.Visibility = Visibility.Visible;
+        SavesList.Visibility = Visibility.Collapsed;
+        GameMenuActions.Visibility = Visibility.Collapsed;
         try
         {
-            var catalog = SavedGameCatalog.Preview(_profile);
-            var canLaunchSave = _canLaunch && catalog.Extension is not null;
-            var saves = await Task.Run(() => catalog.Enumerate()
-                .Select(file => new SaveRow(
-                    Path.GetFileNameWithoutExtension(file.Name), file.FullName, ReadThumbnail(file.FullName), canLaunchSave))
-                .ToArray());
-            if (!IsLoaded) return;
+            var profile = CaptureCatalogProfile(_profile);
+            var canLaunch = _canLaunch;
+            var (hasDirectLaunch, saves) = await Task.Run(() =>
+            {
+                var catalog = SavedGameCatalog.Preview(profile);
+                var hasDirectLaunch = catalog.Extension is not null;
+                var rows = catalog.Enumerate()
+                    .Select(file => new SaveRow(Path.GetFileNameWithoutExtension(file.Name), file.FullName,
+                        ReadThumbnail(file.FullName), canLaunch && hasDirectLaunch))
+                    .ToArray();
+                return (hasDirectLaunch, rows);
+            });
+            if (!IsLoaded || loadVersion != _loadVersion) return;
 
-            GameMenuActions.Visibility = catalog.Extension is null ? Visibility.Visible : Visibility.Collapsed;
+            GameMenuActions.Visibility = hasDirectLaunch ? Visibility.Collapsed : Visibility.Visible;
             OpenGameButton.IsEnabled = _canLaunch;
             if (saves.Length == 0)
             {
@@ -55,9 +67,36 @@ public partial class SavesView : UserControl
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
         {
-            StatusText.Text = LocalizedText.Format(Strings.Saves_ReadFailedFormat, ex.Message);
+            if (IsLoaded && loadVersion == _loadVersion)
+                StatusText.Text = LocalizedText.Format(Strings.Saves_ReadFailedFormat, ex.Message);
         }
     }
+
+    private static ModProfile CaptureCatalogProfile(ModProfile profile) => new()
+    {
+        Id = profile.Id,
+        IsStandalone = profile.IsStandalone,
+        UseBaseGameData = profile.UseBaseGameData,
+        LaunchBackendKind = profile.LaunchBackendKind,
+        GameInstallPath = profile.GameInstallPath,
+        WorkspacePath = profile.WorkspacePath,
+        Mo2OverwritePath = profile.Mo2OverwritePath,
+        ExecutableRelativePath = profile.ExecutableRelativePath,
+        ExecutableSourcePath = profile.ExecutableSourcePath,
+        UsvfsExecutableOverrideRelativePath = profile.UsvfsExecutableOverrideRelativePath,
+        FsgameSourcePath = profile.FsgameSourcePath,
+        WorkingDirectoryRelative = profile.WorkingDirectoryRelative,
+        LaunchArguments = profile.LaunchArguments,
+        Mods = new(profile.Mods.Select(mod => new ModEntry
+        {
+            Id = mod.Id,
+            Name = mod.Name,
+            SourcePath = mod.SourcePath,
+            IsEnabled = mod.IsEnabled,
+            Order = mod.Order,
+            ExcludedFiles = [.. mod.ExcludedFiles]
+        }))
+    };
 
     private static BitmapSource? ReadThumbnail(string savePath)
     {
